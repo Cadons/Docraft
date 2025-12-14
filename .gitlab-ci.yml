@@ -1,0 +1,48 @@
+stages:
+  - build
+  - test
+
+
+default:
+  image: gcc:14
+
+.build_env: &build_env
+  before_script:
+    - apt-get update -y
+    - apt-get install -y cmake make bison flex libgtest-dev libhpdf-dev
+    - g++ --version
+    - cmake --version
+
+
+build:
+  stage: build
+  <<: *build_env
+  script:
+    - mkdir -p build
+    - cd build
+    - cmake .. -DCMAKE_BUILD_TYPE=Release
+    - cmake --build . --config Release -- -j"$(nproc)"
+  artifacts:
+    paths:
+      - build/
+    expire_in: 1 week
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+test:
+  stage: test
+  <<: *build_env
+  needs:
+    - build
+  script:
+    - cd build
+    - ctest -C Release --output-on-failure --output-junit test-results.xml
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  artifacts:
+    when: always
+    reports:
+      junit: build/test-results.xml
+    expire_in: 1 week

@@ -1,0 +1,66 @@
+# CMake build directories and files
+build/
+cmake-build-*/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+CTestTestfile.cmake
+_deps/
+
+# C++ compiled files
+*.o
+*.obj
+*.so
+*.dylib
+*.dll
+*.a
+*.lib
+*.exe
+*.out
+*.app
+
+# IDE - JetBrains (CLion, etc.)
+.idea/
+*.iml
+*.iws
+*.ipr
+# VS Code
+.vscode/
+# Eclipse
+.project
+.cproject
+.settings/
+# Qt Creator
+*.pro.user
+*.qmake.stash
+*.autosave
+# Visual Studio
+.vs/
+*.vcxproj*
+*.sln
+*.user
+*.suo
+# Build artifacts
+bin/
+lib/
+*.log
+
+# Test coverage
+*.gcov
+*.gcda
+*.gcno
+coverage/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Docker
+.dockerignore
+
+#CMake presets
+CMakeUserPresets.json
