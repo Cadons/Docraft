@@ -1,0 +1,35 @@
+#include "model/docraft_rectangle.h"
+
+#include <iostream>
+#include <ostream>
+
+#include "renderer/docraft_renderer.h"
+
+namespace docraft::model {
+    void DocraftRectangle::draw(const std::shared_ptr<DocraftPDFContext> &context) {
+        std::cout << "draw rectangle" << std::endl;
+        context->renderer()->render_rectangle(*this);
+        draw_children(context);
+
+    }
+
+    void DocraftRectangle::set_background_color(const DocraftColor &color) {
+        background_color_ = color;
+    }
+    void DocraftRectangle::set_border_color(const DocraftColor &color) {
+        border_color_ = color;
+    }
+    void DocraftRectangle::set_border_width(float width) {
+        border_width_ = width;
+    }
+
+    const DocraftColor & DocraftRectangle::background_color() const {
+        return background_color_;
+    }
+    const DocraftColor & DocraftRectangle::border_color() const {
+        return border_color_;
+    }
+    float DocraftRectangle::border_width() const {
+        return border_width_;
+    }
+} // docraft

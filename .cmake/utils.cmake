@@ -13,23 +13,3 @@ function (configure_build_folder BUILD_FOLDER_NAME)
         set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/${BUILD_FOLDER_NAME}/bin PARENT_SCOPE)
     endif()
 endfunction()
-function(configure_lexer_and_bison BISON_INPUT FLEX_INPUT OUT_BISON OUT_FLEX)
-    # Find Bison and Flex
-    find_package(BISON REQUIRED)
-    find_package(FLEX REQUIRED)
-
-    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bison)
-    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/flex)
-
-    bison_target(Parser ${BISON_INPUT} ${CMAKE_CURRENT_BINARY_DIR}/bison/grammar.tab.cc
-            DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/bison/grammar.tab.h
-    )
-    flex_target(Lexer ${FLEX_INPUT} ${CMAKE_CURRENT_BINARY_DIR}/flex/lex.yy.cc
-            COMPILE_FLAGS "--c++"
-    )
-    add_flex_bison_dependency(Lexer Parser)
-
-    set(${OUT_BISON} ${BISON_Parser_OUTPUTS} PARENT_SCOPE)
-    set(${OUT_FLEX}  ${FLEX_Lexer_OUTPUTS}  PARENT_SCOPE)
-
-endfunction()

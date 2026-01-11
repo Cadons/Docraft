@@ -6,7 +6,8 @@ find_package(GTest REQUIRED)
 #source files
 set(TEST_SOURCES
         main.cpp
-        test.cpp)
+        test.cpp
+        docraft_color_text.cc)
 
 add_executable(docraft_test
         ${TEST_SOURCES}
