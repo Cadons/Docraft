@@ -1,0 +1,30 @@
+[
+  {
+    "name": "Roboto-Bold",
+    "path": "fonts/Roboto/Roboto-Bold.ttf"
+  },
+  {
+    "name": "Roboto",
+    "path": "fonts/Roboto/Roboto.ttf"
+  },
+  {
+    "name": "Roboto-Italic",
+    "path": "fonts/Roboto/Roboto-Italic.ttf"
+  },
+  {
+    "name": "Roboto-BoldItalic",
+    "path": "fonts/Roboto/Roboto-BoldItalic.ttf"
+  },
+  {
+    "name": "OpenSans",
+    "path": "fonts/OpenSans/OpenSans.ttf"
+  },
+  {
+    "name": "OpenSans-Bold",
+    "path": "fonts/OpenSans/OpenSans-Bold.ttf"
+  },
+  {
+    "name": "OpenSans-BoldItalic",
+    "path": "fonts/OpenSans/OpenSans-BoldItalic.ttf"
+  }
+]

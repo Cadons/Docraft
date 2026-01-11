@@ -1,28 +1,17 @@
-#include <FlexLexer.h>
 #include <iostream>
-#include <fstream>
-#include <sstream>
-#include <vector>
-#include "bison/grammar.tab.h"
-extern void setScanner(yyFlexLexer* s); // Dichiara la funzione
-extern std::vector<std::string> commands;
-int main() {
-    //requere file path
-    std::string filePath;
-    std::cout << "Enter file path: ";
-    std::cin >> filePath;
-    std::string fileContent;
-    //read file content
-    std::ifstream file(filePath);
-    //set input for lexer
-    auto lexer = new yyFlexLexer(&file);// Instantiate the lexer
-    lexer->set_debug(true);
-    setScanner(lexer); // Set the lexer for Bison
-    yyparse();// Start parsing
-    for (const auto& cmd : commands) {
-        std::cout << "Command: " << cmd << std::endl;
-    }
+#include <string>
 
-    delete lexer;// Clean up
+#include "docraft_document.h"
+#include "craft/docraft_craft_language_parser.h"
+
+int main() {
+
+    std::cout << "DOCRAFT generator"<<std::endl;
+    docraft::craft::DocraftCraftLanguageParser parser;
+    parser.load_from_file("test.craft");
+    parser.get_document()->set_document_title("parser");
+    parser.get_document()->render();
+
     return 0;
+
 }

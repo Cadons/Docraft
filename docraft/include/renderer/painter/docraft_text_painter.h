@@ -1,0 +1,23 @@
+#pragma once
+#include <list>
+
+#include "model/docraft_text.h"
+#include "renderer/painter/i_painter.h"
+
+namespace docraft::renderer::painter {
+    class DocraftTextPainter : public IPainter{
+    public:
+        explicit DocraftTextPainter(const model::DocraftText &text_node);
+        void draw(const std::shared_ptr<DocraftPDFContext> &context) override;
+
+    protected:
+        void render_justified(const std::shared_ptr<DocraftPDFContext> &context, const std::string &text);
+        std::pair<std::pair<float,float>,std::pair<float,float>> render_text(const std::shared_ptr<DocraftPDFContext> &context, const std::string &text);
+        std::pair<std::pair<float,float>,std::pair<float,float>> draw_text(const std::shared_ptr<DocraftPDFContext> &context, const std::string &text);
+        void draw_underline(const std::shared_ptr<DocraftPDFContext> &context, const std::string &text);
+
+    private:
+        model::DocraftText text_node_;
+        std::shared_ptr<model::DocraftText> current_line_;
+    };
+} // docraft
