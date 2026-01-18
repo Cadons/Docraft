@@ -26,6 +26,7 @@ namespace docraft::model {
         float rotation_ = 0.0F;
     public:
         DocraftTransform();
+        explicit DocraftTransform(const DocraftPoint& point, const float& width, const float& height);
         std::string to_string() const;
         const DocraftPoint& top_left() const;
         const DocraftPoint& top_center() const;
@@ -36,7 +37,22 @@ namespace docraft::model {
         const DocraftPoint& left_center() const;
         const DocraftPoint& right_center() const;
         float rotation() const;
+        const DocraftPoint& position() const;
+        const DocraftPoint& center() const;
+        float width() const;
+        float height() const;
+
+        void set_position(const DocraftPoint& point);
+        void set_width(const float& width);
+        void set_height(const float& height);
+
+
 
     private:
+        void compute_transform(const DocraftPoint& point, const float& width, const float& height);
+        DocraftPoint position_;
+        DocraftPoint center_;
+        float width_;
+        float height_;
     };
 }

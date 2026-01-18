@@ -12,7 +12,10 @@ namespace docraft::model {
     }
 #pragma endregion
 #pragma region DocraftTrasform
-    DocraftTransform::DocraftTransform() {
+    DocraftTransform::DocraftTransform() = default;
+
+    DocraftTransform::DocraftTransform(const DocraftPoint &point,const float &width, const float &height) {
+        compute_transform(point,width,height);
     }
 
     const DocraftPoint &DocraftTransform::top_left() const {
@@ -51,6 +54,48 @@ namespace docraft::model {
         return rotation_;
     }
 
+    const DocraftPoint & DocraftTransform::position() const {
+        return position_;
+    }
+
+    const DocraftPoint & DocraftTransform::center() const {
+        return center_;
+    }
+
+    float DocraftTransform::width() const {
+        return width_;
+    }
+
+    float DocraftTransform::height() const {
+        return height_;
+    }
+
+
+    void DocraftTransform::compute_transform(const DocraftPoint &point, const float &width, const float &height) {
+        top_left_ = point;
+        top_center_ ={.x=(point.x+width)/2,.y=point.y};
+        top_right_ ={.x=(point.x+width),.y=point.y};
+        bottom_left_ = {.x=point.x,.y=point.y - height};
+        bottom_center_ ={.x=(point.x+width)/2,.y=point.y - height};
+        bottom_right_ ={.x=(point.x+width),.y=point.y - height};
+        left_center_ ={.x=point.x,.y=point.y - (height/2)};
+        right_center_ ={.x=point.x + width,.y=point.y - (height/2)};
+        center_ = {.x=top_center_.x,.y=left_center_.y};
+    }
+    void DocraftTransform::set_position(const DocraftPoint &point) {
+        position_ = point;
+        compute_transform(point,width_,height_);
+    }
+
+    void DocraftTransform::set_width(const float &width) {
+        width_ = width;
+        compute_transform(position_,width_,height_);
+    }
+
+    void DocraftTransform::set_height(const float &height) {
+        height_ = height;
+        compute_transform(position_,width_,height_);
+    }
     std::string DocraftTransform::to_string() const {
         std::ostringstream oss;
 

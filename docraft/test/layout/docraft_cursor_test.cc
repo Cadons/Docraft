@@ -34,7 +34,7 @@ namespace docraft::test::layout {
         EXPECT_EQ(cursor.y(), 30);
         EXPECT_THROW(cursor.move_to(-2,3), std::out_of_range);
 
-        //test allow negative
+        //test allows negative
         cursor.allow_negative_coordinates(true);
         cursor.set_x(-2);
         EXPECT_EQ(cursor.x(), -2);
