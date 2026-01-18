@@ -7,7 +7,8 @@ find_package(GTest REQUIRED)
 set(TEST_SOURCES
         main.cpp
         test.cpp
-        docraft_color_text.cc)
+        docraft_color_text.cc
+        layout/DocraftCursorTest.cc)
 
 add_executable(docraft_test
         ${TEST_SOURCES}

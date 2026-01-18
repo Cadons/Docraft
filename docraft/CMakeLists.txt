@@ -101,7 +101,7 @@ set(DOCRAFT_SOURCES src/main.cpp
         include/layout/handler/docraft_layout_handler.h
         src/model/docraft_children_container_node.cc
         include/model/docraft_children_container_node.h
-        src/backend/docraft_pdf_backend.h
+        include/backend/docraft_pdf_backend.h
         src/model/docraft_image.cc
         include/model/docraft_image.h
         src/renderer/painter/docraft_image_painter.cc
@@ -133,6 +133,8 @@ set(DOCRAFT_SOURCES src/main.cpp
         src/craft/parser/docraft_parser.cc
         include/craft/parser/docraft_parser.h
         include/craft/docraft_craft_language_tokens.h
+        src/utils/docraft_logger.cc
+        include/utils/docraft_logger.h
 )
 add_library(docraft_lib STATIC
         ${DOCRAFT_SOURCES}
