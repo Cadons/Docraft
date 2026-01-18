@@ -33,9 +33,9 @@ namespace docraft::layout::handler {
                     node->set_height(kFooterDefaultHeight_);
                 }
                 auto transform_box = context()->body()->transform_box();
-                transform_box.bottom_left.y = transform_box.bottom_left.y + node->height() + node->margin_bottom();
+                transform_box.bottom_left_.y = transform_box.bottom_left_.y + node->height() + node->margin_bottom();
                 context()->body()->set_transform_box(transform_box);
-                float footer_top_y = context()->body()->transform_box().bottom_left.y + (
+                float footer_top_y = context()->body()->transform_box().bottom_left_.y + (
                                          2 * (context()->body()->margin_top()
                                               + node->margin_bottom()));
                 cursor.move_to(node->margin_left(), footer_top_y);
@@ -76,7 +76,7 @@ namespace docraft::layout::handler {
         } else if (std::dynamic_pointer_cast<model::DocraftFooter>(section)) {
             if (handler_context->body()) {
                 section->set_y(
-                    handler_context->body()->transform_box().bottom_left.y - section->margin_bottom());
+                    handler_context->body()->transform_box().bottom_left_.y - section->margin_bottom());
             } else {
                 section->set_y(section->height() + section->margin_bottom());
             }

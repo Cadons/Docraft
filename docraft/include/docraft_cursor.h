@@ -1,4 +1,6 @@
 #pragma once
+#include "model/docraft_position.h"
+
 namespace docraft {
     /**
      * @class DocraftCursor
@@ -63,7 +65,7 @@ namespace docraft {
         float offset_y() const;
 
     private:
-        float x_, y_;
+        model::DocraftPoint point_;
         bool allow_negative_coordinates_; ///This flag controls whether negative coordinates are allowed
         //TODO: remove deprecated
         [[deprecated]]

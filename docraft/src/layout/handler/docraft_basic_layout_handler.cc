@@ -20,8 +20,8 @@ namespace docraft::layout::handler {
         compute(request);
         set_node_transform_box(request);
         if (auto *container=dynamic_cast<model::DocraftChildrenContainerNode*>(request.get())) {
-            context()->cursor().move_x(request->transform_box().top_left.x);
-            context()->cursor().move_y(request->transform_box().top_left.y);
+            context()->cursor().move_x(request->transform_box().top_left_.x);
+            context()->cursor().move_y(request->transform_box().top_left_.y);
             context()->set_current_rect_width(request->width());
             for (const auto &child: container->children()) {
                 docraft::layout::DocraftLayoutEngine::layout(child, context());

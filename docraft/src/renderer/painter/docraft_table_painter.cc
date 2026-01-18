@@ -19,11 +19,11 @@ namespace docraft::renderer::painter {
         float table_width = table_node_.width();
         float table_height = table_node_.height();
         //draw lines around
-        DocraftPDFRenderer::draw_line(page, table_node_.transform_box().top_left, table_node_.transform_box().top_right); // Top line
-        DocraftPDFRenderer::draw_line(page, table_node_.transform_box().bottom_left, table_node_.transform_box().top_left); // Left line
-        DocraftPDFRenderer::draw_line(page, table_node_.transform_box().top_right, table_node_.transform_box().bottom_right); // Right line
+        DocraftPDFRenderer::draw_line(page, table_node_.transform_box().top_left_, table_node_.transform_box().top_right_); // Top line
+        DocraftPDFRenderer::draw_line(page, table_node_.transform_box().bottom_left_, table_node_.transform_box().top_left_); // Left line
+        DocraftPDFRenderer::draw_line(page, table_node_.transform_box().top_right_, table_node_.transform_box().bottom_right_); // Right line
         if (table_node_.orientation()!=model::LayoutOrientation::kHorizontal) {
-            DocraftPDFRenderer::draw_line(page, table_node_.transform_box().bottom_right, table_node_.transform_box().bottom_left);
+            DocraftPDFRenderer::draw_line(page, table_node_.transform_box().bottom_right_, table_node_.transform_box().bottom_left_);
         }
         //Bottom line
         // //draw titles
@@ -32,13 +32,13 @@ namespace docraft::renderer::painter {
             title->set_style(model::TextStyle::kBold); // reset to normal for table content
             context->font_applier()->apply_font(title);
             HPDF_Page_BeginText(page);
-            HPDF_Page_TextRect(page, title->transform_box().top_left.x, title->transform_box().bottom_left.y,
-                               title->transform_box().top_right.x, title->transform_box().top_right.y,
+            HPDF_Page_TextRect(page, title->transform_box().top_left_.x, title->transform_box().bottom_left_.y,
+                               title->transform_box().top_right_.x, title->transform_box().top_right_.y,
                                title->text().c_str(), HPDF_TALIGN_CENTER, nullptr);
             HPDF_Page_EndText(page);
             //Line of columns
-            DocraftPDFRenderer::draw_line(page, {title->transform_box().top_left.x, table_node_.transform_box().top_left.y}, {
-                          title->transform_box().top_left.x, table_node_.transform_box().bottom_left.y
+            DocraftPDFRenderer::draw_line(page, {title->transform_box().top_left_.x, table_node_.transform_box().top_left_.y}, {
+                          title->transform_box().top_left_.x, table_node_.transform_box().bottom_left_.y
                       });
         }
         constexpr float kOffset = 1.2F;
@@ -57,8 +57,8 @@ namespace docraft::renderer::painter {
         std::vector<float> col_rights;
         for (const auto &title : table_node_.title_nodes()) {
             const auto &tb = title->transform_box();
-            col_lefts.push_back(tb.top_left.x);
-            col_rights.push_back(tb.top_right.x);
+            col_lefts.push_back(tb.top_left_.x);
+            col_rights.push_back(tb.top_right_.x);
         }
 
         float content_top = current_y; // y at top of first content row
@@ -70,7 +70,7 @@ namespace docraft::renderer::painter {
                 if (auto pointer = std::dynamic_pointer_cast<model::DocraftText>(content_row[col_idx])) {
                     context->font_applier()->apply_font(pointer);
                     HPDF_Page_BeginText(page);
-                    HPDF_Page_TextRect(page, pointer->transform_box().top_left.x, pointer->transform_box().top_left.y, pointer->transform_box().top_right.x, pointer->transform_box().bottom_left.y,
+                    HPDF_Page_TextRect(page, pointer->transform_box().top_left_.x, pointer->transform_box().top_left_.y, pointer->transform_box().top_right_.x, pointer->transform_box().bottom_left_.y,
                       pointer->text().c_str(), HPDF_TALIGN_CENTER, nullptr);
                     HPDF_Page_EndText(page);
                 }
@@ -78,7 +78,7 @@ namespace docraft::renderer::painter {
                     DocraftImagePainter img_painter(*img_pointer);
                     img_painter.draw(context);
                 }
-                bottom_y = std::min(bottom_y, content_row[col_idx]->transform_box().bottom_left.y);
+                bottom_y = std::min(bottom_y, content_row[col_idx]->transform_box().bottom_left_.y);
             }
 
             // draw horizontal line at bottom of this row

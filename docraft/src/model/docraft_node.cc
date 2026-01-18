@@ -4,21 +4,6 @@
 #include <ostream>
 
 namespace docraft::model {
-    std::string TransformBox::to_string() const {
-        std::string box_str = "TransformBox:\n";
-        box_str += "  Top Left: (" + std::to_string(top_left.x) + ", " + std::to_string(top_left.y) + ")\n";
-        box_str += "  Top Center: (" + std::to_string(top_center.x) + ", " + std::to_string(top_center.y) + ")\n";
-        box_str += "  Top Right: (" + std::to_string(top_right.x) + ", " + std::to_string(top_right.y) + ")\n";
-        box_str += "  Bottom Left: (" + std::to_string(bottom_left.x) + ", " + std::to_string(bottom_left.y) + ")\n";
-        box_str += "  Bottom Center: (" + std::to_string(bottom_center.x) + ", " + std::to_string(bottom_center.y) +
-                ")\n";
-        box_str += "  Bottom Right: (" + std::to_string(bottom_right.x) + ", " + std::to_string(bottom_right.y) + ")\n";
-        box_str += "  Left Center: (" + std::to_string(left_center.x) + ", " + std::to_string(left_center.y) + ")\n";
-        box_str += "  Right Center: (" + std::to_string(right_center.x) + ", " + std::to_string(right_center.y) + ")\n";
-        box_str += "  Rotation: " + std::to_string(rotation) + "\n";
-        box_str += "  Thickness: " + std::to_string(thickness) + "\n";
-        return box_str;
-    }
 
     int DocraftNode::next_id_ = 0;
 
@@ -73,7 +58,7 @@ namespace docraft::model {
         return weight_;
     }
 
-    const TransformBox &DocraftNode::transform_box() const {
+    const DocraftTransform &DocraftNode::transform_box() const {
         return transform_box_;
     }
 
@@ -153,7 +138,7 @@ namespace docraft::model {
         weight_ = weight;
     }
 
-    void DocraftNode::set_transform_box(const TransformBox &transform_box) {
+    void DocraftNode::set_transform_box(const DocraftTransform &transform_box) {
         transform_box_ = transform_box;
     }
 
@@ -162,18 +147,18 @@ namespace docraft::model {
     }
 
     void DocraftNode::compute_transform_box() {
-        model::TransformBox box;
+        model::DocraftTransform box;
         if (y()==0&&height()!=0){//this avoids having negative y at the beginning
             set_y(height());
         }
-        box.top_left = {.x = x(), .y = y()};
-        box.top_right = {.x = x() + width(), .y = y()};
-        box.bottom_left = {.x = x(), .y = y() - height()};
-        box.bottom_right = {.x = x() + width(), .y = y() - height()};
-        box.top_center = {.x = x() + (width() / 2), .y = y()};
-        box.bottom_center = {.x = x() + (width() / 2), .y = y() - height()};
-        box.left_center = {.x = x(), .y = y() - (height() / 2)};
-        box.right_center = {.x = x() + width(), .y = y() - (height() / 2)};
+        box.top_left_ = {.x = x(), .y = y()};
+        box.top_right_ = {.x = x() + width(), .y = y()};
+        box.bottom_left_ = {.x = x(), .y = y() - height()};
+        box.bottom_right_ = {.x = x() + width(), .y = y() - height()};
+        box.top_center_ = {.x = x() + (width() / 2), .y = y()};
+        box.bottom_center_ = {.x = x() + (width() / 2), .y = y() - height()};
+        box.left_center_ = {.x = x(), .y = y() - (height() / 2)};
+        box.right_center_ = {.x = x() + width(), .y = y() - (height() / 2)};
         set_transform_box(box);
     }
 } // Docraft

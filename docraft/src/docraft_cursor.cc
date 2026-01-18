@@ -9,17 +9,17 @@
 #define Y_CANNOT_BE_NEGATIVE_EXCEPTION_MESSAGE "y must be non-negative"
 #pragma endregion
 namespace docraft {
-    DocraftCursor::DocraftCursor() : x_(0), y_(0), allow_negative_coordinates_(false) {
+    DocraftCursor::DocraftCursor() : allow_negative_coordinates_(false) {
     }
 
     DocraftCursor::~DocraftCursor() = default;
 
     float DocraftCursor::x() const {
-        return x_;
+        return point_.x;
     }
 
     float DocraftCursor::y() const {
-        return y_;
+        return point_.y;
     }
 
     bool DocraftCursor::is_negative_coordinates_allowed() const {
@@ -35,23 +35,22 @@ namespace docraft {
         if (x < 0 && !allow_negative_coordinates_) {
             throw std::out_of_range(X_CANNOT_BE_NEGATIVE_EXCEPTION_MESSAGE);
         }
-        x_ = x;
+        point_.x = x;
     }
 
     void DocraftCursor::set_y(float y) {
         if (y < 0 && !allow_negative_coordinates_) {
             throw std::out_of_range(Y_CANNOT_BE_NEGATIVE_EXCEPTION_MESSAGE);
         }
-        y_ = y;
+        point_.y = y;
     }
 
     void DocraftCursor::reset_x() {
-        x_ = 0;
+        set_x(0);
     }
 
     void DocraftCursor::reset_y() {
-        y_ = 0;
-        y_ = 0;
+        set_y(0);
     }
 
     void DocraftCursor::allow_negative_coordinates(bool allow) {
@@ -67,28 +66,28 @@ namespace docraft {
 
     void DocraftCursor::move_x(float x) {
         if (x == 0) {
-            x_ = x_offset_;
+            set_x(x_offset_);
             return;
         }
-        x_ = x;
+        set_x(x);
     }
 
     void DocraftCursor::move_y(float y) {
         if (y == 0) {
-            y_ = y_offset_;
+            set_y(y_offset_);
             return;
         }
-        y_ = y;
+        set_y(y);
     }
 
     void DocraftCursor::set_offset_x(float x) {
         x_offset_ = x;
-        x_ += x_offset_;
+        set_x(point_.x+x_offset_);
     }
 
     void DocraftCursor::set_offset_y(float y) {
         y_offset_ = y;
-        y_ -= y_offset_;
+        set_y(point_.y+y_offset_);
     }
 
     float DocraftCursor::offset_x() const {

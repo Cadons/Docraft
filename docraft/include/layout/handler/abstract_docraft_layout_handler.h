@@ -21,15 +21,15 @@ namespace docraft::layout::handler {
         template<typename U>
         requires std::derived_from<U, model::DocraftNode>
         static void set_node_transform_box(const std::shared_ptr<U>& node) {
-            model::TransformBox box;
-            box.top_left = {node->x(), node->y()};
-            box.top_right = {node->x() + node->width(), node->y()};
-            box.bottom_left = {node->x(), node->y() - node->height()};
-            box.bottom_right = {node->x() + node->width(), node->y() - node->height()};
-            box.top_center = {node->x() + (node->width() / 2), node->y()};
-            box.bottom_center = {node->x() + (node->width() / 2), node->y() - node->height()};
-            box.left_center = {node->x(), node->y() - (node->height() / 2)};
-            box.right_center = {node->x() + node->width(), node->y() - (node->height() / 2)};
+            model::DocraftTransform box;
+            box.top_left_ = {node->x(), node->y()};
+            box.top_right_ = {node->x() + node->width(), node->y()};
+            box.bottom_left_ = {node->x(), node->y() - node->height()};
+            box.bottom_right_ = {node->x() + node->width(), node->y() - node->height()};
+            box.top_center_ = {node->x() + (node->width() / 2), node->y()};
+            box.bottom_center_ = {node->x() + (node->width() / 2), node->y() - node->height()};
+            box.left_center_ = {node->x(), node->y() - (node->height() / 2)};
+            box.right_center_ = {node->x() + node->width(), node->y() - (node->height() / 2)};
             node->set_transform_box(box);
         }
 

@@ -2,31 +2,10 @@
 #include <string>
 
 #include "docraft_pdf_context.h"
+#include "docraft_position.h"
 
 namespace docraft::model {
-    enum class DocraftPositionType{
-        kBlock,
-        kAbsolute
-    };
-    struct Point {
-        float x;
-        float y;
-    };
-    struct TransformBox {
-        Point top_left;
-        Point top_center;
-        Point top_right;
-        Point bottom_left;
-        Point bottom_center;
-        Point bottom_right;
-        Point left_center;
-        Point right_center;
 
-        float rotation = 0.0F;
-        float thickness = 1.0F;
-
-        std::string to_string() const;
-    };
     /**
      * @brief Base class that represent a node in the document
      */
@@ -59,7 +38,7 @@ namespace docraft::model {
         [[nodiscard]] bool auto_fill_width() const;
         [[nodiscard]] float padding() const;
         [[nodiscard]] float weight() const;
-        [[nodiscard]] const TransformBox &transform_box() const;
+        [[nodiscard]] const DocraftTransform &transform_box() const;
         [[nodiscard]] DocraftPositionType position() const;
         //setter
         void set_x(float x);
@@ -79,7 +58,7 @@ namespace docraft::model {
 
         void set_padding(float padding);
         void set_weight(float weight);
-        void set_transform_box(const TransformBox &transform_box);
+        void set_transform_box(const DocraftTransform &transform_box);
         void set_position(DocraftPositionType position);
 
     private:
@@ -95,7 +74,7 @@ namespace docraft::model {
         bool auto_fill_width_ = true;
         float padding_ = 1.0F;
         float weight_ = 1.0F;
-        TransformBox transform_box_;
+        DocraftTransform transform_box_;
         DocraftPositionType position_ = DocraftPositionType::kBlock;
     };
 } // Docraft

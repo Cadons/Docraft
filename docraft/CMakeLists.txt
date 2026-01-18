@@ -135,6 +135,8 @@ set(DOCRAFT_SOURCES src/main.cpp
         include/craft/docraft_craft_language_tokens.h
         src/utils/docraft_logger.cc
         include/utils/docraft_logger.h
+        include/model/docraft_position.h
+        src/model/docraft_position.cc
 )
 add_library(docraft_lib STATIC
         ${DOCRAFT_SOURCES}

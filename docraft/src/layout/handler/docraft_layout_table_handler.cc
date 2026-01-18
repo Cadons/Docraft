@@ -140,14 +140,14 @@ void DocraftLayoutTableHandler::compute(const std::shared_ptr<model::DocraftTabl
     node->set_width(widths_sum);
     set_node_transform_box(node);
     auto last_content_node = node->content_nodes().back().back();
-    auto new_box = model::TransformBox{
-        .top_left = {.x=fixed_x, .y=fixed_y + title_row_height},
-        .top_right = {.x=fixed_x + widths_sum, .y=fixed_y + title_row_height},
-        .bottom_left = {.x=fixed_x, .y=last_content_node->transform_box().bottom_left.y},
-        .bottom_right = {.x=fixed_x + widths_sum, .y=last_content_node->transform_box().bottom_left.y}
-    };
-    node->set_transform_box(new_box);
-    node->set_height(node->transform_box().top_left.y - node->transform_box().bottom_left.y-title_row_height);
+   // auto new_box = model::DocraftTransform{
+   //     .top_left = {.x=fixed_x, .y=fixed_y + title_row_height},
+   //     .top_right = {.x=fixed_x + widths_sum, .y=fixed_y + title_row_height},
+   //     .bottom_left = {.x=fixed_x, .y=last_content_node->transform_box().bottom_left_.y},
+   //     .bottom_right = {.x=fixed_x + widths_sum, .y=last_content_node->transform_box().bottom_left_.y}
+   // };
+   // node->set_transform_box(new_box);
+    node->set_height(node->transform_box().top_left_.y - node->transform_box().bottom_left_.y-title_row_height);
 }
 
 

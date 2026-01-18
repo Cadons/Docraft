@@ -49,7 +49,7 @@ namespace docraft::renderer::painter {
         HPDF_Page_SetRGBStroke(page, border_color.r, border_color.g, border_color.b);
 
         // 3. DEFINE AND EXECUTE PATH
-        HPDF_Page_Rectangle(page, box.bottom_left.x, box.bottom_left.y,
+        HPDF_Page_Rectangle(page, box.bottom_left_.x, box.bottom_left_.y,
                             rectangle_node_.width(), rectangle_node_.height());
 
         // Determine drawing operation
