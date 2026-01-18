@@ -58,7 +58,7 @@ namespace docraft {
         allow_negative_coordinates_ = allow;
         if (allow_negative_coordinates_) {
             //show a warning
-            utils::DocraftLogger::warning(ALLOW_NEGATIVE_COORDINATES_WARNING);
+            LOG_WARNING(ALLOW_NEGATIVE_COORDINATES_WARNING);
         }
     }
 
