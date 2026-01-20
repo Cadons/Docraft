@@ -28,14 +28,14 @@ namespace docraft::model {
     class DocraftTransform {
     public:
         //TODO: remove
-        DocraftPoint top_left_;
-        DocraftPoint top_center_;
-        DocraftPoint top_right_;
-        DocraftPoint bottom_left_;
-        DocraftPoint bottom_center_;
-        DocraftPoint bottom_right_;
-        DocraftPoint left_center_;
-        DocraftPoint right_center_;
+        [[deprecated]] DocraftPoint top_left_;
+        [[deprecated]] DocraftPoint top_center_;
+        [[deprecated]] DocraftPoint top_right_;
+        [[deprecated]] DocraftPoint bottom_left_;
+        [[deprecated]] DocraftPoint bottom_center_;
+        [[deprecated]] DocraftPoint bottom_right_;
+        [[deprecated]] DocraftPoint left_center_;
+        [[deprecated]] DocraftPoint right_center_;
 
         float rotation_ = 0.0F;
 
@@ -47,21 +47,21 @@ namespace docraft::model {
         std::string to_string() const;
 
         //TODO: remove
-        const DocraftPoint &top_left() const;
+        [[deprecated]] const DocraftPoint &top_left() const;
 
-        const DocraftPoint &top_center() const;
+        [[deprecated]] const DocraftPoint &top_center() const;
 
-        const DocraftPoint &top_right() const;
+        [[deprecated]] const DocraftPoint &top_right() const;
 
-        const DocraftPoint &bottom_left() const;
+        [[deprecated]] const DocraftPoint &bottom_left() const;
 
-        const DocraftPoint &bottom_center() const;
+        [[deprecated]] const DocraftPoint &bottom_center() const;
 
-        const DocraftPoint &bottom_right() const;
+        [[deprecated]] const DocraftPoint &bottom_right() const;
 
-        const DocraftPoint &left_center() const;
+        [[deprecated]] const DocraftPoint &left_center() const;
 
-        const DocraftPoint &right_center() const;
+        [[deprecated]] const DocraftPoint &right_center() const;
 
         //-----
         /**
@@ -107,7 +107,7 @@ namespace docraft::model {
         DocraftPoint center_;
         float width_;
         float height_;
-        float padding_=0;
+        float padding_ = 0;
         DocraftAnchor anchor_; ///This is the anchor box of the component
         DocraftAnchor content_anchor_; ///This is the anchor box of the content, padding is applied
     };
