@@ -45,10 +45,10 @@ namespace {
                                            const pugi::xml_node &craft_language_source) {
         //get attributes
         if (auto x_attr = craft_language_source.attribute(docraft::craft::basic::attribute::kX.data())) {
-            node->set_x(x_attr.as_float());
+        //    node->set_x(x_attr.as_float());
         }
         if (auto y_attr = craft_language_source.attribute(docraft::craft::basic::attribute::kY.data())) {
-            node->set_y(y_attr.as_float());
+          //  node->set_y(y_attr.as_float());
         }
         if (auto width_attr = craft_language_source.attribute(docraft::craft::basic::attribute::kWidth.data())) {
             node->set_width(width_attr.as_float());
@@ -70,9 +70,9 @@ namespace {
         if (auto position_attr = craft_language_source.attribute(docraft::craft::basic::attribute::kPosition.data())) {
             std::string position_str = position_attr.as_string();
             if (position_str == docraft::craft::basic::attribute::position_type::kBlock.data()) {
-                node->set_position(docraft::model::DocraftPositionType::kBlock);
+                //node->set_position(docraft::model::DocraftPositionType::kBlock);
             } else if (position_str == docraft::craft::basic::attribute::position_type::kAbsolute.data()) {
-                node->set_position(docraft::model::DocraftPositionType::kAbsolute);
+              //  node->set_position(docraft::model::DocraftPositionType::kAbsolute);
             }
         }
         if (auto weight_attr = craft_language_source.attribute(docraft::craft::basic::attribute::kWeight.data())) {

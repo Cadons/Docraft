@@ -82,6 +82,12 @@ namespace docraft::model {
         right_center_ ={.x=point.x + width,.y=point.y - (height/2)};
         center_ = {.x=top_center_.x,.y=left_center_.y};
     }
+
+    void DocraftTransform::compute_box_size() {
+        width_ = top_right_.x - top_left_.x;
+        height_ = top_right_.y - top_left_.y;
+    }
+
     void DocraftTransform::set_position(const DocraftPoint &point) {
         position_ = point;
         compute_transform(point,width_,height_);
@@ -96,6 +102,8 @@ namespace docraft::model {
         height_ = height;
         compute_transform(position_,width_,height_);
     }
+
+
     std::string DocraftTransform::to_string() const {
         std::ostringstream oss;
 

@@ -32,7 +32,7 @@ namespace docraft::renderer::painter {
         }
 
 
-        HPDF_Page_DrawImage(page, image, image_node_.x(), image_node_.y() - image_node_.height(), image_node_.width(),
+        HPDF_Page_DrawImage(page, image, image_node_.position().x, image_node_.position().y - image_node_.height(), image_node_.width(),
                             image_node_.height());
     }
 } // docraft

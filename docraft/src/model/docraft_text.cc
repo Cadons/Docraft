@@ -97,16 +97,16 @@ namespace docraft::model {
     void DocraftText::set_x_for_children(float x) {
         for (const auto &line: lines()) {
             if (alignment()==TextAlignment::kCenter||alignment()==TextAlignment::kRight) {
-                line->set_x(line->x() + x);//translate the current x coordinate of x units
+                line->set_position({.x=line->position().x + x,.y=line->position().y});//translate the current x coordinate of x units
             }
             else {
-                line->set_x(x);//If left move only the x it has no partial alignment
+                line->set_position({.x= x,.y=line->position().y});//translate the current x coordinate of x units
             }
         }
     }
     void DocraftText::set_y_for_children(float y) {
         for (const auto &line: lines()) {
-            line->set_y(line->y() - y);
+            line->set_position({.x=line->position().x,.y=line->position().y-y});
         }
     }
 #pragma endregion

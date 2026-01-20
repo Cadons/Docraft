@@ -39,10 +39,10 @@ namespace docraft::layout::handler {
         void set_node_position(const std::shared_ptr<U>& node) {
             if (!node)
                 return;
-            if (node->position() != model::DocraftPositionType::kAbsolute) {
-                node->set_x(context()->cursor().x());
-                node->set_y(context()->cursor().y());
-            }
+            // if (node->position() != model::DocraftPositionType::kAbsolute) {
+            //     node->set_x(context()->cursor().x());
+            //     node->set_y(context()->cursor().y());
+            // }
         }
         std::shared_ptr<DocraftPDFContext> context_;
     };

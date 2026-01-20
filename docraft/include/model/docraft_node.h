@@ -9,7 +9,7 @@ namespace docraft::model {
     /**
      * @brief Base class that represent a node in the document
      */
-    class DocraftNode {
+    class DocraftNode : public DocraftTransform{
     public:
         explicit DocraftNode();
 
@@ -26,29 +26,13 @@ namespace docraft::model {
 
         [[nodiscard]] const std::string &node_name() const;
 
-        [[nodiscard]] float x() const;
-
-        [[nodiscard]] float y() const;
-
-        [[nodiscard]] float width() const;
-
-        [[nodiscard]] float height() const;
 
         [[nodiscard]] bool auto_fill_height() const;
         [[nodiscard]] bool auto_fill_width() const;
         [[nodiscard]] float padding() const;
         [[nodiscard]] float weight() const;
-        [[nodiscard]] const DocraftTransform &transform_box() const;
-        [[nodiscard]] DocraftPositionType position() const;
+        [[nodiscard]] DocraftPositionType position_mode() const;
         //setter
-        void set_x(float x);
-
-        void set_y(float y);
-
-        void set_width(float width);
-
-        void set_height(float height);
-
         void set_name(const std::string &name);
         void set_auto_fill_height(bool auto_fill_height);
         void set_auto_fill_width(bool auto_fill_width);
@@ -58,8 +42,6 @@ namespace docraft::model {
 
         void set_padding(float padding);
         void set_weight(float weight);
-        void set_transform_box(const DocraftTransform &transform_box);
-        void set_position(DocraftPositionType position);
 
     private:
         void compute_transform_box();
@@ -75,6 +57,6 @@ namespace docraft::model {
         float padding_ = 1.0F;
         float weight_ = 1.0F;
         DocraftTransform transform_box_;
-        DocraftPositionType position_ = DocraftPositionType::kBlock;
+        DocraftPositionType position_mode_ = DocraftPositionType::kBlock;
     };
 } // Docraft

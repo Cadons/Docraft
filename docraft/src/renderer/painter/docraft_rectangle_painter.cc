@@ -16,7 +16,7 @@ namespace docraft::renderer::painter {
         auto *doc = context->pdf_doc();
         if (!page || !doc) return;
 
-        const auto& box = rectangle_node_.transform_box();
+        // const auto& box = rectangle_node_.transform_box();
         const auto& bg_color = rectangle_node_.background_color().toRGB();
         const auto& border_color = rectangle_node_.border_color().toRGB();
         float border_width = rectangle_node_.border_width();
@@ -49,8 +49,8 @@ namespace docraft::renderer::painter {
         HPDF_Page_SetRGBStroke(page, border_color.r, border_color.g, border_color.b);
 
         // 3. DEFINE AND EXECUTE PATH
-        HPDF_Page_Rectangle(page, box.bottom_left_.x, box.bottom_left_.y,
-                            rectangle_node_.width(), rectangle_node_.height());
+        // HPDF_Page_Rectangle(page, box.bottom_left_.x, box.bottom_left_.y,
+        //                     rectangle_node_.width(), rectangle_node_.height());
 
         // Determine drawing operation
         bool has_fill = bg_color.a > 0.0F;

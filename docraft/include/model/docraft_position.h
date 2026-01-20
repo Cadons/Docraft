@@ -46,10 +46,9 @@ namespace docraft::model {
         void set_width(const float& width);
         void set_height(const float& height);
 
-
-
     private:
         void compute_transform(const DocraftPoint& point, const float& width, const float& height);
+        void compute_box_size();
         DocraftPoint position_;
         DocraftPoint center_;
         float width_;

@@ -15,48 +15,48 @@ namespace docraft::renderer::painter {
 
     void DocraftTextPainter::render_justified(const std::shared_ptr<DocraftPDFContext> &context,
                                               const std::string &text) {
-        auto page = context->page();
-        auto &cursor = context->cursor();
-
-        float max_width = context->current_rect_width() - (2 * cursor.offset_x());
-        float actual_width = HPDF_Page_TextWidth(page, text.c_str());
-
-        size_t spaces = std::count(text.begin(), text.end(), ' ');
-
-        if (spaces > 0) {
-            float extra_space = (max_width - actual_width) / static_cast<float>(spaces);
-            if (extra_space <= WORD_SPACE_MAX && extra_space >= WORD_SPACE_MIN) {
-                HPDF_Page_SetWordSpace(page, extra_space); //this set the space between words
-            }else {
-                if (extra_space > WORD_SPACE_MAX) {
-                    HPDF_Page_SetWordSpace(page, WORD_SPACE_MAX);
-                } else {
-                    HPDF_Page_SetWordSpace(page, WORD_SPACE_MIN);
-                }
-            }
-        }
-
-
-        HPDF_Page_TextOut(page, current_line_->x(), current_line_->y(), text.c_str());
-
-        HPDF_Page_SetWordSpace(page, 0);
+        // auto page = context->page();
+        // auto &cursor = context->cursor();
+        //
+        // float max_width = context->current_rect_width() - (2 * cursor.offset_x());
+        // float actual_width = HPDF_Page_TextWidth(page, text.c_str());
+        //
+        // size_t spaces = std::count(text.begin(), text.end(), ' ');
+        //
+        // if (spaces > 0) {
+        //     float extra_space = (max_width - actual_width) / static_cast<float>(spaces);
+        //     if (extra_space <= WORD_SPACE_MAX && extra_space >= WORD_SPACE_MIN) {
+        //         HPDF_Page_SetWordSpace(page, extra_space); //this set the space between words
+        //     }else {
+        //         if (extra_space > WORD_SPACE_MAX) {
+        //             HPDF_Page_SetWordSpace(page, WORD_SPACE_MAX);
+        //         } else {
+        //             HPDF_Page_SetWordSpace(page, WORD_SPACE_MIN);
+        //         }
+        //     }
+        // }
+        //
+        //
+        // HPDF_Page_TextOut(page, current_line_->x(), current_line_->y(), text.c_str());
+        //
+        // HPDF_Page_SetWordSpace(page, 0);
     }
 
     std::pair<std::pair<float, float>, std::pair<float, float> > DocraftTextPainter::render_text(
         const std::shared_ptr<DocraftPDFContext> &context, const std::string &text) {
         auto page = context->page();
-
-        //begin drawing
-        HPDF_Page_BeginText(page);
-        if (current_line_->alignment() == model::TextAlignment::kJustified) {
-            render_justified(context, text);
-        } else {
-            HPDF_Page_TextOut(page, current_line_->x(), current_line_->y(), text.c_str());
-        }
-        HPDF_Page_EndText(page);
-        return std::make_pair(std::make_pair(current_line_->x(), current_line_->y()),
-                              std::make_pair(current_line_->x() + HPDF_Page_TextWidth(page, text.c_str()),
-                                             current_line_->y() + current_line_->font_size()));
+        //
+        // //begin drawing
+        // HPDF_Page_BeginText(page);
+        // if (current_line_->alignment() == model::TextAlignment::kJustified) {
+        //     render_justified(context, text);
+        // } else {
+        //     HPDF_Page_TextOut(page, current_line_->x(), current_line_->y(), text.c_str());
+        // }
+        // HPDF_Page_EndText(page);
+        // return std::make_pair(std::make_pair(current_line_->x(), current_line_->y()),
+        //                       std::make_pair(current_line_->x() + HPDF_Page_TextWidth(page, text.c_str()),
+        //                                      current_line_->y() + current_line_->font_size()));
     }
 
     std::pair<std::pair<float, float>, std::pair<float, float> > DocraftTextPainter::draw_text(

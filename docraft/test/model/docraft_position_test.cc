@@ -10,17 +10,10 @@ namespace docraft::test::model {
     };
     TEST_F(DocraftPositionTest, TrasformToString) {
       docraft::model::DocraftTransform transform;
-        transform.top_left_={2,54};
-        transform.top_right_={40,54};
-        transform.bottom_left_={2,54};
-        transform.bottom_right_={40,54};
-        transform.right_center_={2,54};
-        transform.left_center_={2,54};
-        transform.bottom_right_={2,54};
-        transform.bottom_center_={2,54};
-
-
-        LOG_INFO(transform.to_string());
+        transform.set_position({.x=10,.y=20});
+        transform.set_height(10);
+        transform.set_width(20);
+                LOG_INFO(transform.to_string());
     }
     TEST_F(DocraftPositionTest, TrasformBoxAnchorsComputation) {
         docraft::model::DocraftTransform transform({10,30},30,20);
