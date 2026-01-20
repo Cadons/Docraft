@@ -27,9 +27,9 @@ namespace docraft::layout::handler {
 
                     docraft::layout::DocraftLayoutEngine::layout(child, context()); // compute node layout
                     child->set_x_for_children(current_x);
-                    child->set_x(current_x);
-                    child->set_y(current_y);
-                    child->set_width(box_width);
+                    // child->set_x(current_x);
+                    // child->set_y(current_y);
+                    // child->set_width(box_width);
                     node_height = std::max(node_height, child->height());
                     current_x += box_width + node->padding();
                     break;
@@ -40,8 +40,8 @@ namespace docraft::layout::handler {
                     if (std::dynamic_pointer_cast<model::DocraftChildrenContainerNode>(child)) {
                         child->set_x_for_children(current_x);
                     }
-                    child->set_x(current_x);
-                    child->set_y(current_y);
+                    // child->set_x(current_x);
+                    // child->set_y(current_y);
                     node_height += child->height();
                     current_y -= child->height()+node->padding();
                     break;
@@ -54,8 +54,8 @@ namespace docraft::layout::handler {
                 child->set_height(node_height);
             }
             //For Debug
-            std::print("Layout Child Node ID {} at ({}, {}), size: {}x{}\n", child->id(), child->x(), child->y(),
-                       child->width(), child->height());
+            // std::print("Layout Child Node ID {} at ({}, {}), size: {}x{}\n", child->id(), child->x(), child->y(),
+            //            child->width(), child->height());
         }
         if (node->height() == 0) {
             switch (node->orientation()) {
@@ -77,7 +77,7 @@ namespace docraft::layout::handler {
     bool DocraftLayoutHandler::handle(const std::shared_ptr<model::DocraftNode> request) {
         if (auto layout_node = std::dynamic_pointer_cast<model::DocraftLayout>(request)) {
             compute(layout_node);
-            set_node_transform_box(layout_node);
+            // set_node_transform_box(layout_node);
 
             return true;
         }
