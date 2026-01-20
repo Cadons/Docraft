@@ -11,10 +11,8 @@ namespace docraft::model {
         id_ = next_id_++;
     }
 
-    DocraftNode::DocraftNode(const DocraftNode *node) : node_name_(node_name_),
-                                                        id_(next_id_++),
-                                                        width_(width_),
-                                                        height_(height_) {
+    DocraftNode::DocraftNode(const DocraftNode *node) : node_name_(node->node_name()),
+                                                        id_(next_id_++){
         std::cout << "pointer constructor" << std::endl;
     }
 
@@ -65,6 +63,7 @@ namespace docraft::model {
     }
 
     void DocraftNode::set_auto_fill_width(bool auto_fill_width) {
+        auto_fill_width_ = auto_fill_width;
     }
 
     void DocraftNode::set_padding(float padding) {
@@ -83,5 +82,5 @@ namespace docraft::model {
         }
         weight_ = weight;
     }
-    
+
 } // Docraft

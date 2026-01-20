@@ -44,7 +44,6 @@ namespace docraft::model {
         void set_weight(float weight);
 
     private:
-        void compute_transform_box();
         int id_ = 0;
         static int next_id_;
         std::string node_name_;

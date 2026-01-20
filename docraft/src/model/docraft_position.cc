@@ -70,17 +70,31 @@ namespace docraft::model {
         return height_;
     }
 
+    float DocraftTransform::padding() const {
+        return padding_;
+    }
+
 
     void DocraftTransform::compute_transform(const DocraftPoint &point, const float &width, const float &height) {
-        top_left_ = point;
-        top_center_ ={.x=(point.x+width)/2,.y=point.y};
-        top_right_ ={.x=(point.x+width),.y=point.y};
-        bottom_left_ = {.x=point.x,.y=point.y - height};
-        bottom_center_ ={.x=(point.x+width)/2,.y=point.y - height};
-        bottom_right_ ={.x=(point.x+width),.y=point.y - height};
-        left_center_ ={.x=point.x,.y=point.y - (height/2)};
-        right_center_ ={.x=point.x + width,.y=point.y - (height/2)};
+        //compute the normal rectangle
+        anchor_.top_left_ = point;
+        anchor_.top_center_ ={.x=(point.x+width)/2,.y=point.y};
+        anchor_.top_right_ ={.x=(point.x+width),.y=point.y};
+        anchor_.bottom_left_ = {.x=point.x,.y=point.y - height};
+        anchor_.bottom_center_ ={.x=(point.x+width)/2,.y=point.y - height};
+        anchor_.bottom_right_ ={.x=(point.x+width),.y=point.y - height};
+        anchor_.left_center_ ={.x=point.x,.y=point.y - (height/2)};
+        anchor_.right_center_ ={.x=point.x + width,.y=point.y - (height/2)};
         center_ = {.x=top_center_.x,.y=left_center_.y};
+        //compute the content rectangle
+        content_anchor_.top_left_ = {.x=anchor_.top_left_.x+padding(),.y=anchor_.top_left_.y-padding()};
+        content_anchor_.top_center_ = { .x= (content_anchor_.top_left_.x+((this->width()-2*padding())/2)),.y=content_anchor_.top_left_.y};
+        content_anchor_.right_center_= {.x=anchor_.right_center_.x - padding(),.y=anchor_.right_center_.y - padding()};
+        content_anchor_.bottom_left_ = {.x=anchor_.bottom_left_.x + padding(),.y=anchor_.bottom_left_.y + padding()};
+        content_anchor_.bottom_center_ = {.x=(content_anchor_.bottom_left_.x + ((width_ - 2 * padding()) / 2)),.y=content_anchor_.bottom_left_.y};
+        content_anchor_.bottom_right_ = {.x=anchor_.bottom_right_.x - padding(),.y=anchor_.bottom_right_.y + padding()};
+        content_anchor_.left_center_={.x=anchor_.left_center_.x+padding(),.y=(anchor_.left_center_.y-(this->height()-2*padding()))/2};
+        content_anchor_.right_center_={.x=anchor_.right_center_.x-padding(),.y=(anchor_.right_center_.y-(this->height()-2*padding()))/2};
     }
 
     void DocraftTransform::compute_box_size() {
@@ -103,6 +117,9 @@ namespace docraft::model {
         compute_transform(position_,width_,height_);
     }
 
+    void DocraftTransform::set_padding(const float &padding) {
+        padding_ = padding;
+    }
 
     std::string DocraftTransform::to_string() const {
         std::ostringstream oss;

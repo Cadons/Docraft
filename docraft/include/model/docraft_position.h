@@ -11,6 +11,16 @@ namespace docraft::model {
         float y=0.0F;
         std::string to_string() const;
     };
+    struct DocraftAnchor {
+        DocraftPoint top_left_;
+        DocraftPoint top_center_;
+        DocraftPoint top_right_;
+        DocraftPoint bottom_left_;
+        DocraftPoint bottom_center_;
+        DocraftPoint bottom_right_;
+        DocraftPoint left_center_;
+        DocraftPoint right_center_;
+    };
     class DocraftTransform {
         public:
         //TODO: move to private
@@ -41,10 +51,12 @@ namespace docraft::model {
         const DocraftPoint& center() const;
         float width() const;
         float height() const;
+        float padding() const;
 
         void set_position(const DocraftPoint& point);
         void set_width(const float& width);
         void set_height(const float& height);
+        void set_padding(const float& padding);
 
     private:
         void compute_transform(const DocraftPoint& point, const float& width, const float& height);
@@ -53,5 +65,8 @@ namespace docraft::model {
         DocraftPoint center_;
         float width_;
         float height_;
+        float padding_;
+        DocraftAnchor anchor_;///This is the anchor box of the component
+        DocraftAnchor content_anchor_;///This is the anchor box of the content, padding is applied
     };
 }

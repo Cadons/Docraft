@@ -36,4 +36,15 @@ namespace docraft::test::model {
         EXPECT_EQ(transform.center().x,20);
         EXPECT_EQ(transform.center().y,20);
     }
+    TEST_F(DocraftPositionTest, TestContentView) {
+        docraft::model::DocraftTransform transform;
+        transform.set_position({.x=10,.y=20});
+        transform.set_height(10);
+        transform.set_width(20);
+        transform.set_padding(5);
+        //check values
+        LOG_INFO(transform.to_string());
+
+
+    }
 }
