@@ -18,7 +18,7 @@ namespace docraft::model {
 
         virtual ~DocraftNode() = default;
 
-        virtual void draw(const std::shared_ptr<DocraftPDFContext> &context) = 0;
+        virtual void draw(const std::shared_ptr<DocraftPDFContext> &context) = 0;//probably unuseful
 
         //getter
         [[nodiscard]] int id() const;
