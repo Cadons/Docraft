@@ -6,6 +6,7 @@
 
 #include "generic/docraft_font_applier.h"
 #include "model/docraft_layout.h"
+#include "utils/docraft_logger.h"
 
 
 namespace docraft::layout::handler {
@@ -88,6 +89,9 @@ namespace docraft::layout::handler {
             float line_width = measure_text_width(line);
             line->set_width(line_width);
             line->set_height(node->font_size() * 1.2F); // line height
+            if (cursor.y()==context()->page_height()) {
+                cursor.move_to(cursor.x(), cursor.y() - line->height());
+            }
             switch (node->alignment()) {
                 case model::TextAlignment::kLeft:
                     line->set_position({.x=cursor.x(), .y=cursor.y() - total_height});
@@ -114,6 +118,8 @@ namespace docraft::layout::handler {
             box->set_width(node->width());
             box->set_height(node->height());
         }
+
+        LOG_DEBUG(node->to_string());
 
 
 

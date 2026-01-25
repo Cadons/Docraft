@@ -131,7 +131,7 @@ namespace docraft::layout {
         //Layout header
         if (header) {
             context()->cursor().move_to(0, context()->page_height());
-            auto result=compute_layout(header);
+            (void)compute_layout(header);
             header->set_position({.x=0, .y=context()->page_height()});
             header->set_width(context()->page_width());
             header->set_height(context()->page_height()*kHeaderHeightRatio_);
