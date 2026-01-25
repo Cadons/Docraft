@@ -5,9 +5,12 @@
 #include "layout/handler/docraft_basic_layout_handler.h"
 #include "layout/handler/docraft_layout_blank_line.h"
 #include "layout/handler/docraft_layout_handler.h"
-#include "layout/handler/docraft_layout_section_handler.h"
 #include "layout/handler/docraft_layout_table_handler.h"
 #include "layout/handler/docraft_layout_text_handler.h"
+
+#include "model/docraft_header.h"
+#include "model/docraft_body.h"
+#include "model/docraft_footer.h"
 
 namespace docraft::layout {
     DocraftLayoutEngine::DocraftLayoutEngine(const std::shared_ptr<DocraftPDFContext> &context) : context_(context) {
@@ -17,7 +20,6 @@ namespace docraft::layout {
 
     void DocraftLayoutEngine::
     configure_handlers(const std::shared_ptr<DocraftPDFContext> &context) {
-        handlers_.emplace_back(std::make_unique<handler::DocraftLayoutSectionHandler>(context));
         handlers_.emplace_back(std::make_unique<handler::DocraftLayoutTextHandler>(context));
         handlers_.emplace_back(std::make_unique<handler::DocraftLayoutHandler>(context));
         handlers_.emplace_back(std::make_unique<handler::DocraftLayoutTableHandler>(context));
@@ -107,5 +109,56 @@ namespace docraft::layout {
             cursor.move_to(max_rect.anchors().bottom_left.x, max_rect.anchors().bottom_left.y);
         }
         return max_rect;
+    }
+
+    void DocraftLayoutEngine::compute_document_layout(const std::vector<std::shared_ptr<model::DocraftNode>> &nodes) {
+        //Split sections
+        std::shared_ptr<model::DocraftHeader> header=nullptr;
+        std::shared_ptr<model::DocraftBody> body=nullptr;
+        std::shared_ptr<model::DocraftFooter> footer=nullptr;
+        for (const auto& node : nodes) {
+            if (const auto header_node = std::dynamic_pointer_cast<model::DocraftHeader>(node)) {
+                header = header_node;
+            } else if (const auto body_node = std::dynamic_pointer_cast<model::DocraftBody>(node)) {
+                body = body_node;
+            } else if (const auto footer_node = std::dynamic_pointer_cast<model::DocraftFooter>(node)) {
+                footer = footer_node;
+            }
+        }
+        if (body==nullptr) {
+            throw std::runtime_error("Document must have a body section");
+        }
+        //Layout header
+        if (header) {
+            context()->cursor().move_to(0, context()->page_height());
+            auto result=compute_layout(header);
+            header->set_position({.x=0, .y=context()->page_height()});
+            header->set_width(context()->page_width());
+            header->set_height(context()->page_height()*kHeaderHeightRatio_);
+        }
+        //Layout body
+        if (body) {
+            float body_start_y = context()->page_height();
+            if (header) {
+                body_start_y = header->anchors().bottom_left.y;
+            }
+            context()->cursor().move_to(0, body_start_y);
+            compute_layout(body);
+            body->set_position({.x=0, .y=body_start_y});
+            body->set_width(context()->page_width());
+            body->set_height(context()->page_height()*kBodyHeightRatio_);
+        }
+        //Layout footer
+        if  (footer) {
+            float footer_start_y = 0.0F;
+            if (body) {
+                footer_start_y = body->anchors().bottom_left.y;
+            }
+            context()->cursor().move_to(0, footer_start_y);
+            compute_layout(footer);
+            footer->set_position({.x=0, .y=footer_start_y});
+            footer->set_width(context()->page_width());
+            footer->set_height(context()->page_height()*kFooterHeightRatio_);
+        }
     }
 } // docraft

@@ -3,6 +3,9 @@
 #include <gtest/gtest.h>
 
 #include "model/docraft_blank_line.h"
+#include "model/docraft_body.h"
+#include "model/docraft_footer.h"
+#include "model/docraft_header.h"
 #include "model/docraft_layout.h"
 #include "model/docraft_rectangle.h"
 #include "model/docraft_text.h"
@@ -131,4 +134,155 @@ namespace docraft::test::layout {
         EXPECT_NE(layout.width(), 0.0F);
         EXPECT_EQ(layout.width(),context->page_width());
     }
+    TEST_F(DocraftLayoutEngineTest, ComputeLayoutEmptyLayoutNode) {
+        auto& engine = this->engine();
+        auto context = this->context();
+        auto layout_node = std::make_shared<docraft::model::DocraftLayout>();
+        layout_node->set_orientation(docraft::model::LayoutOrientation::kVertical);
+        auto layout = engine->compute_layout(layout_node);
+        EXPECT_EQ(layout.width(), 0);
+        EXPECT_EQ(layout.height(), 0);
+    }
+    TEST_F(DocraftLayoutEngineTest, ComputeTableNode) {
+
+    }
+    TEST_F(DocraftLayoutEngineTest, ComputeFullDocumentLayout) {
+        auto& engine =this->engine();
+        auto context = this->context();
+        std::vector<std::shared_ptr<docraft::model::DocraftNode>> document_nodes;
+        auto header = std::make_shared<docraft::model::DocraftHeader>();
+        auto header_text = std::make_shared<docraft::model::DocraftText>();
+        header_text->set_text("Document Header");
+        header->add_child(header_text);
+        document_nodes.push_back(header);
+        auto body = std::make_shared<docraft::model::DocraftBody>();
+        auto body_text = std::make_shared<docraft::model::DocraftText>();
+        body_text->set_text("This is the body of the document.");
+        body->add_child(body_text);
+        document_nodes.push_back(body);
+        auto footer = std::make_shared<docraft::model::DocraftFooter>();
+        auto footer_text = std::make_shared<docraft::model::DocraftText>();
+        footer_text->set_text("Document Footer");
+        footer->add_child(footer_text);
+        document_nodes.push_back(footer);
+        engine->compute_document_layout(document_nodes);
+        //Verify header layout
+        EXPECT_EQ(header->position().x, 0);
+        EXPECT_EQ(header->position().y, context->page_height());
+        EXPECT_EQ(header->width(), context->page_width());
+        EXPECT_EQ(header->height(), context->page_height()*0.15F);
+        // Verify header item position
+        EXPECT_EQ(header_text->position().x, 0);
+        EXPECT_EQ(header_text->position().y, header->anchors().top_left.y);
+        //Verify body layout
+        EXPECT_EQ(body->position().x, 0);
+        EXPECT_EQ(body->position().y, header->anchors().bottom_left.y);
+        EXPECT_EQ(body->width(), context->page_width());
+        EXPECT_EQ(body->height(), context->page_height()*0.75F);
+        // Verify body item position
+        EXPECT_EQ(body_text->position().x, 0);
+        EXPECT_EQ(body_text->position().y, body->anchors().top_left.y);
+        //Verify footer layout
+        EXPECT_EQ(footer->position().x, 0);
+        EXPECT_EQ(footer->position().y, body->anchors().bottom_left.y);
+        EXPECT_EQ(footer->width(), context->page_width());
+        EXPECT_EQ(footer->height(), context->page_height()*0.10F);
+        // Verify footer item position
+        EXPECT_EQ(footer_text->position().x, 0);
+        EXPECT_EQ(footer_text->position().y, footer->anchors().top_left.y);
+    }
+    TEST_F(DocraftLayoutEngineTest, ComputeDocumentLayoutWithoutBodyThrows) {
+        auto& engine =this->engine();
+        auto context = this->context();
+        std::vector<std::shared_ptr<docraft::model::DocraftNode>> document_nodes;
+        auto header = std::make_shared<docraft::model::DocraftHeader>();
+        document_nodes.push_back(header);
+        auto footer = std::make_shared<docraft::model::DocraftFooter>();
+        document_nodes.push_back(footer);
+        EXPECT_THROW(engine->compute_document_layout(document_nodes), std::runtime_error);
+    }
+    TEST_F(DocraftLayoutEngineTest, ComputeDocumentWithOnlyBody) {
+        auto& engine =this->engine();
+        auto context = this->context();
+        std::vector<std::shared_ptr<docraft::model::DocraftNode>> document_nodes;
+        auto body = std::make_shared<docraft::model::DocraftBody>();
+        auto body_text = std::make_shared<docraft::model::DocraftText>();
+        body_text->set_text("This is the body of the document.");
+        body->add_child(body_text);
+        document_nodes.push_back(body);
+        engine->compute_document_layout(document_nodes);
+        //Verify body layout
+        EXPECT_EQ(body->position().x, 0);
+        EXPECT_EQ(body->position().y, context->page_height());
+        EXPECT_EQ(body->width(), context->page_width());
+        EXPECT_EQ(body->height(), context->page_height()*0.75F);
+        // Verify body item position
+        EXPECT_EQ(body_text->position().x, 0);
+        EXPECT_EQ(body_text->position().y, body->anchors().top_left.y);
+    }
+    TEST_F(DocraftLayoutEngineTest, ComputeDocumentWithOnlyHeaderAndBody) {
+        auto& engine =this->engine();
+        auto context = this->context();
+        std::vector<std::shared_ptr<docraft::model::DocraftNode>> document_nodes;
+        auto header = std::make_shared<docraft::model::DocraftHeader>();
+        auto header_text = std::make_shared<docraft::model::DocraftText>();
+        header_text->set_text("Document Header");
+        header->add_child(header_text);
+        document_nodes.push_back(header);
+        auto body = std::make_shared<docraft::model::DocraftBody>();
+        auto body_text = std::make_shared<docraft::model::DocraftText>();
+        body_text->set_text("This is the body of the document.");
+        body->add_child(body_text);
+        document_nodes.push_back(body);
+        engine->compute_document_layout(document_nodes);
+        //Verify header layout
+        EXPECT_EQ(header->position().x, 0);
+        EXPECT_EQ(header->position().y, context->page_height());
+        EXPECT_EQ(header->width(), context->page_width());
+        EXPECT_EQ(header->height(), context->page_height()*0.15F);
+        // Verify header item position
+        EXPECT_EQ(header_text->position().x, 0);
+        EXPECT_EQ(header_text->position().y, header->anchors().top_left.y);
+        //Verify body layout
+        EXPECT_EQ(body->position().x, 0);
+        EXPECT_EQ(body->position().y, header->anchors().bottom_left.y);
+        EXPECT_EQ(body->width(), context->page_width());
+        EXPECT_EQ(body->height(), context->page_height()*0.75F);
+        // Verify body item position
+        EXPECT_EQ(body_text->position().x, 0);
+        EXPECT_EQ(body_text->position().y, body->anchors().top_left.y);
+    }
+    TEST_F(DocraftLayoutEngineTest, ComputeDocumentWithOnlyBodyAndFooter) {
+        auto& engine =this->engine();
+        auto context = this->context();
+        std::vector<std::shared_ptr<docraft::model::DocraftNode>> document_nodes;
+        auto body = std::make_shared<docraft::model::DocraftBody>();
+        auto body_text = std::make_shared<docraft::model::DocraftText>();
+        body_text->set_text("This is the body of the document.");
+        body->add_child(body_text);
+        document_nodes.push_back(body);
+        auto footer = std::make_shared<docraft::model::DocraftFooter>();
+        auto footer_text = std::make_shared<docraft::model::DocraftText>();
+        footer_text->set_text("Document Footer");
+        footer->add_child(footer_text);
+        document_nodes.push_back(footer);
+        engine->compute_document_layout(document_nodes);
+        //Verify body layout
+        EXPECT_EQ(body->position().x, 0);
+        EXPECT_EQ(body->position().y, context->page_height());
+        EXPECT_EQ(body->width(), context->page_width());
+        EXPECT_EQ(body->height(), context->page_height()*0.75F);
+        // Verify body item position
+        EXPECT_EQ(body_text->position().x, 0);
+        EXPECT_EQ(body_text->position().y, body->anchors().top_left.y);
+        //Verify footer layout
+        EXPECT_EQ(footer->position().x, 0);
+        EXPECT_EQ(footer->position().y, body->anchors().bottom_left.y);
+        EXPECT_EQ(footer->width(), context->page_width());
+        EXPECT_EQ(footer->height(), context->page_height()*0.10F);
+        // Verify footer item position
+        EXPECT_EQ(footer_text->position().x, 0);
+        EXPECT_EQ(footer_text->position().y, footer->anchors().top_left.y);
+    }
+
 }

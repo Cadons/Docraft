@@ -87,8 +87,6 @@ set(DOCRAFT_SOURCES src/main.cpp
         include/layout/handler/docraft_layout_text_handler.h
         include/generic/chain_of_responsibility_handler.h
         include/layout/handler/abstract_docraft_layout_handler.h
-        src/layout/handler/docraft_layout_section_handler.cc
-        include/layout/handler/docraft_layout_section_handler.h
         src/generic/docraft_font_applier.cc
         include/generic/docraft_font_applier.h
         src/model/docraft_header.cc

@@ -14,7 +14,17 @@ namespace docraft::layout {
         ~DocraftLayoutEngine() = default;
         [[deprecated]]
         static void layout(const std::shared_ptr<model::DocraftNode>& node, const std::shared_ptr<DocraftPDFContext> &context);
+        /**
+         * @brief Computes the layout for a single node tree.
+         * @param node A shared pointer to a DocraftNode object.
+         * @return A DocraftTransform representing the computed layout.
+         */
         model::DocraftTransform compute_layout(const std::shared_ptr<model::DocraftNode>& node);
+        /**
+         * @brief Computes the layout for a full document represented by a vector of nodes.
+         * @param nodes A vector of shared pointers to DocraftNode objects.
+         */
+        void compute_document_layout(const std::vector<std::shared_ptr<model::DocraftNode>>& nodes);
     protected:
         const std::shared_ptr<DocraftPDFContext>& context() const;
         /**
@@ -28,6 +38,9 @@ namespace docraft::layout {
         void configure_handlers(const std::shared_ptr<DocraftPDFContext>& context);
         Handlers handlers_;
         std::shared_ptr<DocraftPDFContext> context_;
+        const float kHeaderHeightRatio_ = 0.15F;
+        const float kBodyHeightRatio_ = 0.75F;
+        const float kFooterHeightRatio_ = 0.10F;
 
         /**
          * @brief Execute the correct handler to compute the layout for the given node.

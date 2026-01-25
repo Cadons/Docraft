@@ -6,6 +6,7 @@ namespace docraft::layout::handler {
             throw std::invalid_argument("box is null");
         }
         node->set_weight(1.0F); //blank line takes full width
+        box->set_width(context()->available_space());//get full available width
         box->set_height(1.0F); //default height for blank line
         box->set_position({.x=context()->cursor().x(), .y=context()->cursor().y()});
 

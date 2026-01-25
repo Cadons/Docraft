@@ -192,8 +192,8 @@ namespace docraft {
     DocraftCursor &DocraftPDFContext::cursor() {
         return cursor_;
     }
-    float DocraftPDFContext::current_rect_width() const {
-        return current_rect_width_;
+    float DocraftPDFContext::available_space() const {
+        return page_width() - cursor_.x();
     }
     std::shared_ptr<renderer::DocraftAbstractRenderer> DocraftPDFContext::renderer() {
         if (!renderer_) {

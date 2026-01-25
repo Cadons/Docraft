@@ -57,7 +57,7 @@ namespace docraft::layout::handler {
             }
             std::string line = node->text().substr(start, end - start);
             float line_width = measure_test_width(line);
-            if (line_width > context()->current_rect_width()) {
+            if (line_width > context()->available_space()) {
                 // If the line exceeds the width, break it into smaller parts
                 size_t line_start = 0;
                 while (line_start < line.length()) {
@@ -65,7 +65,7 @@ namespace docraft::layout::handler {
                     while (line_end <= line.length()) {
                         std::string sub_line = line.substr(line_start, line_end - line_start);
                         float sub_line_width = measure_test_width(sub_line);
-                        if (sub_line_width > context()->current_rect_width()) {
+                        if (sub_line_width > context()->available_space()) {
                             break;
                         }
                         line_end++;
@@ -93,10 +93,10 @@ namespace docraft::layout::handler {
                     line->set_position({.x=cursor.x(), .y=cursor.y() - total_height});
                     break;
                 case model::TextAlignment::kCenter:
-                    line->set_position({.x=cursor.x() + ((context()->current_rect_width() - line_width) / 2), .y=cursor.y() - total_height});
+                    line->set_position({.x=cursor.x() + ((context()->available_space() - line_width) / 2), .y=cursor.y() - total_height});
                     break;
                 case model::TextAlignment::kRight:
-                    line->set_position({.x=cursor.x() + (context()->current_rect_width() - line_width), .y=cursor.y() - total_height});
+                    line->set_position({.x=cursor.x() + (context()->available_space() - line_width), .y=cursor.y() - total_height});
                     break;
                 case model::TextAlignment::kJustified:
                     line->set_position({.x=cursor.x(), .y=cursor.y() - total_height});

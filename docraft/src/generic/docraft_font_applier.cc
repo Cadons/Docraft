@@ -52,6 +52,7 @@ namespace docraft::generic {
     }
 
     DocraftFontApplier::~DocraftFontApplier() {
+        //TODO: fix error: Error cleaning up temporary font files: filesystem error: in remove_all: Operation not permitted ["/var/folders/3q/d0wxdmr947lgw5y1b4_tdyb80000gn/T/"]
         try {
             std::filesystem::remove_all(std::filesystem::temp_directory_path());
         } catch (const std::filesystem::filesystem_error &e) {

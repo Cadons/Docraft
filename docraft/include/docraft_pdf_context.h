@@ -24,7 +24,7 @@ namespace docraft {
 
         HPDF_Page page() const;
         DocraftCursor& cursor();
-        float current_rect_width() const;
+        float available_space() const;
         void set_renderer(const std::shared_ptr<renderer::DocraftAbstractRenderer> &renderer);
         std::shared_ptr<renderer::DocraftAbstractRenderer> renderer();
 
@@ -52,8 +52,5 @@ namespace docraft {
         std::shared_ptr<model::DocraftBody> body_;
         std::shared_ptr<model::DocraftFooter> footer_;
         std::shared_ptr<docraft::generic::DocraftFontApplier> font_applier_;
-
-
-
     };
 } // docraft
