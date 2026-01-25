@@ -214,7 +214,7 @@ namespace docraft::craft::parser {
             int col_number =0;
             std::vector<std::string> titles;
             for (auto title: table_header.children()) {
-                if (title.name() == elements::kTableTitle.data()) {
+                if (title.name() == std::string(elements::kTableTitle.data())) {
                     col_number++;
                     table_node->add_title_node(std::make_shared<model::DocraftText>(title.child_value()));
                     titles.emplace_back(title.child_value());
@@ -226,7 +226,7 @@ namespace docraft::craft::parser {
             table_node->set_cols(col_number);
             if (auto table_body = craft_language_source.child(elements::kTableBody.data())) {
                 for (auto row: table_body.children()) {
-                    if (row.name() == elements::kTableRow.data()) {
+                    if (row.name() == std::string(elements::kTableRow.data())) {
                         if (!row.children().empty()) {
                             const std::vector<std::string> support_type = {elements::kText.data(), elements::kImage.data()};
                             for (auto col: row.children()) {

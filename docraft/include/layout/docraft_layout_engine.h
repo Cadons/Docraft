@@ -38,9 +38,9 @@ namespace docraft::layout {
         void configure_handlers(const std::shared_ptr<DocraftPDFContext>& context);
         Handlers handlers_;
         std::shared_ptr<DocraftPDFContext> context_;
-        const float kHeaderHeightRatio_ = 0.15F;
-        const float kBodyHeightRatio_ = 0.75F;
-        const float kFooterHeightRatio_ = 0.10F;
+        const float kHeaderHeightRatio_ = 0.10F;
+        const float kBodyHeightRatio_ = 0.85F;
+        const float kFooterHeightRatio_ = 0.05F;
 
         /**
          * @brief Execute the correct handler to compute the layout for the given node.
