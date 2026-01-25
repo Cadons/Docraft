@@ -4,12 +4,11 @@
 #include "model/docraft_blank_line.h"
 
 namespace docraft::layout::handler {
-    class DocraftLayoutBlankLine :public generic::DocraftChainOfResponsibilityHandler<model::DocraftNode>,
-                                        public AbstractDocraftLayoutHandler<model::DocraftBlankLine> {
+    class DocraftLayoutBlankLine :public AbstractDocraftLayoutHandler<model::DocraftBlankLine> {
     public:
         using AbstractDocraftLayoutHandler<model::DocraftBlankLine>::AbstractDocraftLayoutHandler;
-        void compute(const std::shared_ptr<model::DocraftBlankLine> &node) override;
+        void compute(const std::shared_ptr<model::DocraftBlankLine> &node, model::DocraftTransform* box) override;
 
-        bool handle(std::shared_ptr<model::DocraftNode> request) override;
+        bool handle(const std::shared_ptr<model::DocraftNode> &request, model::DocraftTransform *result) override;
     };
 } // docraft

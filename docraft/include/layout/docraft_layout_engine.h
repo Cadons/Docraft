@@ -7,14 +7,34 @@
 #include "model/docraft_node.h"
 
 namespace docraft::layout {
-    using Handlers = std::vector<std::unique_ptr<generic::DocraftChainOfResponsibilityHandler<model::DocraftNode> > >;
+    using Handlers = std::vector<std::unique_ptr<generic::DocraftChainOfResponsibilityHandler<model::DocraftNode, model::DocraftTransform>>>;
     class DocraftLayoutEngine {
     public:
-        static void layout(std::shared_ptr<model::DocraftNode> node, const std::shared_ptr<DocraftPDFContext> &context);
+        explicit DocraftLayoutEngine(const std::shared_ptr<DocraftPDFContext>& context);
+        ~DocraftLayoutEngine() = default;
+        [[deprecated]]
+        static void layout(const std::shared_ptr<model::DocraftNode>& node, const std::shared_ptr<DocraftPDFContext> &context);
+        model::DocraftTransform compute_layout(const std::shared_ptr<model::DocraftNode>& node);
+    protected:
+        const std::shared_ptr<DocraftPDFContext>& context() const;
+        /**
+         * @brief Computes the maximum rectangle that can contain all the given boxes.
+         * @param boxes A vector of DocraftTransform representing the boxes.
+         * @return A DocraftTransform representing the maximum rectangle.
+         */
+        static model::DocraftTransform compute_max_rect(const std::vector<model::DocraftTransform>& boxes) ;
+
     private:
+        void configure_handlers(const std::shared_ptr<DocraftPDFContext>& context);
+        Handlers handlers_;
+        std::shared_ptr<DocraftPDFContext> context_;
 
-        static void configure_handlers(const std::shared_ptr<DocraftPDFContext>& context);
-        static Handlers handlers_;
-
+        /**
+         * @brief Execute the correct handler to compute the layout for the given node.
+         * @param node
+         * @param box
+         * @return
+         */
+        bool compute_node(const std::shared_ptr<model::DocraftNode>& node, model::DocraftTransform* box) const;
     };
 } // layout

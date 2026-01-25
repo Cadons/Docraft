@@ -8,7 +8,7 @@
 
 namespace docraft::layout::handler {
 
-void DocraftLayoutTableHandler::compute(const std::shared_ptr<model::DocraftTable> &node) {
+void DocraftLayoutTableHandler::compute(const std::shared_ptr<model::DocraftTable> &node, model::DocraftTransform* box) {
    //  // create table nodes and setup the layout
    //  float height = node->height();
    //  float width = node->width();
@@ -151,9 +151,9 @@ void DocraftLayoutTableHandler::compute(const std::shared_ptr<model::DocraftTabl
 }
 
 
-    bool DocraftLayoutTableHandler::handle(std::shared_ptr<model::DocraftNode> request) {
+    bool DocraftLayoutTableHandler::handle(const std::shared_ptr<model::DocraftNode>& request, model::DocraftTransform * /*result*/) {
         if (auto table_node = std::dynamic_pointer_cast<model::DocraftTable>(request)) {
-            compute(table_node);
+            compute(table_node, {});
             return true;
         }
         return false;

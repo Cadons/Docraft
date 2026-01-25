@@ -25,7 +25,12 @@ namespace docraft {
     bool DocraftCursor::is_negative_coordinates_allowed() const {
         return allow_negative_coordinates_;
     }
-
+    DocraftCursorDirection DocraftCursor::direction() const {
+        if (direction_stack_.empty()) {
+            return DocraftCursorDirection::kVertical;//default direction
+        }
+        return direction_stack_.top();
+    }
     void DocraftCursor::move_to(float x, float y) {
         set_x(x);
         set_y(y);
@@ -61,40 +66,12 @@ namespace docraft {
         }
     }
 
-    //TODO: remove deprecated methods
-
-
-    void DocraftCursor::move_x(float x) {
-        if (x == 0) {
-            set_x(x_offset_);
-            return;
+    void DocraftCursor::push_direction(DocraftCursorDirection direction) {
+        direction_stack_.push(direction);
+    }
+    void DocraftCursor::pop_direction() {
+        if (!direction_stack_.empty()) {
+            direction_stack_.pop();
         }
-        set_x(x);
-    }
-
-    void DocraftCursor::move_y(float y) {
-        if (y == 0) {
-            set_y(y_offset_);
-            return;
-        }
-        set_y(y);
-    }
-
-    void DocraftCursor::set_offset_x(float x) {
-        x_offset_ = x;
-        set_x(point_.x+x_offset_);
-    }
-
-    void DocraftCursor::set_offset_y(float y) {
-        y_offset_ = y;
-        set_y(point_.y+y_offset_);
-    }
-
-    float DocraftCursor::offset_x() const {
-        return x_offset_;
-    }
-
-    float DocraftCursor::offset_y() const {
-        return y_offset_;
     }
 } // docraft

@@ -154,7 +154,7 @@ namespace docraft {
         float page_height = HPDF_Page_GetHeight(page_);
         page_height_ = page_height;
         page_width_ = HPDF_Page_GetWidth(page_);
-        cursor_.move_to(0, page_height - cursor_.offset_y());
+
         current_rect_width_ = HPDF_Page_GetWidth(page_);
     }
 

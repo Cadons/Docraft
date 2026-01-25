@@ -2,10 +2,10 @@
 #include <memory>
 
 namespace docraft::generic{
-    template<typename T>
+    template<class T,class K>
     class DocraftChainOfResponsibilityHandler {
     public:
         virtual ~DocraftChainOfResponsibilityHandler() = default;
-        virtual bool handle(std::shared_ptr<T> request) =0;
+        virtual bool handle(const std::shared_ptr<T>& request,K* result ) =0;
     };
 }

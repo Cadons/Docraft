@@ -7,15 +7,15 @@ namespace docraft::model {
 
     int DocraftNode::next_id_ = 0;
 
-    DocraftNode::DocraftNode() {
+    DocraftNode::DocraftNode() : DocraftTransform(), transform_box_() {
         id_ = next_id_++;
     }
 
-    DocraftNode::DocraftNode(const DocraftNode *node) : node_name_(node->node_name()),
-                                                        id_(next_id_++){
+    DocraftNode::DocraftNode(const DocraftNode *node) : DocraftTransform(), transform_box_(),
+                                                        node_name_(node->node_name()),
+                                                        id_(next_id_++) {
         std::cout << "pointer constructor" << std::endl;
     }
-
     int DocraftNode::id() const {
         return id_;
     }
@@ -31,10 +31,6 @@ namespace docraft::model {
 
     bool DocraftNode::auto_fill_height() const {
         return auto_fill_height_;
-    }
-
-    float DocraftNode::padding() const {
-        return padding_;
     }
 
     float DocraftNode::weight() const {
@@ -64,10 +60,6 @@ namespace docraft::model {
 
     void DocraftNode::set_auto_fill_width(bool auto_fill_width) {
         auto_fill_width_ = auto_fill_width;
-    }
-
-    void DocraftNode::set_padding(float padding) {
-        padding_ = padding;
     }
 
     void DocraftNode::set_weight(float weight) {

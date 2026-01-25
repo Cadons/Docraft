@@ -5,18 +5,19 @@
 #include "model/docraft_text.h"
 
 namespace docraft::layout::handler {
-    class DocraftLayoutTextHandler : public generic::DocraftChainOfResponsibilityHandler<model::DocraftNode>,
-                                     public AbstractDocraftLayoutHandler<model::DocraftText> {
+    class DocraftLayoutTextHandler : public AbstractDocraftLayoutHandler<model::DocraftText> {
     public:
 
-        void compute(const std::shared_ptr<model::DocraftText>& node) override;
+        void compute(const std::shared_ptr<model::DocraftText>& node, model::DocraftTransform* box) override;
 
         using AbstractDocraftLayoutHandler::AbstractDocraftLayoutHandler;
 
+        bool handle(const std::shared_ptr<model::DocraftNode> &request, model::DocraftTransform *result) override;
 
-        bool handle(std::shared_ptr<model::DocraftNode> request) override;
     protected:
-        static void filter_text(std::shared_ptr<model::DocraftText> node);
+        static void filter_text(const std::shared_ptr<model::DocraftText>& node);
+        float measure_text_width(const std::shared_ptr<model::DocraftText>& node) const;
+        float measure_test_width(const std::string& text) const;
 
     };
 } // docraft

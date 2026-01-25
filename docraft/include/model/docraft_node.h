@@ -30,8 +30,6 @@ namespace docraft::model {
 
         [[nodiscard]] bool auto_fill_width() const;
 
-        [[deprecated]] [[nodiscard]] float padding() const;
-
         [[nodiscard]] float weight() const;
 
         [[nodiscard]] DocraftPositionType position_mode() const;
@@ -46,19 +44,13 @@ namespace docraft::model {
         virtual void set_x_for_children(float x);
 
         virtual void set_y_for_children(float y);
-
-        [[deprecated]] void set_padding(float padding);
-
+        
         void set_weight(float weight);
 
     private:
         int id_ = 0;
         static int next_id_;
         std::string node_name_;
-        [[deprecated]] float x_ = 0.0F;
-        [[deprecated]] float y_ = 0.0F;
-        [[deprecated]] float width_ = 0.0F;
-        [[deprecated]] float height_ = 0.0F;
         bool auto_fill_height_ = true;
         bool auto_fill_width_ = true;
         [[deprecated]] float padding_ = 1.0F;

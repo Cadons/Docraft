@@ -3,7 +3,7 @@
 #include "docraft_cursor.h"
 
 namespace docraft::test::layout {
-    class docraft_cursor_test : public ::testing::Test {
+    class DocraftCursorTest : public ::testing::Test {
     protected:
         void SetUp() override {
         }
@@ -19,7 +19,7 @@ namespace docraft::test::layout {
         DocraftCursor cursor_;
     };
 
-    TEST_F(docraft_cursor_test, PositionSetters) {
+    TEST_F(DocraftCursorTest, PositionSetters) {
         auto cursor = this->cursor();
         cursor.set_x(10);
         EXPECT_EQ(cursor.x(), 10);

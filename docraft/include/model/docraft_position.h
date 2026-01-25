@@ -27,43 +27,12 @@ namespace docraft::model {
 
     class DocraftTransform {
     public:
-        //TODO: remove
-        [[deprecated]] DocraftPoint top_left_;
-        [[deprecated]] DocraftPoint top_center_;
-        [[deprecated]] DocraftPoint top_right_;
-        [[deprecated]] DocraftPoint bottom_left_;
-        [[deprecated]] DocraftPoint bottom_center_;
-        [[deprecated]] DocraftPoint bottom_right_;
-        [[deprecated]] DocraftPoint left_center_;
-        [[deprecated]] DocraftPoint right_center_;
-
-        float rotation_ = 0.0F;
-
-    public:
         DocraftTransform();
 
         explicit DocraftTransform(const DocraftPoint &point, const float &width, const float &height);
 
         std::string to_string() const;
 
-        //TODO: remove
-        [[deprecated]] const DocraftPoint &top_left() const;
-
-        [[deprecated]] const DocraftPoint &top_center() const;
-
-        [[deprecated]] const DocraftPoint &top_right() const;
-
-        [[deprecated]] const DocraftPoint &bottom_left() const;
-
-        [[deprecated]] const DocraftPoint &bottom_center() const;
-
-        [[deprecated]] const DocraftPoint &bottom_right() const;
-
-        [[deprecated]] const DocraftPoint &left_center() const;
-
-        [[deprecated]] const DocraftPoint &right_center() const;
-
-        //-----
         /**
          * @brief Get the anchors object
          *
@@ -101,13 +70,12 @@ namespace docraft::model {
     private:
         void compute_transform(const DocraftPoint &point, const float &width, const float &height);
 
-        void compute_box_size();
-
         DocraftPoint position_;
         DocraftPoint center_;
-        float width_;
-        float height_;
-        float padding_ = 0;
+        float width_=0.0F;
+        float height_=0.0F;
+        float padding_ = 0.0F;
+        float rotation_ = 0.0F;
         DocraftAnchor anchor_; ///This is the anchor box of the component
         DocraftAnchor content_anchor_; ///This is the anchor box of the content, padding is applied
     };

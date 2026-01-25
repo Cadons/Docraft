@@ -9,7 +9,8 @@ set(TEST_SOURCES
         test.cpp
         docraft_color_test.cc
         layout/docraft_cursor_test.cc
-        model/docraft_position_test.cc)
+        model/docraft_position_test.cc
+        layout/docraft_layout_engine_test.cc)
 
 add_executable(docraft_test
         ${TEST_SOURCES}

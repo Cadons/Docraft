@@ -9,7 +9,7 @@
 #include "model/docraft_layout.h"
 
 namespace docraft::layout::handler {
-    void DocraftLayoutSectionHandler::compute(const std::shared_ptr<model::DocraftSection> &node) {
+    void DocraftLayoutSectionHandler::compute(const std::shared_ptr<model::DocraftSection> &node, model::DocraftTransform* box) {
         // auto &cursor = context()->cursor();
         // cursor.set_offset_x(node->margin_left());
         // cursor.set_offset_y(node->margin_top());
@@ -83,9 +83,10 @@ namespace docraft::layout::handler {
         // }
     }
 
-    bool DocraftLayoutSectionHandler::handle(const std::shared_ptr<model::DocraftNode> request) {
+    bool DocraftLayoutSectionHandler::handle(const std::shared_ptr<model::DocraftNode> &request,
+                                             model::DocraftTransform * /*result*/) {
         if (auto section_node = std::dynamic_pointer_cast<model::DocraftSection>(request)) {
-            compute(section_node);
+            compute(section_node, {});
             const float section_width = context()->page_width();
             //compute children layout
             float total_height = section_node->height();
@@ -97,7 +98,7 @@ namespace docraft::layout::handler {
                 context()->set_current_rect_width(section_width);
                 float current_y = context()->cursor().y();
                 //save current y position, it will be modified in the layout computation
-                context()->cursor().move_y(current_y); //restore y position to the current position
+             //   context()->cursor().move_y(current_y); //restore y position to the current position
             }
             section_node->set_height(total_height);
             section_node->set_width(total_width);

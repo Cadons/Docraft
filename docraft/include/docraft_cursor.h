@@ -1,7 +1,14 @@
 #pragma once
+#include <stack>
+
 #include "model/docraft_position.h"
 
 namespace docraft {
+
+    enum class DocraftCursorDirection {
+        kHorizontal,
+        kVertical
+    };
     /**
      * @class DocraftCursor
      * @brief Represents a cursor in the 2D space for handling position
@@ -18,6 +25,8 @@ namespace docraft {
 
         bool is_negative_coordinates_allowed() const;
 
+        DocraftCursorDirection direction() const;
+
         /**
          * @brief Resets the x-coordinate of the cursor to 0
          */
@@ -32,6 +41,9 @@ namespace docraft {
 
         void set_y(float y);
 
+        void push_direction(DocraftCursorDirection direction);
+        void pop_direction();
+
         /**
          * @brief Moves the cursor to the specified coordinates.
          * @param x
@@ -45,32 +57,10 @@ namespace docraft {
          */
         void allow_negative_coordinates(bool allow);
 
-        //TODO: remove deprecated
-        [[deprecated]]
-        void move_x(float x);
-
-        [[deprecated]]
-        void move_y(float y);
-
-        [[deprecated]]
-        void set_offset_x(float x);
-
-        [[deprecated]]
-        void set_offset_y(float y);
-
-        [[deprecated]]
-        float offset_x() const;
-
-        [[deprecated]]
-        float offset_y() const;
 
     private:
         model::DocraftPoint point_;
         bool allow_negative_coordinates_; ///This flag controls whether negative coordinates are allowed
-        //TODO: remove deprecated
-        [[deprecated]]
-        float x_offset_;
-        [[deprecated]]
-        float y_offset_;
+        std::stack<DocraftCursorDirection> direction_stack_=std::stack<DocraftCursorDirection>();
     };
 } // docraft

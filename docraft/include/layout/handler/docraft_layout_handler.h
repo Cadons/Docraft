@@ -5,12 +5,11 @@
 #include "model/docraft_node.h"
 
 namespace docraft::layout::handler {
-    class DocraftLayoutHandler: public generic::DocraftChainOfResponsibilityHandler<model::DocraftNode>,
-                                        public AbstractDocraftLayoutHandler<model::DocraftLayout> {
+    class DocraftLayoutHandler:public AbstractDocraftLayoutHandler<model::DocraftLayout> {
     public:
         using AbstractDocraftLayoutHandler<model::DocraftLayout>::AbstractDocraftLayoutHandler;
-        void compute(const std::shared_ptr<model::DocraftLayout> &node) override;
+        void compute(const std::shared_ptr<model::DocraftLayout> &node, model::DocraftTransform* box) override;
 
-        bool handle(std::shared_ptr<model::DocraftNode> request) override;
+        bool handle(const std::shared_ptr<model::DocraftNode> &request, model::DocraftTransform *result) override;
     };
 } // docraft

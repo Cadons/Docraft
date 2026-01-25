@@ -36,18 +36,18 @@ namespace docraft::model {
                 format_ = ImageFormat::kRaw;
                 break;
         }
-
-        // Retrieve dimensions if not already set
-        if (width() == 0 || height() == 0) {
-            auto [orig_width, orig_height] = get_image_dimensions(path_, format_);
-            set_width(orig_width);
-
-            if (height() <= 0) {
-                // Maintain aspect ratio
-                float aspect_ratio = orig_height / orig_width;
-                set_height(width() * aspect_ratio);
-            }
-        }
+        //
+        // // Retrieve dimensions if not already set
+        // if (width() == 0 || height() == 0) {
+        //     auto [orig_width, orig_height] = get_image_dimensions(path_, format_);
+        //     set_width(orig_width);
+        //
+        //     if (height() <= 0) {
+        //         // Maintain aspect ratio
+        //         float aspect_ratio = orig_height / orig_width;
+        //         set_height(width() * aspect_ratio);
+        //     }
+        // }
     }
 
     // Helper function to get image dimensions

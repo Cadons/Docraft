@@ -52,7 +52,11 @@ namespace docraft::generic {
     }
 
     DocraftFontApplier::~DocraftFontApplier() {
-        std::filesystem::remove_all(std::filesystem::temp_directory_path());
+        try {
+            std::filesystem::remove_all(std::filesystem::temp_directory_path());
+        } catch (const std::filesystem::filesystem_error &e) {
+            std::cerr << "Error cleaning up temporary font files: " << e.what() << std::endl;
+        }
     }
 
     DocraftFontApplier::DocraftFontApplier(const std::shared_ptr<DocraftPDFContext> &context) : context_(context) {
