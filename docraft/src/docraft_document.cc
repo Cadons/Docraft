@@ -30,11 +30,8 @@ namespace docraft {
         pdf_context_->set_font_applier(std::make_shared<generic::DocraftFontApplier>(pdf_context_));
         std::cout << "render" << std::endl;
         // Layout phase
-        for (auto &node : dom_) {
-            if (node) {
-                docraft::layout::DocraftLayoutEngine::layout(node, pdf_context_);
-            }
-        }
+        layout::DocraftLayoutEngine layout_engine(pdf_context_);
+        layout_engine.compute_document_layout(dom_);
 
         // Rendering phase
         for (auto &node : dom_) {

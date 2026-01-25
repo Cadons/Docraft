@@ -8,6 +8,7 @@
 #include "model/docraft_header.h"
 #include "model/docraft_layout.h"
 #include "model/docraft_rectangle.h"
+#include "model/docraft_table.h"
 #include "model/docraft_text.h"
 
 namespace docraft::test::layout {
@@ -143,9 +144,111 @@ namespace docraft::test::layout {
         EXPECT_EQ(layout.width(), 0);
         EXPECT_EQ(layout.height(), 0);
     }
-    TEST_F(DocraftLayoutEngineTest, ComputeTableNode) {
+    TEST_F(DocraftLayoutEngineTest, ComputeTableHorizontalNode) {
+        auto& engine = this->engine();
+        auto context = this->context();
 
+        auto table = std::make_shared<docraft::model::DocraftTable>();
+        table->set_titles({"ColA", "ColB"});
+        table->set_column_weights({.5F, .5F});
+        table->set_auto_fill_width(true);
+
+        // 2x2 grid content (rectangles are deterministic for height)
+        auto c00 = std::make_shared<docraft::model::DocraftRectangle>();
+        c00->set_height(10.0F);
+        auto c01 = std::make_shared<docraft::model::DocraftRectangle>();
+        c01->set_height(20.0F);
+        auto c10 = std::make_shared<docraft::model::DocraftRectangle>();
+        c10->set_height(15.0F);
+        auto c11 = std::make_shared<docraft::model::DocraftRectangle>();
+        c11->set_height(5.0F);
+
+        table->add_content_node(c00);
+        table->add_content_node(c01);
+        table->add_content_node(c10);
+        table->add_content_node(c11);
+
+        const auto box = engine->compute_layout(table);
+
+        // Table should start at the initial cursor (engine ctor places cursor at top-left of page).
+        EXPECT_FLOAT_EQ(table->position().x, 0.0F);
+        EXPECT_FLOAT_EQ(table->position().y, context->page_height());
+
+        // Auto-fill width should consume the remaining page width.
+        EXPECT_NEAR(table->width(), context->page_width(), 0.001F);
+        EXPECT_NEAR(box.width(), context->page_width(), 0.001F);
+
+        // Titles should be generated and have a non-zero row height.
+        ASSERT_EQ(table->title_nodes().size(), 2U);
+        const float title_row_height = table->title_nodes()[0]->height();
+        EXPECT_GT(title_row_height, 0.0F);
+
+        // Content is 2 rows: row heights should be max of each row's cell heights.
+        // Row0 max(10,20)=20; Row1 max(15,5)=15
+        const float expected_height = title_row_height + 20.0F + 15.0F;
+        EXPECT_NEAR(table->height(), expected_height, 0.01F);
+        EXPECT_NEAR(box.height(), expected_height, 0.01F);
+
+        // Cells in the same row must share the same computed height.
+        EXPECT_FLOAT_EQ(c00->height(), c01->height());
+        EXPECT_FLOAT_EQ(c10->height(), c11->height());
+        EXPECT_FLOAT_EQ(c00->height(), 20.0F);
+        EXPECT_FLOAT_EQ(c10->height(), 15.0F);
+
+        // Basic positioning sanity: second column starts to the right of first column.
+        EXPECT_GT(c01->position().x, c00->position().x);
+        // Second row should be below the first row (Y decreases downwards in this engine).
+        EXPECT_LT(c10->position().y, c00->position().y);
     }
+      TEST_F(DocraftLayoutEngineTest, ComputeVerticalTableNode) {
+        auto& engine = this->engine();
+        auto context = this->context();
+
+        auto table = std::make_shared<docraft::model::DocraftTable>();
+        table->set_orientation(docraft::model::LayoutOrientation::kVertical);
+        table->set_titles({"KeyA", "KeyB"});
+        table->set_cols(2);                 // key/value
+        table->set_auto_fill_width(true);
+
+        auto v0 = std::make_shared<docraft::model::DocraftRectangle>();
+        v0->set_height(10.0F);
+        auto v1 = std::make_shared<docraft::model::DocraftRectangle>();
+        v1->set_height(20.0F);
+
+        table->add_content_node(v0);
+        table->add_content_node(v1);
+
+        const auto box = engine->compute_layout(table);
+
+        // Starts at initial cursor.
+        EXPECT_FLOAT_EQ(table->position().x, 0.0F);
+        EXPECT_FLOAT_EQ(table->position().y, context->page_height());
+
+        // Auto-fill width.
+        EXPECT_NEAR(table->width(), context->page_width(), 0.001F);
+        EXPECT_NEAR(box.width(), context->page_width(), 0.001F);
+
+        // One title per row.
+        ASSERT_EQ(table->title_nodes().size(), 2U);
+
+        // Values should be placed to the right of their row title.
+        EXPECT_GT(v0->position().x, table->title_nodes()[0]->position().x);
+        EXPECT_GT(v1->position().x, table->title_nodes()[1]->position().x);
+
+        // Row heights: handler enforces a uniform height per row (title + value cells share it).
+        EXPECT_FLOAT_EQ(v0->height(), table->title_nodes()[0]->height());
+        EXPECT_FLOAT_EQ(v1->height(), table->title_nodes()[1]->height());
+
+        // Second row is below the first row (Y decreases downwards).
+        EXPECT_LT(table->title_nodes()[1]->position().y, table->title_nodes()[0]->position().y);
+        EXPECT_LT(v1->position().y, v0->position().y);
+
+        // Table height is the sum of row heights (which are stored on the title nodes post-layout).
+        const float expected_height = table->title_nodes()[0]->height() + table->title_nodes()[1]->height();
+        EXPECT_NEAR(table->height(), expected_height, 0.01F);
+        EXPECT_NEAR(box.height(), expected_height, 0.01F);
+    }
+
     TEST_F(DocraftLayoutEngineTest, ComputeFullDocumentLayout) {
         auto& engine =this->engine();
         auto context = this->context();
