@@ -88,7 +88,7 @@ namespace docraft::layout::handler {
             line->set_font_size(node->font_size());
             float line_width = measure_text_width(line);
             line->set_width(line_width);
-            line->set_height(node->font_size() * 1.2F); // line height
+            line->set_height(node->font_size()*interline_space_ ); // TODO: add a parameter to handle the interline spacing
             if (cursor.y()==context()->page_height()) {
                 cursor.move_to(cursor.x(), cursor.y() - line->height());
             }

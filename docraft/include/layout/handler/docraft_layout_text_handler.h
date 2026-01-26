@@ -18,6 +18,8 @@ namespace docraft::layout::handler {
         static void filter_text(const std::shared_ptr<model::DocraftText>& node);
         float measure_text_width(const std::shared_ptr<model::DocraftText>& node) const;
         float measure_test_width(const std::string& text) const;
+    private:
+        const float interline_space_ = 1.2F;
 
     };
 } // docraft
