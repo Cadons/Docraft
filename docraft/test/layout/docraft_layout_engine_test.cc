@@ -28,8 +28,8 @@ namespace docraft::test::layout {
         std::shared_ptr<DocraftPDFContext> &context() {
             return context_;
         }
-        const float kHeaderHeightRatio_ = 0.10F;
-        const float kBodyHeightRatio_ = 0.85F;
+        const float kHeaderHeightRatio_ = 0.05F;
+        const float kBodyHeightRatio_ = 0.90F;
         const float kFooterHeightRatio_ = 0.05F;
     private:
         std::unique_ptr<docraft::layout::DocraftLayoutEngine> engine_;

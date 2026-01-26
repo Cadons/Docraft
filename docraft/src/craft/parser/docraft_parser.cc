@@ -45,10 +45,10 @@ namespace {
                                            const pugi::xml_node &craft_language_source) {
         //get attributes
         if (auto x_attr = craft_language_source.attribute(docraft::craft::basic::attribute::kX.data())) {
-        //    node->set_x(x_attr.as_float());
+         node->set_position({x_attr.as_float(), node->position().y});
         }
         if (auto y_attr = craft_language_source.attribute(docraft::craft::basic::attribute::kY.data())) {
-          //  node->set_y(y_attr.as_float());
+            node->set_position({node->position().x, y_attr.as_float()});
         }
         if (auto width_attr = craft_language_source.attribute(docraft::craft::basic::attribute::kWidth.data())) {
             node->set_width(width_attr.as_float());
@@ -128,7 +128,7 @@ namespace docraft::craft::parser {
         auto header_node = std::make_shared<model::DocraftHeader>();
         const auto rect = std::dynamic_pointer_cast<model::DocraftRectangle>(
             DocraftRectangleParser::parse(craft_language_source));
-        apply_attributes_to(header_node, rect);
+        apply_attributes_to( rect,header_node);
         configure_section_attributes(header_node, craft_language_source);
         return header_node;
     }

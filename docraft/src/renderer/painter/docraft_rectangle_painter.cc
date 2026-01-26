@@ -49,8 +49,8 @@ namespace docraft::renderer::painter {
         HPDF_Page_SetRGBStroke(page, border_color.r, border_color.g, border_color.b);
 
         // 3. DEFINE AND EXECUTE PATH
-        // HPDF_Page_Rectangle(page, box.bottom_left_.x, box.bottom_left_.y,
-        //                     rectangle_node_.width(), rectangle_node_.height());
+        HPDF_Page_Rectangle(page,rectangle_node_.anchors().bottom_left.x, rectangle_node_.anchors().bottom_left.y,
+                            rectangle_node_.width(), rectangle_node_.height());
 
         // Determine drawing operation
         bool has_fill = bg_color.a > 0.0F;
