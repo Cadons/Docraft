@@ -128,6 +128,7 @@ namespace docraft::layout {
         if (body==nullptr) {
             throw std::runtime_error("Document must have a body section");
         }
+        const float kLineHeightOffset_ = 12.0F;
         //Layout header
         if (header) {
             context()->cursor().move_to(0, context()->page_height());
@@ -142,7 +143,7 @@ namespace docraft::layout {
             if (header) {
                 body_start_y = header->anchors().bottom_left.y;
             }
-            context()->cursor().move_to(0, body_start_y);
+            context()->cursor().move_to(0, body_start_y-kLineHeightOffset_);
             compute_layout(body);
             body->set_position({.x=0, .y=body_start_y});
             body->set_width(context()->page_width());
@@ -154,7 +155,7 @@ namespace docraft::layout {
             if (body) {
                 footer_start_y = body->anchors().bottom_left.y;
             }
-            context()->cursor().move_to(0, footer_start_y);
+            context()->cursor().move_to(0, footer_start_y-kLineHeightOffset_);
             compute_layout(footer);
             footer->set_position({.x=0, .y=footer_start_y});
             footer->set_width(context()->page_width());

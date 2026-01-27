@@ -31,6 +31,7 @@ namespace docraft::test::layout {
         const float kHeaderHeightRatio_ = 0.05F;
         const float kBodyHeightRatio_ = 0.90F;
         const float kFooterHeightRatio_ = 0.05F;
+        const float kLineHeightOffset_ = 12.0F;
     private:
         std::unique_ptr<docraft::layout::DocraftLayoutEngine> engine_;
         std::shared_ptr<DocraftPDFContext> context_;
@@ -287,7 +288,7 @@ namespace docraft::test::layout {
         EXPECT_EQ(body->height(), context->page_height()*kBodyHeightRatio_);
         // Verify body item position
         EXPECT_EQ(body_text->position().x, 0);
-        EXPECT_EQ(body_text->position().y, body->anchors().top_left.y);
+        EXPECT_EQ(body_text->position().y, body->anchors().top_left.y-kLineHeightOffset_); // accounting for line height offset
         //Verify footer layout
         EXPECT_EQ(footer->position().x, 0);
         EXPECT_EQ(footer->position().y, body->anchors().bottom_left.y);
@@ -295,7 +296,7 @@ namespace docraft::test::layout {
         EXPECT_EQ(footer->height(), context->page_height()*kFooterHeightRatio_);
         // Verify footer item position
         EXPECT_EQ(footer_text->position().x, 0);
-        EXPECT_EQ(footer_text->position().y, footer->anchors().top_left.y);
+        EXPECT_EQ(footer_text->position().y, footer->anchors().top_left.y-kLineHeightOffset_); // accounting for line height offset
     }
     TEST_F(DocraftLayoutEngineTest, ComputeDocumentLayoutWithoutBodyThrows) {
         auto& engine =this->engine();
@@ -324,7 +325,7 @@ namespace docraft::test::layout {
         EXPECT_EQ(body->height(), context->page_height()*kBodyHeightRatio_);
         // Verify body item position
         EXPECT_EQ(body_text->position().x, 0);
-        EXPECT_EQ(body_text->position().y, body->anchors().top_left.y);
+        EXPECT_EQ(body_text->position().y, body->anchors().top_left.y-kLineHeightOffset_);
     }
     TEST_F(DocraftLayoutEngineTest, ComputeDocumentWithOnlyHeaderAndBody) {
         auto& engine =this->engine();
@@ -356,7 +357,7 @@ namespace docraft::test::layout {
         EXPECT_EQ(body->height(), context->page_height()*kBodyHeightRatio_);
         // Verify body item position
         EXPECT_EQ(body_text->position().x, 0);
-        EXPECT_EQ(body_text->position().y, body->anchors().top_left.y);
+        EXPECT_EQ(body_text->position().y, body->anchors().top_left.y-kLineHeightOffset_);
     }
     TEST_F(DocraftLayoutEngineTest, ComputeDocumentWithOnlyBodyAndFooter) {
         auto& engine =this->engine();
@@ -380,7 +381,7 @@ namespace docraft::test::layout {
         EXPECT_EQ(body->height(), context->page_height()*kBodyHeightRatio_);
         // Verify body item position
         EXPECT_EQ(body_text->position().x, 0);
-        EXPECT_EQ(body_text->position().y, body->anchors().top_left.y);
+        EXPECT_EQ(body_text->position().y, body->anchors().top_left.y-kLineHeightOffset_);
         //Verify footer layout
         EXPECT_EQ(footer->position().x, 0);
         EXPECT_EQ(footer->position().y, body->anchors().bottom_left.y);
@@ -388,7 +389,7 @@ namespace docraft::test::layout {
         EXPECT_EQ(footer->height(), context->page_height()*kFooterHeightRatio_);
         // Verify footer item position
         EXPECT_EQ(footer_text->position().x, 0);
-        EXPECT_EQ(footer_text->position().y, footer->anchors().top_left.y);
+        EXPECT_EQ(footer_text->position().y, footer->anchors().top_left.y-kLineHeightOffset_);
     }
 
 }

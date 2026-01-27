@@ -94,16 +94,16 @@ namespace docraft::layout::handler {
             }
             switch (node->alignment()) {
                 case model::TextAlignment::kLeft:
-                    line->set_position({.x=cursor.x(), .y=cursor.y() - total_height});
+                    line->set_position({.x=cursor.x(), .y=cursor.y()});
                     break;
                 case model::TextAlignment::kCenter:
-                    line->set_position({.x=cursor.x() + ((context()->available_space() - line_width) / 2), .y=cursor.y() - total_height});
+                    line->set_position({.x=cursor.x() + ((context()->available_space() - line_width) / 2), .y=cursor.y()});
                     break;
                 case model::TextAlignment::kRight:
-                    line->set_position({.x=cursor.x() + (context()->available_space() - line_width), .y=cursor.y() - total_height});
+                    line->set_position({.x=cursor.x() + (context()->available_space() - line_width), .y=cursor.y()});
                     break;
                 case model::TextAlignment::kJustified:
-                    line->set_position({.x=cursor.x(), .y=cursor.y() - total_height});
+                    line->set_position({.x=cursor.x(), .y=cursor.y()});
                     break;
             }
             total_height += line->height();
@@ -119,7 +119,8 @@ namespace docraft::layout::handler {
             box->set_height(node->height());
         }
 
-        LOG_DEBUG(node->to_string());
+        context()->cursor().move_to(global_cursor.x(), box->anchors().bottom_left.y);
+        LOG_DEBUG(node->text()+":"+node->to_string());
 
 
 
