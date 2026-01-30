@@ -28,11 +28,11 @@ namespace docraft::renderer::painter {
          //Bottom line
          // //draw titles
          for (const auto &title: table_node_.title_nodes()) {
-        
+
              title->set_style(model::TextStyle::kBold); // reset to normal for table content
              context->font_applier()->apply_font(title);
              HPDF_Page_BeginText(page);
-             HPDF_Page_TextRect(page, title->anchors().top_left.x, title->anchors().bottom_left.y,
+             HPDF_Page_TextRect(page, title->anchors().top_left.x, title->anchors().top_left.y,
                                 title->anchors().top_right.x, title->anchors().top_right.y,
                                 title->text().c_str(), HPDF_TALIGN_CENTER, nullptr);
              HPDF_Page_EndText(page);
@@ -51,7 +51,7 @@ namespace docraft::renderer::painter {
          //draw content nodes
          const float row_height = table_node_.title_nodes().front()->height();
          float current_y = line_y;
-        
+
          //compute boundaries
          std::vector<float> col_lefts;
          std::vector<float> col_rights;
@@ -60,7 +60,7 @@ namespace docraft::renderer::painter {
              col_lefts.push_back(tb.top_left.x);
              col_rights.push_back(tb.top_right.x);
          }
-        
+
          float content_top = current_y; // y at top of first content row
          size_t row_idx = 0;
          for (const auto &content_row : table_node_.content_nodes()) {
@@ -70,7 +70,7 @@ namespace docraft::renderer::painter {
                  if (auto pointer = std::dynamic_pointer_cast<model::DocraftText>(content_row[col_idx])) {
                      context->font_applier()->apply_font(pointer);
                      HPDF_Page_BeginText(page);
-                     HPDF_Page_TextRect(page, pointer->anchors().top_left.x, pointer->anchors().top_left.y, pointer->anchors().top_right.x, pointer->anchors().bottom_left.y,
+                     HPDF_Page_TextRect(page, pointer->anchors().top_left.x, pointer->anchors().top_left.y, pointer->anchors().bottom_right.x, pointer->anchors().bottom_right.y,
                        pointer->text().c_str(), HPDF_TALIGN_CENTER, nullptr);
                      HPDF_Page_EndText(page);
                  }
@@ -80,12 +80,12 @@ namespace docraft::renderer::painter {
                  }
                  bottom_y = std::min(bottom_y, content_row[col_idx]->anchors().bottom_left.y);
              }
-        
+
              // draw horizontal line at bottom of this row
              float line_y_here =  bottom_y;
              std::print("Drawing line at y: {}\n", line_y_here);
              DocraftPDFRenderer::draw_line(page, { .x=start_x, .y=line_y_here }, { .x=start_x + table_width, .y=line_y_here });
-            
+
              ++row_idx;
        }
 

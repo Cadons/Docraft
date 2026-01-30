@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <numeric>
+#include <print>
 #include <vector>
 
 #include "layout/docraft_layout_engine.h"
@@ -96,6 +97,7 @@ namespace docraft::layout::handler {
 
                 natural_widths[i] = title_node->width();
                 title_row_height = std::max(title_row_height, title_node->height());
+                title_node->set_height(title_row_height); // Enforce uniform title row height
             }
 
             const float natural_sum = std::accumulate(natural_widths.begin(), natural_widths.end(), 0.0F);
@@ -153,7 +155,7 @@ namespace docraft::layout::handler {
             float total_content_height = 0.0F;
 
             for (const auto &row: grid) {
-                float row_height = 0.0F;
+                float row_height = 20.0F;
 
                 for (std::size_t c = 0; c < std::min(row.size(), cols); ++c) {
                     const auto &cell = row[c];
@@ -336,12 +338,24 @@ namespace docraft::layout::handler {
         switch (node->orientation()) {
             case model::LayoutOrientation::kHorizontal:
                 layout_horizontal_table(node, box, context());
-                return;
+                break;
             case model::LayoutOrientation::kVertical:
                 layout_vertical_table(node, box, context());
-                return;
+                break;
             default:
                 throw std::runtime_error("unsupported table orientation");
+        }
+        //print cels positions for debug
+        for (const auto &row: node->content_nodes()) {
+            for (const auto &cell: row) {
+                if (cell) {
+                    std::print("Cell at ({}, {}) size ({}, {})\n",
+                               cell->position().x,
+                               cell->position().y,
+                               cell->width(),
+                               cell->height());
+                }
+            }
         }
     }
 
