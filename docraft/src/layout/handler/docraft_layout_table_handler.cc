@@ -54,11 +54,11 @@ namespace docraft::layout::handler {
          * @return float
          */
         float available_width_for(const std::shared_ptr<model::DocraftTable> &node,
-                                  const std::shared_ptr<DocraftPDFContext> &context,
+                                  const std::shared_ptr<DocraftDocumentContext> &context,
                                   const float fixed_x,
                                   const float fallback) {
             if (node->auto_fill_width()) {
-                return context->page_width() - fixed_x;
+                return context->available_space();
             }
             float w = node->width();
             return (w > 0.0F) ? w : fallback;
@@ -71,7 +71,7 @@ namespace docraft::layout::handler {
          */
         void layout_horizontal_table(const std::shared_ptr<model::DocraftTable> &node,
                                      model::DocraftTransform *box,
-                                     const std::shared_ptr<DocraftPDFContext> &context) {
+                                     const std::shared_ptr<DocraftDocumentContext> &context) {
             DocraftCursor table_cursor = {context->cursor()};//Use a custom cursor to not affect the main one
             const float fixed_x = table_cursor.x();
             const float fixed_y = table_cursor.y();
@@ -200,7 +200,7 @@ namespace docraft::layout::handler {
 
         void layout_vertical_table(const std::shared_ptr<model::DocraftTable> &node,
                                    model::DocraftTransform *box,
-                                   const std::shared_ptr<DocraftPDFContext> &context) {
+                                   const std::shared_ptr<DocraftDocumentContext> &context) {
             DocraftCursor table_cursor = {context->cursor()};//Use a custom cursor to not affect the main one
             const float fixed_x = table_cursor.x();
             const float fixed_y = table_cursor.y();

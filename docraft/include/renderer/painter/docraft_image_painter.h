@@ -7,7 +7,7 @@ namespace docraft::renderer::painter {
     class DocraftImagePainter : public renderer::painter::IPainter{
         public:
         explicit DocraftImagePainter(const model::DocraftImage &image_node);
-        void draw(const std::shared_ptr<DocraftPDFContext> &context) override;
+        void draw(const std::shared_ptr<DocraftDocumentContext> &context) override;
 
         private:
         const model::DocraftImage &image_node_;

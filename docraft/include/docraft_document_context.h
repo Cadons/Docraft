@@ -15,10 +15,10 @@ namespace docraft {
         class DocraftFooter;
     }
 
-    class DocraftPDFContext {
+    class DocraftDocumentContext {
         public:
-        DocraftPDFContext();
-        ~DocraftPDFContext();
+        DocraftDocumentContext();
+        ~DocraftDocumentContext();
 
         HPDF_Doc pdf_doc() const;
 

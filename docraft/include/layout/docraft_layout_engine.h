@@ -10,10 +10,10 @@ namespace docraft::layout {
     using Handlers = std::vector<std::unique_ptr<generic::DocraftChainOfResponsibilityHandler<model::DocraftNode, model::DocraftTransform>>>;
     class DocraftLayoutEngine {
     public:
-        explicit DocraftLayoutEngine(const std::shared_ptr<DocraftPDFContext>& context);
+        explicit DocraftLayoutEngine(const std::shared_ptr<DocraftDocumentContext>& context);
         ~DocraftLayoutEngine() = default;
         [[deprecated]]
-        static void layout(const std::shared_ptr<model::DocraftNode>& node, const std::shared_ptr<DocraftPDFContext> &context);
+        static void layout(const std::shared_ptr<model::DocraftNode>& node, const std::shared_ptr<DocraftDocumentContext> &context);
         /**
          * @brief Computes the layout for a single node tree.
          * @param node A shared pointer to a DocraftNode object.
@@ -26,7 +26,7 @@ namespace docraft::layout {
          */
         void compute_document_layout(const std::vector<std::shared_ptr<model::DocraftNode>>& nodes);
     protected:
-        const std::shared_ptr<DocraftPDFContext>& context() const;
+        const std::shared_ptr<DocraftDocumentContext>& context() const;
         /**
          * @brief Computes the maximum rectangle that can contain all the given boxes.
          * @param boxes A vector of DocraftTransform representing the boxes.
@@ -35,9 +35,9 @@ namespace docraft::layout {
         static model::DocraftTransform compute_max_rect(const std::vector<model::DocraftTransform>& boxes) ;
 
     private:
-        void configure_handlers(const std::shared_ptr<DocraftPDFContext>& context);
+        void configure_handlers(const std::shared_ptr<DocraftDocumentContext>& context);
         Handlers handlers_;
-        std::shared_ptr<DocraftPDFContext> context_;
+        std::shared_ptr<DocraftDocumentContext> context_;
         const float kHeaderHeightRatio_ = 0.05F;
         const float kBodyHeightRatio_ = 0.90F;
         const float kFooterHeightRatio_ = 0.05F;

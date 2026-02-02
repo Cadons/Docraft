@@ -18,7 +18,7 @@ namespace docraft::model {
         orientation_ = orientation;
     }
 
-    void DocraftLayout::draw(const std::shared_ptr<DocraftPDFContext> &context) {
+    void DocraftLayout::draw(const std::shared_ptr<DocraftDocumentContext> &context) {
         std::cout << "draw layout" << std::endl;
         draw_children(context);
     }

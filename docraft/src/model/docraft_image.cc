@@ -15,7 +15,7 @@ namespace docraft::model {
         format_ = node->format();
     }
 
-    void DocraftImage::draw(const std::shared_ptr<DocraftPDFContext> &context) {
+    void DocraftImage::draw(const std::shared_ptr<DocraftDocumentContext> &context) {
         context->renderer()->render_image(*this);
     }
     void DocraftImage::set_path(const std::string &path) {

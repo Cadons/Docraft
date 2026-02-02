@@ -12,7 +12,7 @@ namespace docraft::renderer::painter {
 
 
 
-    void DocraftTablePainter::draw(const std::shared_ptr<DocraftPDFContext> &context) {
+    void DocraftTablePainter::draw(const std::shared_ptr<DocraftDocumentContext> &context) {
          auto *page = context->page();
          float start_x = table_node_.position().x;
          float start_y = table_node_.position().y;
@@ -70,7 +70,7 @@ namespace docraft::renderer::painter {
                  if (auto pointer = std::dynamic_pointer_cast<model::DocraftText>(content_row[col_idx])) {
                      context->font_applier()->apply_font(pointer);
                      HPDF_Page_BeginText(page);
-                     HPDF_Page_TextRect(page, pointer->anchors().top_left.x, pointer->anchors().top_left.y, pointer->anchors().bottom_right.x, pointer->anchors().bottom_right.y,
+                     HPDF_Page_TextRect(page, pointer->anchors().top_left.x, pointer->anchors().top_left.y-pointer->font_size()*0.5F, pointer->anchors().bottom_right.x, pointer->anchors().bottom_right.y,
                        pointer->text().c_str(), HPDF_TALIGN_CENTER, nullptr);
                      HPDF_Page_EndText(page);
                  }

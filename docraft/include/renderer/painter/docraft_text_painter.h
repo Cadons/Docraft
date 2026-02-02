@@ -8,13 +8,13 @@ namespace docraft::renderer::painter {
     class DocraftTextPainter : public IPainter{
     public:
         explicit DocraftTextPainter(const model::DocraftText &text_node);
-        void draw(const std::shared_ptr<DocraftPDFContext> &context) override;
+        void draw(const std::shared_ptr<DocraftDocumentContext> &context) override;
 
     protected:
-        void render_justified(const std::shared_ptr<DocraftPDFContext> &context, const std::string &text);
-        std::pair<std::pair<float,float>,std::pair<float,float>> render_text(const std::shared_ptr<DocraftPDFContext> &context, const std::string &text);
-        std::pair<std::pair<float,float>,std::pair<float,float>> draw_text(const std::shared_ptr<DocraftPDFContext> &context, const std::string &text);
-        void draw_underline(const std::shared_ptr<DocraftPDFContext> &context, const std::string &text);
+        void render_justified(const std::shared_ptr<DocraftDocumentContext> &context, const std::string &text);
+        std::pair<std::pair<float,float>,std::pair<float,float>> render_text(const std::shared_ptr<DocraftDocumentContext> &context, const std::string &text);
+        std::pair<std::pair<float,float>,std::pair<float,float>> draw_text(const std::shared_ptr<DocraftDocumentContext> &context, const std::string &text);
+        void draw_underline(const std::shared_ptr<DocraftDocumentContext> &context, const std::string &text);
 
     private:
         model::DocraftText text_node_;

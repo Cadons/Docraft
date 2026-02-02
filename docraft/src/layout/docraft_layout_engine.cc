@@ -13,13 +13,13 @@
 #include "model/docraft_footer.h"
 
 namespace docraft::layout {
-    DocraftLayoutEngine::DocraftLayoutEngine(const std::shared_ptr<DocraftPDFContext> &context) : context_(context) {
+    DocraftLayoutEngine::DocraftLayoutEngine(const std::shared_ptr<DocraftDocumentContext> &context) : context_(context) {
         configure_handlers(context);
         context->cursor().move_to(0, context->page_height());
     }
 
     void DocraftLayoutEngine::
-    configure_handlers(const std::shared_ptr<DocraftPDFContext> &context) {
+    configure_handlers(const std::shared_ptr<DocraftDocumentContext> &context) {
         handlers_.emplace_back(std::make_unique<handler::DocraftLayoutTextHandler>(context));
         handlers_.emplace_back(std::make_unique<handler::DocraftLayoutHandler>(context));
         handlers_.emplace_back(std::make_unique<handler::DocraftLayoutTableHandler>(context));
@@ -27,12 +27,12 @@ namespace docraft::layout {
         handlers_.emplace_back(std::make_unique<handler::DocraftBasicLayoutHandler>(context));
     }
 
-    const std::shared_ptr<DocraftPDFContext> &DocraftLayoutEngine::context() const {
+    const std::shared_ptr<DocraftDocumentContext> &DocraftLayoutEngine::context() const {
         return context_;
     }
 
     void DocraftLayoutEngine::layout(const std::shared_ptr<model::DocraftNode> &node,
-                                     const std::shared_ptr<DocraftPDFContext> &context) {
+                                     const std::shared_ptr<DocraftDocumentContext> &context) {
         throw std::runtime_error("DocraftLayoutEngine deprecated");
     }
 
@@ -72,7 +72,12 @@ namespace docraft::layout {
     model::DocraftTransform DocraftLayoutEngine::compute_layout(const std::shared_ptr<model::DocraftNode> &node) {
         std::vector<model::DocraftTransform> child_boxes;
         auto &cursor = context()->cursor();
-        const float max_width = context()->page_width() - cursor.x();
+        float max_width = context()->page_width() - cursor.x();
+        if (std::dynamic_pointer_cast<model::DocraftSection>(node)) {
+            auto section_node = std::dynamic_pointer_cast<model::DocraftSection>(node);
+            max_width = context()->available_space() - (section_node->margin_right());
+            context()->set_current_rect_width(max_width);
+        }
         if (std::dynamic_pointer_cast<model::DocraftLayout>(node)) {
             //Move the cursor direction based on layout orientation to layout children correctly
             auto layout_node = std::dynamic_pointer_cast<model::DocraftLayout>(node);
@@ -131,9 +136,9 @@ namespace docraft::layout {
         const float kLineHeightOffset_ = 12.0F;
         //Layout header
         if (header) {
-            context()->cursor().move_to(0, context()->page_height());
+            context()->cursor().move_to(header->margin_left(), context()->page_height());
             (void)compute_layout(header);
-            header->set_position({.x=0, .y=context()->page_height()});
+            header->set_position({.x=header->margin_left(), .y=context()->page_height()});
             header->set_width(context()->page_width());
             header->set_height(context()->page_height()*kHeaderHeightRatio_);
         }
@@ -143,10 +148,13 @@ namespace docraft::layout {
             if (header) {
                 body_start_y = header->anchors().bottom_left.y;
             }
-            context()->cursor().move_to(0, body_start_y-kLineHeightOffset_);
+            //margins for body content
+            float left_margin = body->margin_left();
+            float right_margin = body->margin_right();
+            context()->cursor().move_to(left_margin, body_start_y-kLineHeightOffset_);
             compute_layout(body);
-            body->set_position({.x=0, .y=body_start_y});
-            body->set_width(context()->page_width());
+            body->set_position({.x=left_margin, .y=body_start_y});
+            body->set_width(context()->page_width()-(left_margin+right_margin));
             body->set_height(context()->page_height()*kBodyHeightRatio_);
         }
         //Layout footer
@@ -155,9 +163,9 @@ namespace docraft::layout {
             if (body) {
                 footer_start_y = body->anchors().bottom_left.y;
             }
-            context()->cursor().move_to(0, footer_start_y-kLineHeightOffset_);
+            context()->cursor().move_to(footer->margin_left(), footer_start_y-kLineHeightOffset_);
             compute_layout(footer);
-            footer->set_position({.x=0, .y=footer_start_y});
+            footer->set_position({.x=footer->margin_left(), .y=footer_start_y});
             footer->set_width(context()->page_width());
             footer->set_height(context()->page_height()*kFooterHeightRatio_);
         }

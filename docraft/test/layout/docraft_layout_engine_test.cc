@@ -15,7 +15,7 @@ namespace docraft::test::layout {
     class DocraftLayoutEngineTest : public ::testing::Test {
     protected:
         void SetUp() override {
-            context_ = std::make_shared<DocraftPDFContext>();
+            context_ = std::make_shared<DocraftDocumentContext>();
             engine_ = std::make_unique<docraft::layout::DocraftLayoutEngine>(context_);
         }
 
@@ -25,7 +25,7 @@ namespace docraft::test::layout {
         std::unique_ptr<docraft::layout::DocraftLayoutEngine>& engine() {
             return engine_;
         }
-        std::shared_ptr<DocraftPDFContext> &context() {
+        std::shared_ptr<DocraftDocumentContext> &context() {
             return context_;
         }
         const float kHeaderHeightRatio_ = 0.05F;
@@ -34,7 +34,7 @@ namespace docraft::test::layout {
         const float kLineHeightOffset_ = 12.0F;
     private:
         std::unique_ptr<docraft::layout::DocraftLayoutEngine> engine_;
-        std::shared_ptr<DocraftPDFContext> context_;
+        std::shared_ptr<DocraftDocumentContext> context_;
 
     };
 
@@ -162,10 +162,10 @@ namespace docraft::test::layout {
         c00->set_height(10.0F);
         auto c01 = std::make_shared<docraft::model::DocraftRectangle>();
         c01->set_height(20.0F);
-        auto c10 = std::make_shared<docraft::model::DocraftRectangle>();
-        c10->set_height(15.0F);
-        auto c11 = std::make_shared<docraft::model::DocraftRectangle>();
-        c11->set_height(5.0F);
+        auto c10 = std::make_shared<docraft::model::DocraftText>();
+        c10->set_text("Cell 10");
+        auto c11 = std::make_shared<docraft::model::DocraftText>();
+        c11->set_text("Cell 11");
 
         table->add_content_node(c00);
         table->add_content_node(c01);
@@ -189,7 +189,7 @@ namespace docraft::test::layout {
 
         // Content is 2 rows: row heights should be max of each row's cell heights.
         // Row0 max(10,20)=20; Row1 max(15,5)=15
-        const float expected_height = title_row_height + 20.0F + 15.0F;
+        const float expected_height = title_row_height + 20.0F + 20.0F;
         EXPECT_NEAR(table->height(), expected_height, 0.01F);
         EXPECT_NEAR(box.height(), expected_height, 0.01F);
 
@@ -197,7 +197,9 @@ namespace docraft::test::layout {
         EXPECT_FLOAT_EQ(c00->height(), c01->height());
         EXPECT_FLOAT_EQ(c10->height(), c11->height());
         EXPECT_FLOAT_EQ(c00->height(), 20.0F);
-        EXPECT_FLOAT_EQ(c10->height(), 15.0F);
+        EXPECT_FLOAT_EQ(c10->height(), 20.0F);
+        EXPECT_EQ(c10->text(),"Cell 10");
+        EXPECT_EQ(c11->text(),"Cell 11");
 
         // Basic positioning sanity: second column starts to the right of first column.
         EXPECT_GT(c01->position().x, c00->position().x);

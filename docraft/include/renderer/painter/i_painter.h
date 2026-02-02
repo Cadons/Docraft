@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 
-#include "docraft_pdf_context.h"
+#include "docraft_document_context.h"
 
 namespace docraft::renderer::painter {
     /**
@@ -10,6 +10,6 @@ namespace docraft::renderer::painter {
     class IPainter {
         public:
         virtual ~IPainter() = default;
-        virtual void draw(const std::shared_ptr<DocraftPDFContext> &context) = 0;
+        virtual void draw(const std::shared_ptr<DocraftDocumentContext> &context) = 0;
     };
 } // docraft

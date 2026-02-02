@@ -5,7 +5,7 @@
 #include <memory>
 #include <unordered_map>
 namespace docraft {
-    class DocraftPDFContext;
+    class DocraftDocumentContext;
     namespace model {
         class DocraftText;
     }
@@ -19,7 +19,7 @@ namespace docraft::generic {
 
         ~DocraftFontApplier();
 
-        explicit DocraftFontApplier(const std::shared_ptr<DocraftPDFContext>& context);
+        explicit DocraftFontApplier(const std::shared_ptr<DocraftDocumentContext>& context);
         void set_font_encoding(const std::string& font_name, bool utf8);
         [[nodiscard]] bool is_font_utf8_encoding(const std::string& font_name) const;
     private:
@@ -28,7 +28,7 @@ namespace docraft::generic {
         void configure_color(HPDF_Doc pdf, HPDF_Page page, const std::shared_ptr<model::DocraftText> &node);
         std::filesystem::path temp_dir_;
         std::unordered_map<std::string, std::string> fonts_;
-        std::shared_ptr<DocraftPDFContext> context_;
+        std::shared_ptr<DocraftDocumentContext> context_;
         std::unordered_map<std::string, bool> font_utf8_encoding_;
 
 

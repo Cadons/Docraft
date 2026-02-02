@@ -13,7 +13,7 @@ namespace docraft::renderer::painter {
     }
 
 
-    void DocraftTextPainter::render_justified(const std::shared_ptr<DocraftPDFContext> &context,
+    void DocraftTextPainter::render_justified(const std::shared_ptr<DocraftDocumentContext> &context,
                                               const std::string &text) {
         auto page = context->page();
         auto &cursor = context->cursor();
@@ -43,7 +43,7 @@ namespace docraft::renderer::painter {
     }
 
     std::pair<std::pair<float, float>, std::pair<float, float> > DocraftTextPainter::render_text(
-        const std::shared_ptr<DocraftPDFContext> &context, const std::string &text) {
+        const std::shared_ptr<DocraftDocumentContext> &context, const std::string &text) {
         auto page = context->page();
 
         //begin drawing
@@ -60,12 +60,12 @@ namespace docraft::renderer::painter {
     }
 
     std::pair<std::pair<float, float>, std::pair<float, float> > DocraftTextPainter::draw_text(
-        const std::shared_ptr<DocraftPDFContext> &context, const std::string &text) {
+        const std::shared_ptr<DocraftDocumentContext> &context, const std::string &text) {
         return render_text(context, text);
     }
 
     void DocraftTextPainter::
-    draw_underline(const std::shared_ptr<DocraftPDFContext> &context, const std::string &text) {
+    draw_underline(const std::shared_ptr<DocraftDocumentContext> &context, const std::string &text) {
         //TODO: improve text underline for alignment different from Left
         auto &cursor = context->cursor();
         auto *page = context->page();
@@ -87,7 +87,7 @@ namespace docraft::renderer::painter {
         HPDF_Page_Stroke(page);
     }
 
-    void DocraftTextPainter::draw(const std::shared_ptr<DocraftPDFContext> &context) {
+    void DocraftTextPainter::draw(const std::shared_ptr<DocraftDocumentContext> &context) {
         for (const auto &line: text_node_.lines()) {
             current_line_ = line;
              context->font_applier()->apply_font(current_line_);

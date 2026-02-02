@@ -1,5 +1,5 @@
 #include "generic/docraft_font_applier.h"
-#include "docraft_pdf_context.h"
+#include "docraft_document_context.h"
 #include "model/docraft_text.h"
 
 #include <hpdf.h>
@@ -60,7 +60,7 @@ namespace docraft::generic {
         }
     }
 
-    DocraftFontApplier::DocraftFontApplier(const std::shared_ptr<DocraftPDFContext> &context) : context_(context) {
+    DocraftFontApplier::DocraftFontApplier(const std::shared_ptr<DocraftDocumentContext> &context) : context_(context) {
         docraft_register_fonts();
         temp_dir_ = std::filesystem::temp_directory_path();
         //load default fonts

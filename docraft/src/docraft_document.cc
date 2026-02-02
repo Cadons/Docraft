@@ -25,7 +25,7 @@ namespace docraft {
         dom_.emplace_back(node);
     }
     void DocraftDocument::render() {
-        pdf_context_ = std::make_shared<DocraftPDFContext>();
+        pdf_context_ = std::make_shared<DocraftDocumentContext>();
         pdf_context_->set_renderer(std::make_shared<renderer::DocraftPDFRenderer>(pdf_context_));
         pdf_context_->set_font_applier(std::make_shared<generic::DocraftFontApplier>(pdf_context_));
         std::cout << "render" << std::endl;

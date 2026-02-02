@@ -7,7 +7,7 @@ namespace docraft::renderer::painter {
     DocraftImagePainter::DocraftImagePainter(const model::DocraftImage &image_node) : image_node_(image_node) {
     }
 
-    void DocraftImagePainter::draw(const std::shared_ptr<DocraftPDFContext> &context) {
+    void DocraftImagePainter::draw(const std::shared_ptr<DocraftDocumentContext> &context) {
 //         auto *page = context->page();
 //         auto *pdf = context->pdf_doc();
 //

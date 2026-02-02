@@ -11,7 +11,7 @@ namespace docraft::model {
     DocraftText::DocraftText(const std::string &text) : text_(text) {
     }
 
-    void DocraftText::draw(const std::shared_ptr<DocraftPDFContext> &context) {
+    void DocraftText::draw(const std::shared_ptr<DocraftDocumentContext> &context) {
         context->renderer()->render_text(*this);
 
     }

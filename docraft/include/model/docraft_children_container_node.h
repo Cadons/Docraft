@@ -15,7 +15,7 @@ namespace docraft::model {
         void set_x_for_children(float x) override;
         void set_y_for_children(float y) override;
     protected:
-        virtual void draw_children(const std::shared_ptr<DocraftPDFContext> &context) const;
+        virtual void draw_children(const std::shared_ptr<DocraftDocumentContext> &context) const;
 
         /**
          * @brief Called when a child is added to the container

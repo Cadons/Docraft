@@ -9,7 +9,7 @@ namespace docraft::model {
         set_auto_fill_height(false);
     }
 
-    void DocraftTable::draw(const std::shared_ptr<DocraftPDFContext> &context) {
+    void DocraftTable::draw(const std::shared_ptr<DocraftDocumentContext> &context) {
         if (column_weights_.empty()) {
             float default_weight = 1.0F;
             column_weights_.resize(cols_, default_weight);

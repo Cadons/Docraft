@@ -7,7 +7,7 @@ namespace docraft::renderer::painter {
     public:
         explicit docraft_blank_line_painter(const model::DocraftBlankLine &blank_line_node);
 
-        void draw(const std::shared_ptr<DocraftPDFContext> &context) override;
+        void draw(const std::shared_ptr<DocraftDocumentContext> &context) override;
 
     private:
         const model::DocraftBlankLine &blank_line_node_;

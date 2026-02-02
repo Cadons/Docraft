@@ -10,7 +10,7 @@ namespace docraft::model {
 
         ~DocraftTable() override = default;
 
-        void draw(const std::shared_ptr<DocraftPDFContext> &context) override;
+        void draw(const std::shared_ptr<DocraftDocumentContext> &context) override;
 
         void set_rows(int rows);
 

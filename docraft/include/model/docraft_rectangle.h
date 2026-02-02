@@ -7,7 +7,7 @@ namespace docraft::model {
     class DocraftRectangle : public DocraftChildrenContainerNode {
     public:
         using DocraftChildrenContainerNode::DocraftChildrenContainerNode;
-        void draw(const std::shared_ptr<DocraftPDFContext> &context) override;
+        void draw(const std::shared_ptr<DocraftDocumentContext> &context) override;
         void set_background_color(const DocraftColor &color);
         void set_border_color(const DocraftColor &color);
         void set_border_width(float width);

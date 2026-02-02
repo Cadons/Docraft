@@ -23,7 +23,7 @@ namespace docraft::model {
         return children_;
     }
 
-    void DocraftChildrenContainerNode::draw_children(const std::shared_ptr<DocraftPDFContext> &context) const {
+    void DocraftChildrenContainerNode::draw_children(const std::shared_ptr<DocraftDocumentContext> &context) const {
         for (const auto &child: children()) {
             child->draw(context);
         }

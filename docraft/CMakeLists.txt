@@ -69,8 +69,8 @@ set(DOCRAFT_SOURCES src/main.cpp
         include/model/docraft_text.h
         src/docraft_document.cc
         include/docraft_document.h
-        src/docraft_pdf_context.cc
-        include/docraft_pdf_context.h
+        src/docraft_document_context.cc
+        include/docraft_document_context.h
         src/docraft_cursor.cc
         include/docraft_cursor.h
         src/docraft_color.cc

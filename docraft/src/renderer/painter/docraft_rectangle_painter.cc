@@ -9,7 +9,7 @@ namespace docraft::renderer::painter {
         rectangle_node) {
     }
 
-    void DocraftRectanglePainter::draw(const std::shared_ptr<DocraftPDFContext> &context) {
+    void DocraftRectanglePainter::draw(const std::shared_ptr<DocraftDocumentContext> &context) {
         // Validate context and handles early to avoid invalid-document errors
         if (!context) return;
         auto *page = context->page();

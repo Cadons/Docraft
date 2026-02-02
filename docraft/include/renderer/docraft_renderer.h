@@ -14,7 +14,7 @@ namespace docraft::renderer {
      **/
     class DocraftAbstractRenderer {
     public:
-        explicit DocraftAbstractRenderer(const std::shared_ptr<DocraftPDFContext> &docraftContext) : docraftContext_(
+        explicit DocraftAbstractRenderer(const std::shared_ptr<DocraftDocumentContext> &docraftContext) : docraftContext_(
             docraftContext) {
         }
 
@@ -33,11 +33,11 @@ namespace docraft::renderer {
         virtual void render_blank_line(const model::DocraftBlankLine &blank_line_node)=0;
 
     protected:
-        const std::shared_ptr<DocraftPDFContext> &context() const {
+        const std::shared_ptr<DocraftDocumentContext> &context() const {
             return docraftContext_;
         }
 
     private:
-        std::shared_ptr<DocraftPDFContext> docraftContext_;
+        std::shared_ptr<DocraftDocumentContext> docraftContext_;
     };
 } // renderer

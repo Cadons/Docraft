@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 
-#include "docraft_pdf_context.h"
+#include "docraft_document_context.h"
 #include "docraft_position.h"
 
 namespace docraft::model {
@@ -18,7 +18,7 @@ namespace docraft::model {
 
         virtual ~DocraftNode() = default;
 
-        virtual void draw(const std::shared_ptr<DocraftPDFContext> &context) = 0;//probably unuseful
+        virtual void draw(const std::shared_ptr<DocraftDocumentContext> &context) = 0;//probably unuseful
 
         //getter
         [[nodiscard]] int id() const;

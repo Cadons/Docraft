@@ -17,7 +17,7 @@ namespace docraft::model {
         LayoutOrientation orientation() const;
 
         void set_orientation(LayoutOrientation orientation);
-        void draw(const std::shared_ptr<DocraftPDFContext> &context) override;
+        void draw(const std::shared_ptr<DocraftDocumentContext> &context) override;
         void set_weight_for_child(int index, float weight) const;
 
     protected:
