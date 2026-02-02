@@ -5,6 +5,7 @@
 
 #include "generic/chain_of_responsibility_handler.h"
 #include "model/docraft_node.h"
+#include "model/docraft_section.h"
 
 namespace docraft::layout {
     using Handlers = std::vector<std::unique_ptr<generic::DocraftChainOfResponsibilityHandler<model::DocraftNode, model::DocraftTransform>>>;
@@ -49,5 +50,6 @@ namespace docraft::layout {
          * @return
          */
         bool compute_node(const std::shared_ptr<model::DocraftNode>& node, model::DocraftTransform* box) const;
+        float compute_width(const std::shared_ptr<model::DocraftSection> &node) const;
     };
 } // layout

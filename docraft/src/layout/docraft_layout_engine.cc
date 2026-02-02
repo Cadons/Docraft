@@ -116,6 +116,12 @@ namespace docraft::layout {
         return max_rect;
     }
 
+    float DocraftLayoutEngine::compute_width(const std::shared_ptr<model::DocraftSection> &node) const {
+        float margin_left = node->margin_left();
+        float margin_right = node->margin_right();
+        return context()->page_width() - (margin_left + margin_right);
+    }
+
     void DocraftLayoutEngine::compute_document_layout(const std::vector<std::shared_ptr<model::DocraftNode>> &nodes) {
         //Split sections
         std::shared_ptr<model::DocraftHeader> header=nullptr;
@@ -139,7 +145,7 @@ namespace docraft::layout {
             context()->cursor().move_to(header->margin_left(), context()->page_height());
             (void)compute_layout(header);
             header->set_position({.x=header->margin_left(), .y=context()->page_height()});
-            header->set_width(context()->page_width());
+            header->set_width(compute_width(header));
             header->set_height(context()->page_height()*kHeaderHeightRatio_);
         }
         //Layout body
@@ -149,12 +155,10 @@ namespace docraft::layout {
                 body_start_y = header->anchors().bottom_left.y;
             }
             //margins for body content
-            float left_margin = body->margin_left();
-            float right_margin = body->margin_right();
-            context()->cursor().move_to(left_margin, body_start_y-kLineHeightOffset_);
+            context()->cursor().move_to(body->margin_left(), body_start_y-kLineHeightOffset_);
             compute_layout(body);
-            body->set_position({.x=left_margin, .y=body_start_y});
-            body->set_width(context()->page_width()-(left_margin+right_margin));
+            body->set_position({.x=body->margin_left(), .y=body_start_y});
+            body->set_width(compute_width(body));
             body->set_height(context()->page_height()*kBodyHeightRatio_);
         }
         //Layout footer
@@ -166,7 +170,7 @@ namespace docraft::layout {
             context()->cursor().move_to(footer->margin_left(), footer_start_y-kLineHeightOffset_);
             compute_layout(footer);
             footer->set_position({.x=footer->margin_left(), .y=footer_start_y});
-            footer->set_width(context()->page_width());
+            footer->set_width(compute_width(footer));
             footer->set_height(context()->page_height()*kFooterHeightRatio_);
         }
     }
