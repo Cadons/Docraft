@@ -193,7 +193,7 @@ namespace docraft {
         return cursor_;
     }
     float DocraftDocumentContext::available_space() const {
-        return current_rect_width_ - cursor_.x();
+        return current_rect_width_ ;
     }
     std::shared_ptr<renderer::DocraftAbstractRenderer> DocraftDocumentContext::renderer() {
         if (!renderer_) {

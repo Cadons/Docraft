@@ -11,6 +11,7 @@
 
 namespace docraft::layout::handler {
     namespace {
+        constexpr float kHorizontalTableOffset = 5.0F;
         /**
          * @This function ensures that the title nodes of the table are created based on the titles provided.
          * @param node
@@ -74,7 +75,7 @@ namespace docraft::layout::handler {
                                      const std::shared_ptr<DocraftDocumentContext> &context) {
             DocraftCursor table_cursor = {context->cursor()};//Use a custom cursor to not affect the main one
             const float fixed_x = table_cursor.x();
-            const float fixed_y = table_cursor.y();
+            const float fixed_y = table_cursor.y()-kHorizontalTableOffset;
 
             docraft::layout::DocraftLayoutEngine engine(context);
 

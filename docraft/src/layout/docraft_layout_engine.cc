@@ -73,6 +73,7 @@ namespace docraft::layout {
         std::vector<model::DocraftTransform> child_boxes;
         auto &cursor = context()->cursor();
         float max_width = context()->page_width() - cursor.x();
+
         if (std::dynamic_pointer_cast<model::DocraftSection>(node)) {
             auto section_node = std::dynamic_pointer_cast<model::DocraftSection>(node);
             max_width = context()->available_space() - (section_node->margin_right());
@@ -93,7 +94,11 @@ namespace docraft::layout {
             for (const auto &child: container_node->children()) {
                 float last_child_width = child_boxes.empty() ? 0.0F : child_boxes.back().width();
                 if (child->width() == 0.0F) {
-                    child->set_width(max_width - last_child_width);
+                    if (cursor.direction()==DocraftCursorDirection::kHorizontal) {
+                        child->set_width(max_width - last_child_width);
+                    }else {
+                        child->set_width(max_width);
+                    }
                 }
                 auto child_box = compute_layout(child);
                 child_boxes.emplace_back(child_box);
@@ -111,7 +116,7 @@ namespace docraft::layout {
         if (cursor.direction() == DocraftCursorDirection::kHorizontal) {
             cursor.move_to(max_rect.anchors().top_right.x, max_rect.anchors().top_right.y);
         } else {
-            cursor.move_to(max_rect.anchors().bottom_left.x, max_rect.anchors().bottom_left.y);
+            cursor.move_to(max_rect.anchors().bottom_left.x, max_rect.anchors().bottom_left.y-1.0F);
         }
         return max_rect;
     }

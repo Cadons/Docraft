@@ -7,7 +7,11 @@ namespace docraft::layout::handler {
         }
         node->set_weight(1.0F); //blank line takes full width
         box->set_width(context()->available_space());//get full available width
-        box->set_height(1.0F); //default height for blank line
+        if (node->height() > 0.0F) {
+            box->set_height(node->height());
+        } else {
+            box->set_height(1.0F); //default height for blank line
+        }
         box->set_position({.x=context()->cursor().x(), .y=context()->cursor().y()});
 
     }

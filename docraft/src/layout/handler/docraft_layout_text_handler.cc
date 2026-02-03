@@ -62,17 +62,29 @@ namespace docraft::layout::handler {
                 // If the line exceeds the width, break it into smaller parts
                 size_t line_start = 0;
                 while (line_start < line.length()) {
-                    size_t line_end = line_start + 1;
-                    while (line_end <= line.length()) {
-                        std::string sub_line = line.substr(line_start, line_end - line_start);
+                    size_t probe_end = line_start +1;//start probing from the next character
+                    size_t last_fit_end = line_start;
+
+                    while (probe_end <= line.length()) {
+                        std::string sub_line = line.substr(line_start, probe_end - line_start);
                         float sub_line_width = measure_test_width(sub_line);
+
                         if (sub_line_width > context()->available_space()) {
                             break;
                         }
-                        line_end++;
+                        last_fit_end = probe_end;
+                        ++probe_end;
                     }
-                    node->add_line(std::make_shared<model::DocraftText>(line.substr(line_start, line_end - line_start - 1)));
-                    line_start = line_end - 1;
+                    // If nothing fits (even 1 char), force progress by consuming 1 char.
+                    if (last_fit_end == line_start) {
+                        last_fit_end = std::min(line_start + 1, line.length());
+                    }
+
+                    node->add_line(std::make_shared<model::DocraftText>(
+                        line.substr(line_start, last_fit_end - line_start)
+                    ));
+                    line_start = last_fit_end;
+
                 }
             } else {
                 node->add_line(std::make_shared<model::DocraftText>(line));
@@ -81,49 +93,64 @@ namespace docraft::layout::handler {
         }
 
         //Compute position for each line
-        float total_height = 0.0F;
+ float total_height = 0.0F;
         float total_width = 0.0F;
+
+        const float line_height = node->font_size() * interline_space_;
+
+        // Always move to the first baseline below the current cursor Y,
+        // but clamp so the first line doesn't get clipped above the page.
+        const float kTopSafe = context()->page_height() - line_height;
+        float first_baseline_y = cursor.y() - line_height;
+        if (first_baseline_y > kTopSafe) {
+            first_baseline_y = kTopSafe;
+        }
+        cursor.move_to(cursor.x(), first_baseline_y);
+
         for (const auto& line : node->lines()) {
             line->set_font_name(node->font_name());
             line->set_font_size(node->font_size());
+
             float line_width = measure_text_width(line);
             line->set_width(line_width);
-            line->set_height(node->font_size()*interline_space_ ); // TODO: add a parameter to handle the interline spacing
-            if (cursor.y()==context()->page_height()) {
-                cursor.move_to(cursor.x(), cursor.y() - line->height());
-            }
+            line->set_height(line_height);
+
             switch (node->alignment()) {
                 case model::TextAlignment::kLeft:
-                    line->set_position({.x=cursor.x(), .y=cursor.y()});
+                    line->set_position({.x = cursor.x(), .y = cursor.y()});
                     break;
                 case model::TextAlignment::kCenter:
-                    line->set_position({.x=cursor.x() + ((context()->available_space() - line_width) / 2), .y=cursor.y()});
+                    line->set_position({.x = cursor.x() + ((context()->available_space() - line_width) / 2), .y = cursor.y()});
                     break;
                 case model::TextAlignment::kRight:
-                    line->set_position({.x=cursor.x() + (context()->available_space() - line_width), .y=cursor.y()});
+                    line->set_position({.x = cursor.x() + (context()->available_space() - line_width), .y = cursor.y()});
                     break;
                 case model::TextAlignment::kJustified:
-                    line->set_position({.x=cursor.x(), .y=cursor.y()});
+                    line->set_position({.x = cursor.x(), .y = cursor.y()});
                     break;
             }
+
             total_height += line->height();
             total_width = std::max(total_width, line_width);
-            cursor.move_to(cursor.x(), cursor.y() - line->height());
+
+            cursor.move_to(cursor.x(), std::max(cursor.y() - line->height(),line->height()));
         }
-        node->set_position({.x=global_cursor.x(), .y=global_cursor.y()});
+
+        node->set_position({.x = global_cursor.x(), .y = global_cursor.y()});
         node->set_height(total_height);
         node->set_width(total_width);
+
         if (box) {
-            box->set_position({.x=node->position().x, .y=node->position().y});
+            box->set_position({.x = node->position().x, .y = node->position().y});
             box->set_width(node->width());
             box->set_height(node->height());
         }
 
-        context()->cursor().move_to(global_cursor.x(), box->anchors().bottom_left.y);
-        LOG_DEBUG(node->text()+":"+node->to_string());
+        // Add a small bottom padding so consecutive Text nodes don't collide via baseline/descender.
+        const float k_bottom_padding = node->font_size() * 0.20F;
+        context()->cursor().move_to(global_cursor.x(), box->anchors().bottom_left.y - k_bottom_padding);
 
-
-
+        LOG_DEBUG(node->text() + ":" + node->to_string());
     }
 
     bool DocraftLayoutTextHandler::handle(const std::shared_ptr<model::DocraftNode> &request,
