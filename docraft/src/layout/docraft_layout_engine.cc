@@ -116,7 +116,10 @@ namespace docraft::layout {
         if (cursor.direction() == DocraftCursorDirection::kHorizontal) {
             cursor.move_to(max_rect.anchors().top_right.x, max_rect.anchors().top_right.y);
         } else {
-            cursor.move_to(max_rect.anchors().bottom_left.x, max_rect.anchors().bottom_left.y-1.0F);
+            if (max_rect.anchors().bottom_left.y>0)
+                cursor.move_to(max_rect.anchors().bottom_left.x, max_rect.anchors().bottom_left.y-1.0F);
+            else
+                cursor.move_to(max_rect.anchors().bottom_left.x, 0.0F);
         }
         return max_rect;
     }

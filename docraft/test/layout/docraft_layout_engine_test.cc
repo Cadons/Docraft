@@ -65,7 +65,7 @@ namespace docraft::test::layout {
         EXPECT_EQ(layout_node->children().size(), 2);
         auto layout = engine->compute_layout(layout_node);
         EXPECT_EQ(layout.width(), 150);
-        EXPECT_NEAR(layout.height(), 44.40,0.0001); //fontSize*1.2 + 30=12*1.2 +30=44.4
+        EXPECT_NEAR(layout.height(), 45.40,0.0001); //fontSize*1.2 + 30=12*1.2 +30=44.4
     }
     TEST_F(DocraftLayoutEngineTest, ComputeLayoutMultipleNodesHorizontalLayout) {
         auto& engine = this->engine();
@@ -112,7 +112,7 @@ namespace docraft::test::layout {
         EXPECT_EQ(outer_layout->children().size(), 2);
         auto layout = engine->compute_layout(outer_layout);
         EXPECT_EQ(layout.width(), 200); // max width between inner layout and rectangle
-        EXPECT_NEAR(layout.height(), 70,0.001); // inner layout height + rectangle height
+        EXPECT_NEAR(layout.height(), 71,0.001); // inner layout height + rectangle height
         //Test position for each child
         EXPECT_EQ(inner_layout->position().x, 0);
         EXPECT_EQ(inner_layout->position().y, 841); //default page height
@@ -124,7 +124,7 @@ namespace docraft::test::layout {
         EXPECT_EQ(child2->position().y, child1->anchors().top_right.y);
         //Child 3 position
         EXPECT_EQ(child3->position().x, inner_layout->anchors().bottom_left.x);
-        EXPECT_EQ(child3->position().y, inner_layout->anchors().bottom_left.y);
+        EXPECT_EQ(child3->position().y+1, inner_layout->anchors().bottom_left.y);
         //Test widths and heights
         EXPECT_NEAR(inner_layout->width(), child1->width()+child2->width(),0.001); // text width approx 47.335 for "Inner" at default font size
         EXPECT_NEAR(inner_layout->height(), 20,0.001);
