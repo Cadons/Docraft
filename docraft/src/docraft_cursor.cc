@@ -1,6 +1,7 @@
 #include "docraft_cursor.h"
 
 #include <stdexcept>
+#include <valarray>
 
 #include "utils/docraft_logger.h"
 #pragma region Messages

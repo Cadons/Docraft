@@ -148,7 +148,11 @@ namespace docraft::layout::handler {
 
         // Add a small bottom padding so consecutive Text nodes don't collide via baseline/descender.
         const float k_bottom_padding = node->font_size() * 0.20F;
-        context()->cursor().move_to(global_cursor.x(), box->anchors().bottom_left.y - k_bottom_padding);
+        float box_y=box->anchors().bottom_left.y - k_bottom_padding;
+        if (box_y<0.0F){
+            box_y=0.0F;
+        }
+        context()->cursor().move_to(global_cursor.x(), box_y);
 
         LOG_DEBUG(node->text() + ":" + node->to_string());
     }
