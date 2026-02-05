@@ -13,6 +13,7 @@
 #include <iostream>
 #include "utils/docraft_font_registry.h"
 #include "fonts.h"
+#include "utils/docraft_logger.h"
 
 namespace docraft::generic {
     std::list<std::string> DocraftFontApplier::default_fonts() {
@@ -52,9 +53,14 @@ namespace docraft::generic {
     }
 
     DocraftFontApplier::~DocraftFontApplier() {
-        //TODO: fix error: Error cleaning up temporary font files: filesystem error: in remove_all: Operation not permitted ["/var/folders/3q/d0wxdmr947lgw5y1b4_tdyb80000gn/T/"]
         try {
-      //      std::filesystem::remove_all(std::filesystem::temp_directory_path());
+            for (const auto &pair: fonts_) {
+                const auto &font_name = pair.first;
+                auto temp_path = kTempDir / (font_name + ".ttf");
+                if (std::filesystem::exists(temp_path)) {
+                    std::filesystem::remove(temp_path);
+                }
+            }
         } catch (const std::filesystem::filesystem_error &e) {
             std::cerr << "Error cleaning up temporary font files: " << e.what() << std::endl;
         }
@@ -62,7 +68,6 @@ namespace docraft::generic {
 
     DocraftFontApplier::DocraftFontApplier(const std::shared_ptr<DocraftDocumentContext> &context) : context_(context) {
         docraft_register_fonts();
-        temp_dir_ = std::filesystem::temp_directory_path();
         //load default fonts
         for (const auto &font: default_fonts()) {
             load_font_data(font, nullptr);
@@ -88,29 +93,55 @@ namespace docraft::generic {
         return true;
     }
 
-    const char *DocraftFontApplier::load_font_data(const std::string &name, HPDF_Doc pdf) {
-        if (fonts_.contains(name)) return fonts_[name].c_str();
-        auto registry = utils::DocraftFontRegistry::instance();
+      const char *DocraftFontApplier::load_font_data(const std::string &name, HPDF_Doc pdf) {
+        // If already mapped, reuse it
+        auto it_existing = fonts_.find(name);
+        if (it_existing != fonts_.end() && !it_existing->second.empty()) {
+            return it_existing->second.c_str();
+        }
 
+        auto &registry = utils::DocraftFontRegistry::instance();
+
+        // Built-in fonts: Haru resolves by the same name; no PDF needed here.
         if (pdf == nullptr) {
             fonts_.insert({name, name});
-            utils::DocraftFontRegistry::instance().register_font(name, nullptr, 0);
+            registry.register_font(name, nullptr, 0);
             font_utf8_encoding_.insert({name, false});
-            return name.c_str();
+            return fonts_.at(name).c_str();
         }
-        if (const auto *font_resource = registry.get_font(name)) {
-            auto temp_path = temp_dir_ / (name + ".ttf");
 
-            std::ofstream ofs(temp_path, std::ios::binary);
-            ofs.write(reinterpret_cast<const char *>(font_resource->data), font_resource->size);
-            const auto *internal_name = HPDF_LoadTTFontFromFile(pdf, temp_path.string().c_str(), HPDF_TRUE);
-            fonts_.insert({name, internal_name});
-            font_utf8_encoding_.insert({name, true});
-            return internal_name;
+        const auto *font_resource = registry.get_font(name);
+        if (!font_resource || !font_resource->data || font_resource->size == 0) {
+            LOG_ERROR("Font resource not found or invalid for font: " + name);
+            return nullptr;
         }
-        std::cerr << "Font " << name << " not found in the resources" << std::endl;
-        return nullptr;
+
+        const auto temp_path = kTempDir / (name + ".ttf");
+
+        // Ensure the temp file exists (Haru loads from file path)
+        if (!std::filesystem::exists(temp_path)) {
+            std::ofstream ofs(temp_path, std::ios::binary);
+            if (!ofs) {
+                LOG_ERROR("Cannot open temp font file for writing: " + temp_path.string());
+                return nullptr;
+            }
+            ofs.write(reinterpret_cast<const char *>(font_resource->data), font_resource->size);
+            ofs.close();
+        }
+
+        // IMPORTANT: Always load/register into THIS HPDF_Doc (even if file already existed)
+        const char *internal_name = HPDF_LoadTTFontFromFile(pdf, temp_path.string().c_str(), HPDF_TRUE);
+        if (!internal_name || HPDF_GetError(pdf) != HPDF_OK) {
+           LOG_ERROR("Cannot load internal font file: " + temp_path.string());
+            HPDF_ResetError(pdf);
+            return nullptr;
+        }
+
+        fonts_.insert({name, internal_name});
+        font_utf8_encoding_.insert({name, true}); // custom fonts are UTF-8 encoded
+        return fonts_.at(name).c_str();
     }
+
 
     void DocraftFontApplier::configure_color(HPDF_Doc pdf, HPDF_Page page,
                                              const std::shared_ptr<model::DocraftText> &node) {
@@ -135,7 +166,7 @@ namespace docraft::generic {
         }
         const std::string base_name = node->font_name();
         // ensure base font data is loaded once
-        load_font_data(base_name, pdf);
+        auto font_name=load_font_data(base_name, pdf);
 
         std::string selected = base_name;
         std::vector<std::string> candidates;
@@ -194,5 +225,12 @@ namespace docraft::generic {
     bool DocraftFontApplier::is_font_utf8_encoding(const std::string &font_name) const {
         if (!font_utf8_encoding_.contains(font_name)) return false;
         return font_utf8_encoding_.at(font_name);
+    }
+    const char* DocraftFontApplier::get_font_registred_name(const std::string& name) {
+        auto it = fonts_.find(name);
+        if (it != fonts_.end()) {
+            return it->second.c_str();
+        }
+        return nullptr;
     }
 } // docraft

@@ -53,7 +53,7 @@ namespace docraft::model {
     private:
         std::string text_;
         float font_size_ = 12.0F;
-        std::string font_name_ = "Helvetica";
+        std::string font_name_ = "OpenSans";
         DocraftColor color_;
         TextStyle style_ = TextStyle::kNormal;
         TextAlignment alignment_ = TextAlignment::kLeft;

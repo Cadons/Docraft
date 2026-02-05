@@ -26,7 +26,8 @@ namespace docraft::layout::handler {
         if (!page) {
             throw std::runtime_error("PDF page is not initialized in context");
         }
-        HPDF_Font font = HPDF_GetFont(context()->pdf_doc(), node->font_name().c_str(), nullptr);
+        generic::DocraftFontApplier font_applier(context());
+        HPDF_Font font = HPDF_GetFont(context()->pdf_doc(),font_applier.get_font_registred_name(node->font_name()) , nullptr);
         HPDF_Page_SetFontAndSize(page, font, node->font_size());
         return HPDF_Page_TextWidth(page, node->text().c_str());
     }
