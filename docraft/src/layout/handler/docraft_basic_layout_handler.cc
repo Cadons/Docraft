@@ -11,12 +11,16 @@ namespace docraft::layout::handler {
         if (box == nullptr) {
             throw std::invalid_argument("box is null");
         }
-        if (context()->available_space()<node->width()) {
-            node->set_width(context()->available_space());
-        }
-        box->set_width(node->width());
-        box->set_height(node->height());
+
         box->set_position({.x=context_->cursor().x(), .y=context()->cursor().y()});
+
+        if (context()->available_space()<node->width()||node->width()==0) {
+            //put the node in the available space
+            box->set_width(context()->available_space()*node->weight());
+        }else {
+            box->set_width(node->width());
+        }
+        box->set_height(node->height());
     }
 
     bool DocraftBasicLayoutHandler::handle(const std::shared_ptr<model::DocraftNode> &request,

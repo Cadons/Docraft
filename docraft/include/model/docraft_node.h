@@ -54,7 +54,7 @@ namespace docraft::model {
         bool auto_fill_height_ = true;
         bool auto_fill_width_ = true;
         [[deprecated]] float padding_ = 1.0F;
-        float weight_ = 1.0F;
+        float weight_ = -1.0F;// -1 means no weight assigned
         DocraftTransform transform_box_;
         DocraftPositionType position_mode_ = DocraftPositionType::kBlock;
     };

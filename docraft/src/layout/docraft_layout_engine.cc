@@ -76,7 +76,7 @@ namespace docraft::layout {
 
         if (std::dynamic_pointer_cast<model::DocraftSection>(node)) {
             auto section_node = std::dynamic_pointer_cast<model::DocraftSection>(node);
-            max_width = context()->available_space() - (section_node->margin_right());
+            max_width = context()->available_space() - (section_node->margin_right())-(section_node->margin_left());
             context()->set_current_rect_width(max_width);
         }
         if (std::dynamic_pointer_cast<model::DocraftLayout>(node)) {
@@ -91,11 +91,28 @@ namespace docraft::layout {
         //Process nodes from here
         if (std::dynamic_pointer_cast<model::DocraftChildrenContainerNode>(node)) {
             auto container_node = std::dynamic_pointer_cast<model::DocraftChildrenContainerNode>(node);
+            if (!container_node->children().empty()) {
+                bool no_weigth_assigned = false;
+                for (const auto &child: container_node->children()) {
+                    if (child->weight() == -1.0F) {
+                        no_weigth_assigned = true;
+                        break;
+                    }
+                }
+                if (no_weigth_assigned) {
+                    // If no weight is assigned to children, distribute weights equally
+
+                    const float equal_weight = 1.0F / static_cast<float>(container_node->children().size());
+                    for (const auto &child: container_node->children()) {
+                        child->set_weight(equal_weight);
+                    }
+                }
+            }
             for (const auto &child: container_node->children()) {
                 float last_child_width = child_boxes.empty() ? 0.0F : child_boxes.back().width();
                 if (child->width() == 0.0F) {
                     if (cursor.direction()==DocraftCursorDirection::kHorizontal) {
-                        child->set_width(max_width - last_child_width);
+                        child->set_width((max_width) - last_child_width);
                     }else {
                         child->set_width(max_width);
                     }
@@ -103,7 +120,11 @@ namespace docraft::layout {
                 auto child_box = compute_layout(child);
                 child_boxes.emplace_back(child_box);
                 child->set_position({.x = child_box.position().x, .y = child_box.position().y});
-                child->set_width(child_box.width());
+                if (child->anchors().top_right.x>max_width) {
+                    child->set_width(max_width - child->anchors().top_left.x);
+                }else {
+                    child->set_width(child_box.width());
+                }
                 child->set_height(child_box.height());
             }
         }
@@ -145,7 +166,7 @@ namespace docraft::layout {
         if (body==nullptr) {
             throw std::runtime_error("Document must have a body section");
         }
-        const float kLineHeightOffset_ = 12.0F;
+        constexpr float kLineHeightOffset = 12.0F;
         //Layout header
         if (header) {
             context()->cursor().move_to(header->margin_left(), context()->page_height());
@@ -161,7 +182,7 @@ namespace docraft::layout {
                 body_start_y = header->anchors().bottom_left.y;
             }
             //margins for body content
-            context()->cursor().move_to(body->margin_left(), body_start_y-kLineHeightOffset_);
+            context()->cursor().move_to(body->margin_left(), body_start_y-kLineHeightOffset);
             compute_layout(body);
             body->set_position({.x=body->margin_left(), .y=body_start_y});
             body->set_width(compute_width(body));
@@ -173,7 +194,7 @@ namespace docraft::layout {
             if (body) {
                 footer_start_y = body->anchors().bottom_left.y;
             }
-            context()->cursor().move_to(footer->margin_left(), footer_start_y-kLineHeightOffset_);
+            context()->cursor().move_to(footer->margin_left(), footer_start_y-kLineHeightOffset);
             compute_layout(footer);
             footer->set_position({.x=footer->margin_left(), .y=footer_start_y});
             footer->set_width(compute_width(footer));

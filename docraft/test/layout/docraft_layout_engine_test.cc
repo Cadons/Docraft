@@ -75,15 +75,17 @@ namespace docraft::test::layout {
 
         auto child1 = std::make_shared<docraft::model::DocraftText>();
         child1->set_text("Hello");
+        child1->set_weight(0.5F);
         layout_node->add_child(child1);
         auto child2 = std::make_shared<docraft::model::DocraftRectangle>();
         child2->set_width(80);
         child2->set_height(40);
+        child2->set_weight(0.5F);
         layout_node->add_child(child2);
 
         EXPECT_EQ(layout_node->children().size(), 2);
         auto layout = engine->compute_layout(layout_node);
-        EXPECT_NEAR(layout.width(), 107.335,0.001);// text width approx 48 for "Hello" at default font size
+        EXPECT_NEAR(layout.width(), 80,0.001);// text width approx 48 for "Hello" at default font size
         EXPECT_EQ(layout.height(), 40);// max height between text and rectangle, in this case rectangle height
     }
     TEST_F(DocraftLayoutEngineTest, ComputeLayoutInsideAnotherLayout) {
@@ -111,7 +113,7 @@ namespace docraft::test::layout {
 
         EXPECT_EQ(outer_layout->children().size(), 2);
         auto layout = engine->compute_layout(outer_layout);
-        EXPECT_EQ(layout.width(), 200); // max width between inner layout and rectangle
+        EXPECT_EQ(layout.width(), 297.5); // max width between inner layout and rectangle
         EXPECT_NEAR(layout.height(), 71,0.001); // inner layout height + rectangle height
         //Test position for each child
         EXPECT_EQ(inner_layout->position().x, 0);
@@ -126,7 +128,7 @@ namespace docraft::test::layout {
         EXPECT_EQ(child3->position().x, inner_layout->anchors().bottom_left.x);
         EXPECT_EQ(child3->position().y+1, inner_layout->anchors().bottom_left.y);
         //Test widths and heights
-        EXPECT_NEAR(inner_layout->width(), child1->width()+child2->width(),0.001); // text width approx 47.335 for "Inner" at default font size
+        EXPECT_NEAR(inner_layout->width(), 297.5,0.001);//297.5 is the width of the page, inner layout should take all the available width
         EXPECT_NEAR(inner_layout->height(), 20,0.001);
 
     }
