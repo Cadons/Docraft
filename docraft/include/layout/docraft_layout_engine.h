@@ -15,6 +15,9 @@ namespace docraft::layout {
         ~DocraftLayoutEngine() = default;
         [[deprecated]]
         static void layout(const std::shared_ptr<model::DocraftNode>& node, const std::shared_ptr<DocraftDocumentContext> &context);
+
+        void post_process(const std::shared_ptr<model::DocraftNode> & node, const model::DocraftTransform & docraft_transform);
+
         /**
          * @brief Computes the layout for a single node tree.
          * @param node A shared pointer to a DocraftNode object.

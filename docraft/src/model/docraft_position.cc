@@ -55,10 +55,10 @@ namespace docraft::model {
         //compute the normal rectangle
         position_ = point;
         anchor_.top_left = point;
-        anchor_.top_center ={.x=(point.x+width)/2,.y=point.y};
+        anchor_.top_center ={.x=(point.x+(width/2)),.y=point.y};
         anchor_.top_right ={.x=(point.x+width),.y=point.y};
         anchor_.bottom_left = {.x=point.x,.y=point.y - height};
-        anchor_.bottom_center ={.x=(point.x+width)/2,.y=point.y - height};
+        anchor_.bottom_center ={.x=(point.x+(width/2)),.y=point.y - height};
         anchor_.bottom_right ={.x=(point.x+width),.y=point.y - height};
         anchor_.left_center ={.x=point.x,.y=point.y - (height/2)};
         anchor_.right_center ={.x=point.x + width,.y=point.y - (height/2)};

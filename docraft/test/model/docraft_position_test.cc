@@ -25,15 +25,15 @@ namespace docraft::test::model {
         EXPECT_EQ(transform.anchors().bottom_left.y,10);
         EXPECT_EQ(transform.anchors().bottom_right.x,40);
         EXPECT_EQ(transform.anchors().bottom_right.y,10);
-        EXPECT_EQ(transform.anchors().top_center.x,20);
+        EXPECT_EQ(transform.anchors().top_center.x,25);
         EXPECT_EQ(transform.anchors().top_center.y,30);
-        EXPECT_EQ(transform.anchors().bottom_center.x,20);
+        EXPECT_EQ(transform.anchors().bottom_center.x,25);
         EXPECT_EQ(transform.anchors().bottom_center.y,10);
         EXPECT_EQ(transform.anchors().left_center.x,10);
         EXPECT_EQ(transform.anchors().left_center.y,20);
         EXPECT_EQ(transform.anchors().right_center.x,40);
         EXPECT_EQ(transform.anchors().right_center.y,20);
-        EXPECT_EQ(transform.center().x,20);
+        EXPECT_EQ(transform.center().x,25);
         EXPECT_EQ(transform.center().y,20);
     }
     TEST_F(DocraftPositionTest, TrasformBoxAnchorsContentComputation) {
@@ -47,9 +47,9 @@ namespace docraft::test::model {
         EXPECT_EQ(transform.content_anchors().bottom_left.y,15.0F);
         EXPECT_EQ(transform.content_anchors().bottom_right.x,35.0F);
         EXPECT_EQ(transform.content_anchors().bottom_right.y,15.0F);
-        EXPECT_EQ(transform.content_anchors().top_center.x,20.0F);
+        EXPECT_EQ(transform.content_anchors().top_center.x,25.0F);
         EXPECT_EQ(transform.content_anchors().top_center.y,25.0F);
-        EXPECT_EQ(transform.content_anchors().bottom_center.x,20.0F);
+        EXPECT_EQ(transform.content_anchors().bottom_center.x,25.0F);
         EXPECT_EQ(transform.content_anchors().bottom_center.y,15.0F);
         EXPECT_EQ(transform.content_anchors().left_center.x,15.0F);
         EXPECT_EQ(transform.content_anchors().left_center.y,20.0F);

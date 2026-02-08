@@ -11,6 +11,7 @@
 #include "model/docraft_header.h"
 #include "model/docraft_body.h"
 #include "model/docraft_footer.h"
+#include "utils/docraft_logger.h"
 
 namespace docraft::layout {
     DocraftLayoutEngine::DocraftLayoutEngine(const std::shared_ptr<DocraftDocumentContext> &context) : context_(context) {
@@ -69,6 +70,32 @@ namespace docraft::layout {
         return false;
     }
 
+    void DocraftLayoutEngine::post_process(const std::shared_ptr<model::DocraftNode> &node, const model::DocraftTransform &docraft_transform) {
+        //if layout post processing to adapt width of the childern to the layout width
+        if (std::dynamic_pointer_cast<model::DocraftLayout>(node)) {
+            auto layout_node = std::dynamic_pointer_cast<model::DocraftLayout>(node);
+            if (layout_node->orientation() == model::LayoutOrientation::kHorizontal) {
+                //this post processing is necessary when a layout has other layout as child, in this case the child layout will compute its width based on the available space, but then the parent layout will adapt the child width to fit the layout width
+                for (const auto &child: layout_node->children()) {
+                    if (std::dynamic_pointer_cast<model::DocraftLayout>(child)) {
+                        auto child_layout = std::dynamic_pointer_cast<model::DocraftLayout>(child);
+                        for (const auto &child_box: child_layout->children()) {
+                            LOG_DEBUG("Post processing layout: adapting child box width to child layout width");
+                            if (child_box->width() > child->width()) {
+                                //available space is equal to child width
+                                context()->cursor().move_to(child_box->position().x, child_box->position().y);
+                                context()->set_current_rect_width(child->width()- child_box->position().x);//compute layout again to adapt the child box width to the child layout width
+                                auto child_box_layout = compute_layout(child_box);
+                                child_box->set_width(child_box_layout.width());
+                                child_box->set_height(child_box_layout.height());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     model::DocraftTransform DocraftLayoutEngine::compute_layout(const std::shared_ptr<model::DocraftNode> &node) {
         std::vector<model::DocraftTransform> child_boxes;
         auto &cursor = context()->cursor();
@@ -112,7 +139,7 @@ namespace docraft::layout {
                 float last_child_width = child_boxes.empty() ? 0.0F : child_boxes.back().width();
                 if (child->width() == 0.0F) {
                     if (cursor.direction()==DocraftCursorDirection::kHorizontal) {
-                        child->set_width((max_width) - last_child_width);
+                        child->set_width(std::max(0.0F, (max_width) - last_child_width));
                     }else {
                         child->set_width(max_width);
                     }
@@ -134,6 +161,8 @@ namespace docraft::layout {
         if (!compute_node(node, &max_rect)) {
             throw std::runtime_error("compute node failed");
         }
+        //Post process layout if necessary
+        post_process(node, max_rect);
         if (cursor.direction() == DocraftCursorDirection::kHorizontal) {
             cursor.move_to(max_rect.anchors().top_right.x, max_rect.anchors().top_right.y);
         } else {
