@@ -16,14 +16,13 @@ namespace docraft::renderer::painter {
     void DocraftTextPainter::render_justified(const std::shared_ptr<DocraftDocumentContext> &context,
                                               const std::string &text) {
         auto page = context->page();
-        auto &cursor = context->cursor();
 
-        float max_width = context->available_space();
+        float max_width = current_line_->width();
         float actual_width = HPDF_Page_TextWidth(page, text.c_str());
 
         size_t spaces = std::count(text.begin(), text.end(), ' ');
 
-        if (spaces > 0) {
+        if (spaces > 0 && max_width > actual_width) {
             float extra_space = (max_width - actual_width) / static_cast<float>(spaces);
             if (extra_space <= WORD_SPACE_MAX && extra_space >= WORD_SPACE_MIN) {
                 HPDF_Page_SetWordSpace(page, extra_space); //this set the space between words

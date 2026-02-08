@@ -110,15 +110,29 @@ namespace docraft::layout::handler {
         }
         text_cursor.move_to(text_cursor.x(), first_baseline_y);
 
-        for (const auto& line : node->lines()) {
+        const auto lines = node->lines();
+        for (std::size_t i = 0; i < lines.size(); ++i) {
+            const auto& line = lines[i];
             line->set_font_name(node->font_name());
             line->set_font_size(node->font_size());
 
             float line_width = measure_text_width(line);
-            line->set_width(line_width);
+            const bool is_last_line = (i + 1 == lines.size());
+            if (node->alignment() == model::TextAlignment::kJustified) {
+                if (is_last_line) {
+                    line->set_alignment(model::TextAlignment::kLeft);
+                    line->set_width(line_width);
+                } else {
+                    line->set_alignment(model::TextAlignment::kJustified);
+                    line->set_width(context()->available_space());
+                }
+            } else {
+                line->set_alignment(node->alignment());
+                line->set_width(line_width);
+            }
             line->set_height(line_height);
 
-            switch (node->alignment()) {
+            switch (line->alignment()) {
                 case model::TextAlignment::kLeft:
                     line->set_position({.x = text_cursor.x(), .y = text_cursor.y()});
                     break;
@@ -134,7 +148,7 @@ namespace docraft::layout::handler {
             }
 
             total_height += line->height();
-            total_width = std::max(total_width, line_width);
+            total_width = std::max(total_width, line->width());
 
             text_cursor.move_to(text_cursor.x(), std::max(text_cursor.y() - line->height(),line->height()));
         }

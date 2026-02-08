@@ -119,9 +119,16 @@ namespace docraft::layout {
                 }
             }
             const float saved_available_space = context()->available_space();
+            const bool is_horizontal = (cursor.direction() == DocraftCursorDirection::kHorizontal);
+            const std::size_t child_count = container_node->children().size();
+            float available_width_for_children = max_width;
+            if (is_horizontal && child_count > 1) {
+                const float total_spacing = kHorizontalSpacing_ * static_cast<float>(child_count - 1);
+                available_width_for_children = std::max(0.0F, max_width - total_spacing);
+            }
             for (const auto &child: container_node->children()) {
-                if (cursor.direction() == DocraftCursorDirection::kHorizontal) {
-                    context()->set_current_rect_width(max_width * child->weight());
+                if (is_horizontal) {
+                    context()->set_current_rect_width(available_width_for_children * child->weight());
                 } else {
                     context()->set_current_rect_width(max_width);
                 }
@@ -140,9 +147,9 @@ namespace docraft::layout {
         node->set_width(max_rect.width());
         node->set_height(max_rect.height());
         if (cursor.direction() == DocraftCursorDirection::kHorizontal) {
-            cursor.move_to(max_rect.anchors().top_right.x, max_rect.anchors().top_right.y);
+            cursor.move_to(max_rect.anchors().top_right.x + kHorizontalSpacing_, max_rect.anchors().top_right.y);
         } else {
-            const float spacing = std::max(kDefaultNodeSpacing_, node->padding());
+            const float spacing = std::max(kVerticalSpacing_, node->padding());
             float next_y = max_rect.anchors().bottom_left.y - spacing;
             if (next_y < 0.0F) {
                 next_y = 0.0F;

@@ -45,7 +45,8 @@ namespace docraft::layout {
         const float kHeaderHeightRatio_ = 0.05F;
         const float kBodyHeightRatio_ = 0.90F;
         const float kFooterHeightRatio_ = 0.05F;
-        const float kDefaultNodeSpacing_ = 4.0F;
+        const float kVerticalSpacing_ = 4.0F;
+        const float kHorizontalSpacing_ = 4.0F;
 
         /**
          * @brief Execute the correct handler to compute the layout for the given node.

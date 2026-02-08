@@ -1,5 +1,6 @@
 #include "layout/docraft_layout_engine.h"
 
+#include <algorithm>
 #include <gtest/gtest.h>
 
 #include "model/docraft_blank_line.h"
@@ -32,6 +33,8 @@ namespace docraft::test::layout {
         const float kBodyHeightRatio_ = 0.90F;
         const float kFooterHeightRatio_ = 0.05F;
         const float kLineHeightOffset_ = 12.0F;
+        const float kVerticalSpacing_ = 4.0F;
+        const float kHorizontalSpacing_ = 4.0F;
     private:
         std::unique_ptr<docraft::layout::DocraftLayoutEngine> engine_;
         std::shared_ptr<DocraftDocumentContext> context_;
@@ -65,7 +68,7 @@ namespace docraft::test::layout {
         EXPECT_EQ(layout_node->children().size(), 2);
         auto layout = engine->compute_layout(layout_node);
         EXPECT_EQ(layout.width(), 150);
-        EXPECT_NEAR(layout.height(), 48.40,0.0001); //fontSize*1.2 + 30=12*1.2 +30=44.4
+        EXPECT_NEAR(layout.height(), child1->height() + kVerticalSpacing_ + child2->height(), 0.0001);
     }
     TEST_F(DocraftLayoutEngineTest, ComputeLayoutMultipleNodesHorizontalLayout) {
         auto& engine = this->engine();
@@ -85,7 +88,7 @@ namespace docraft::test::layout {
 
         EXPECT_EQ(layout_node->children().size(), 2);
         auto layout = engine->compute_layout(layout_node);
-        EXPECT_NEAR(layout.width(), 80,0.001);// text width approx 48 for "Hello" at default font size
+        EXPECT_NEAR(layout.width(), child1->width() + kHorizontalSpacing_ + child2->width(), 0.001);
         EXPECT_EQ(layout.height(), 40);// max height between text and rectangle, in this case rectangle height
     }
     TEST_F(DocraftLayoutEngineTest, ComputeLayoutInsideAnotherLayout) {
@@ -113,8 +116,8 @@ namespace docraft::test::layout {
 
         EXPECT_EQ(outer_layout->children().size(), 2);
         auto layout = engine->compute_layout(outer_layout);
-        EXPECT_EQ(layout.width(), 595); // max width between inner layout and rectangle
-        EXPECT_NEAR(layout.height(), 74,0.001); // inner layout height + rectangle height
+        EXPECT_NEAR(layout.width(), std::max(inner_layout->width(), child3->width()), 0.001);
+        EXPECT_NEAR(layout.height(), inner_layout->height() + kVerticalSpacing_ + child3->height(), 0.001);
         //Test position for each child
         EXPECT_EQ(inner_layout->position().x, 0);
         EXPECT_EQ(inner_layout->position().y, 841); //default page height
@@ -122,13 +125,13 @@ namespace docraft::test::layout {
         EXPECT_EQ(child1->position().x, 0);
         EXPECT_EQ(child1->position().y, inner_layout->anchors().top_left.y);
         //Child 2 position
-        EXPECT_EQ(child2->position().x, child1->anchors().top_right.x);
+        EXPECT_EQ(child2->position().x, child1->anchors().top_right.x + kHorizontalSpacing_);
         EXPECT_EQ(child2->position().y, child1->anchors().top_right.y);
         //Child 3 position
         EXPECT_EQ(child3->position().x, inner_layout->anchors().bottom_left.x);
-        EXPECT_EQ(child3->position().y+4, inner_layout->anchors().bottom_left.y);
+        EXPECT_EQ(child3->position().y + kVerticalSpacing_, inner_layout->anchors().bottom_left.y);
         //Test widths and heights
-        EXPECT_NEAR(inner_layout->width(), 595,0.001);//297.5 is the width of the page, inner layout should take all the available width
+        EXPECT_NEAR(inner_layout->width(), 595,0.001);//inner layout = the width of the page, inner layout should take all the available width
         EXPECT_NEAR(inner_layout->height(), 20,0.001);
 
     }
@@ -592,9 +595,10 @@ namespace docraft::test::layout {
             EXPECT_GT(root_layout->height(), 0.0F);
 
             // --- Weight distribution: panels should respect 0.25 / 0.50 / 0.25 ---
-            const float expected_left_w = page_w * 0.25F;
-            const float expected_center_w = page_w * 0.50F;
-            const float expected_right_w = page_w * 0.25F;
+            const float available_w = page_w - (2.0F * kHorizontalSpacing_);
+            const float expected_left_w = available_w * 0.25F;
+            const float expected_center_w = available_w * 0.50F;
+            const float expected_right_w = available_w * 0.25F;
 
             EXPECT_NEAR(left_panel->width(), expected_left_w, 1.0F);
             EXPECT_NEAR(center_panel->width(), expected_center_w, 1.0F);
@@ -602,8 +606,8 @@ namespace docraft::test::layout {
 
             // --- Horizontal positioning: panels should be side by side ---
             EXPECT_NEAR(left_panel->position().x, 10.0F, 0.01F);
-            EXPECT_NEAR(center_panel->position().x, left_panel->anchors().top_right.x, 1.0F);
-            EXPECT_NEAR(right_panel->position().x, center_panel->anchors().top_right.x, 1.0F);
+            EXPECT_NEAR(center_panel->position().x, left_panel->anchors().top_right.x + kHorizontalSpacing_, 1.0F);
+            EXPECT_NEAR(right_panel->position().x, center_panel->anchors().top_right.x + kHorizontalSpacing_, 1.0F);
 
             // All top-level panels should start at the same Y
             EXPECT_FLOAT_EQ(left_panel->position().y, center_panel->position().y);
@@ -618,8 +622,8 @@ namespace docraft::test::layout {
             // --- Center panel: nested horizontal inner layout ---
             ASSERT_EQ(center_inner_h->children().size(), 2U);
             // Inner A and Inner B should each get 50% of center panel width
-            EXPECT_NEAR(inner_a->width(), center_panel->width() * 0.5F, 1.0F);
-            EXPECT_NEAR(inner_b->width(), center_panel->width() * 0.5F, 1.0F);
+            EXPECT_NEAR(inner_a->width(), (center_panel->width() - kHorizontalSpacing_) * 0.5F, 1.0F);
+            EXPECT_NEAR(inner_b->width(), (center_panel->width() - kHorizontalSpacing_) * 0.5F, 1.0F);
             // Inner A should be to the left of Inner B
             EXPECT_LT(inner_a->position().x, inner_b->position().x);
 
@@ -631,8 +635,8 @@ namespace docraft::test::layout {
 
             // --- Right panel: nested horizontal with R1/R2 ---
             ASSERT_EQ(right_inner_h->children().size(), 2U);
-            EXPECT_NEAR(r1_layout->width(), right_panel->width() * 0.5F, 1.0F);
-            EXPECT_NEAR(r2_layout->width(), right_panel->width() * 0.5F, 1.0F);
+            EXPECT_NEAR(r1_layout->width(), (right_panel->width() - kHorizontalSpacing_) * 0.5F, 1.0F);
+            EXPECT_NEAR(r2_layout->width(), (right_panel->width() - kHorizontalSpacing_) * 0.5F, 1.0F);
             // R1 should be to the left of R2
             EXPECT_LT(r1_layout->position().x, r2_layout->position().x);
             // Both R rectangles should have height 10
