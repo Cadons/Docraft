@@ -1,6 +1,7 @@
 #include "layout/handler/docraft_layout_text_handler.h"
 
 #include <algorithm>
+#include <sstream>
 #include <hpdf.h>
 #include <print>
 
@@ -51,47 +52,79 @@ namespace docraft::layout::handler {
         DocraftCursor text_cursor = cursor;//cursor for the text box, start from the current global cursor
 
 
-        //Divide text into lines if necessary
-        for (size_t start = 0; start < node->text().length();)
-        {
-            //get the maximum string that fits in the current width
+        node->clear_lines(); // Recompute wrapping from scratch to avoid duplicate lines.
+
+        const float available_width = context()->available_space();
+        auto add_wrapped_word = [&](const std::string& word) {
+            if (word.empty()) {
+                return;
+            }
+            if (measure_test_width(word) <= available_width) {
+                node->add_line(std::make_shared<model::DocraftText>(word));
+                return;
+            }
+            // If a single word exceeds available width, split by characters.
+            size_t line_start = 0;
+            while (line_start < word.length()) {
+                size_t probe_end = line_start + 1;
+                size_t last_fit_end = line_start;
+                while (probe_end <= word.length()) {
+                    std::string sub_line = word.substr(line_start, probe_end - line_start);
+                    float sub_line_width = measure_test_width(sub_line);
+                    if (sub_line_width > available_width) {
+                        break;
+                    }
+                    last_fit_end = probe_end;
+                    ++probe_end;
+                }
+                if (last_fit_end == line_start) {
+                    last_fit_end = std::min(line_start + 1, word.length());
+                }
+                node->add_line(std::make_shared<model::DocraftText>(
+                    word.substr(line_start, last_fit_end - line_start)
+                ));
+                line_start = last_fit_end;
+            }
+        };
+
+        auto wrap_paragraph = [&](const std::string& paragraph) {
+            std::istringstream iss(paragraph);
+            std::string word;
+            std::string current_line;
+            while (iss >> word) {
+                if (current_line.empty()) {
+                    if (measure_test_width(word) <= available_width) {
+                        current_line = word;
+                    } else {
+                        add_wrapped_word(word);
+                    }
+                    continue;
+                }
+                std::string candidate = current_line + " " + word;
+                if (measure_test_width(candidate) <= available_width) {
+                    current_line = candidate;
+                } else {
+                    node->add_line(std::make_shared<model::DocraftText>(current_line));
+                    current_line.clear();
+                    if (measure_test_width(word) <= available_width) {
+                        current_line = word;
+                    } else {
+                        add_wrapped_word(word);
+                    }
+                }
+            }
+            if (!current_line.empty()) {
+                node->add_line(std::make_shared<model::DocraftText>(current_line));
+            }
+        };
+
+        // Split on explicit newlines, then wrap each paragraph by words.
+        for (size_t start = 0; start < node->text().length();) {
             size_t end = node->text().find('\n', start);
             if (end == std::string::npos) {
                 end = node->text().length();
             }
-            std::string line = node->text().substr(start, end - start);
-            float line_width = measure_test_width(line);
-            if (line_width > context()->available_space()) {
-                // If the line exceeds the width, break it into smaller parts
-                size_t line_start = 0;
-                while (line_start < line.length()) {
-                    size_t probe_end = line_start +1;//start probing from the next character
-                    size_t last_fit_end = line_start;
-
-                    while (probe_end <= line.length()) {
-                        std::string sub_line = line.substr(line_start, probe_end - line_start);
-                        float sub_line_width = measure_test_width(sub_line);
-
-                        if (sub_line_width > context()->available_space()) {
-                            break;
-                        }
-                        last_fit_end = probe_end;
-                        ++probe_end;
-                    }
-                    // If nothing fits (even 1 char), force progress by consuming 1 char.
-                    if (last_fit_end == line_start) {
-                        last_fit_end = std::min(line_start + 1, line.length());
-                    }
-
-                    node->add_line(std::make_shared<model::DocraftText>(
-                        line.substr(line_start, last_fit_end - line_start)
-                    ));
-                    line_start = last_fit_end;
-
-                }
-            } else {
-                node->add_line(std::make_shared<model::DocraftText>(line));
-            }
+            wrap_paragraph(node->text().substr(start, end - start));
             start = end + 1;
         }
 
@@ -119,13 +152,9 @@ namespace docraft::layout::handler {
             float line_width = measure_text_width(line);
             const bool is_last_line = (i + 1 == lines.size());
             if (node->alignment() == model::TextAlignment::kJustified) {
-                if (is_last_line) {
-                    line->set_alignment(model::TextAlignment::kLeft);
-                    line->set_width(line_width);
-                } else {
-                    line->set_alignment(model::TextAlignment::kJustified);
-                    line->set_width(context()->available_space());
-                }
+                // Stretch all lines to the full available width for visible justification.
+                line->set_alignment(model::TextAlignment::kJustified);
+                line->set_width(context()->available_space());
             } else {
                 line->set_alignment(node->alignment());
                 line->set_width(line_width);

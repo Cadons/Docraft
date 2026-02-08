@@ -123,6 +123,7 @@ namespace docraft::layout {
             const std::size_t child_count = container_node->children().size();
             float available_width_for_children = max_width;
             if (is_horizontal && child_count > 1) {
+                // Reserve fixed gaps between columns, then distribute the remaining width by weight.
                 const float total_spacing = kHorizontalSpacing_ * static_cast<float>(child_count - 1);
                 available_width_for_children = std::max(0.0F, max_width - total_spacing);
             }
@@ -147,8 +148,10 @@ namespace docraft::layout {
         node->set_width(max_rect.width());
         node->set_height(max_rect.height());
         if (cursor.direction() == DocraftCursorDirection::kHorizontal) {
+            // Advance cursor to the next column start, keeping a fixed horizontal gap.
             cursor.move_to(max_rect.anchors().top_right.x + kHorizontalSpacing_, max_rect.anchors().top_right.y);
         } else {
+            // Advance cursor down with a fixed vertical gap or per-node padding (whichever is larger).
             const float spacing = std::max(kVerticalSpacing_, node->padding());
             float next_y = max_rect.anchors().bottom_left.y - spacing;
             if (next_y < 0.0F) {

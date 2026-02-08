@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <hpdf.h>
 #include <print>
+#include <sstream>
 
 #include "generic/docraft_font_applier.h"
 #define WORD_SPACE_MAX 300
@@ -17,28 +18,37 @@ namespace docraft::renderer::painter {
                                               const std::string &text) {
         auto page = context->page();
 
+        // Use the computed line width as the target for justification.
         float max_width = current_line_->width();
         float actual_width = HPDF_Page_TextWidth(page, text.c_str());
 
         size_t spaces = std::count(text.begin(), text.end(), ' ');
 
-        if (spaces > 0 && max_width > actual_width) {
-            float extra_space = (max_width - actual_width) / static_cast<float>(spaces);
-            if (extra_space <= WORD_SPACE_MAX && extra_space >= WORD_SPACE_MIN) {
-                HPDF_Page_SetWordSpace(page, extra_space); //this set the space between words
-            }else {
-                if (extra_space > WORD_SPACE_MAX) {
-                    HPDF_Page_SetWordSpace(page, WORD_SPACE_MAX);
-                } else {
-                    HPDF_Page_SetWordSpace(page, WORD_SPACE_MIN);
-                }
-            }
+        if (spaces == 0 || max_width <= actual_width) {
+            // Fallback: no extra spacing to distribute.
+            HPDF_Page_SetTextMatrix(page, 1, 0, 0, 1, current_line_->position().x, current_line_->position().y);
+            HPDF_Page_ShowText(page, text.c_str());
+            return;
         }
 
+        // Manually distribute extra space between words for visible justification.
+        const float extra_space = (max_width - actual_width) / static_cast<float>(spaces);
+        const float space_width = HPDF_Page_TextWidth(page, " ");
+        float x = current_line_->position().x;
+        const float y = current_line_->position().y;
 
-        HPDF_Page_TextOut(page, current_line_->position().x, current_line_->position().y, text.c_str());
-
-        HPDF_Page_SetWordSpace(page, 0);
+        std::istringstream iss(text);
+        std::string word;
+        bool first = true;
+        while (iss >> word) {
+            if (!first) {
+                x += space_width + extra_space;
+            }
+            HPDF_Page_SetTextMatrix(page, 1, 0, 0, 1, x, y);
+            HPDF_Page_ShowText(page, word.c_str());
+            x += HPDF_Page_TextWidth(page, word.c_str());
+            first = false;
+        }
     }
 
     std::pair<std::pair<float, float>, std::pair<float, float> > DocraftTextPainter::render_text(
