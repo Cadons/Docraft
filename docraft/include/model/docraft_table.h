@@ -19,6 +19,7 @@ namespace docraft::model {
         void set_orientation(LayoutOrientation orientation);
         void set_column_weight(int index, float weight);
         void set_row_weight(int index, float weight);
+        void set_baseline_offset(float offset);
         void set_title(int index, const std::string &title);
         void set_titles(const std::vector<std::string> &titles);
         void set_column_weights(const std::vector<float> &weights);
@@ -44,6 +45,7 @@ namespace docraft::model {
         [[nodiscard]] std::vector<std::vector<std::shared_ptr<DocraftNode>>>content_nodes() const;
         [[nodiscard]] int last_title_node_index() const;
         [[nodiscard]] int last_content_node_index() const;
+        [[nodiscard]] float baseline_offset() const;
 
     private:
         int rows_;
@@ -55,5 +57,6 @@ namespace docraft::model {
         std::vector<std::string> titles_;
         std::vector<std::shared_ptr<DocraftText>> title_nodes_;
         std::vector<std::shared_ptr<DocraftNode>> content_nodes_;
+        float baseline_offset_ = 0.25F;
     };
 } // docraft

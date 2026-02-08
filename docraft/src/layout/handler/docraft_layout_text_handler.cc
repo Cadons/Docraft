@@ -148,6 +148,9 @@ namespace docraft::layout::handler {
             const auto& line = lines[i];
             line->set_font_name(node->font_name());
             line->set_font_size(node->font_size());
+            line->set_color(node->color());
+            line->set_style(node->style());
+            line->set_underline(node->underline());
 
             float line_width = measure_text_width(line);
             const bool is_last_line = (i + 1 == lines.size());

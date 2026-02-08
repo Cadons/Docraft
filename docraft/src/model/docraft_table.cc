@@ -48,6 +48,10 @@ namespace docraft::model {
         row_weights_[index] = weight;
     }
 
+    void DocraftTable::set_baseline_offset(const float offset) {
+        baseline_offset_ = offset;
+    }
+
     void DocraftTable::set_title(int index, const std::string &title) {
         if (index < 0 || std::cmp_greater_equal(index, titles_.size())) {
             throw std::out_of_range("Title index out of range");
@@ -172,6 +176,10 @@ namespace docraft::model {
 
     int DocraftTable::last_content_node_index() const {
         return content_nodes_.size() - 1;
+    }
+
+    float DocraftTable::baseline_offset() const {
+        return baseline_offset_;
     }
 
 #pragma endregion

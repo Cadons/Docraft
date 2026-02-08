@@ -100,6 +100,8 @@ namespace docraft::renderer::painter {
         for (const auto &line: text_node_.lines()) {
             current_line_ = line;
              context->font_applier()->apply_font(current_line_);
+            auto rgb = current_line_->color().toRGB();
+            HPDF_Page_SetRGBFill(context->page(), rgb.r, rgb.g, rgb.b);
             if (line->underline()) {
                 draw_underline(context, line->text());
             } else {

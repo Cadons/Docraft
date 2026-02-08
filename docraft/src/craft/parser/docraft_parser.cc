@@ -215,16 +215,51 @@ namespace docraft::craft::parser {
     std::shared_ptr<model::DocraftNode> DocraftTableParser::parse(const pugi::xml_node &craft_language_source) {
         auto table_node = std::make_shared<model::DocraftTable>();
 
+        if (auto baseline_attr = craft_language_source.attribute(elements::table::attribute::kBaselineOffset.data())) {
+            table_node->set_baseline_offset(baseline_attr.as_float());
+        }
+
         // handle model (next)
         // check if it has TableHeader with TableTile
         if (auto table_header = craft_language_source.child(elements::kTableHeader.data())) {
             int col_number = 0;
             std::vector<std::string> titles;
-
             for (auto title: table_header.children()) {
                 if (title.name() == std::string{elements::kTableTitle}) {
                     col_number++;
-                    table_node->add_title_node(std::make_shared<model::DocraftText>(title.child_value()));
+                    auto title_node = std::make_shared<model::DocraftText>(title.child_value());
+                    if (auto alignment_attr = title.attribute(elements::table_title::attribute::kAlignment.data())) {
+                        std::string alignment_str = alignment_attr.as_string();
+                        if (alignment_str == std::string{alignment::kLeft}) {
+                            title_node->set_alignment(model::TextAlignment::kLeft);
+                        } else if (alignment_str == std::string{alignment::kRight}) {
+                            title_node->set_alignment(model::TextAlignment::kRight);
+                        } else if (alignment_str == std::string{alignment::kJustified}) {
+                            title_node->set_alignment(model::TextAlignment::kJustified);
+                        } else {
+                            title_node->set_alignment(model::TextAlignment::kCenter);
+                        }
+                    } else {
+                        title_node->set_alignment(model::TextAlignment::kCenter);
+                    }
+                    if (auto style_attr = title.attribute(elements::table_title::attribute::kStyle.data())) {
+                        std::string style_str = style_attr.as_string();
+                        if (style_str == std::string{style::kBold}) {
+                            title_node->set_style(model::TextStyle::kBold);
+                        } else if (style_str == std::string{style::kItalic}) {
+                            title_node->set_style(model::TextStyle::kItalic);
+                        } else if (style_str == std::string{style::kBoldItalic}) {
+                            title_node->set_style(model::TextStyle::kBoldItalic);
+                        } else {
+                            title_node->set_style(model::TextStyle::kNormal);
+                        }
+                    } else {
+                        title_node->set_style(model::TextStyle::kBold);
+                    }
+                    if (auto color_attr = title.attribute(elements::table_title::attribute::kColor.data())) {
+                        title_node->set_color(get_docraft_color(color_attr));
+                    }
+                    table_node->add_title_node(title_node);
                     titles.emplace_back(title.child_value());
                 } else {
                     throw std::invalid_argument(std::string(title.name()) + " cannot be placed in a table header");
