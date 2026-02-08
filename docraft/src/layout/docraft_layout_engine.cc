@@ -14,9 +14,12 @@
 #include "utils/docraft_logger.h"
 
 namespace docraft::layout {
-    DocraftLayoutEngine::DocraftLayoutEngine(const std::shared_ptr<DocraftDocumentContext> &context) : context_(context) {
+    DocraftLayoutEngine::DocraftLayoutEngine(const std::shared_ptr<DocraftDocumentContext> &context, const bool reset_cursor)
+        : context_(context) {
         configure_handlers(context);
-        context->cursor().move_to(0, context->page_height());
+        if (reset_cursor && context) {
+            context->cursor().move_to(0, context->page_height());
+        }
     }
 
     void DocraftLayoutEngine::
@@ -61,9 +64,10 @@ namespace docraft::layout {
     }
 
     bool DocraftLayoutEngine::compute_node(const std::shared_ptr<model::DocraftNode> &node,
-                                           model::DocraftTransform *box) const {
+                                           model::DocraftTransform *box,
+                                           DocraftCursor& cursor) const {
         for (const auto &handler: handlers_) {
-            if (handler->handle(node, box)) {
+            if (handler->handle(node, box, cursor)) {
                 return true;
             }
         }
@@ -72,8 +76,13 @@ namespace docraft::layout {
 
 
     model::DocraftTransform DocraftLayoutEngine::compute_layout(const std::shared_ptr<model::DocraftNode> &node) {
+        auto& cursor = context()->cursor();
+        return compute_layout(node, cursor);
+    }
+
+    model::DocraftTransform DocraftLayoutEngine::compute_layout(const std::shared_ptr<model::DocraftNode> &node,
+                                                                DocraftCursor& cursor) {
         std::vector<model::DocraftTransform> child_boxes;
-        auto &cursor = context()->cursor();
         float max_width = context()->available_space();
 
         if (auto section_node = std::dynamic_pointer_cast<model::DocraftSection>(node)) {
@@ -111,12 +120,12 @@ namespace docraft::layout {
             }
             const float saved_available_space = context()->available_space();
             for (const auto &child: container_node->children()) {
-                if (context()->cursor().direction()==DocraftCursorDirection::kHorizontal) {
-                    context()->set_current_rect_width(max_width*child->weight());
+                if (cursor.direction() == DocraftCursorDirection::kHorizontal) {
+                    context()->set_current_rect_width(max_width * child->weight());
                 } else {
                     context()->set_current_rect_width(max_width);
                 }
-                auto child_box = compute_layout(child);
+                auto child_box = compute_layout(child, cursor);
                 child_boxes.emplace_back(child_box);
             }
             context()->set_current_rect_width(saved_available_space);
@@ -124,7 +133,7 @@ namespace docraft::layout {
 
         auto max_rect = compute_max_rect(child_boxes);
 
-        if (!compute_node(node, &max_rect)) {
+        if (!compute_node(node, &max_rect, cursor)) {
             throw std::runtime_error("compute node failed");
         }
         node->set_position(max_rect.position());
@@ -166,7 +175,7 @@ namespace docraft::layout {
         //Layout header
         if (header) {
             context()->cursor().move_to(0, context()->page_height());
-            (void)compute_layout(header);
+            (void)compute_layout(header, context()->cursor());
             header->set_position({.x = header->margin_left(), .y = context()->page_height()});
             header->set_width(compute_width(header));
             header->set_height(context()->page_height()*kHeaderHeightRatio_);
@@ -178,7 +187,7 @@ namespace docraft::layout {
                 body_start_y = header->anchors().bottom_left.y;
             }
             context()->cursor().move_to(0, body_start_y - kLineHeightOffset);
-            compute_layout(body);
+            compute_layout(body, context()->cursor());
             body->set_position({.x = body->margin_left(), .y = body_start_y});
             body->set_width(compute_width(body));
             body->set_height(context()->page_height()*kBodyHeightRatio_);
@@ -190,7 +199,7 @@ namespace docraft::layout {
                 footer_start_y = body->anchors().bottom_left.y;
             }
             context()->cursor().move_to(0, footer_start_y - kLineHeightOffset);
-            compute_layout(footer);
+            compute_layout(footer, context()->cursor());
             footer->set_position({.x = footer->margin_left(), .y = footer_start_y});
             footer->set_width(compute_width(footer));
             footer->set_height(context()->page_height()*kFooterHeightRatio_);

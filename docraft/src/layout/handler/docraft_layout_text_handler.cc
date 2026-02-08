@@ -40,13 +40,15 @@ namespace docraft::layout::handler {
         return HPDF_Page_TextWidth(page, text.c_str());
     }
 
-    void DocraftLayoutTextHandler::compute(const std::shared_ptr<model::DocraftText> &node, model::DocraftTransform* box) {
+    void DocraftLayoutTextHandler::compute(const std::shared_ptr<model::DocraftText> &node,
+                                           model::DocraftTransform* box,
+                                           DocraftCursor& cursor) {
         filter_text(node);
         generic::DocraftFontApplier font_applier(context());
         font_applier.apply_font(node);
-        auto global_cursor= context()->cursor();
+        auto global_cursor = cursor;
         node->set_position({.x=global_cursor.x(), .y=global_cursor.y()});
-        DocraftCursor cursor= context()->cursor();//cursor for the text box, start from the current global cursor
+        DocraftCursor text_cursor = cursor;//cursor for the text box, start from the current global cursor
 
 
         //Divide text into lines if necessary
@@ -102,11 +104,11 @@ namespace docraft::layout::handler {
         // Always move to the first baseline below the current cursor Y,
         // but clamp so the first line doesn't get clipped above the page.
         const float kTopSafe = context()->page_height() - line_height;
-        float first_baseline_y = cursor.y() - line_height;
+        float first_baseline_y = text_cursor.y() - line_height;
         if (first_baseline_y > kTopSafe) {
             first_baseline_y = kTopSafe;
         }
-        cursor.move_to(cursor.x(), first_baseline_y);
+        text_cursor.move_to(text_cursor.x(), first_baseline_y);
 
         for (const auto& line : node->lines()) {
             line->set_font_name(node->font_name());
@@ -118,23 +120,23 @@ namespace docraft::layout::handler {
 
             switch (node->alignment()) {
                 case model::TextAlignment::kLeft:
-                    line->set_position({.x = cursor.x(), .y = cursor.y()});
+                    line->set_position({.x = text_cursor.x(), .y = text_cursor.y()});
                     break;
                 case model::TextAlignment::kCenter:
-                    line->set_position({.x = cursor.x() + ((context()->available_space() - line_width) / 2), .y = cursor.y()});
+                    line->set_position({.x = text_cursor.x() + ((context()->available_space() - line_width) / 2), .y = text_cursor.y()});
                     break;
                 case model::TextAlignment::kRight:
-                    line->set_position({.x = cursor.x() + (context()->available_space() - line_width), .y = cursor.y()});
+                    line->set_position({.x = text_cursor.x() + (context()->available_space() - line_width), .y = text_cursor.y()});
                     break;
                 case model::TextAlignment::kJustified:
-                    line->set_position({.x = cursor.x(), .y = cursor.y()});
+                    line->set_position({.x = text_cursor.x(), .y = text_cursor.y()});
                     break;
             }
 
             total_height += line->height();
             total_width = std::max(total_width, line_width);
 
-            cursor.move_to(cursor.x(), std::max(cursor.y() - line->height(),line->height()));
+            text_cursor.move_to(text_cursor.x(), std::max(text_cursor.y() - line->height(),line->height()));
         }
 
         node->set_position({.x = global_cursor.x(), .y = global_cursor.y()});
@@ -153,15 +155,16 @@ namespace docraft::layout::handler {
         if (box_y<0.0F){
             box_y=0.0F;
         }
-        context()->cursor().move_to(global_cursor.x(), box_y);
+        cursor.move_to(global_cursor.x(), box_y);
 
         LOG_DEBUG(node->text() + ":" + node->to_string());
     }
 
     bool DocraftLayoutTextHandler::handle(const std::shared_ptr<model::DocraftNode> &request,
-                                          model::DocraftTransform * result) {
+                                          model::DocraftTransform * result,
+                                          DocraftCursor& cursor) {
         if (auto text_node = std::dynamic_pointer_cast<model::DocraftText>(request)) {
-            compute(text_node,result);
+            compute(text_node,result, cursor);
             return true;
         }
         return false;

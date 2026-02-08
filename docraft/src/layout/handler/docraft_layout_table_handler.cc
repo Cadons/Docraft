@@ -71,12 +71,13 @@ namespace docraft::layout::handler {
          */
         void layout_horizontal_table(const std::shared_ptr<model::DocraftTable> &node,
                                      model::DocraftTransform *box,
-                                     const std::shared_ptr<DocraftDocumentContext> &context) {
-            DocraftCursor table_cursor = {context->cursor()};//Use a custom cursor to not affect the main one
+                                     const std::shared_ptr<DocraftDocumentContext> &context,
+                                     DocraftCursor& cursor) {
+            DocraftCursor table_cursor = cursor;//Use a custom cursor to not affect the main one
             const float fixed_x = table_cursor.x();
             const float fixed_y = table_cursor.y()-node->padding();//Adjust for some top padding
 
-            docraft::layout::DocraftLayoutEngine engine(context);
+            docraft::layout::DocraftLayoutEngine engine(context, false);
 
             const auto &titles = node->titles();
             const std::size_t cols = titles.size();
@@ -92,7 +93,7 @@ namespace docraft::layout::handler {
                 const float saved_x = table_cursor.x();
                 const float saved_y = table_cursor.y();
                 table_cursor.move_to(0.0F, context->page_height());
-                (void) engine.compute_layout(title_node);
+                (void) engine.compute_layout(title_node, table_cursor);
                 table_cursor.move_to(saved_x, saved_y);
 
                 natural_widths[i] = title_node->width();
@@ -166,7 +167,7 @@ namespace docraft::layout::handler {
                     const float saved_x = table_cursor.x();
                     const float saved_y = table_cursor.y();
                     table_cursor.move_to(col_lefts[c], y);
-                    (void) engine.compute_layout(cell);
+                    (void) engine.compute_layout(cell, table_cursor);
                     table_cursor.move_to(saved_x, saved_y);
 
                     row_height = std::max(row_height, cell->height());
@@ -200,12 +201,13 @@ namespace docraft::layout::handler {
 
         void layout_vertical_table(const std::shared_ptr<model::DocraftTable> &node,
                                    model::DocraftTransform *box,
-                                   const std::shared_ptr<DocraftDocumentContext> &context) {
-            DocraftCursor table_cursor = {context->cursor()};//Use a custom cursor to not affect the main one
+                                   const std::shared_ptr<DocraftDocumentContext> &context,
+                                   DocraftCursor& cursor) {
+            DocraftCursor table_cursor = cursor;//Use a custom cursor to not affect the main one
             const float fixed_x = table_cursor.x();
             const float fixed_y = table_cursor.y();
 
-            docraft::layout::DocraftLayoutEngine engine(context);
+            docraft::layout::DocraftLayoutEngine engine(context, false);
 
             const std::size_t rows = node->titles().size();
             ensure_title_nodes(node);
@@ -227,7 +229,7 @@ namespace docraft::layout::handler {
                 const float saved_x = table_cursor.x();
                 const float saved_y = table_cursor.y();
                 table_cursor.move_to(fixed_x, context->page_height());
-                (void) engine.compute_layout(title_node);
+                (void) engine.compute_layout(title_node, table_cursor);
                 table_cursor.move_to(saved_x, saved_y);
 
                 title_col_natural_width = std::max(title_col_natural_width, title_node->width());
@@ -272,7 +274,7 @@ namespace docraft::layout::handler {
                     const float saved_x = table_cursor.x();
                     const float saved_y = table_cursor.y();
                     table_cursor.move_to(fixed_x + title_col_width + (static_cast<float>(vc) * value_col_width), y);
-                    (void) engine.compute_layout(cell);
+                    (void) engine.compute_layout(cell, table_cursor);
                     table_cursor.move_to(saved_x, saved_y);
 
                     row_height = std::max(row_height, cell->height());
@@ -317,13 +319,13 @@ namespace docraft::layout::handler {
     }
 
     void DocraftLayoutTableHandler::compute(const std::shared_ptr<model::DocraftTable> &node,
-                                            model::DocraftTransform *box) {
+                                            model::DocraftTransform *box,
+                                            DocraftCursor& cursor) {
         if (!node) {
             throw std::invalid_argument("table node is null");
         }
 
         if (node->titles().empty()) {
-            auto &cursor = context()->cursor();
             node->set_position({.x = cursor.x(), .y = cursor.y()});
             node->set_width(0.0F);
             node->set_height(0.0F);
@@ -337,10 +339,10 @@ namespace docraft::layout::handler {
 
         switch (node->orientation()) {
             case model::LayoutOrientation::kHorizontal:
-                layout_horizontal_table(node, box, context());
+                layout_horizontal_table(node, box, context(), cursor);
                 break;
             case model::LayoutOrientation::kVertical:
-                layout_vertical_table(node, box, context());
+                layout_vertical_table(node, box, context(), cursor);
                 break;
             default:
                 throw std::runtime_error("unsupported table orientation");
@@ -360,9 +362,10 @@ namespace docraft::layout::handler {
     }
 
     bool DocraftLayoutTableHandler::handle(const std::shared_ptr<model::DocraftNode> &request,
-                                           model::DocraftTransform *result) {
+                                           model::DocraftTransform *result,
+                                           DocraftCursor& cursor) {
         if (auto table_node = std::dynamic_pointer_cast<model::DocraftTable>(request)) {
-            compute(table_node, result);
+            compute(table_node, result, cursor);
             return true;
         }
         return false;

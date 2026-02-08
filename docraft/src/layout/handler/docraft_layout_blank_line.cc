@@ -1,7 +1,9 @@
 #include "layout/handler/docraft_layout_blank_line.h"
 
 namespace docraft::layout::handler {
-    void DocraftLayoutBlankLine::compute(const std::shared_ptr<model::DocraftBlankLine> &node, model::DocraftTransform* box) {
+    void DocraftLayoutBlankLine::compute(const std::shared_ptr<model::DocraftBlankLine> &node,
+                                         model::DocraftTransform* box,
+                                         DocraftCursor& cursor) {
         if (box == nullptr) {
             throw std::invalid_argument("box is null");
         }
@@ -12,14 +14,15 @@ namespace docraft::layout::handler {
         } else {
             box->set_height(1.0F); //default height for blank line
         }
-        box->set_position({.x=context()->cursor().x(), .y=context()->cursor().y()});
+        box->set_position({.x=cursor.x(), .y=cursor.y()});
 
     }
 
     bool DocraftLayoutBlankLine::handle(const std::shared_ptr<model::DocraftNode> &request,
-                                        model::DocraftTransform * result) {
+                                        model::DocraftTransform * result,
+                                        DocraftCursor& cursor) {
         if (auto blank_line_node = std::dynamic_pointer_cast<model::DocraftBlankLine>(request)) {
-            compute(blank_line_node, result);
+            compute(blank_line_node, result, cursor);
             return true;
         }
         return false;

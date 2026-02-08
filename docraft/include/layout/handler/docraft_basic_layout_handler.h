@@ -8,8 +8,8 @@ namespace docraft::layout::handler {
     public:
         using AbstractDocraftLayoutHandler::AbstractDocraftLayoutHandler;
 
-        void compute(const std::shared_ptr<model::DocraftNode> &node, model::DocraftTransform* box) override;
+        void compute(const std::shared_ptr<model::DocraftNode> &node, model::DocraftTransform* box, DocraftCursor& cursor) override;
 
-        bool handle(const std::shared_ptr<model::DocraftNode> &request, model::DocraftTransform *result) override;
+        bool handle(const std::shared_ptr<model::DocraftNode> &request, model::DocraftTransform *result, DocraftCursor& cursor) override;
     };
 } // docraft

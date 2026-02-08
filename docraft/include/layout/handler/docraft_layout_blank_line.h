@@ -7,8 +7,8 @@ namespace docraft::layout::handler {
     class DocraftLayoutBlankLine :public AbstractDocraftLayoutHandler<model::DocraftBlankLine> {
     public:
         using AbstractDocraftLayoutHandler<model::DocraftBlankLine>::AbstractDocraftLayoutHandler;
-        void compute(const std::shared_ptr<model::DocraftBlankLine> &node, model::DocraftTransform* box) override;
+        void compute(const std::shared_ptr<model::DocraftBlankLine> &node, model::DocraftTransform* box, DocraftCursor& cursor) override;
 
-        bool handle(const std::shared_ptr<model::DocraftNode> &request, model::DocraftTransform *result) override;
+        bool handle(const std::shared_ptr<model::DocraftNode> &request, model::DocraftTransform *result, DocraftCursor& cursor) override;
     };
 } // docraft

@@ -7,12 +7,13 @@
 
 namespace docraft::layout::handler {
     void DocraftBasicLayoutHandler::compute(const std::shared_ptr<model::DocraftNode> &node,
-                                            model::DocraftTransform *box) {
+                                            model::DocraftTransform *box,
+                                            DocraftCursor& cursor) {
         if (box == nullptr) {
             throw std::invalid_argument("box is null");
         }
 
-        box->set_position({.x=context_->cursor().x(), .y=context()->cursor().y()});
+        box->set_position({.x=cursor.x(), .y=cursor.y()});
 
         if (context()->available_space()<node->width()||node->width()==0) {
             //put the node in the available space
@@ -24,8 +25,9 @@ namespace docraft::layout::handler {
     }
 
     bool DocraftBasicLayoutHandler::handle(const std::shared_ptr<model::DocraftNode> &request,
-                                           model::DocraftTransform *result) {
-        compute(request, result);
+                                           model::DocraftTransform *result,
+                                           DocraftCursor& cursor) {
+        compute(request, result, cursor);
         return true;
     }
 } // docraft

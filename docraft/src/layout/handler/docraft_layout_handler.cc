@@ -6,7 +6,8 @@
 
 namespace docraft::layout::handler {
     void DocraftLayoutHandler::compute(const std::shared_ptr<model::DocraftLayout> &node,
-                                       model::DocraftTransform *box) {
+                                       model::DocraftTransform *box,
+                                       DocraftCursor& cursor) {
         if (box == nullptr) {
             throw std::invalid_argument("box is null");
         }
@@ -15,13 +16,14 @@ namespace docraft::layout::handler {
             node->set_width(context()->available_space());
             box->set_width(node->width());
         }
-        context()->cursor().pop_direction(); //remove layout direction
+        cursor.pop_direction(); //remove layout direction
     }
 
     bool DocraftLayoutHandler::handle(const std::shared_ptr<model::DocraftNode> &request,
-                                      model::DocraftTransform *result) {
+                                      model::DocraftTransform *result,
+                                      DocraftCursor& cursor) {
         if (auto layout_node = std::dynamic_pointer_cast<model::DocraftLayout>(request)) {
-            compute(layout_node, result);
+            compute(layout_node, result, cursor);
             return true;
         }
         return false;

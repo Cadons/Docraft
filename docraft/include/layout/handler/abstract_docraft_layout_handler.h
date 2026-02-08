@@ -18,7 +18,7 @@ namespace docraft::layout::handler {
                 throw std::invalid_argument("context is null");
             }
         }
-        virtual void compute(const std::shared_ptr<T>& node, model::DocraftTransform* box) =0;
+        virtual void compute(const std::shared_ptr<T>& node, model::DocraftTransform* box, DocraftCursor& cursor) =0;
         std::shared_ptr<DocraftDocumentContext> context() const {
             return context_;
         }

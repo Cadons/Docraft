@@ -8,11 +8,11 @@ namespace docraft::layout::handler {
     class DocraftLayoutTextHandler : public AbstractDocraftLayoutHandler<model::DocraftText> {
     public:
 
-        void compute(const std::shared_ptr<model::DocraftText>& node, model::DocraftTransform* box) override;
+        void compute(const std::shared_ptr<model::DocraftText>& node, model::DocraftTransform* box, DocraftCursor& cursor) override;
 
         using AbstractDocraftLayoutHandler::AbstractDocraftLayoutHandler;
 
-        bool handle(const std::shared_ptr<model::DocraftNode> &request, model::DocraftTransform *result) override;
+        bool handle(const std::shared_ptr<model::DocraftNode> &request, model::DocraftTransform *result, DocraftCursor& cursor) override;
 
     protected:
         static void filter_text(const std::shared_ptr<model::DocraftText>& node);
