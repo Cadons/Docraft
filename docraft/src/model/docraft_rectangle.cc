@@ -6,7 +6,7 @@
 #include "renderer/docraft_renderer.h"
 
 namespace docraft::model {
-    void DocraftRectangle::draw(const std::shared_ptr<DocraftPDFContext> &context) {
+    void DocraftRectangle::draw(const std::shared_ptr<DocraftDocumentContext> &context) {
         std::cout << "draw rectangle" << std::endl;
         context->renderer()->render_rectangle(*this);
         draw_children(context);

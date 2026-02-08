@@ -18,6 +18,6 @@ namespace docraft::renderer {
 
         void render_blank_line(const model::DocraftBlankLine &blank_line_node) override;
 
-        static void draw_line(HPDF_Page page, model::Point start, model::Point end, DocraftColor color = DocraftColor(0,0,0,1));
+        static void draw_line(HPDF_Page page, model::DocraftPoint start, model::DocraftPoint end, DocraftColor color = DocraftColor(0,0,0,1));
     };
 } // renderer

@@ -1,16 +1,17 @@
 #include "layout/handler/docraft_layout_text_handler.h"
 
+#include <algorithm>
+#include <sstream>
 #include <hpdf.h>
 #include <print>
 
 #include "generic/docraft_font_applier.h"
 #include "model/docraft_layout.h"
+#include "utils/docraft_logger.h"
 
 
 namespace docraft::layout::handler {
-
-
-    void DocraftLayoutTextHandler::filter_text(std::shared_ptr<model::DocraftText> node) {
+    void DocraftLayoutTextHandler::filter_text(const std::shared_ptr<model::DocraftText>& node) {
         // Remove new line characters
         std::string filtered_text;
         for (char c: node->text()) {
@@ -21,111 +22,187 @@ namespace docraft::layout::handler {
         node->set_text(filtered_text);
     }
 
-    void DocraftLayoutTextHandler::compute(const std::shared_ptr<model::DocraftText>& node) {
-        auto &cursor = context()->cursor();
+    float DocraftLayoutTextHandler::measure_text_width(const std::shared_ptr<model::DocraftText> &node) const {
         auto *page = context()->page();
-        auto *pdf = context()->pdf_doc();
-
-        filter_text(node);
-        const float max_width = context()->current_rect_width();
-        const float line_height = node->font_size() * 1.2F; // line height factor
-        std::string remaining_text = node->text();
-         context()->font_applier()->apply_font(node);
-        float total_height = 0.0F;
-        float total_width = 0.0F;
-        while (!remaining_text.empty()) {
-            // compute how much space is left in the current line
-            float available_width = max_width;
-
-            if (available_width <= node->font_size() * 0.5F) {
-                // if no space create a new line
-                cursor.reset_x();
-                cursor.move_to(cursor.x(), cursor.y() - line_height);
-                available_width = max_width;
-            }
-            //Measure how many letters can be placed in that space
-            // HPDF_TRUE enable word breaking
-            HPDF_UINT measured_chars = HPDF_Page_MeasureText(page, remaining_text.c_str(),
-                                                             available_width - cursor.offset_x(), HPDF_TRUE,
-                                                             nullptr);
-
-
-            std::string current_line = remaining_text.substr(0, measured_chars);
-            if (measured_chars==0) {
-                break;
-            }
-            float position_x = cursor.x();
-
-            switch (node->alignment()) {
-                case model::TextAlignment::kCenter: {
-                    float actual_width = HPDF_Page_TextWidth(page, current_line.c_str()) + cursor.offset_x();
-                    float centered_x = cursor.offset_x() + ((max_width - actual_width) / 2.0F);
-                    position_x = centered_x;
-                    break;
-                }
-                case model::TextAlignment::kRight: {
-                    float text_width = HPDF_Page_TextWidth(page, current_line.c_str()) + (2 * cursor.offset_x());
-                    cursor.reset_x();
-                    float start_x = cursor.x() + (max_width - text_width);
-                    position_x = start_x;
-                    break;
-                }
-
-                case model::TextAlignment::kLeft:
-                default:
-
-
-                    break;
-            }
-            // Update the cursor
-            float actual_width = HPDF_Page_TextWidth(page, current_line.c_str());
-            if (!remaining_text.empty()) {
-                //If there is other text return a new line
-                cursor.reset_x();
-                if (cursor.y()< line_height) {
-                    //avoid going out of the page
-                    cursor.move_to(position_x, line_height);
-                }else {
-                    cursor.move_to(position_x, cursor.y() - line_height);
-                }
-            } else {
-                //if text is ended move cursor at the end of the text
-                cursor.move_x(position_x+ actual_width + cursor.offset_x());
-            }
-            remaining_text.erase(0, measured_chars);
-
-
-            // Remove spaces at the beginning of the line if the cursor is near the left margin
-            if (current_line.starts_with(' ') && cursor.x() <= cursor.offset_x() + 1.0F) {
-                current_line.erase(0, 1);
-            }
-            //add text line
-            auto line = std::make_shared<model::DocraftText>(*node);
-            line->set_text(current_line);
-            line->set_width(HPDF_Page_TextWidth(page, current_line.c_str())+node->padding());
-            line->set_height(line_height+node->padding());
-            set_node_position(line);
-            node->add_line(line);
-            total_height += line->height();
-            total_width = std::max(total_width, actual_width);
-            set_node_transform_box(line);
+        if (!page) {
+            throw std::runtime_error("PDF page is not initialized in context");
         }
-        node->set_height(total_height);
-        node->set_width(total_width);
-        //For debug
-        for (const auto &line: node->lines()) {
-            std::print("Text Node ID {} drawn at ({}, {}), size: {}x{}\n", line->id(), line->x(), line->y(),
-                       line->width(), line->height());
-        }
+        generic::DocraftFontApplier font_applier(context());
+        HPDF_Font font = HPDF_GetFont(context()->pdf_doc(),font_applier.get_font_registred_name(node->font_name()) , nullptr);
+        HPDF_Page_SetFontAndSize(page, font, node->font_size());
+        return HPDF_Page_TextWidth(page, node->text().c_str());
     }
 
-    bool DocraftLayoutTextHandler::handle(const std::shared_ptr<model::DocraftNode> request) {
-        if (auto text_node=std::dynamic_pointer_cast<model::DocraftText>(request)) {
-            compute(text_node);
-            if (text_node->text().empty()) {
-                text_node->set_height(text_node->font_size() * 1.2F); // set minimum height for empty text
+    float DocraftLayoutTextHandler::measure_test_width(const std::string &text) const {
+        auto *page = context()->page();
+        if (!page) {
+            throw std::runtime_error("PDF page is not initialized in context");
+        }
+        return HPDF_Page_TextWidth(page, text.c_str());
+    }
+
+    void DocraftLayoutTextHandler::compute(const std::shared_ptr<model::DocraftText> &node,
+                                           model::DocraftTransform* box,
+                                           DocraftCursor& cursor) {
+        filter_text(node);
+        generic::DocraftFontApplier font_applier(context());
+        font_applier.apply_font(node);
+        auto global_cursor = cursor;
+        node->set_position({.x=global_cursor.x(), .y=global_cursor.y()});
+        DocraftCursor text_cursor = cursor;//cursor for the text box, start from the current global cursor
+
+
+        node->clear_lines(); // Recompute wrapping from scratch to avoid duplicate lines.
+
+        const float available_width = context()->available_space();
+        auto add_wrapped_word = [&](const std::string& word) {
+            if (word.empty()) {
+                return;
             }
-            set_node_transform_box(text_node);
+            if (measure_test_width(word) <= available_width) {
+                node->add_line(std::make_shared<model::DocraftText>(word));
+                return;
+            }
+            // If a single word exceeds available width, split by characters.
+            size_t line_start = 0;
+            while (line_start < word.length()) {
+                size_t probe_end = line_start + 1;
+                size_t last_fit_end = line_start;
+                while (probe_end <= word.length()) {
+                    std::string sub_line = word.substr(line_start, probe_end - line_start);
+                    float sub_line_width = measure_test_width(sub_line);
+                    if (sub_line_width > available_width) {
+                        break;
+                    }
+                    last_fit_end = probe_end;
+                    ++probe_end;
+                }
+                if (last_fit_end == line_start) {
+                    last_fit_end = std::min(line_start + 1, word.length());
+                }
+                node->add_line(std::make_shared<model::DocraftText>(
+                    word.substr(line_start, last_fit_end - line_start)
+                ));
+                line_start = last_fit_end;
+            }
+        };
+
+        auto wrap_paragraph = [&](const std::string& paragraph) {
+            std::istringstream iss(paragraph);
+            std::string word;
+            std::string current_line;
+            while (iss >> word) {
+                if (current_line.empty()) {
+                    if (measure_test_width(word) <= available_width) {
+                        current_line = word;
+                    } else {
+                        add_wrapped_word(word);
+                    }
+                    continue;
+                }
+                std::string candidate = current_line + " " + word;
+                if (measure_test_width(candidate) <= available_width) {
+                    current_line = candidate;
+                } else {
+                    node->add_line(std::make_shared<model::DocraftText>(current_line));
+                    current_line.clear();
+                    if (measure_test_width(word) <= available_width) {
+                        current_line = word;
+                    } else {
+                        add_wrapped_word(word);
+                    }
+                }
+            }
+            if (!current_line.empty()) {
+                node->add_line(std::make_shared<model::DocraftText>(current_line));
+            }
+        };
+
+        // Split on explicit newlines, then wrap each paragraph by words.
+        for (size_t start = 0; start < node->text().length();) {
+            size_t end = node->text().find('\n', start);
+            if (end == std::string::npos) {
+                end = node->text().length();
+            }
+            wrap_paragraph(node->text().substr(start, end - start));
+            start = end + 1;
+        }
+
+        //Compute position for each line
+ float total_height = 0.0F;
+        float total_width = 0.0F;
+
+        const float line_height = node->font_size() * interline_space_;
+
+        // Always move to the first baseline below the current cursor Y,
+        // but clamp so the first line doesn't get clipped above the page.
+        const float kTopSafe = context()->page_height() - line_height;
+        float first_baseline_y = text_cursor.y() - line_height;
+        if (first_baseline_y > kTopSafe) {
+            first_baseline_y = kTopSafe;
+        }
+        text_cursor.move_to(text_cursor.x(), first_baseline_y);
+
+        const auto lines = node->lines();
+        for (std::size_t i = 0; i < lines.size(); ++i) {
+            const auto& line = lines[i];
+            line->set_font_name(node->font_name());
+            line->set_font_size(node->font_size());
+            line->set_color(node->color());
+            line->set_style(node->style());
+            line->set_underline(node->underline());
+
+            float line_width = measure_text_width(line);
+            const bool is_last_line = (i + 1 == lines.size());
+            if (node->alignment() == model::TextAlignment::kJustified) {
+                // Stretch all lines to the full available width for visible justification.
+                line->set_alignment(model::TextAlignment::kJustified);
+                line->set_width(context()->available_space());
+            } else {
+                line->set_alignment(node->alignment());
+                line->set_width(line_width);
+            }
+            line->set_height(line_height);
+
+            switch (line->alignment()) {
+                case model::TextAlignment::kLeft:
+                    line->set_position({.x = text_cursor.x(), .y = text_cursor.y()});
+                    break;
+                case model::TextAlignment::kCenter:
+                    line->set_position({.x = text_cursor.x() + ((context()->available_space() - line_width) / 2), .y = text_cursor.y()});
+                    break;
+                case model::TextAlignment::kRight:
+                    line->set_position({.x = text_cursor.x() + (context()->available_space() - line_width), .y = text_cursor.y()});
+                    break;
+                case model::TextAlignment::kJustified:
+                    line->set_position({.x = text_cursor.x(), .y = text_cursor.y()});
+                    break;
+            }
+
+            total_height += line->height();
+            total_width = std::max(total_width, line->width());
+
+            text_cursor.move_to(text_cursor.x(), std::max(text_cursor.y() - line->height(),line->height()));
+        }
+
+        node->set_position({.x = global_cursor.x(), .y = global_cursor.y()});
+        node->set_height(total_height);
+        node->set_width(total_width);
+
+        if (box) {
+            box->set_position({.x = node->position().x, .y = node->position().y});
+            box->set_width(node->width());
+            box->set_height(node->height());
+        }
+
+        LOG_DEBUG(node->text() + ":" + node->to_string());
+    }
+
+    bool DocraftLayoutTextHandler::handle(const std::shared_ptr<model::DocraftNode> &request,
+                                          model::DocraftTransform * result,
+                                          DocraftCursor& cursor) {
+        if (auto text_node = std::dynamic_pointer_cast<model::DocraftText>(request)) {
+            compute(text_node,result, cursor);
             return true;
         }
         return false;

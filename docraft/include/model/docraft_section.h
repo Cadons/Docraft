@@ -26,7 +26,7 @@ namespace docraft::model {
         float margins_ = 0.0F;
         float margin_top_ = 0.0F;
         float margin_bottom_ = 0.0F;
-        float margin_left_ = 0.0F;
-        float margin_right_ = 0.0F;
+        float margin_left_ = 10.0F;
+        float margin_right_ = 10.0F;
     };
 } // Docraft

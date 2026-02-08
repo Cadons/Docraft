@@ -54,6 +54,15 @@ namespace docraft::craft {
         }
         namespace table::attribute {
             constexpr string kModel = "model";
+            constexpr string kBaselineOffset = "baseline_offset";
+        }
+        namespace table_header::attribute {
+            constexpr string kColor = "color";
+        }
+        namespace table_title::attribute {
+            constexpr string kAlignment = "alignment";
+            constexpr string kStyle = "style";
+            constexpr string kColor = "color";
         }
         namespace layout::attribute {
             constexpr string kOrientation = "orientation";

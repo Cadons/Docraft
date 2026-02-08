@@ -2,7 +2,7 @@
 #include <vector>
 #include <memory>
 
-#include "docraft_pdf_context.h"
+#include "docraft_document_context.h"
 #include "model/docraft_node.h"
 namespace docraft {
     class DocraftDocument {
@@ -14,7 +14,7 @@ namespace docraft {
         void set_document_title(const std::string &document_title);
         std::string document_title();
     private:
-        std::shared_ptr<DocraftPDFContext> pdf_context_;
+        std::shared_ptr<DocraftDocumentContext> pdf_context_;
         std::string document_title_;
         std::vector<std::shared_ptr<model::DocraftNode>> dom_;
     };

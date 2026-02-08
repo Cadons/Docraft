@@ -26,7 +26,7 @@ namespace docraft::model {
         explicit DocraftText(const std::string& text);
         DocraftText(const DocraftText& node) = default;
         ~DocraftText() override = default;
-        void draw(const std::shared_ptr<DocraftPDFContext>& context) override;
+        void draw(const std::shared_ptr<DocraftDocumentContext>& context) override;
 
         //getter
         [[nodiscard]] const std::string &text() const;

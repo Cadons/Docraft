@@ -23,7 +23,7 @@ namespace docraft::model {
         return children_;
     }
 
-    void DocraftChildrenContainerNode::draw_children(const std::shared_ptr<DocraftPDFContext> &context) const {
+    void DocraftChildrenContainerNode::draw_children(const std::shared_ptr<DocraftDocumentContext> &context) const {
         for (const auto &child: children()) {
             child->draw(context);
         }
@@ -39,13 +39,13 @@ namespace docraft::model {
 
     void DocraftChildrenContainerNode::set_x_for_children(float x) {
         for (auto &child: children_) {
-            child->set_x(x);
+         //   child->set_x(x);
         }
     }
 
     void DocraftChildrenContainerNode::set_y_for_children(float y) {
         for (auto &child: children_) {
-            child->set_y(y);
+        //    child->set_y(y);
         }
     }
 

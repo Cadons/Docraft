@@ -13,7 +13,7 @@ namespace docraft::model {
                 DocraftImage(const DocraftImage &node) = default;
                 ~DocraftImage() override = default;
                 explicit DocraftImage(DocraftImage *node);
-                void draw(const std::shared_ptr<DocraftPDFContext> &context) override;
+                void draw(const std::shared_ptr<DocraftDocumentContext> &context) override;
                 void set_path(const std::string &path);
 
                 static std::pair<float, float> get_image_dimensions(const std::string &path, ImageFormat format);

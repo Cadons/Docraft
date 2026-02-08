@@ -1,4 +1,4 @@
-#include "docraft_pdf_context.h"
+#include "docraft_document_context.h"
 #include <hpdf.h>
 #include <iostream>
 #include <sstream>
@@ -145,7 +145,7 @@ static void error_handler(HPDF_STATUS error_no, HPDF_STATUS , void *) {
 #pragma endregion
 
 namespace docraft {
-    DocraftPDFContext::DocraftPDFContext() {
+    DocraftDocumentContext::DocraftDocumentContext() {
         pdf_doc_ = HPDF_New(error_handler,NULL);
         HPDF_UseUTFEncodings(pdf_doc_);
         HPDF_SetCurrentEncoder(pdf_doc_, "UTF-8");
@@ -154,75 +154,75 @@ namespace docraft {
         float page_height = HPDF_Page_GetHeight(page_);
         page_height_ = page_height;
         page_width_ = HPDF_Page_GetWidth(page_);
-        cursor_.move_to(0, page_height - cursor_.offset_y());
-        current_rect_width_ = HPDF_Page_GetWidth(page_);
+
+        current_rect_width_ = page_width_;
     }
 
-    DocraftPDFContext::~DocraftPDFContext() = default;
+    DocraftDocumentContext::~DocraftDocumentContext() = default;
 #pragma region setter
-    void DocraftPDFContext::set_renderer(const std::shared_ptr<renderer::DocraftAbstractRenderer> &renderer) {
+    void DocraftDocumentContext::set_renderer(const std::shared_ptr<renderer::DocraftAbstractRenderer> &renderer) {
         renderer_ = renderer;
     }
 
-    void DocraftPDFContext::set_current_rect_width(float current_rect_width) {
+    void DocraftDocumentContext::set_current_rect_width(float current_rect_width) {
         current_rect_width_ = current_rect_width;
     }
-    void DocraftPDFContext::set_header(const std::shared_ptr<model::DocraftHeader> &header) {
+    void DocraftDocumentContext::set_header(const std::shared_ptr<model::DocraftHeader> &header) {
         header_ = header;
     }
-    void DocraftPDFContext::set_body(const std::shared_ptr<model::DocraftBody> &body) {
+    void DocraftDocumentContext::set_body(const std::shared_ptr<model::DocraftBody> &body) {
         body_ = body;
     }
-    void DocraftPDFContext::set_footer(const std::shared_ptr<model::DocraftFooter> &footer) {
+    void DocraftDocumentContext::set_footer(const std::shared_ptr<model::DocraftFooter> &footer) {
         footer_ = footer;
     }
-    void DocraftPDFContext::set_font_applier(const std::shared_ptr<generic::DocraftFontApplier> &font_applier) {
+    void DocraftDocumentContext::set_font_applier(const std::shared_ptr<generic::DocraftFontApplier> &font_applier) {
         font_applier_ = font_applier;
     }
 #pragma endregion
 #pragma region getter
-    HPDF_Doc DocraftPDFContext::pdf_doc() const {
+    HPDF_Doc DocraftDocumentContext::pdf_doc() const {
         return pdf_doc_;
     }
 
-    HPDF_Page DocraftPDFContext::page() const {
+    HPDF_Page DocraftDocumentContext::page() const {
         return page_;
     }
 
-    DocraftCursor &DocraftPDFContext::cursor() {
+    DocraftCursor &DocraftDocumentContext::cursor() {
         return cursor_;
     }
-    float DocraftPDFContext::current_rect_width() const {
-        return current_rect_width_;
+    float DocraftDocumentContext::available_space() const {
+        return current_rect_width_ ;
     }
-    std::shared_ptr<renderer::DocraftAbstractRenderer> DocraftPDFContext::renderer() {
+    std::shared_ptr<renderer::DocraftAbstractRenderer> DocraftDocumentContext::renderer() {
         if (!renderer_) {
             throw std::runtime_error("Renderer not set in DocraftPDFContext");
         }
         return renderer_;
     }
 
-    float DocraftPDFContext::page_height() const {
+    float DocraftDocumentContext::page_height() const {
         return page_height_;
     }
-    float DocraftPDFContext::page_width() const {
+    float DocraftDocumentContext::page_width() const {
         return page_width_;
     }
 
 
-    const std::shared_ptr<model::DocraftHeader>& DocraftPDFContext::header() const {
+    const std::shared_ptr<model::DocraftHeader>& DocraftDocumentContext::header() const {
         return header_;
     }
 
 
-    const std::shared_ptr<model::DocraftBody>& DocraftPDFContext::body() const {
+    const std::shared_ptr<model::DocraftBody>& DocraftDocumentContext::body() const {
         return body_;
     }
 
-    const std::shared_ptr<model::DocraftFooter>& DocraftPDFContext::footer() const {
+    const std::shared_ptr<model::DocraftFooter>& DocraftDocumentContext::footer() const {
         return footer_;
     }
-    const std::shared_ptr<generic::DocraftFontApplier>& DocraftPDFContext::font_applier() const {
+    const std::shared_ptr<generic::DocraftFontApplier>& DocraftDocumentContext::font_applier() const {
         return font_applier_;
     }
 #pragma endregion

@@ -7,7 +7,7 @@ namespace docraft::renderer::painter {
     DocraftImagePainter::DocraftImagePainter(const model::DocraftImage &image_node) : image_node_(image_node) {
     }
 
-    void DocraftImagePainter::draw(const std::shared_ptr<DocraftPDFContext> &context) {
+    void DocraftImagePainter::draw(const std::shared_ptr<DocraftDocumentContext> &context) {
         auto *page = context->page();
         auto *pdf = context->pdf_doc();
 
@@ -32,7 +32,7 @@ namespace docraft::renderer::painter {
         }
 
 
-        HPDF_Page_DrawImage(page, image, image_node_.x(), image_node_.y() - image_node_.height(), image_node_.width(),
+        HPDF_Page_DrawImage(page, image, image_node_.position().x, image_node_.position().y - image_node_.height(), image_node_.width(),
                             image_node_.height());
     }
 } // docraft

@@ -18,37 +18,39 @@ namespace {
         if (color_attr.as_string()[0] == '#') {
             return docraft::DocraftColor(color_attr.as_string());
         }
+
         std::string color_name_str = color_attr.as_string();
-        if (color_name_str == docraft::craft::color::kBlack.data()) {
+
+        if (color_name_str == std::string{docraft::craft::color::kBlack}) {
             return docraft::DocraftColor(docraft::ColorName::Black);
-        } else if (color_name_str == docraft::craft::color::kWhite.data()) {
+        } else if (color_name_str == std::string{docraft::craft::color::kWhite}) {
             return docraft::DocraftColor(docraft::ColorName::White);
-        } else if (color_name_str == docraft::craft::color::kRed.data()) {
+        } else if (color_name_str == std::string{docraft::craft::color::kRed}) {
             return docraft::DocraftColor(docraft::ColorName::Red);
-        } else if (color_name_str == docraft::craft::color::kGreen.data()) {
+        } else if (color_name_str == std::string{docraft::craft::color::kGreen}) {
             return docraft::DocraftColor(docraft::ColorName::Green);
-        } else if (color_name_str == docraft::craft::color::kBlue.data()) {
+        } else if (color_name_str == std::string{docraft::craft::color::kBlue}) {
             return docraft::DocraftColor(docraft::ColorName::Blue);
-        } else if (color_name_str == docraft::craft::color::kYellow.data()) {
+        } else if (color_name_str == std::string{docraft::craft::color::kYellow}) {
             return docraft::DocraftColor(docraft::ColorName::Yellow);
-        } else if (color_name_str == docraft::craft::color::kCyan.data()) {
+        } else if (color_name_str == std::string{docraft::craft::color::kCyan}) {
             return docraft::DocraftColor(docraft::ColorName::Cyan);
-        } else if (color_name_str == docraft::craft::color::kMagenta.data()) {
+        } else if (color_name_str == std::string{docraft::craft::color::kMagenta}) {
             return docraft::DocraftColor(docraft::ColorName::Magenta);
         } else {
-            //default to black
+            // default to black
             return docraft::DocraftColor(docraft::ColorName::Black);
         }
     }
 
     void configure_docraft_node_attributes(const std::shared_ptr<docraft::model::DocraftNode> &node,
                                            const pugi::xml_node &craft_language_source) {
-        //get attributes
+        // get attributes
         if (auto x_attr = craft_language_source.attribute(docraft::craft::basic::attribute::kX.data())) {
-            node->set_x(x_attr.as_float());
+            node->set_position({x_attr.as_float(), node->position().y});
         }
         if (auto y_attr = craft_language_source.attribute(docraft::craft::basic::attribute::kY.data())) {
-            node->set_y(y_attr.as_float());
+            node->set_position({node->position().x, y_attr.as_float()});
         }
         if (auto width_attr = craft_language_source.attribute(docraft::craft::basic::attribute::kWidth.data())) {
             node->set_width(width_attr.as_float());
@@ -57,11 +59,11 @@ namespace {
             node->set_height(height_attr.as_float());
         }
         if (auto auto_fill_height_attr = craft_language_source.attribute(
-            docraft::craft::basic::attribute::kAutoFillHeight.data())) {
+                docraft::craft::basic::attribute::kAutoFillHeight.data())) {
             node->set_auto_fill_height(auto_fill_height_attr.as_bool());
         }
         if (auto auto_fill_width_attr = craft_language_source.attribute(
-            docraft::craft::basic::attribute::kAutoFillWidth.data())) {
+                docraft::craft::basic::attribute::kAutoFillWidth.data())) {
             node->set_auto_fill_width(auto_fill_width_attr.as_bool());
         }
         if (auto padding_attr = craft_language_source.attribute(docraft::craft::basic::attribute::kPadding.data())) {
@@ -69,10 +71,10 @@ namespace {
         }
         if (auto position_attr = craft_language_source.attribute(docraft::craft::basic::attribute::kPosition.data())) {
             std::string position_str = position_attr.as_string();
-            if (position_str == docraft::craft::basic::attribute::position_type::kBlock.data()) {
-                node->set_position(docraft::model::DocraftPositionType::kBlock);
-            } else if (position_str == docraft::craft::basic::attribute::position_type::kAbsolute.data()) {
-                node->set_position(docraft::model::DocraftPositionType::kAbsolute);
+            if (position_str == std::string{docraft::craft::basic::attribute::position_type::kBlock}) {
+                // node->set_position(docraft::model::DocraftPositionType::kBlock);
+            } else if (position_str == std::string{docraft::craft::basic::attribute::position_type::kAbsolute}) {
+                // node->set_position(docraft::model::DocraftPositionType::kAbsolute);
             }
         }
         if (auto weight_attr = craft_language_source.attribute(docraft::craft::basic::attribute::kWeight.data())) {
@@ -82,31 +84,31 @@ namespace {
 
     void configure_section_attributes(const std::shared_ptr<docraft::model::DocraftSection> &node,
                                       const pugi::xml_node &craft_language_source) {
-        //get attributes
-        if (auto margin_top_attr = craft_language_source.
-                attribute(docraft::craft::section::attribute::kMarginTop.data())) {
+        // get attributes
+        if (auto margin_top_attr = craft_language_source.attribute(
+                docraft::craft::section::attribute::kMarginTop.data())) {
             node->set_margin_top(margin_top_attr.as_float());
         }
-        if (auto margin_bottom_attr = craft_language_source.
-                attribute(docraft::craft::section::attribute::kMarginBottom.data())) {
+        if (auto margin_bottom_attr = craft_language_source.attribute(
+                docraft::craft::section::attribute::kMarginBottom.data())) {
             node->set_margin_bottom(margin_bottom_attr.as_float());
         }
-        if (auto margin_left_attr = craft_language_source.
-                attribute(docraft::craft::section::attribute::kMarginLeft.data())) {
+        if (auto margin_left_attr = craft_language_source.attribute(
+                docraft::craft::section::attribute::kMarginLeft.data())) {
             node->set_margin_left(margin_left_attr.as_float());
         }
-        if (auto margin_right_attr = craft_language_source.
-                attribute(docraft::craft::section::attribute::kMarginRight.data())) {
+        if (auto margin_right_attr = craft_language_source.attribute(
+                docraft::craft::section::attribute::kMarginRight.data())) {
             node->set_margin_right(margin_right_attr.as_float());
         }
         configure_docraft_node_attributes(node, craft_language_source);
     }
-}
+} // namespace
 
 namespace docraft::craft::parser {
     void DocraftRectangleParser::apply_attributes_to(const std::shared_ptr<model::DocraftRectangle> &from,
                                                      const std::shared_ptr<model::DocraftRectangle> &to) {
-        //apply from properties to to object
+        // apply from properties to to object
         to->set_background_color(from->background_color());
         to->set_border_color(from->border_color());
     }
@@ -114,10 +116,11 @@ namespace docraft::craft::parser {
     std::shared_ptr<model::DocraftNode> DocraftRectangleParser::parse(const pugi::xml_node &craft_language_source) {
         auto rectangle = std::make_shared<model::DocraftRectangle>();
         if (auto background_color_attr = craft_language_source.attribute(
-            elements::rectangle::attribute::kBackgroundColor.data())) {
+                elements::rectangle::attribute::kBackgroundColor.data())) {
             rectangle->set_background_color(get_docraft_color(background_color_attr));
         }
-        if (auto border_color_attr = craft_language_source.attribute(elements::rectangle::attribute::kBorderColor.data())) {
+        if (auto border_color_attr =
+                    craft_language_source.attribute(elements::rectangle::attribute::kBorderColor.data())) {
             rectangle->set_border_color(get_docraft_color(border_color_attr));
         }
         configure_docraft_node_attributes(rectangle, craft_language_source);
@@ -127,8 +130,8 @@ namespace docraft::craft::parser {
     std::shared_ptr<model::DocraftNode> DocraftHeaderParser::parse(const pugi::xml_node &craft_language_source) {
         auto header_node = std::make_shared<model::DocraftHeader>();
         const auto rect = std::dynamic_pointer_cast<model::DocraftRectangle>(
-            DocraftRectangleParser::parse(craft_language_source));
-        apply_attributes_to(header_node, rect);
+                DocraftRectangleParser::parse(craft_language_source));
+        apply_attributes_to(rect, header_node);
         configure_section_attributes(header_node, craft_language_source);
         return header_node;
     }
@@ -136,7 +139,7 @@ namespace docraft::craft::parser {
     std::shared_ptr<model::DocraftNode> DocraftBodyParser::parse(const pugi::xml_node &craft_language_source) {
         auto body_node = std::make_shared<model::DocraftBody>();
         const auto rect = std::dynamic_pointer_cast<model::DocraftRectangle>(
-            DocraftRectangleParser::parse(craft_language_source));
+                DocraftRectangleParser::parse(craft_language_source));
         apply_attributes_to(rect, body_node);
         configure_section_attributes(body_node, craft_language_source);
 
@@ -146,7 +149,7 @@ namespace docraft::craft::parser {
     std::shared_ptr<model::DocraftNode> DocraftFooterParser::parse(const pugi::xml_node &craft_language_source) {
         auto footer_node = std::make_shared<model::DocraftFooter>();
         const auto rect = std::dynamic_pointer_cast<model::DocraftRectangle>(
-            DocraftRectangleParser::parse(craft_language_source));
+                DocraftRectangleParser::parse(craft_language_source));
         apply_attributes_to(rect, footer_node);
         configure_section_attributes(footer_node, craft_language_source);
         return footer_node;
@@ -154,9 +157,11 @@ namespace docraft::craft::parser {
 
     std::shared_ptr<model::DocraftNode> DocraftTextParser::parse(const pugi::xml_node &craft_language_source) {
         auto text_node = std::make_shared<model::DocraftText>();
-        //get text content
+
+        // get text content
         text_node->set_text(craft_language_source.child_value());
-        //get attributes
+
+        // get attributes
         if (auto font_size_attr = craft_language_source.attribute(elements::text::attribute::kFontSize.data())) {
             text_node->set_font_size(font_size_attr.as_float());
         }
@@ -168,11 +173,11 @@ namespace docraft::craft::parser {
         }
         if (auto style_attr = craft_language_source.attribute(elements::text::attribute::kStyle.data())) {
             std::string style_str = style_attr.as_string();
-            if (style_str == style::kBold.data()) {
+            if (style_str == std::string{style::kBold}) {
                 text_node->set_style(model::TextStyle::kBold);
-            } else if (style_str == style::kItalic.data()) {
+            } else if (style_str == std::string{style::kItalic}) {
                 text_node->set_style(model::TextStyle::kItalic);
-            } else if (style_str == style::kBoldItalic.data()) {
+            } else if (style_str == std::string{style::kBoldItalic}) {
                 text_node->set_style(model::TextStyle::kBoldItalic);
             } else {
                 text_node->set_style(model::TextStyle::kNormal);
@@ -180,11 +185,11 @@ namespace docraft::craft::parser {
         }
         if (auto alignment_attr = craft_language_source.attribute(elements::text::attribute::kAlignment.data())) {
             std::string alignment_str = alignment_attr.as_string();
-            if (alignment_str == alignment::kCenter.data()) {
+            if (alignment_str == std::string{alignment::kCenter}) {
                 text_node->set_alignment(model::TextAlignment::kCenter);
-            } else if (alignment_str == alignment::kRight.data()) {
+            } else if (alignment_str == std::string{alignment::kRight}) {
                 text_node->set_alignment(model::TextAlignment::kRight);
-            } else if (alignment_str == alignment::kJustified.data()) {
+            } else if (alignment_str == std::string{alignment::kJustified}) {
                 text_node->set_alignment(model::TextAlignment::kJustified);
             } else {
                 text_node->set_alignment(model::TextAlignment::kLeft);
@@ -193,6 +198,7 @@ namespace docraft::craft::parser {
         if (auto underline_attr = craft_language_source.attribute(elements::text::attribute::kUnderline.data())) {
             text_node->set_underline(underline_attr.as_bool());
         }
+
         configure_docraft_node_attributes(text_node, craft_language_source);
         return text_node;
     }
@@ -208,27 +214,70 @@ namespace docraft::craft::parser {
 
     std::shared_ptr<model::DocraftNode> DocraftTableParser::parse(const pugi::xml_node &craft_language_source) {
         auto table_node = std::make_shared<model::DocraftTable>();
-        //handle model (next)
-        //check if it has TableHeader with TableTile
+
+        if (auto baseline_attr = craft_language_source.attribute(elements::table::attribute::kBaselineOffset.data())) {
+            table_node->set_baseline_offset(baseline_attr.as_float());
+        }
+
+        // handle model (next)
+        // check if it has TableHeader with TableTile
         if (auto table_header = craft_language_source.child(elements::kTableHeader.data())) {
-            int col_number =0;
+            int col_number = 0;
             std::vector<std::string> titles;
             for (auto title: table_header.children()) {
-                if (title.name() == elements::kTableTitle.data()) {
+                if (title.name() == std::string{elements::kTableTitle}) {
                     col_number++;
-                    table_node->add_title_node(std::make_shared<model::DocraftText>(title.child_value()));
+                    auto title_node = std::make_shared<model::DocraftText>(title.child_value());
+                    if (auto alignment_attr = title.attribute(elements::table_title::attribute::kAlignment.data())) {
+                        std::string alignment_str = alignment_attr.as_string();
+                        if (alignment_str == std::string{alignment::kLeft}) {
+                            title_node->set_alignment(model::TextAlignment::kLeft);
+                        } else if (alignment_str == std::string{alignment::kRight}) {
+                            title_node->set_alignment(model::TextAlignment::kRight);
+                        } else if (alignment_str == std::string{alignment::kJustified}) {
+                            title_node->set_alignment(model::TextAlignment::kJustified);
+                        } else {
+                            title_node->set_alignment(model::TextAlignment::kCenter);
+                        }
+                    } else {
+                        title_node->set_alignment(model::TextAlignment::kCenter);
+                    }
+                    if (auto style_attr = title.attribute(elements::table_title::attribute::kStyle.data())) {
+                        std::string style_str = style_attr.as_string();
+                        if (style_str == std::string{style::kBold}) {
+                            title_node->set_style(model::TextStyle::kBold);
+                        } else if (style_str == std::string{style::kItalic}) {
+                            title_node->set_style(model::TextStyle::kItalic);
+                        } else if (style_str == std::string{style::kBoldItalic}) {
+                            title_node->set_style(model::TextStyle::kBoldItalic);
+                        } else {
+                            title_node->set_style(model::TextStyle::kNormal);
+                        }
+                    } else {
+                        title_node->set_style(model::TextStyle::kBold);
+                    }
+                    if (auto color_attr = title.attribute(elements::table_title::attribute::kColor.data())) {
+                        title_node->set_color(get_docraft_color(color_attr));
+                    }
+                    table_node->add_title_node(title_node);
                     titles.emplace_back(title.child_value());
                 } else {
                     throw std::invalid_argument(std::string(title.name()) + " cannot be placed in a table header");
                 }
             }
+
             table_node->set_titles(titles);
             table_node->set_cols(col_number);
+
             if (auto table_body = craft_language_source.child(elements::kTableBody.data())) {
                 for (auto row: table_body.children()) {
-                    if (row.name() == elements::kTableRow.data()) {
+                    if (row.name() == std::string{elements::kTableRow}) {
                         if (!row.children().empty()) {
-                            const std::vector<std::string> support_type = {elements::kText.data(), elements::kImage.data()};
+                            const std::vector<std::string> support_type = {
+                                    std::string{elements::kText},
+                                    std::string{elements::kImage},
+                            };
+
                             for (auto col: row.children()) {
                                 bool supported = false;
                                 for (const auto &item: support_type) {
@@ -237,19 +286,20 @@ namespace docraft::craft::parser {
                                         break;
                                     }
                                 }
+
                                 if (supported) {
-                                    if (col.name() == elements::kText.data()) {
+                                    if (col.name() == std::string{elements::kText}) {
                                         DocraftTextParser text_parser;
                                         auto text_node = text_parser.parse(col);
                                         table_node->add_content_node(text_node);
-                                    } else if (col.name() == elements::kImage.data()) {
+                                    } else if (col.name() == std::string{elements::kImage}) {
                                         DocraftImageParser image_parser;
                                         auto image = image_parser.parse(col);
                                         table_node->add_content_node(image);
                                     }
                                 } else {
-                                    throw std::runtime_error(
-                                        std::string(col.name()) + " is not supported in the table body");
+                                    throw std::runtime_error(std::string(col.name()) +
+                                                             " is not supported in the table body");
                                 }
                             }
                         }
@@ -259,16 +309,18 @@ namespace docraft::craft::parser {
                 }
             }
         } else {
-            throw std::invalid_argument(std::string(elements::kTableHeader.data()) + " tag not found, it is mandatory");
+            throw std::invalid_argument(std::string(elements::kTableHeader.data()) +
+                                        " tag not found, it is mandatory");
         }
+
         configure_docraft_node_attributes(table_node, craft_language_source);
         return table_node;
     }
 
     std::shared_ptr<model::DocraftNode> DocraftLayoutParser::parse(const pugi::xml_node &craft_language_source) {
         auto layout_node = std::make_shared<model::DocraftLayout>();
-        if (auto orientation = craft_language_source.attribute(elements::layout::attribute::kOrientation.data())) {
-            if (orientation.as_string() == orientation::kHorizontal.data()) {
+        if (auto orientation_attr = craft_language_source.attribute(elements::layout::attribute::kOrientation.data())) {
+            if (orientation_attr.as_string() == std::string{orientation::kHorizontal}) {
                 layout_node->set_orientation(model::LayoutOrientation::kHorizontal);
             } else {
                 layout_node->set_orientation(model::LayoutOrientation::kVertical);
@@ -283,4 +335,4 @@ namespace docraft::craft::parser {
         configure_docraft_node_attributes(blank, craft_language_source);
         return blank;
     }
-} // docraft
+} // namespace docraft::craft::parser

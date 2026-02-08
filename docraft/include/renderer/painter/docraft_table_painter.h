@@ -7,7 +7,7 @@ namespace docraft::renderer::painter {
     public:
         DocraftTablePainter(const model::DocraftTable &table_node);
 
-        void draw(const std::shared_ptr<DocraftPDFContext> &context) override;
+        void draw(const std::shared_ptr<DocraftDocumentContext> &context) override;
     private:
         const model::DocraftTable &table_node_;
     };

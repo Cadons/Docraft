@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <hpdf.h>
 #include <print>
+#include <sstream>
 
 #include "generic/docraft_font_applier.h"
 #define WORD_SPACE_MAX 300
@@ -13,37 +14,45 @@ namespace docraft::renderer::painter {
     }
 
 
-    void DocraftTextPainter::render_justified(const std::shared_ptr<DocraftPDFContext> &context,
+    void DocraftTextPainter::render_justified(const std::shared_ptr<DocraftDocumentContext> &context,
                                               const std::string &text) {
         auto page = context->page();
-        auto &cursor = context->cursor();
 
-        float max_width = context->current_rect_width() - (2 * cursor.offset_x());
+        // Use the computed line width as the target for justification.
+        float max_width = current_line_->width();
         float actual_width = HPDF_Page_TextWidth(page, text.c_str());
 
         size_t spaces = std::count(text.begin(), text.end(), ' ');
 
-        if (spaces > 0) {
-            float extra_space = (max_width - actual_width) / static_cast<float>(spaces);
-            if (extra_space <= WORD_SPACE_MAX && extra_space >= WORD_SPACE_MIN) {
-                HPDF_Page_SetWordSpace(page, extra_space); //this set the space between words
-            }else {
-                if (extra_space > WORD_SPACE_MAX) {
-                    HPDF_Page_SetWordSpace(page, WORD_SPACE_MAX);
-                } else {
-                    HPDF_Page_SetWordSpace(page, WORD_SPACE_MIN);
-                }
-            }
+        if (spaces == 0 || max_width <= actual_width) {
+            // Fallback: no extra spacing to distribute.
+            HPDF_Page_SetTextMatrix(page, 1, 0, 0, 1, current_line_->position().x, current_line_->position().y);
+            HPDF_Page_ShowText(page, text.c_str());
+            return;
         }
 
+        // Manually distribute extra space between words for visible justification.
+        const float extra_space = (max_width - actual_width) / static_cast<float>(spaces);
+        const float space_width = HPDF_Page_TextWidth(page, " ");
+        float x = current_line_->position().x;
+        const float y = current_line_->position().y;
 
-        HPDF_Page_TextOut(page, current_line_->x(), current_line_->y(), text.c_str());
-
-        HPDF_Page_SetWordSpace(page, 0);
+        std::istringstream iss(text);
+        std::string word;
+        bool first = true;
+        while (iss >> word) {
+            if (!first) {
+                x += space_width + extra_space;
+            }
+            HPDF_Page_SetTextMatrix(page, 1, 0, 0, 1, x, y);
+            HPDF_Page_ShowText(page, word.c_str());
+            x += HPDF_Page_TextWidth(page, word.c_str());
+            first = false;
+        }
     }
 
     std::pair<std::pair<float, float>, std::pair<float, float> > DocraftTextPainter::render_text(
-        const std::shared_ptr<DocraftPDFContext> &context, const std::string &text) {
+        const std::shared_ptr<DocraftDocumentContext> &context, const std::string &text) {
         auto page = context->page();
 
         //begin drawing
@@ -51,21 +60,21 @@ namespace docraft::renderer::painter {
         if (current_line_->alignment() == model::TextAlignment::kJustified) {
             render_justified(context, text);
         } else {
-            HPDF_Page_TextOut(page, current_line_->x(), current_line_->y(), text.c_str());
+            HPDF_Page_TextOut(page, current_line_->position().x, current_line_->position().y, text.c_str());
         }
         HPDF_Page_EndText(page);
-        return std::make_pair(std::make_pair(current_line_->x(), current_line_->y()),
-                              std::make_pair(current_line_->x() + HPDF_Page_TextWidth(page, text.c_str()),
-                                             current_line_->y() + current_line_->font_size()));
+        return std::make_pair(std::make_pair(current_line_->position().x, current_line_->position().y),
+                              std::make_pair(current_line_->position().y + HPDF_Page_TextWidth(page, text.c_str()),
+                                             current_line_->position().y + current_line_->font_size()));
     }
 
     std::pair<std::pair<float, float>, std::pair<float, float> > DocraftTextPainter::draw_text(
-        const std::shared_ptr<DocraftPDFContext> &context, const std::string &text) {
+        const std::shared_ptr<DocraftDocumentContext> &context, const std::string &text) {
         return render_text(context, text);
     }
 
     void DocraftTextPainter::
-    draw_underline(const std::shared_ptr<DocraftPDFContext> &context, const std::string &text) {
+    draw_underline(const std::shared_ptr<DocraftDocumentContext> &context, const std::string &text) {
         //TODO: improve text underline for alignment different from Left
         auto &cursor = context->cursor();
         auto *page = context->page();
@@ -87,10 +96,12 @@ namespace docraft::renderer::painter {
         HPDF_Page_Stroke(page);
     }
 
-    void DocraftTextPainter::draw(const std::shared_ptr<DocraftPDFContext> &context) {
+    void DocraftTextPainter::draw(const std::shared_ptr<DocraftDocumentContext> &context) {
         for (const auto &line: text_node_.lines()) {
             current_line_ = line;
              context->font_applier()->apply_font(current_line_);
+            auto rgb = current_line_->color().toRGB();
+            HPDF_Page_SetRGBFill(context->page(), rgb.r, rgb.g, rgb.b);
             if (line->underline()) {
                 draw_underline(context, line->text());
             } else {

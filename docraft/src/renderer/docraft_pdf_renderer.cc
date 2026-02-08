@@ -31,7 +31,7 @@ namespace docraft::renderer {
         painter::DocraftRectanglePainter painter(rectangle_node);
         painter.draw(context());
     }
-    void DocraftPDFRenderer::draw_line(HPDF_Page page, model::Point start, model::Point end, DocraftColor color) {
+    void DocraftPDFRenderer::draw_line(HPDF_Page page, model::DocraftPoint start, model::DocraftPoint end, DocraftColor color) {
         const auto rgb=color.toRGB();
         HPDF_Page_SetRGBStroke(page, rgb.r, rgb.g, rgb.b);
         HPDF_Page_MoveTo(page, start.x, start.y);

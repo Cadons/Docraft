@@ -69,8 +69,8 @@ set(DOCRAFT_SOURCES src/main.cpp
         include/model/docraft_text.h
         src/docraft_document.cc
         include/docraft_document.h
-        src/docraft_pdf_context.cc
-        include/docraft_pdf_context.h
+        src/docraft_document_context.cc
+        include/docraft_document_context.h
         src/docraft_cursor.cc
         include/docraft_cursor.h
         src/docraft_color.cc
@@ -87,8 +87,6 @@ set(DOCRAFT_SOURCES src/main.cpp
         include/layout/handler/docraft_layout_text_handler.h
         include/generic/chain_of_responsibility_handler.h
         include/layout/handler/abstract_docraft_layout_handler.h
-        src/layout/handler/docraft_layout_section_handler.cc
-        include/layout/handler/docraft_layout_section_handler.h
         src/generic/docraft_font_applier.cc
         include/generic/docraft_font_applier.h
         src/model/docraft_header.cc
@@ -101,7 +99,7 @@ set(DOCRAFT_SOURCES src/main.cpp
         include/layout/handler/docraft_layout_handler.h
         src/model/docraft_children_container_node.cc
         include/model/docraft_children_container_node.h
-        src/backend/docraft_pdf_backend.h
+        include/backend/docraft_pdf_backend.h
         src/model/docraft_image.cc
         include/model/docraft_image.h
         src/renderer/painter/docraft_image_painter.cc
@@ -133,6 +131,10 @@ set(DOCRAFT_SOURCES src/main.cpp
         src/craft/parser/docraft_parser.cc
         include/craft/parser/docraft_parser.h
         include/craft/docraft_craft_language_tokens.h
+        src/utils/docraft_logger.cc
+        include/utils/docraft_logger.h
+        include/model/docraft_position.h
+        src/model/docraft_position.cc
 )
 add_library(docraft_lib STATIC
         ${DOCRAFT_SOURCES}

@@ -1,59 +1,78 @@
 #include "docraft_cursor.h"
 
+#include <stdexcept>
+#include <valarray>
+
+#include "utils/docraft_logger.h"
+#pragma region Messages
+#define ALLOW_NEGATIVE_COORDINATES_WARNING "Negative coordinates now allowed, some layout computations may not work properly!"
+#define X_CANNOT_BE_NEGATIVE_EXCEPTION_MESSAGE "x must be non-negative"
+#define Y_CANNOT_BE_NEGATIVE_EXCEPTION_MESSAGE "y must be non-negative"
+#pragma endregion
 namespace docraft {
-    DocraftCursor::DocraftCursor() : x_offset_(0), y_offset_(0){
-        x_ = x_offset_;
-        y_ = y_offset_;
+    DocraftCursor::DocraftCursor() : allow_negative_coordinates_(false) {
     }
 
     DocraftCursor::~DocraftCursor() = default;
 
     float DocraftCursor::x() const {
-        return x_;
+        return point_.x;
     }
 
     float DocraftCursor::y() const {
-        return y_;
+        return point_.y;
     }
 
+    bool DocraftCursor::is_negative_coordinates_allowed() const {
+        return allow_negative_coordinates_;
+    }
+    DocraftCursorDirection DocraftCursor::direction() const {
+        if (direction_stack_.empty()) {
+            return DocraftCursorDirection::kVertical;//default direction
+        }
+        return direction_stack_.top();
+    }
     void DocraftCursor::move_to(float x, float y) {
-        move_x(x);
-        move_y(y);
+        set_x(x);
+        set_y(y);
     }
+
+    void DocraftCursor::set_x(float x) {
+        if (x < 0 && !allow_negative_coordinates_) {
+            throw std::out_of_range(X_CANNOT_BE_NEGATIVE_EXCEPTION_MESSAGE);
+        }
+        point_.x = x;
+    }
+
+    void DocraftCursor::set_y(float y) {
+        if (y < 0 && !allow_negative_coordinates_) {
+            throw std::out_of_range(Y_CANNOT_BE_NEGATIVE_EXCEPTION_MESSAGE);
+        }
+        point_.y = y;
+    }
+
     void DocraftCursor::reset_x() {
-        x_ = x_offset_;
+        set_x(0);
     }
+
     void DocraftCursor::reset_y() {
-        y_ = y_offset_;
+        set_y(0);
     }
 
-    void DocraftCursor::move_x(float x) {
-        if (x == 0) {
-            x_ = x_offset_;
-            return;
+    void DocraftCursor::allow_negative_coordinates(bool allow) {
+        allow_negative_coordinates_ = allow;
+        if (allow_negative_coordinates_) {
+            //show a warning
+            LOG_WARNING(ALLOW_NEGATIVE_COORDINATES_WARNING);
         }
-        x_ = x;
-    }
-    void DocraftCursor::move_y(float y) {
-        if (y == 0) {
-            y_ = y_offset_;
-            return;
-        }
-        y_ = y;
     }
 
-    void DocraftCursor::set_offset_x(float x) {
-        x_offset_ = x;
-        x_+=x_offset_;
+    void DocraftCursor::push_direction(DocraftCursorDirection direction) {
+        direction_stack_.push(direction);
     }
-    void DocraftCursor::set_offset_y(float y) {
-        y_offset_ = y;
-        y_-=y_offset_;
-    }
-    float DocraftCursor::offset_x() const {
-        return x_offset_;
-    }
-    float DocraftCursor::offset_y() const {
-        return y_offset_;
+    void DocraftCursor::pop_direction() {
+        if (!direction_stack_.empty()) {
+            direction_stack_.pop();
+        }
     }
 } // docraft

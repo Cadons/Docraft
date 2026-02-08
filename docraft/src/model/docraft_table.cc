@@ -9,7 +9,7 @@ namespace docraft::model {
         set_auto_fill_height(false);
     }
 
-    void DocraftTable::draw(const std::shared_ptr<DocraftPDFContext> &context) {
+    void DocraftTable::draw(const std::shared_ptr<DocraftDocumentContext> &context) {
         if (column_weights_.empty()) {
             float default_weight = 1.0F;
             column_weights_.resize(cols_, default_weight);
@@ -46,6 +46,10 @@ namespace docraft::model {
             throw std::out_of_range("Row weight index out of range");
         }
         row_weights_[index] = weight;
+    }
+
+    void DocraftTable::set_baseline_offset(const float offset) {
+        baseline_offset_ = offset;
     }
 
     void DocraftTable::set_title(int index, const std::string &title) {
@@ -172,6 +176,10 @@ namespace docraft::model {
 
     int DocraftTable::last_content_node_index() const {
         return content_nodes_.size() - 1;
+    }
+
+    float DocraftTable::baseline_offset() const {
+        return baseline_offset_;
     }
 
 #pragma endregion

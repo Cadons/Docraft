@@ -7,7 +7,7 @@ namespace docraft::renderer::painter {
         blank_line_node) {
     }
 
-    void docraft_blank_line_painter::draw(const std::shared_ptr<DocraftPDFContext> &context) {
+    void docraft_blank_line_painter::draw(const std::shared_ptr<DocraftDocumentContext> &context) {
         // Blank line does not render anything
     }
 } // docraft

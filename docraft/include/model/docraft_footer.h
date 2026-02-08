@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 
-#include "docraft_pdf_context.h"
+#include "docraft_document_context.h"
 #include "model/docraft_section.h"
 
 namespace docraft::model {

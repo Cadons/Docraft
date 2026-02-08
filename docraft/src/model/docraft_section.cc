@@ -8,44 +8,33 @@ namespace docraft::model {
                                                            margin_left_(node->margin_left_),
                                                            margin_right_(node->margin_right_) {
     }
-
     float DocraftSection::margins() const {
         return margins_;
     }
-
     float DocraftSection::margin_top() const {
         return margin_top_;
     }
-
     float DocraftSection::margin_bottom() const {
         return margin_bottom_;
     }
-
     float DocraftSection::margin_left() const {
         return margin_left_;
     }
-
     float DocraftSection::margin_right() const {
         return margin_right_;
     }
-
-
     void DocraftSection::set_margins(float margins) {
         margins_ = margins;
     }
-
     void DocraftSection::set_margin_top(float margin_top) {
         margin_top_ = margin_top;
     }
-
     void DocraftSection::set_margin_bottom(float margin_bottom) {
         margin_bottom_ = margin_bottom;
     }
-
     void DocraftSection::set_margin_left(float margin_left) {
         margin_left_ = margin_left;
     }
-
     void DocraftSection::set_margin_right(float margin_right) {
         margin_right_ = margin_right;
     }

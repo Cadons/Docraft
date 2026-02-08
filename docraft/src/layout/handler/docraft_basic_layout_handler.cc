@@ -6,29 +6,28 @@
 #include "model/docraft_layout.h"
 
 namespace docraft::layout::handler {
-    void DocraftBasicLayoutHandler::compute(const std::shared_ptr<model::DocraftNode> &node) {
-        set_node_position(node);
-        if (node->width() == 0) {
-            node->set_width(context()->current_rect_width()-context()->cursor().offset_x());
+    void DocraftBasicLayoutHandler::compute(const std::shared_ptr<model::DocraftNode> &node,
+                                            model::DocraftTransform *box,
+                                            DocraftCursor& cursor) {
+        if (box == nullptr) {
+            throw std::invalid_argument("box is null");
         }
-        //for Debug
-        std::print("Basic Layout Handler: Node ID {} positioned at ({}, {}), size: {}x{}\n",
-                   node->id(), node->x(), node->y(), node->width(), node->height());
+
+        box->set_position({.x=cursor.x(), .y=cursor.y()});
+
+        if (context()->available_space()<node->width()||node->width()==0) {
+            //put the node in the available space
+            box->set_width(context()->available_space());
+        }else {
+            box->set_width(node->width());
+        }
+        box->set_height(node->height());
     }
 
-    bool DocraftBasicLayoutHandler::handle(const std::shared_ptr<model::DocraftNode> request) {
-        compute(request);
-        set_node_transform_box(request);
-        if (auto *container=dynamic_cast<model::DocraftChildrenContainerNode*>(request.get())) {
-            context()->cursor().move_x(request->transform_box().top_left.x);
-            context()->cursor().move_y(request->transform_box().top_left.y);
-            context()->set_current_rect_width(request->width());
-            for (const auto &child: container->children()) {
-                docraft::layout::DocraftLayoutEngine::layout(child, context());
-                std::print("Child Node ID {} drawn at ({}, {}), size: {}x{}\n", child->id(), child->x(), child->y(),
-                           child->width(), child->height());
-            }
-        }
+    bool DocraftBasicLayoutHandler::handle(const std::shared_ptr<model::DocraftNode> &request,
+                                           model::DocraftTransform *result,
+                                           DocraftCursor& cursor) {
+        compute(request, result, cursor);
         return true;
     }
 } // docraft
