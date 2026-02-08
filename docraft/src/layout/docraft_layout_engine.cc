@@ -142,8 +142,12 @@ namespace docraft::layout {
         if (cursor.direction() == DocraftCursorDirection::kHorizontal) {
             cursor.move_to(max_rect.anchors().top_right.x, max_rect.anchors().top_right.y);
         } else {
-            if (max_rect.anchors().bottom_left.y>0)
-                cursor.move_to(max_rect.anchors().bottom_left.x, max_rect.anchors().bottom_left.y-1.0F);
+            const float spacing = std::max(kDefaultNodeSpacing_, node->padding());
+            float next_y = max_rect.anchors().bottom_left.y - spacing;
+            if (next_y < 0.0F) {
+                next_y = 0.0F;
+            }
+            cursor.move_to(max_rect.anchors().bottom_left.x, next_y);
         }
         return max_rect;
     }
