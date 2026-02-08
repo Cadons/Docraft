@@ -113,7 +113,7 @@ namespace docraft::test::layout {
 
         EXPECT_EQ(outer_layout->children().size(), 2);
         auto layout = engine->compute_layout(outer_layout);
-        EXPECT_EQ(layout.width(), 297.5); // max width between inner layout and rectangle
+        EXPECT_EQ(layout.width(), 595); // max width between inner layout and rectangle
         EXPECT_NEAR(layout.height(), 71,0.001); // inner layout height + rectangle height
         //Test position for each child
         EXPECT_EQ(inner_layout->position().x, 0);
@@ -128,7 +128,7 @@ namespace docraft::test::layout {
         EXPECT_EQ(child3->position().x, inner_layout->anchors().bottom_left.x);
         EXPECT_EQ(child3->position().y+1, inner_layout->anchors().bottom_left.y);
         //Test widths and heights
-        EXPECT_NEAR(inner_layout->width(), 297.5,0.001);//297.5 is the width of the page, inner layout should take all the available width
+        EXPECT_NEAR(inner_layout->width(), 595,0.001);//297.5 is the width of the page, inner layout should take all the available width
         EXPECT_NEAR(inner_layout->height(), 20,0.001);
 
     }
@@ -400,6 +400,256 @@ namespace docraft::test::layout {
         // Verify footer item position
         EXPECT_EQ(footer_text->position().x, 10);
         EXPECT_EQ(footer_text->position().y, footer->anchors().top_left.y-kLineHeightOffset_);
+    }
+ TEST_F(DocraftLayoutEngineTest, ComputeComplexNestedHorizontalVerticalLayout) {
+            // Reproduces the XML:
+            // <Layout orientation="horizontal">
+            //   <Layout vertical weight=0.25> Left Panel: Text + Rectangle(h=100) </Layout>
+            //   <Layout vertical weight=0.50> Center: Text + nested horizontal(2 vertical columns) </Layout>
+            //   <Layout vertical weight=0.25> Right Panel: Text + Rectangle(h=100) + nested horizontal </Layout>
+            // </Layout>
+
+            auto& engine = this->engine();
+            auto context = this->context();
+
+            auto body = std::make_shared<docraft::model::DocraftBody>();
+            // === Root horizontal layout ===
+            auto root_layout = std::make_shared<docraft::model::DocraftLayout>();
+            root_layout->set_orientation(docraft::model::LayoutOrientation::kHorizontal);
+
+            // === LEFT PANEL (weight 0.25) ===
+            auto left_panel = std::make_shared<docraft::model::DocraftLayout>();
+            left_panel->set_orientation(docraft::model::LayoutOrientation::kVertical);
+            left_panel->set_weight(0.25F);
+
+            auto left_text = std::make_shared<docraft::model::DocraftText>();
+            left_text->set_text("Left Panel");
+            left_text->set_font_size(7);
+            left_text->set_style(docraft::model::TextStyle::kBold);
+            left_panel->add_child(left_text);
+
+            auto left_rect = std::make_shared<docraft::model::DocraftRectangle>();
+            left_rect->set_height(100);
+            left_rect->set_background_color(docraft::DocraftColor(255, 0, 0));
+            left_panel->add_child(left_rect);
+
+            root_layout->add_child(left_panel);
+
+            // === CENTER PANEL (weight 0.50) ===
+            auto center_panel = std::make_shared<docraft::model::DocraftLayout>();
+            center_panel->set_orientation(docraft::model::LayoutOrientation::kVertical);
+            center_panel->set_weight(0.50F);
+
+            auto center_text = std::make_shared<docraft::model::DocraftText>();
+            center_text->set_text("Center (nested)");
+            center_text->set_font_size(7);
+            center_text->set_style(docraft::model::TextStyle::kBold);
+            center_text->set_color(docraft::DocraftColor(255, 0, 0));
+            center_panel->add_child(center_text);
+
+            // Nested horizontal layout inside center
+            auto center_inner_h = std::make_shared<docraft::model::DocraftLayout>();
+            center_inner_h->set_orientation(docraft::model::LayoutOrientation::kHorizontal);
+
+            // Inner A (left column)
+            auto inner_a = std::make_shared<docraft::model::DocraftLayout>();
+            inner_a->set_orientation(docraft::model::LayoutOrientation::kVertical);
+            inner_a->set_weight(0.5F);
+
+            auto inner_a_rect = std::make_shared<docraft::model::DocraftRectangle>();
+            inner_a_rect->set_height(14);
+            inner_a->add_child(inner_a_rect);
+
+            auto inner_a_text = std::make_shared<docraft::model::DocraftText>();
+            inner_a_text->set_text("Inner A");
+            inner_a_text->set_font_size(6);
+            inner_a_text->set_alignment(docraft::model::TextAlignment::kCenter);
+            inner_a->add_child(inner_a_text);
+
+            auto inner_a_caption = std::make_shared<docraft::model::DocraftText>();
+            inner_a_caption->set_text("Caption A");
+            inner_a_caption->set_font_size(5);
+            inner_a_caption->set_alignment(docraft::model::TextAlignment::kCenter);
+            inner_a->add_child(inner_a_caption);
+
+            center_inner_h->add_child(inner_a);
+
+            // Inner B (right column) with table
+            auto inner_b = std::make_shared<docraft::model::DocraftLayout>();
+            inner_b->set_orientation(docraft::model::LayoutOrientation::kVertical);
+            inner_b->set_weight(0.5F);
+
+            auto inner_b_rect = std::make_shared<docraft::model::DocraftRectangle>();
+            inner_b_rect->set_height(14);
+            inner_b->add_child(inner_b_rect);
+
+            auto inner_b_text = std::make_shared<docraft::model::DocraftText>();
+            inner_b_text->set_text("Inner B");
+            inner_b_text->set_font_size(6);
+            inner_b_text->set_alignment(docraft::model::TextAlignment::kCenter);
+            inner_b->add_child(inner_b_text);
+
+            // Vertical table 3x2
+            auto table = std::make_shared<docraft::model::DocraftTable>();
+            table->set_orientation(docraft::model::LayoutOrientation::kVertical);
+            table->set_titles({"Key", "Val"});
+            // Actually this is a vertical table with 3 rows, titles are row headers
+            // But set_titles takes the row keys. For a 3-row vertical table:
+            table->set_titles({"Key", "Val"}); // 2 columns (key/val)
+            table->set_cols(2);
+            table->set_auto_fill_width(true);
+
+            // 3 rows of data (A/1, B/2, C/3) — each row has key+val
+            auto cell_a = std::make_shared<docraft::model::DocraftText>("A");
+            cell_a->set_font_size(5);
+            auto cell_1 = std::make_shared<docraft::model::DocraftText>("1");
+            cell_1->set_font_size(5);
+            auto cell_b = std::make_shared<docraft::model::DocraftText>("B");
+            cell_b->set_font_size(5);
+            auto cell_2 = std::make_shared<docraft::model::DocraftText>("2");
+            cell_2->set_font_size(5);
+            auto cell_c = std::make_shared<docraft::model::DocraftText>("C");
+            cell_c->set_font_size(5);
+            auto cell_3 = std::make_shared<docraft::model::DocraftText>("3");
+            cell_3->set_font_size(5);
+
+            table->add_content_node(cell_a);
+            table->add_content_node(cell_1);
+            table->add_content_node(cell_b);
+            table->add_content_node(cell_2);
+            table->add_content_node(cell_c);
+            table->add_content_node(cell_3);
+
+            inner_b->add_child(table);
+
+            center_inner_h->add_child(inner_b);
+            center_panel->add_child(center_inner_h);
+
+            root_layout->add_child(center_panel);
+
+            // === RIGHT PANEL (weight 0.25) ===
+            auto right_panel = std::make_shared<docraft::model::DocraftLayout>();
+            right_panel->set_orientation(docraft::model::LayoutOrientation::kVertical);
+            right_panel->set_weight(0.25F);
+
+            auto right_text = std::make_shared<docraft::model::DocraftText>();
+            right_text->set_text("Right Panel");
+            right_text->set_font_size(7);
+            right_text->set_style(docraft::model::TextStyle::kBold);
+            right_panel->add_child(right_text);
+
+            auto right_rect = std::make_shared<docraft::model::DocraftRectangle>();
+            right_rect->set_height(100);
+            right_panel->add_child(right_rect);
+
+            // Nested horizontal inside right panel
+            auto right_inner_h = std::make_shared<docraft::model::DocraftLayout>();
+            right_inner_h->set_orientation(docraft::model::LayoutOrientation::kHorizontal);
+
+            auto r1_layout = std::make_shared<docraft::model::DocraftLayout>();
+            r1_layout->set_orientation(docraft::model::LayoutOrientation::kVertical);
+            r1_layout->set_weight(0.5F);
+            auto r1_rect = std::make_shared<docraft::model::DocraftRectangle>();
+            r1_rect->set_height(10);
+            r1_layout->add_child(r1_rect);
+            auto r1_text = std::make_shared<docraft::model::DocraftText>();
+            r1_text->set_text("R1");
+            r1_text->set_font_size(5);
+            r1_text->set_alignment(docraft::model::TextAlignment::kCenter);
+            r1_layout->add_child(r1_text);
+
+            auto r2_layout = std::make_shared<docraft::model::DocraftLayout>();
+            r2_layout->set_orientation(docraft::model::LayoutOrientation::kVertical);
+            r2_layout->set_weight(0.5F);
+            auto r2_rect = std::make_shared<docraft::model::DocraftRectangle>();
+            r2_rect->set_height(10);
+            r2_layout->add_child(r2_rect);
+            auto r2_text = std::make_shared<docraft::model::DocraftText>();
+            r2_text->set_text("R2");
+            r2_text->set_font_size(5);
+            r2_text->set_alignment(docraft::model::TextAlignment::kCenter);
+            r2_layout->add_child(r2_text);
+
+            right_inner_h->add_child(r1_layout);
+            right_inner_h->add_child(r2_layout);
+            right_panel->add_child(right_inner_h);
+
+            root_layout->add_child(right_panel);
+
+            body->add_child(root_layout);
+            // === COMPUTE LAYOUT ===
+            auto result = engine->compute_layout(body);
+
+            const float page_w = context->page_width()-10;
+
+            // --- Structural assertions ---
+
+            // Root layout should have 3 children
+            ASSERT_EQ(root_layout->children().size(), 3U);
+
+            // Root layout should span the full available width
+            EXPECT_NEAR(root_layout->width(), page_w, 1.0F);
+            EXPECT_GT(root_layout->height(), 0.0F);
+
+            // --- Weight distribution: panels should respect 0.25 / 0.50 / 0.25 ---
+            const float expected_left_w = page_w * 0.25F;
+            const float expected_center_w = page_w * 0.50F;
+            const float expected_right_w = page_w * 0.25F;
+
+            EXPECT_NEAR(left_panel->width(), expected_left_w, 1.0F);
+            EXPECT_NEAR(center_panel->width(), expected_center_w, 1.0F);
+            EXPECT_NEAR(right_panel->width(), expected_right_w, 1.0F);
+
+            // --- Horizontal positioning: panels should be side by side ---
+            EXPECT_NEAR(left_panel->position().x, 10.0F, 0.01F);
+            EXPECT_NEAR(center_panel->position().x, left_panel->anchors().top_right.x, 1.0F);
+            EXPECT_NEAR(right_panel->position().x, center_panel->anchors().top_right.x, 1.0F);
+
+            // All top-level panels should start at the same Y
+            EXPECT_FLOAT_EQ(left_panel->position().y, center_panel->position().y);
+            EXPECT_FLOAT_EQ(center_panel->position().y, right_panel->position().y);
+
+            // --- Left panel children ---
+            EXPECT_GT(left_text->height(), 0.0F);
+            EXPECT_FLOAT_EQ(left_rect->height(), 100.0F);
+            // Text should be above rectangle (higher Y)
+            EXPECT_GT(left_text->position().y, left_rect->position().y);
+
+            // --- Center panel: nested horizontal inner layout ---
+            ASSERT_EQ(center_inner_h->children().size(), 2U);
+            // Inner A and Inner B should each get 50% of center panel width
+            EXPECT_NEAR(inner_a->width(), center_panel->width() * 0.5F, 1.0F);
+            EXPECT_NEAR(inner_b->width(), center_panel->width() * 0.5F, 1.0F);
+            // Inner A should be to the left of Inner B
+            EXPECT_LT(inner_a->position().x, inner_b->position().x);
+
+            // --- Table inside Inner B ---
+            EXPECT_GT(table->width(), 0.0F);
+            EXPECT_GT(table->height(), 0.0F);
+            // Table should be within inner_b bounds
+            EXPECT_GE(table->position().x, inner_b->position().x - 0.01F);
+
+            // --- Right panel: nested horizontal with R1/R2 ---
+            ASSERT_EQ(right_inner_h->children().size(), 2U);
+            EXPECT_NEAR(r1_layout->width(), right_panel->width() * 0.5F, 1.0F);
+            EXPECT_NEAR(r2_layout->width(), right_panel->width() * 0.5F, 1.0F);
+            // R1 should be to the left of R2
+            EXPECT_LT(r1_layout->position().x, r2_layout->position().x);
+            // Both R rectangles should have height 10
+            EXPECT_FLOAT_EQ(r1_rect->height(), 10.0F);
+            EXPECT_FLOAT_EQ(r2_rect->height(), 10.0F);
+
+            // --- Vertical ordering inside panels ---
+            // In left panel: text is first child, rect second — rect should be below text
+            EXPECT_GT(left_text->position().y, left_rect->position().y);
+            // In right panel: text > rect > inner_h (top to bottom = decreasing Y)
+            EXPECT_GT(right_text->position().y, right_rect->position().y);
+            EXPECT_GT(right_rect->position().y, right_inner_h->position().y);
+
+            // --- Overall height sanity ---
+            // The root layout height should be at least the tallest panel
+            float max_panel_height = std::max({left_panel->height(), center_panel->height(), right_panel->height()});
+            EXPECT_NEAR(root_layout->height(), max_panel_height, 1.0F);
     }
 
 }

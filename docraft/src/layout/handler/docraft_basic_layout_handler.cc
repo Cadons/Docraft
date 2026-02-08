@@ -16,7 +16,7 @@ namespace docraft::layout::handler {
 
         if (context()->available_space()<node->width()||node->width()==0) {
             //put the node in the available space
-            box->set_width(context()->available_space()*node->weight());
+            box->set_width(context()->available_space());
         }else {
             box->set_width(node->width());
         }

@@ -10,9 +10,9 @@ namespace docraft::layout::handler {
         if (box == nullptr) {
             throw std::invalid_argument("box is null");
         }
-        //if the layout has a weight, it takes the available space
+        // If the layout has a weight, the parent already scoped available_space to that share.
         if (node->weight()!=-1.0F) {
-            node->set_width(context()->available_space() * node->weight());
+            node->set_width(context()->available_space());
             box->set_width(node->width());
         }
         context()->cursor().pop_direction(); //remove layout direction

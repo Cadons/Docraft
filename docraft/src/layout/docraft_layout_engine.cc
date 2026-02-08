@@ -70,43 +70,17 @@ namespace docraft::layout {
         return false;
     }
 
-    void DocraftLayoutEngine::post_process(const std::shared_ptr<model::DocraftNode> &node, const model::DocraftTransform &docraft_transform) {
-        //if layout post processing to adapt width of the childern to the layout width
-        if (std::dynamic_pointer_cast<model::DocraftLayout>(node)) {
-            auto layout_node = std::dynamic_pointer_cast<model::DocraftLayout>(node);
-            if (layout_node->orientation() == model::LayoutOrientation::kHorizontal) {
-                //this post processing is necessary when a layout has other layout as child, in this case the child layout will compute its width based on the available space, but then the parent layout will adapt the child width to fit the layout width
-                for (const auto &child: layout_node->children()) {
-                    if (std::dynamic_pointer_cast<model::DocraftLayout>(child)) {
-                        auto child_layout = std::dynamic_pointer_cast<model::DocraftLayout>(child);
-                        for (const auto &child_box: child_layout->children()) {
-                            LOG_DEBUG("Post processing layout: adapting child box width to child layout width");
-                            if (child_box->width() > child->width()) {
-                                //available space is equal to child width
-                                context()->cursor().move_to(child_box->position().x, child_box->position().y);
-                                context()->set_current_rect_width(child->width()- child_box->position().x);//compute layout again to adapt the child box width to the child layout width
-                                auto child_box_layout = compute_layout(child_box);
-                                child_box->set_width(child_box_layout.width());
-                                child_box->set_height(child_box_layout.height());
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     model::DocraftTransform DocraftLayoutEngine::compute_layout(const std::shared_ptr<model::DocraftNode> &node) {
         std::vector<model::DocraftTransform> child_boxes;
         auto &cursor = context()->cursor();
-        float max_width = context()->page_width() - cursor.x();
+        float max_width = context()->available_space();
 
-        if (std::dynamic_pointer_cast<model::DocraftSection>(node)) {
-            auto section_node = std::dynamic_pointer_cast<model::DocraftSection>(node);
-            max_width = context()->available_space() - (section_node->margin_right())-(section_node->margin_left());
+        if (auto section_node = std::dynamic_pointer_cast<model::DocraftSection>(node)) {
+            cursor.move_to(section_node->margin_left(), cursor.y());// Move cursor to the left margin of the section
+            max_width = max_width - section_node->margin_right();//compute the width from left margin to right margin
             context()->set_current_rect_width(max_width);
-        }
-        if (std::dynamic_pointer_cast<model::DocraftLayout>(node)) {
+        }        if (std::dynamic_pointer_cast<model::DocraftLayout>(node)) {
             //Move the cursor direction based on layout orientation to layout children correctly
             auto layout_node = std::dynamic_pointer_cast<model::DocraftLayout>(node);
             if (layout_node->orientation() == model::LayoutOrientation::kHorizontal) {
@@ -135,25 +109,17 @@ namespace docraft::layout {
                     }
                 }
             }
+            const float saved_available_space = context()->available_space();
             for (const auto &child: container_node->children()) {
-                float last_child_width = child_boxes.empty() ? 0.0F : child_boxes.back().width();
-                if (child->width() == 0.0F) {
-                    if (cursor.direction()==DocraftCursorDirection::kHorizontal) {
-                        child->set_width(std::max(0.0F, (max_width) - last_child_width));
-                    }else {
-                        child->set_width(max_width);
-                    }
+                if (context()->cursor().direction()==DocraftCursorDirection::kHorizontal) {
+                    context()->set_current_rect_width(max_width*child->weight());
+                } else {
+                    context()->set_current_rect_width(max_width);
                 }
                 auto child_box = compute_layout(child);
                 child_boxes.emplace_back(child_box);
-                child->set_position({.x = child_box.position().x, .y = child_box.position().y});
-                if (child->anchors().top_right.x>max_width) {
-                    child->set_width(max_width - child->anchors().top_left.x);
-                }else {
-                    child->set_width(child_box.width());
-                }
-                child->set_height(child_box.height());
             }
+            context()->set_current_rect_width(saved_available_space);
         }
 
         auto max_rect = compute_max_rect(child_boxes);
@@ -161,8 +127,9 @@ namespace docraft::layout {
         if (!compute_node(node, &max_rect)) {
             throw std::runtime_error("compute node failed");
         }
-        //Post process layout if necessary
-        post_process(node, max_rect);
+        node->set_position(max_rect.position());
+        node->set_width(max_rect.width());
+        node->set_height(max_rect.height());
         if (cursor.direction() == DocraftCursorDirection::kHorizontal) {
             cursor.move_to(max_rect.anchors().top_right.x, max_rect.anchors().top_right.y);
         } else {
@@ -198,9 +165,9 @@ namespace docraft::layout {
         constexpr float kLineHeightOffset = 12.0F;
         //Layout header
         if (header) {
-            context()->cursor().move_to(header->margin_left(), context()->page_height());
+            context()->cursor().move_to(0, context()->page_height());
             (void)compute_layout(header);
-            header->set_position({.x=header->margin_left(), .y=context()->page_height()});
+            header->set_position({.x = header->margin_left(), .y = context()->page_height()});
             header->set_width(compute_width(header));
             header->set_height(context()->page_height()*kHeaderHeightRatio_);
         }
@@ -210,10 +177,9 @@ namespace docraft::layout {
             if (header) {
                 body_start_y = header->anchors().bottom_left.y;
             }
-            //margins for body content
-            context()->cursor().move_to(body->margin_left(), body_start_y-kLineHeightOffset);
+            context()->cursor().move_to(0, body_start_y - kLineHeightOffset);
             compute_layout(body);
-            body->set_position({.x=body->margin_left(), .y=body_start_y});
+            body->set_position({.x = body->margin_left(), .y = body_start_y});
             body->set_width(compute_width(body));
             body->set_height(context()->page_height()*kBodyHeightRatio_);
         }
@@ -223,9 +189,9 @@ namespace docraft::layout {
             if (body) {
                 footer_start_y = body->anchors().bottom_left.y;
             }
-            context()->cursor().move_to(footer->margin_left(), footer_start_y-kLineHeightOffset);
+            context()->cursor().move_to(0, footer_start_y - kLineHeightOffset);
             compute_layout(footer);
-            footer->set_position({.x=footer->margin_left(), .y=footer_start_y});
+            footer->set_position({.x = footer->margin_left(), .y = footer_start_y});
             footer->set_width(compute_width(footer));
             footer->set_height(context()->page_height()*kFooterHeightRatio_);
         }
