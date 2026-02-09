@@ -1,4 +1,5 @@
 #pragma once
+#include <atomic>
 #include <filesystem>
 #include <list>
 #include <memory>
@@ -28,6 +29,7 @@ namespace docraft::generic {
         static const inline std::filesystem::path kTempDir = std::filesystem::temp_directory_path();
         static inline std::unordered_map<std::string, std::string> fonts_;
         static inline std::unordered_map<std::string, bool> font_utf8_encoding_;
+        static inline std::atomic<int> instance_count_{0};
         std::shared_ptr<DocraftDocumentContext> context_;
 
 

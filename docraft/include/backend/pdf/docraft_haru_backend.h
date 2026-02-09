@@ -9,10 +9,10 @@ namespace docraft::backend::pdf {
 	/**
 	 * @brief This class is responsible for managing the Haru PDF document and providing an interface for rendering operations.
 	 */
-class DocraftHaruBackend : public docraft::backend::IDocraftRenderingBackend {
+	class DocraftHaruBackend : public docraft::backend::IDocraftRenderingBackend {
 	public:
 		DocraftHaruBackend();
-		~DocraftHaruBackend() override = default;
+		~DocraftHaruBackend() override;
 #pragma region text rendering
 		void begin_text() const override;
 		void end_text() const override;

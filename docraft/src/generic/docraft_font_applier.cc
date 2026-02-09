@@ -62,6 +62,9 @@ namespace docraft::generic {
     }
 
     DocraftFontApplier::~DocraftFontApplier() {
+        if (instance_count_.fetch_sub(1) != 1) {
+            return;
+        }
         try {
             for (const auto &pair: fonts_) {
                 const auto &font_name = pair.first;
@@ -76,6 +79,7 @@ namespace docraft::generic {
     }
 
     DocraftFontApplier::DocraftFontApplier(const std::shared_ptr<DocraftDocumentContext> &context) : context_(context) {
+        instance_count_.fetch_add(1);
         docraft_register_fonts();
         //load default fonts
         for (const auto &font: default_fonts()) {
