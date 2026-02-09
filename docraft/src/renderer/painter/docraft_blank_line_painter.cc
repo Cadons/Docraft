@@ -1,7 +1,5 @@
 #include "renderer/painter/docraft_blank_line_painter.h"
 
-#include <hpdf.h>
-
 namespace docraft::renderer::painter {
     docraft_blank_line_painter::docraft_blank_line_painter(const model::DocraftBlankLine &blank_line_node) : blank_line_node_(
         blank_line_node) {

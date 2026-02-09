@@ -1,8 +1,8 @@
 #pragma once
-#include <hpdf_doc.h>
 #include <memory>
 
 #include "docraft_cursor.h"
+#include "backend/docraft_rendering_backend.h"
 #include "generic/docraft_font_applier.h"
 
 namespace docraft {
@@ -18,11 +18,10 @@ namespace docraft {
     class DocraftDocumentContext {
         public:
         DocraftDocumentContext();
+        explicit DocraftDocumentContext(const std::shared_ptr<backend::IDocraftRenderingBackend>& backend);
         ~DocraftDocumentContext();
 
-        HPDF_Doc pdf_doc() const;
-
-        HPDF_Page page() const;
+        [[nodiscard]] const std::shared_ptr<backend::IDocraftRenderingBackend>& rendering_backend() const;
         DocraftCursor& cursor();
         float available_space() const;
         void set_renderer(const std::shared_ptr<renderer::DocraftAbstractRenderer> &renderer);
@@ -39,10 +38,13 @@ namespace docraft {
         [[nodiscard]] const std::shared_ptr<model::DocraftFooter>& footer() const;
         void set_font_applier(const std::shared_ptr<docraft::generic::DocraftFontApplier>& font_applier);
         [[nodiscard]] const std::shared_ptr<docraft::generic::DocraftFontApplier>& font_applier()const;
+        [[nodiscard]] const std::shared_ptr<backend::IDocraftLineRenderingBackend>& line_backend() const;
+        [[nodiscard]] const std::shared_ptr<backend::IDocraftShapeRenderingBackend>& shape_backend() const;
+        [[nodiscard]] const std::shared_ptr<backend::IDocraftTextRenderingBackend>& text_backend() const;
+        [[nodiscard]] const std::shared_ptr<backend::IDocraftImageRenderingBackend>& image_backend() const;
+        void set_backend(const std::shared_ptr<backend::IDocraftRenderingBackend>& backend);
 
     private:
-        HPDF_Doc pdf_doc_;
-        HPDF_Page page_;
         DocraftCursor cursor_;
         float current_rect_width_=0;
         std::shared_ptr<renderer::DocraftAbstractRenderer> renderer_;
@@ -52,5 +54,10 @@ namespace docraft {
         std::shared_ptr<model::DocraftBody> body_;
         std::shared_ptr<model::DocraftFooter> footer_;
         std::shared_ptr<docraft::generic::DocraftFontApplier> font_applier_;
+        std::shared_ptr<backend::IDocraftRenderingBackend> backend_;
+        mutable std::shared_ptr<backend::IDocraftLineRenderingBackend> line_backend_;
+        mutable std::shared_ptr<backend::IDocraftShapeRenderingBackend> shape_backend_;
+        mutable std::shared_ptr<backend::IDocraftTextRenderingBackend> text_backend_;
+        mutable std::shared_ptr<backend::IDocraftImageRenderingBackend> image_backend_;
     };
 } // docraft

@@ -1,7 +1,5 @@
 #include "model/docraft_text.h"
 
-#include <filesystem>
-#include <hpdf.h>
 #include <ostream>
 #include <memory>
 

@@ -6,7 +6,6 @@
 #include "model/docraft_rectangle.h"
 #include "model/docraft_section.h"
 #include "model/docraft_table.h"
-#include "model/docraft_text.h"
 
 namespace docraft::renderer {
     /*

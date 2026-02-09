@@ -6,23 +6,23 @@
 namespace docraft {
     void DocraftColor::convert_known_color(ColorName name) {
         switch (color_name_) {
-            case ColorName::Black: rgb_ = RGB(0.0F, 0.0F, 0.0F, 1.0F);
+            case ColorName::kBlack: rgb_ = RGB(0.0F, 0.0F, 0.0F, 1.0F);
                 break;
-            case ColorName::White: rgb_ = RGB(1.0F, 1.0F, 1.0F, 1.0F);
+            case ColorName::kWhite: rgb_ = RGB(1.0F, 1.0F, 1.0F, 1.0F);
                 break;
-            case ColorName::Red: rgb_ = RGB(1.0F, 0.0F, 0.0F, 1.0F);
+            case ColorName::kRed: rgb_ = RGB(1.0F, 0.0F, 0.0F, 1.0F);
                 break;
-            case ColorName::Green: rgb_ = RGB(0.0F, 1.0F, 0.0F, 1.0F);
+            case ColorName::kGreen: rgb_ = RGB(0.0F, 1.0F, 0.0F, 1.0F);
                 break;
-            case ColorName::Blue: rgb_ = RGB(0.0F, 0.0F, 1.0F, 1.0F);
+            case ColorName::kBlue: rgb_ = RGB(0.0F, 0.0F, 1.0F, 1.0F);
                 break;
-            case ColorName::Yellow: rgb_ = RGB(1.0F, 1.0F, 0.0F, 1.0F);
+            case ColorName::kYellow: rgb_ = RGB(1.0F, 1.0F, 0.0F, 1.0F);
                 break;
-            case ColorName::Cyan: rgb_ = RGB(0.0F, 1.0F, 1.0F, 1.0F);
+            case ColorName::kCyan: rgb_ = RGB(0.0F, 1.0F, 1.0F, 1.0F);
                 break;
-            case ColorName::Magenta: rgb_ = RGB(1.0F, 0.0F, 1.0F, 1.0F);
+            case ColorName::kMagenta: rgb_ = RGB(1.0F, 0.0F, 1.0F, 1.0F);
                 break;
-            case ColorName::Purple: rgb_ = RGB(0.5F, 0.0F, 0.5F, 1.0F);
+            case ColorName::kPurple: rgb_ = RGB(0.5F, 0.0F, 0.5F, 1.0F);
                 break;
         }
     }
@@ -31,7 +31,7 @@ namespace docraft {
         convert_known_color(name);
     }
 
-    DocraftColor::DocraftColor(float r, float g, float b, float a) : rgb_(RGB(r, g, b, a)) {
+    DocraftColor::DocraftColor(float r, float g, float b, float a) : color_name_(), rgb_(RGB(r, g, b, a)) {
     }
 
     DocraftColor::DocraftColor(const std::string &hex_code) {
