@@ -11,10 +11,10 @@
 
 namespace docraft::layout::handler {
     void DocraftLayoutTextHandler::filter_text(const std::shared_ptr<model::DocraftText>& node) {
-        // Remove new line characters
+        // Remove carriage returns, keep newlines for paragraph splitting.
         std::string filtered_text;
         for (char c: node->text()) {
-            if (c != '\n' && c != '\r') {
+            if (c != '\r') {
                 filtered_text += c;
             }
         }
@@ -145,9 +145,14 @@ namespace docraft::layout::handler {
             float line_width = measure_text_width(line);
             const bool is_last_line = (i + 1 == lines.size());
             if (node->alignment() == model::TextAlignment::kJustified) {
-                // Stretch all lines to the full available width for visible justification.
-                line->set_alignment(model::TextAlignment::kJustified);
-                line->set_width(context()->available_space());
+                if (is_last_line) {
+                    line->set_alignment(model::TextAlignment::kLeft);
+                    line->set_width(line_width);
+                } else {
+                    // Stretch non-final lines to the full available width for visible justification.
+                    line->set_alignment(model::TextAlignment::kJustified);
+                    line->set_width(context()->available_space());
+                }
             } else {
                 line->set_alignment(node->alignment());
                 line->set_width(line_width);
@@ -172,7 +177,7 @@ namespace docraft::layout::handler {
             total_height += line->height();
             total_width = std::max(total_width, line->width());
 
-            text_cursor.move_to(text_cursor.x(), std::max(text_cursor.y() - line->height(),line->height()));
+            text_cursor.move_to(text_cursor.x(), std::max(text_cursor.y() - line->height(), 0.0F));
         }
 
         node->set_position({.x = global_cursor.x(), .y = global_cursor.y()});

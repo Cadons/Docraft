@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 #include <unordered_map>
 
 #include <hpdf_image.h>
@@ -148,10 +149,25 @@ namespace {
 namespace docraft::backend::pdf {
     DocraftHaruBackend::DocraftHaruBackend() {
         pdf_ = HPDF_New(error_handler, NULL);
+        if (!pdf_) {
+            throw std::runtime_error("Failed to initialize Haru PDF document");
+        }
         HPDF_UseUTFEncodings(pdf_);
         HPDF_SetCurrentEncoder(pdf_, "UTF-8");
         HPDF_SetCompressionMode(pdf_, HPDF_COMP_ALL);
         page_ = HPDF_AddPage(pdf_);
+        if (!page_) {
+            HPDF_Free(pdf_);
+            pdf_ = nullptr;
+            throw std::runtime_error("Failed to create Haru PDF page");
+        }
+    }
+    DocraftHaruBackend::~DocraftHaruBackend() {
+        if (pdf_) {
+            HPDF_Free(pdf_);
+            pdf_ = nullptr;
+            page_ = nullptr;
+        }
     }
 
     void DocraftHaruBackend::begin_text() const {
@@ -244,6 +260,9 @@ namespace docraft::backend::pdf {
         float width,
         float height) const {
         auto image = HPDF_LoadPngImageFromFile(pdf_, path.c_str());
+        if (!image) {
+            throw std::runtime_error("Failed to load PNG image: " + path);
+        }
         HPDF_Page_DrawImage(page_, image, x, y, width, height);
     }
 
@@ -258,6 +277,9 @@ namespace docraft::backend::pdf {
             pdf_,
             reinterpret_cast<const HPDF_BYTE*>(data),
             static_cast<HPDF_UINT>(size));
+        if (!image) {
+            throw std::runtime_error("Failed to load PNG image from memory");
+        }
         HPDF_Page_DrawImage(page_, image, x, y, width, height);
     }
 
@@ -268,6 +290,9 @@ namespace docraft::backend::pdf {
         float width,
         float height) const {
         auto image = HPDF_LoadJpegImageFromFile(pdf_, path.c_str());
+        if (!image) {
+            throw std::runtime_error("Failed to load JPEG image: " + path);
+        }
         HPDF_Page_DrawImage(page_, image, x, y, width, height);
     }
 
@@ -282,6 +307,9 @@ namespace docraft::backend::pdf {
             pdf_,
             reinterpret_cast<const HPDF_BYTE*>(data),
             static_cast<HPDF_UINT>(size));
+        if (!image) {
+            throw std::runtime_error("Failed to load JPEG image from memory");
+        }
         HPDF_Page_DrawImage(page_, image, x, y, width, height);
     }
 
@@ -299,6 +327,9 @@ namespace docraft::backend::pdf {
             static_cast<HPDF_UINT>(pixel_width),
             static_cast<HPDF_UINT>(pixel_height),
             HPDF_CS_DEVICE_RGB);
+        if (!image) {
+            throw std::runtime_error("Failed to load raw RGB image: " + path);
+        }
         HPDF_Page_DrawImage(page_, image, x, y, width, height);
     }
 
@@ -318,6 +349,9 @@ namespace docraft::backend::pdf {
             static_cast<HPDF_UINT>(pixel_height),
             HPDF_CS_DEVICE_RGB,
             bits_per_component);
+        if (!image) {
+            throw std::runtime_error("Failed to load raw RGB image from memory");
+        }
         HPDF_Page_DrawImage(page_, image, x, y, width, height);
     }
 
@@ -355,6 +389,9 @@ namespace docraft::backend::pdf {
         float size,
         const char* encoder) const {
         HPDF_Font font = HPDF_GetFont(pdf_, internal_name.c_str(), encoder);
+        if (!font) {
+            throw std::runtime_error("Failed to resolve font: " + internal_name);
+        }
         HPDF_Page_SetFontAndSize(page_, font, size);
     }
 
