@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <sstream>
-#include <hpdf.h>
 #include <print>
 
 #include "generic/docraft_font_applier.h"
@@ -23,22 +22,13 @@ namespace docraft::layout::handler {
     }
 
     float DocraftLayoutTextHandler::measure_text_width(const std::shared_ptr<model::DocraftText> &node) const {
-        auto *page = context()->page();
-        if (!page) {
-            throw std::runtime_error("PDF page is not initialized in context");
-        }
         generic::DocraftFontApplier font_applier(context());
-        HPDF_Font font = HPDF_GetFont(context()->pdf_doc(),font_applier.get_font_registred_name(node->font_name()) , nullptr);
-        HPDF_Page_SetFontAndSize(page, font, node->font_size());
-        return HPDF_Page_TextWidth(page, node->text().c_str());
+        font_applier.apply_font(node);
+        return context()->text_backend()->measure_text_width(node->text());
     }
 
     float DocraftLayoutTextHandler::measure_test_width(const std::string &text) const {
-        auto *page = context()->page();
-        if (!page) {
-            throw std::runtime_error("PDF page is not initialized in context");
-        }
-        return HPDF_Page_TextWidth(page, text.c_str());
+        return context()->text_backend()->measure_text_width(text);
     }
 
     void DocraftLayoutTextHandler::compute(const std::shared_ptr<model::DocraftText> &node,

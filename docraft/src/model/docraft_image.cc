@@ -1,7 +1,5 @@
 #include "model/docraft_image.h"
 
-#include <hpdf.h>
-
 #include "renderer/docraft_renderer.h"
 
 namespace docraft::model {
@@ -13,6 +11,9 @@ namespace docraft::model {
     DocraftImage::DocraftImage(DocraftImage *node) : DocraftNode(node) {
         path_ = node->path();
         format_ = node->format();
+        raw_data_ = node->raw_data();
+        raw_pixel_width_ = node->raw_pixel_width();
+        raw_pixel_height_ = node->raw_pixel_height();
     }
 
     void DocraftImage::draw(const std::shared_ptr<DocraftDocumentContext> &context) {
@@ -50,22 +51,18 @@ namespace docraft::model {
         // }
     }
 
+    void DocraftImage::set_raw_data(const std::vector<unsigned char> &data, int pixel_width, int pixel_height) {
+        raw_data_ = data;
+        raw_pixel_width_ = pixel_width;
+        raw_pixel_height_ = pixel_height;
+        format_ = ImageFormat::kRaw;
+    }
+
     // Helper function to get image dimensions
     std::pair<float, float> DocraftImage::get_image_dimensions(const std::string &path, ImageFormat format) {
-        HPDF_Doc pdf = HPDF_New(nullptr, nullptr);
-        HPDF_Image image = nullptr;
-
-        if (format == ImageFormat::kPng) {
-            image = HPDF_LoadPngImageFromFile(pdf, path.c_str());
-        } else if (format == ImageFormat::kJpeg) {
-            image = HPDF_LoadJpegImageFromFile(pdf, path.c_str());
-        }
-
-        float width = image ? HPDF_Image_GetWidth(image) : 0;
-        float height = image ? HPDF_Image_GetHeight(image) : 0;
-
-        HPDF_Free(pdf);
-        return {width, height};
+        (void)path;
+        (void)format;
+        return {0.0F, 0.0F};
     }
 
     const std::string & DocraftImage::path() const {
@@ -73,5 +70,14 @@ namespace docraft::model {
     }
     ImageFormat DocraftImage::format() const {
         return format_;
+    }
+    const std::vector<unsigned char> &DocraftImage::raw_data() const {
+        return raw_data_;
+    }
+    int DocraftImage::raw_pixel_width() const {
+        return raw_pixel_width_;
+    }
+    int DocraftImage::raw_pixel_height() const {
+        return raw_pixel_height_;
     }
 } // docraft

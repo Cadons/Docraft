@@ -22,24 +22,24 @@ namespace {
         std::string color_name_str = color_attr.as_string();
 
         if (color_name_str == std::string{docraft::craft::color::kBlack}) {
-            return docraft::DocraftColor(docraft::ColorName::Black);
+            return docraft::DocraftColor(docraft::ColorName::kBlack);
         } else if (color_name_str == std::string{docraft::craft::color::kWhite}) {
-            return docraft::DocraftColor(docraft::ColorName::White);
+            return docraft::DocraftColor(docraft::ColorName::kWhite);
         } else if (color_name_str == std::string{docraft::craft::color::kRed}) {
-            return docraft::DocraftColor(docraft::ColorName::Red);
+            return docraft::DocraftColor(docraft::ColorName::kRed);
         } else if (color_name_str == std::string{docraft::craft::color::kGreen}) {
-            return docraft::DocraftColor(docraft::ColorName::Green);
+            return docraft::DocraftColor(docraft::ColorName::kGreen);
         } else if (color_name_str == std::string{docraft::craft::color::kBlue}) {
-            return docraft::DocraftColor(docraft::ColorName::Blue);
+            return docraft::DocraftColor(docraft::ColorName::kBlue);
         } else if (color_name_str == std::string{docraft::craft::color::kYellow}) {
-            return docraft::DocraftColor(docraft::ColorName::Yellow);
+            return docraft::DocraftColor(docraft::ColorName::kYellow);
         } else if (color_name_str == std::string{docraft::craft::color::kCyan}) {
-            return docraft::DocraftColor(docraft::ColorName::Cyan);
+            return docraft::DocraftColor(docraft::ColorName::kCyan);
         } else if (color_name_str == std::string{docraft::craft::color::kMagenta}) {
-            return docraft::DocraftColor(docraft::ColorName::Magenta);
+            return docraft::DocraftColor(docraft::ColorName::kMagenta);
         } else {
             // default to black
-            return docraft::DocraftColor(docraft::ColorName::Black);
+            return docraft::DocraftColor(docraft::ColorName::kBlack);
         }
     }
 

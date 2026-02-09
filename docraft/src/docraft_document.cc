@@ -4,7 +4,6 @@
 
 #include "docraft_document.h"
 
-#include <hpdf.h>
 #include <iostream>
 #include <ostream>
 #include <list>
@@ -40,7 +39,7 @@ namespace docraft {
             }
         }
 
-        HPDF_SaveToFile(pdf_context_->pdf_doc(), (document_title_ + ".pdf").c_str());
+        pdf_context_->rendering_backend()->save_to_file(document_title_ + ".pdf");
     }
     void DocraftDocument::set_document_title(const std::string &document_title) {
         document_title_ = document_title;

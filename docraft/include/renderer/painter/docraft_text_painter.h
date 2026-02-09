@@ -1,5 +1,6 @@
 #pragma once
 #include <list>
+#include "backend/docraft_text_rendering_backend.h"
 
 #include "model/docraft_text.h"
 #include "renderer/painter/i_painter.h"
@@ -19,5 +20,6 @@ namespace docraft::renderer::painter {
     private:
         model::DocraftText text_node_;
         std::shared_ptr<model::DocraftText> current_line_;
+        std::shared_ptr<docraft::backend::IDocraftTextRenderingBackend> text_backend_;
     };
 } // docraft

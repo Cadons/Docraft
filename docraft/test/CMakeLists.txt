@@ -8,9 +8,12 @@ set(TEST_SOURCES
         main.cpp
         test.cpp
         docraft_color_test.cc
+        generic/docraft_font_applier_test.cc
         layout/docraft_cursor_test.cc
         model/docraft_position_test.cc
-        layout/docraft_layout_engine_test.cc)
+        layout/docraft_layout_engine_test.cc
+        renderer/docraft_image_painter_test.cc
+        renderer/docraft_painter_smoke_test.cc)
 
 add_executable(docraft_test
         ${TEST_SOURCES}

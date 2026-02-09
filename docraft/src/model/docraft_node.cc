@@ -7,13 +7,23 @@ namespace docraft::model {
 
     int DocraftNode::next_id_ = 0;
 
-    DocraftNode::DocraftNode() : DocraftTransform(), transform_box_() {
+    DocraftNode::DocraftNode() {
         id_ = next_id_++;
     }
 
-    DocraftNode::DocraftNode(const DocraftNode *node) : DocraftTransform(), transform_box_(),
-                                                        node_name_(node->node_name()),
-                                                        id_(next_id_++) {
+    DocraftNode::DocraftNode(const DocraftNode &node)
+        : DocraftTransform(node),
+          transform_box_(node.transform_box_),
+          id_(node.id_),
+          node_name_(node.node_name_),
+          auto_fill_height_(node.auto_fill_height_),
+          auto_fill_width_(node.auto_fill_width_),
+          weight_(node.weight_),
+          position_mode_(node.position_mode_) {
+    }
+
+    DocraftNode::DocraftNode(const DocraftNode *node) : id_(next_id_++),
+                                                        node_name_(node->node_name()) {
         std::cout << "pointer constructor" << std::endl;
     }
     int DocraftNode::id() const {

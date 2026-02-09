@@ -1,7 +1,5 @@
 #include "renderer/docraft_pdf_renderer.h"
 
-#include <hpdf.h>
-
 #include "../../include/renderer/painter/docraft_image_painter.h"
 #include "renderer/painter/docraft_blank_line_painter.h"
 #include "renderer/painter/docraft_rectangle_painter.h"
@@ -31,14 +29,6 @@ namespace docraft::renderer {
         painter::DocraftRectanglePainter painter(rectangle_node);
         painter.draw(context());
     }
-    void DocraftPDFRenderer::draw_line(HPDF_Page page, model::DocraftPoint start, model::DocraftPoint end, DocraftColor color) {
-        const auto rgb=color.toRGB();
-        HPDF_Page_SetRGBStroke(page, rgb.r, rgb.g, rgb.b);
-        HPDF_Page_MoveTo(page, start.x, start.y);
-        HPDF_Page_LineTo(page, end.x, end.y);
-        HPDF_Page_Stroke(page);
-    }
-
     void DocraftPDFRenderer::render_blank_line(const model::DocraftBlankLine &blank_line_node) {
         painter::docraft_blank_line_painter painter(blank_line_node);
         painter.draw(context());

@@ -3,15 +3,15 @@
 
 namespace docraft {
     enum class ColorName {
-        Black,
-        White,
-        Red,
-        Green,
-        Blue,
-        Yellow,
-        Magenta,
-        Cyan,
-        Purple
+        kBlack,
+        kWhite,
+        kRed,
+        kGreen,
+        kBlue,
+        kYellow,
+        kMagenta,
+        kCyan,
+        kPurple
     };
 
     struct RGB {
@@ -35,7 +35,7 @@ namespace docraft {
     class DocraftColor {
     public:
 
-        explicit DocraftColor(ColorName name = ColorName::Black);
+        explicit DocraftColor(ColorName name = ColorName::kBlack);
 
         explicit DocraftColor(float r, float g, float b, float a = 1.0F);
 

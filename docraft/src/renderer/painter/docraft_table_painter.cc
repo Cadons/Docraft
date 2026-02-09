@@ -1,9 +1,8 @@
 #include "renderer/painter/docraft_table_painter.h"
-#include <hpdf.h>
 #include <print>
+#include <backend/docraft_line_rendering_backend.h>
 
 #include "generic/docraft_font_applier.h"
-#include "renderer/docraft_pdf_renderer.h"
 #include "renderer/painter/docraft_image_painter.h"
 
 namespace docraft::renderer::painter {
@@ -13,17 +12,36 @@ namespace docraft::renderer::painter {
 
 
     void DocraftTablePainter::draw(const std::shared_ptr<DocraftDocumentContext> &context) {
-         auto *page = context->page();
+         if (!context) return;
+         auto line_backend = context->line_backend();
+         if (!line_backend) return;
+         line_backend->set_stroke_color(0.0F, 0.0F, 0.0F);
          float start_x = table_node_.position().x;
          float start_y = table_node_.position().y;
          float table_width = table_node_.width();
          float table_height = table_node_.height();
             //draw border
-         DocraftPDFRenderer::draw_line(page, table_node_.anchors().top_left, table_node_.anchors().top_right); // Top line
-         DocraftPDFRenderer::draw_line(page, table_node_.anchors().bottom_left, table_node_.anchors().top_left); // Left line
-         DocraftPDFRenderer::draw_line(page, table_node_.anchors().top_right, table_node_.anchors().bottom_right); // Right line
+         line_backend->draw_line(
+             table_node_.anchors().top_left.x,
+             table_node_.anchors().top_left.y,
+             table_node_.anchors().top_right.x,
+             table_node_.anchors().top_right.y); // Top line
+         line_backend->draw_line(
+             table_node_.anchors().bottom_left.x,
+             table_node_.anchors().bottom_left.y,
+             table_node_.anchors().top_left.x,
+             table_node_.anchors().top_left.y); // Left line
+         line_backend->draw_line(
+             table_node_.anchors().top_right.x,
+             table_node_.anchors().top_right.y,
+             table_node_.anchors().bottom_right.x,
+             table_node_.anchors().bottom_right.y); // Right line
          if (table_node_.orientation()!=model::LayoutOrientation::kHorizontal) {
-             DocraftPDFRenderer::draw_line(page, table_node_.anchors().bottom_right, table_node_.anchors().bottom_left);
+             line_backend->draw_line(
+                 table_node_.anchors().bottom_right.x,
+                 table_node_.anchors().bottom_right.y,
+                 table_node_.anchors().bottom_left.x,
+                 table_node_.anchors().bottom_left.y);
          }
          //draw titles
          if (table_node_.orientation() == model::LayoutOrientation::kHorizontal &&
@@ -31,14 +49,18 @@ namespace docraft::renderer::painter {
              for (const auto &title: table_node_.title_nodes()) {
                  title->draw(context);
                  // Line of columns
-                 DocraftPDFRenderer::draw_line(page,
-                     {title->anchors().top_left.x, table_node_.anchors().top_left.y},
-                     {title->anchors().top_left.x, table_node_.anchors().bottom_left.y});
+                 line_backend->draw_line(
+                     title->anchors().top_left.x,
+                     table_node_.anchors().top_left.y,
+                     title->anchors().top_left.x,
+                     table_node_.anchors().bottom_left.y);
              }
              float line_y = table_node_.title_nodes().front()->anchors().bottom_left.y;
-             DocraftPDFRenderer::draw_line(page,
-                 {start_x, line_y},
-                 {start_x + table_width, line_y}); // Line below titles
+             line_backend->draw_line(
+                 start_x,
+                 line_y,
+                 start_x + table_width,
+                 line_y); // Line below titles
          }
          //draw content nodes
 
@@ -77,7 +99,11 @@ namespace docraft::renderer::painter {
              // draw horizontal line at bottom of this row
              float line_y_here =  bottom_y;
              std::print("Drawing line at y: {}\n", line_y_here);
-             DocraftPDFRenderer::draw_line(page, { .x=start_x, .y=line_y_here }, { .x=start_x + table_width, .y=line_y_here });
+             line_backend->draw_line(
+                 start_x,
+                 line_y_here,
+                 start_x + table_width,
+                 line_y_here);
              content_top = line_y_here;
        }
 

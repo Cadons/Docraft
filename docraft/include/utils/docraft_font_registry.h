@@ -26,6 +26,14 @@ namespace docraft::utils {
             if (it != registry_.end()) return &it->second;
             return nullptr;
         }
+        std::vector<std::string> registered_font_names() const {
+            std::vector<std::string> names;
+            names.reserve(registry_.size());
+            for (const auto &pair : registry_) {
+                names.push_back(pair.first);
+            }
+            return names;
+        }
 
     private:
         std::unordered_map<std::string, DocraftFontData> registry_;

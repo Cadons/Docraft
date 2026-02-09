@@ -4,7 +4,7 @@
 using namespace docraft;
 
 TEST(DocraftColor, ConvertsKnownColorToRGB) {
-    DocraftColor color(ColorName::Red);
+    DocraftColor color(ColorName::kRed);
     RGB rgb = color.toRGB();
     EXPECT_FLOAT_EQ(rgb.r, 1.0F);
     EXPECT_FLOAT_EQ(rgb.g, 0.0F);
@@ -49,6 +49,6 @@ TEST(DocraftColor, CreatesFromRGB) {
 }
 
 TEST(DocraftColor, ConvertsToColorName) {
-    DocraftColor color(ColorName::Blue);
-    EXPECT_EQ(color.toColorName(), ColorName::Blue);
+    DocraftColor color(ColorName::kBlue);
+    EXPECT_EQ(color.toColorName(), ColorName::kBlue);
 }
