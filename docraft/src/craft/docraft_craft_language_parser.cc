@@ -12,11 +12,13 @@
 #include "model/docraft_body.h"
 #include "model/docraft_footer.h"
 #include "model/docraft_children_container_node.h"
+#include "utils/docraft_logger.h"
 
 namespace docraft::craft {
 
 DocraftCraftLanguageParser::DocraftCraftLanguageParser() {
     // Register parsers for different node types
+    parsers_[tag_formatter(elements::kSettings.data())] = std::make_unique<parser::DocraftSettingsParser>(); // settings should be parsed before any other node, so it is registered first
     parsers_[tag_formatter(section::kHeader.data())] = std::make_unique<parser::DocraftHeaderParser>();
     parsers_[tag_formatter(section::kBody.data())] = std::make_unique<parser::DocraftBodyParser>();
     parsers_[tag_formatter(section::kFooter.data())] = std::make_unique<parser::DocraftFooterParser>();
@@ -110,10 +112,21 @@ void DocraftCraftLanguageParser::load_document() {
     }
     pugi::xml_node document = root;
 
+    //Settings
+    const std::string settings_tag = tag_formatter(elements::kSettings.data());
+    if (pugi::xml_node settings_node = document.child(settings_tag.c_str())) {
+       LOG_DEBUG("Settings found.");
+        auto it = parsers_.find(settings_tag);
+        if (it != parsers_.end()) {
+            if (auto settings = std::dynamic_pointer_cast<model::DocraftSettings>(it->second->parse(settings_node))) {
+                document_->set_settings(settings);
+            }
+        }
+    }
     // Header (optional)
     const std::string header_tag = tag_formatter(section::kHeader.data());
     if (pugi::xml_node header_node = document.child(header_tag.c_str())) {
-        std::cout << "Header found." << std::endl;
+        LOG_DEBUG("Header found.");
         auto it = parsers_.find(header_tag);
         if (it != parsers_.end()) {
             if (auto header = std::dynamic_pointer_cast<model::DocraftHeader>(it->second->parse(header_node))) {
@@ -125,7 +138,7 @@ void DocraftCraftLanguageParser::load_document() {
     // Body (required)
     const std::string body_tag = tag_formatter(section::kBody.data());
     if (pugi::xml_node body_node = document.child(body_tag.c_str())) {
-        std::cout << "Body found." << std::endl;
+        LOG_DEBUG("Body found.");
         auto it = parsers_.find(body_tag);
         if (it != parsers_.end()) {
             if (auto body = std::dynamic_pointer_cast<model::DocraftBody>(it->second->parse(body_node))) {
@@ -139,7 +152,7 @@ void DocraftCraftLanguageParser::load_document() {
     // Footer (optional)
     const std::string footer_tag = tag_formatter(section::kFooter.data());
     if (pugi::xml_node footer_node = document.child(footer_tag.c_str())) {
-        std::cout << "Footer found." << std::endl;
+        LOG_DEBUG("Footer found.");
         auto it = parsers_.find(footer_tag);
         if (it != parsers_.end()) {
             if (auto footer = std::dynamic_pointer_cast<model::DocraftFooter>(it->second->parse(footer_node))) {
@@ -148,7 +161,7 @@ void DocraftCraftLanguageParser::load_document() {
         }
     }
 
-    std::cout << "Document loaded from .craft file successfully." << std::endl;
+    LOG_INFO("Document loaded successfully with title: " + document_->document_title());
 }
 
 std::shared_ptr<DocraftDocument> DocraftCraftLanguageParser::get_document() const {

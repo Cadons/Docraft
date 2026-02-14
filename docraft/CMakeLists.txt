@@ -143,6 +143,8 @@ set(DOCRAFT_SOURCES src/main.cpp
         src/model/docraft_position.cc
         src/backend/pdf/docraft_haru_backend.cc
         include/backend/pdf/docraft_haru_backend.h
+        src/model/docraft_settings.cc
+        include/model/docraft_settings.h
 )
 add_library(docraft_lib STATIC
         ${DOCRAFT_SOURCES}

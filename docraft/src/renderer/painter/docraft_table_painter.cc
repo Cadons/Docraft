@@ -4,6 +4,7 @@
 
 #include "generic/docraft_font_applier.h"
 #include "renderer/painter/docraft_image_painter.h"
+#include "utils/docraft_logger.h"
 
 namespace docraft::renderer::painter {
     DocraftTablePainter::DocraftTablePainter(const model::DocraftTable &table_node) : table_node_(table_node) {
@@ -98,7 +99,7 @@ namespace docraft::renderer::painter {
 
              // draw horizontal line at bottom of this row
              float line_y_here =  bottom_y;
-             std::print("Drawing line at y: {}\n", line_y_here);
+             LOG_DEBUG(std::format("Drawing horizontal line at y={}", line_y_here));
              line_backend->draw_line(
                  start_x,
                  line_y_here,

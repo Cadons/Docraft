@@ -1,7 +1,9 @@
 #include "docraft_color.h"
 
+#include <cctype>
 #include <iostream>
 #include <ostream>
+#include <stdexcept>
 
 namespace docraft {
     void DocraftColor::convert_known_color(ColorName name) {
@@ -35,12 +37,12 @@ namespace docraft {
     }
 
     DocraftColor::DocraftColor(const std::string &hex_code) {
-        //convert hex to rgb
-        if (hex_code.size() != 7 || hex_code[0] != '#') {
-            if (hex_code.size() != 9) {
-                std::cerr << "Invalid hex code: " << hex_code << std::endl;
-                rgb_ = RGB(0.0F, 0.0F, 0.0F, 1.0F); //default black
-                return;
+        if ((hex_code.size() != 7 && hex_code.size() != 9) || hex_code[0] != '#') {
+            throw std::invalid_argument("Invalid hex code: " + hex_code);
+        }
+        for (size_t i = 1; i < hex_code.size(); ++i) {
+            if (!std::isxdigit(static_cast<unsigned char>(hex_code[i]))) {
+                throw std::invalid_argument("Invalid hex code: " + hex_code);
             }
         }
         //example of color: #RRGGBB or #RRGGBBAA

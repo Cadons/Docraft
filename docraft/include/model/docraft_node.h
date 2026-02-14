@@ -47,6 +47,8 @@ namespace docraft::model {
         
         void set_weight(float weight);
 
+        void set_position_mode(DocraftPositionType position_mode);
+
     private:
         int id_ = 0;
         static int next_id_;

@@ -4,10 +4,11 @@
 #include <ostream>
 
 #include "renderer/docraft_renderer.h"
+#include "utils/docraft_logger.h"
 
 namespace docraft::model {
     void DocraftRectangle::draw(const std::shared_ptr<DocraftDocumentContext> &context) {
-        std::cout << "draw rectangle" << std::endl;
+        LOG_DEBUG("Drawing rectangle");
         context->renderer()->render_rectangle(*this);
         draw_children(context);
 

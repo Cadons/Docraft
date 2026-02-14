@@ -31,12 +31,7 @@ TEST(DocraftColor, ConvertsHexCodeWithAlphaToRGB) {
 }
 
 TEST(DocraftColor, HandlesInvalidHexCode) {
-    DocraftColor color("invalid");
-    RGB rgb = color.toRGB();
-    EXPECT_FLOAT_EQ(rgb.r, 0.0F);
-    EXPECT_FLOAT_EQ(rgb.g, 0.0F);
-    EXPECT_FLOAT_EQ(rgb.b, 0.0F);
-    EXPECT_FLOAT_EQ(rgb.a, 1.0F);
+    EXPECT_ANY_THROW([](){DocraftColor color("invalid"); }());
 }
 
 TEST(DocraftColor, CreatesFromRGB) {

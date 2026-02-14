@@ -26,6 +26,7 @@ namespace docraft::model {
                                                         node_name_(node->node_name()) {
         std::cout << "pointer constructor" << std::endl;
     }
+#pragma region Getter
     int DocraftNode::id() const {
         return id_;
     }
@@ -50,8 +51,8 @@ namespace docraft::model {
     DocraftPositionType DocraftNode::position_mode() const {
         return position_mode_;
     }
-
-
+#pragma endregion
+#pragma region Setter
     void DocraftNode::set_name(const std::string &name) {
         node_name_ = name;
     }
@@ -84,5 +85,8 @@ namespace docraft::model {
         }
         weight_ = weight;
     }
-
+    void DocraftNode::set_position_mode(DocraftPositionType position_mode) {
+        position_mode_ = position_mode;
+    }
+#pragma endregion
 } // Docraft
