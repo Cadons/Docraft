@@ -50,10 +50,13 @@ namespace docraft::craft {
         constexpr string kText = "Text";
         constexpr string kImage = "Image";
         constexpr string kTable = "Table";
-        constexpr string kTableHeader = "TableHeader";
-        constexpr string kTableTitle = "TableTitle";
-        constexpr string kTableBody = "TableBody";
-        constexpr string kTableRow = "TableRow";
+        constexpr string kTHead = "THead";
+        constexpr string kTBody = "TBody";
+        constexpr string kRow = "Row";
+        constexpr string kCell = "Cell";
+        constexpr string kTitle = "Title";
+        constexpr string kHTitle = "HTitle";
+        constexpr string kVTitle = "VTitle";
         constexpr string kLayout = "Layout";
         constexpr string kBlankLine = "Blank";
         constexpr string kRectangle = "Rectangle";
@@ -104,6 +107,7 @@ namespace docraft::craft {
         namespace table::attribute {
             constexpr string kModel = "model";
             constexpr string kBaselineOffset = "baseline_offset";
+            constexpr string kTableTile = "TableTile";
         }
         namespace table_header::attribute {
             constexpr string kColor = "color";
@@ -112,6 +116,20 @@ namespace docraft::craft {
             constexpr string kAlignment = "alignment";
             constexpr string kStyle = "style";
             constexpr string kColor = "color";
+            constexpr string kBackgroundColor = "background_color";
+        }
+        namespace table_htitle::attribute {
+            constexpr string kBackgroundColor = "background_color";
+        }
+        namespace table_vtitle::attribute {
+            constexpr string kBackgroundColor = "background_color";
+        }
+        namespace table_row::attribute {
+            constexpr string kBackgroundColor = "background_color";
+        }
+        namespace table_column::attribute {
+            constexpr string kBackgroundColor = "background_color";
+            constexpr string kTableTile = "TableTile";
         }
         namespace layout::attribute {
             constexpr string kOrientation = "orientation";

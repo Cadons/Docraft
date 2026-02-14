@@ -288,12 +288,14 @@ namespace docraft::layout::handler {
                 }
             };
 
-            const std::size_t rows = node->titles().size();
+            const std::size_t rows = node->titles().empty()
+                                         ? node->title_nodes().size()
+                                         : node->titles().size();
             ensure_title_nodes(node);
 
             // In vertical mode: first column is titles (row headers), remaining columns are values.
             const std::size_t total_cols = static_cast<std::size_t>(std::max(2, node->cols()));
-            const std::size_t value_cols = (total_cols > 1) ? (total_cols - 1) : 1;
+            const std::size_t value_cols = static_cast<std::size_t>(std::max(1, node->content_cols()));
 
             // Flatten content sequentially: each row consumes value_cols items.
             const auto flat = flatten_content_nodes(node);
@@ -337,6 +339,42 @@ namespace docraft::layout::handler {
             float y = fixed_y;
             float total_height = 0.0F;
 
+            const float padding_x = 2.0F*kCellPaddingX;
+            const float padding_y = 2.0F*kCellPaddingY;
+            // Optional header row (vertical tables only).
+            float header_row_height = 0.0F;
+            if (!node->htitle_nodes().empty()) {
+                // Measure header row height by laying out htitle nodes within value column widths.
+                for (std::size_t c = 0; c < std::min(value_cols, node->htitle_nodes().size()); ++c) {
+                    const auto &htitle_node = node->htitle_nodes()[c];
+                    const float saved_x = table_cursor.x();
+                    const float saved_y = table_cursor.y();
+                    const float inner_width = std::max(0.0F, value_col_width - padding_x);
+                    context->set_current_rect_width(inner_width);
+                    table_cursor.move_to(
+                        fixed_x + title_col_width + (static_cast<float>(c) * value_col_width) + kCellPaddingX,
+                        y - kCellPaddingY);
+                    (void) engine.compute_layout(htitle_node, table_cursor);
+                    table_cursor.move_to(saved_x, saved_y);
+                    header_row_height = std::max(header_row_height, htitle_node->height() + padding_y);
+                }
+                // Place header row htitle nodes.
+                for (std::size_t c = 0; c < std::min(value_cols, node->htitle_nodes().size()); ++c) {
+                    const auto &htitle_node = node->htitle_nodes()[c];
+                    if (auto text_node = std::dynamic_pointer_cast<model::DocraftText>(htitle_node)) {
+                        center_text_in_row(text_node, y, header_row_height);
+                    }
+                    htitle_node->set_position({
+                        .x = fixed_x + title_col_width + (static_cast<float>(c) * value_col_width), .y = y
+                    });
+                    htitle_node->set_width(value_col_width);
+                    htitle_node->set_height(header_row_height);
+                }
+
+                total_height += header_row_height;
+                y -= header_row_height;
+            }
+
             for (std::size_t r = 0; r < rows; ++r) {
                 float row_height = 0.0F;
 
@@ -345,12 +383,12 @@ namespace docraft::layout::handler {
                     const auto &title_node = node->title_nodes()[r];
                     const float saved_x = table_cursor.x();
                     const float saved_y = table_cursor.y();
-                    const float inner_width = std::max(0.0F, title_col_width - (2.0F * kCellPaddingX));
+                    const float inner_width = std::max(0.0F, title_col_width -padding_x);
                     context->set_current_rect_width(inner_width);
                     table_cursor.move_to(fixed_x + kCellPaddingX, y - kCellPaddingY);
                     (void) engine.compute_layout(title_node, table_cursor);
                     table_cursor.move_to(saved_x, saved_y);
-                    row_height = std::max(row_height, title_node->height() + (2.0F * kCellPaddingY));
+                    row_height = std::max(row_height, title_node->height() + padding_y);
                 }
 
                 // Measure the row's value cells to find row height.
@@ -364,7 +402,7 @@ namespace docraft::layout::handler {
 
                     const float saved_x = table_cursor.x();
                     const float saved_y = table_cursor.y();
-                    const float inner_width = std::max(0.0F, value_col_width - (2.0F * kCellPaddingX));
+                    const float inner_width = std::max(0.0F, value_col_width - padding_x);
                     context->set_current_rect_width(inner_width);
                     table_cursor.move_to(
                         fixed_x + title_col_width + (static_cast<float>(vc) * value_col_width) + kCellPaddingX,
@@ -372,7 +410,7 @@ namespace docraft::layout::handler {
                     (void) engine.compute_layout(cell, table_cursor);
                     table_cursor.move_to(saved_x, saved_y);
 
-                    row_height = std::max(row_height, cell->height() + (2.0F * kCellPaddingY));
+                    row_height = std::max(row_height, cell->height() + padding_y);
                 }
 
                 // Place title cell.
