@@ -6,6 +6,9 @@ namespace docraft::backend {
      */
     class IDocraftLineRenderingBackend {
     public:
+        /**
+         * @brief Virtual destructor.
+         */
         virtual ~IDocraftLineRenderingBackend() = default;
         /**
          * @brief Sets the stroke color used for subsequent line drawing.

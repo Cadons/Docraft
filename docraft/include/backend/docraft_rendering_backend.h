@@ -13,29 +13,44 @@ namespace docraft::backend {
                                      public IDocraftShapeRenderingBackend,
                                      public IDocraftImageRenderingBackend {
     public:
+        /**
+         * @brief Virtual destructor.
+         */
         ~IDocraftRenderingBackend() override = default;
         /**
          * @brief Returns the current page width in points.
+         * @return Page width in points.
          */
         virtual float page_width() const = 0;
         /**
          * @brief Returns the current page height in points.
+         * @return Page height in points.
          */
         virtual float page_height() const = 0;
         /**
          * @brief Saves the document to a file path.
+         * @param path Output file path.
          */
         virtual void save_to_file(const std::string& path) const = 0;
         /**
          * @brief Registers a TTF font and returns the internal name.
+         * @param path Font file path.
+         * @param embed Whether to embed the font in the document.
+         * @return Backend internal font name.
          */
         virtual const char* register_ttf_font_from_file(const std::string& path, bool embed) const = 0;
         /**
          * @brief Checks whether a font can be used with the given encoder.
+         * @param internal_name Backend internal font name.
+         * @param encoder Backend encoder name.
+         * @return true if the font can be used.
          */
         virtual bool can_use_font(const std::string& internal_name, const char* encoder) const = 0;
         /**
          * @brief Sets the current font and size.
+         * @param internal_name Backend internal font name.
+         * @param size Font size in points.
+         * @param encoder Backend encoder name.
          */
         virtual void set_font(const std::string& internal_name, float size, const char* encoder) const = 0;
     };

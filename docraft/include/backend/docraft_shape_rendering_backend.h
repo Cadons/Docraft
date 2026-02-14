@@ -8,6 +8,9 @@ namespace docraft::backend {
      */
     class IDocraftShapeRenderingBackend : public virtual IDocraftLineRenderingBackend {
     public:
+        /**
+         * @brief Virtual destructor.
+         */
         ~IDocraftShapeRenderingBackend() override = default;
         /**
          * @brief Saves the current graphics state.

@@ -95,8 +95,12 @@ set(DOCRAFT_SOURCES src/main.cpp
         include/model/docraft_paragraph.h
         src/model/docraft_layout.cc
         include/model/docraft_layout.h
+        src/model/docraft_list.cc
+        include/model/docraft_list.h
         src/layout/handler/docraft_layout_handler.cc
         include/layout/handler/docraft_layout_handler.h
+        src/layout/handler/docraft_layout_list_handler.cc
+        include/layout/handler/docraft_layout_list_handler.h
         src/model/docraft_children_container_node.cc
         include/model/docraft_children_container_node.h
         include/backend/docraft_pdf_backend.h
@@ -138,6 +142,7 @@ set(DOCRAFT_SOURCES src/main.cpp
         include/craft/docraft_craft_language_tokens.h
         src/utils/docraft_logger.cc
         src/utils/docraft_font_resolver.cc
+        src/utils/docraft_font_registry.cc
         include/utils/docraft_logger.h
         include/model/docraft_position.h
         src/model/docraft_position.cc

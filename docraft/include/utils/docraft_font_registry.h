@@ -1,59 +1,58 @@
 #pragma once
 #include <filesystem>
-#include <fstream>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 namespace docraft::utils {
+    /**
+     * @brief Raw font data container.
+     */
     struct DocraftFontData {
         const unsigned char* data;
         size_t size;
     };
 
+    /**
+     * @brief Singleton registry for in-memory and file-based fonts.
+     *
+     * Stores raw font data so backends can register fonts without re-reading files.
+     */
     class DocraftFontRegistry {
     public:
-        static DocraftFontRegistry& instance() {
-            static DocraftFontRegistry inst;
-            return inst;
-        }
+        /**
+         * @brief Returns the singleton instance.
+         * @return Reference to the registry singleton.
+         */
+        static DocraftFontRegistry& instance();
 
-        bool register_font(const std::string& name, const unsigned char* data, size_t size) {
-            registry_.insert({name, {data, size}});
-            return true;
-        }
-        bool register_font(const std::string& name, const std::string& file_path) {
-            if (!std::filesystem::exists(file_path)) {
-                std::cerr << "Font file " << file_path << " does not exist, skipping." << std::endl;
-                return false;
-            }
-            try {
-                auto data = std::make_unique<unsigned char[]>(std::filesystem::file_size(file_path));
-                if (std::ifstream file(file_path, std::ios::binary); !file.read(reinterpret_cast<char*>(data.get()), std::filesystem::file_size(file_path))) {
-                    std::cerr << "Failed to read font file: " << file_path << std::endl;
-                    return false;
-                }
-                registry_.insert({name, {data.release(), static_cast<size_t>(std::filesystem::file_size(file_path))}});
-                return true;
-            } catch (const std::exception &e) {
-                std::cerr << "Error registering font from file: " << e.what() << std::endl;
-                return false;
-            }
-        }
+        /**
+         * @brief Registers a font from memory.
+         * @param name Font family or variant name.
+         * @param data Raw font data.
+         * @param size Size of the data in bytes.
+         * @return true if the font was registered.
+         */
+        bool register_font(const std::string& name, const unsigned char* data, size_t size);
+        /**
+         * @brief Registers a font by loading it from a file path.
+         * @param name Font family or variant name.
+         * @param file_path Path to the font file.
+         * @return true on success, false on failure.
+         */
+        bool register_font(const std::string& name, const std::string& file_path);
 
-        const DocraftFontData* get_font(const std::string& name) const {
-            auto it = registry_.find(name);
-            if (it != registry_.end()) return &it->second;
-            return nullptr;
-        }
-        std::vector<std::string> registered_font_names() const {
-            std::vector<std::string> names;
-            names.reserve(registry_.size());
-            for (const auto &pair : registry_) {
-                names.push_back(pair.first);
-            }
-            return names;
-        }
+        /**
+         * @brief Returns font data for a registered name, or nullptr if missing.
+         * @param name Font family or variant name.
+         * @return Pointer to font data, or nullptr if not found.
+         */
+        const DocraftFontData* get_font(const std::string& name) const;
+        /**
+         * @brief Returns the list of registered font names.
+         * @return Vector of font names.
+         */
+        std::vector<std::string> registered_font_names() const;
 
     private:
         std::unordered_map<std::string, DocraftFontData> registry_;

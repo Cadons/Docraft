@@ -8,6 +8,9 @@ namespace docraft::backend {
      */
     class IDocraftImageRenderingBackend {
     public:
+        /**
+         * @brief Virtual destructor.
+         */
         virtual ~IDocraftImageRenderingBackend() = default;
         /**
          * @brief Draws a PNG image from file.
