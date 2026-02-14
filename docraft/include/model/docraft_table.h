@@ -1,5 +1,7 @@
 #pragma once
+#include <optional>
 #include "docraft_text.h"
+#include "docraft_color.h"
 #include "model/docraft_children_container_node.h"
 #include "model/docraft_layout.h"
 
@@ -71,6 +73,11 @@ namespace docraft::model {
          */
         void set_titles(const std::vector<std::string> &titles);
         /**
+         * @brief Sets the number of content columns (data cells per row).
+         * @param cols Content column count.
+         */
+        void set_content_cols(int cols);
+        /**
          * @brief Sets all column weights.
          * @param weights Vector of weights.
          */
@@ -87,16 +94,33 @@ namespace docraft::model {
          */
         void set_title_node(int index, const std::shared_ptr<DocraftText> &node);
         /**
+         * @brief Sets a header title node by index (vertical tables only).
+         * @param index Header title index.
+         * @param node Header title node.
+         */
+        void set_htitle_node(int index, const std::shared_ptr<DocraftText> &node);
+        /**
          * @brief Sets a content node by flat index.
          * @param index Content index (row-major).
          * @param node Content node.
          */
         void set_content_node(int index, const std::shared_ptr<DocraftNode> &node);
         /**
+         * @brief Sets a content node background by flat index.
+         * @param index Content index (row-major).
+         * @param color Background color.
+         */
+        void set_content_node_background(int index, const DocraftColor &color);
+        /**
          * @brief Sets all title nodes.
          * @param nodes Vector of title nodes.
          */
         void set_title_nodes(const std::vector<std::shared_ptr<DocraftText>> &nodes);
+        /**
+         * @brief Sets all header title nodes (vertical tables only).
+         * @param nodes Vector of header title nodes.
+         */
+        void set_htitle_nodes(const std::vector<std::shared_ptr<DocraftText>> &nodes);
         /**
          * @brief Sets all content nodes.
          * @param nodes Vector of content nodes.
@@ -106,12 +130,36 @@ namespace docraft::model {
          * @brief Adds a title node.
          * @param node Title node.
          */
-        void add_title_node(const std::shared_ptr<DocraftText> &node);
+        void add_title_node(const std::shared_ptr<DocraftText> &node,
+                            std::optional<DocraftColor> background = std::nullopt);
+        /**
+         * @brief Adds a header title node (vertical tables only).
+         * @param node Header title node.
+         */
+        void add_htitle_node(const std::shared_ptr<DocraftText> &node,
+                             std::optional<DocraftColor> background = std::nullopt);
         /**
          * @brief Adds a content node.
          * @param node Content node.
          */
-        void add_content_node(const std::shared_ptr<DocraftNode> &node);
+        void add_content_node(const std::shared_ptr<DocraftNode> &node,
+                              std::optional<DocraftColor> background = std::nullopt);
+        /**
+         * @brief Adds a row background.
+         * @param background Optional background color.
+         */
+        void add_row_background(std::optional<DocraftColor> background);
+        /**
+         * @brief Sets a row background.
+         * @param index Row index.
+         * @param background Background color.
+         */
+        void set_row_background(int index, const DocraftColor &background);
+        /**
+         * @brief Sets the default background for data cells.
+         * @param background Optional background color.
+         */
+        void set_default_cell_background(std::optional<DocraftColor> background);
 
         /**
          * @brief Returns the number of rows.
@@ -124,6 +172,11 @@ namespace docraft::model {
          * @return Column count.
          */
         [[nodiscard]] int cols() const;
+        /**
+         * @brief Returns the number of content columns.
+         * @return Content column count.
+         */
+        [[nodiscard]] int content_cols() const;
 
         /**
          * @brief Returns the table orientation.
@@ -161,10 +214,40 @@ namespace docraft::model {
          */
         [[nodiscard]] const std::vector<std::shared_ptr<DocraftText>> &title_nodes() const;
         /**
+         * @brief Returns header title nodes (vertical tables only).
+         * @return Vector of header title nodes.
+         */
+        [[nodiscard]] const std::vector<std::shared_ptr<DocraftText>> &htitle_nodes() const;
+        /**
          * @brief Returns content nodes as a 2D array.
          * @return 2D vector of content nodes.
          */
         [[nodiscard]] std::vector<std::vector<std::shared_ptr<DocraftNode>>>content_nodes() const;
+        /**
+         * @brief Returns title cell background colors.
+         * @return Vector of optional title background colors.
+         */
+        [[nodiscard]] const std::vector<std::optional<DocraftColor>> &title_backgrounds() const;
+        /**
+         * @brief Returns header title cell background colors.
+         * @return Vector of optional header title background colors.
+         */
+        [[nodiscard]] const std::vector<std::optional<DocraftColor>> &htitle_backgrounds() const;
+        /**
+         * @brief Returns content cell background colors.
+         * @return Vector of optional content background colors.
+         */
+        [[nodiscard]] const std::vector<std::optional<DocraftColor>> &content_backgrounds() const;
+        /**
+         * @brief Returns row background colors.
+         * @return Vector of optional row background colors.
+         */
+        [[nodiscard]] const std::vector<std::optional<DocraftColor>> &row_backgrounds() const;
+        /**
+         * @brief Returns the default background for data cells.
+         * @return Optional background color.
+         */
+        [[nodiscard]] const std::optional<DocraftColor> &default_cell_background() const;
         /**
          * @brief Returns the last title node index.
          * @return Index of last title node.
@@ -184,13 +267,20 @@ namespace docraft::model {
     private:
         int rows_;
         int cols_;
+        int content_cols_ = 0;
         LayoutOrientation orientation_ = LayoutOrientation::kHorizontal;
         //Horizontal means that the title are on the top, vertical creates rows with titles and items are in n columns (generally usde for nx2 tables)
         std::vector<float> column_weights_;
         std::vector<float> row_weights_;
         std::vector<std::string> titles_;
         std::vector<std::shared_ptr<DocraftText>> title_nodes_;
+        std::vector<std::shared_ptr<DocraftText>> htitle_nodes_;
         std::vector<std::shared_ptr<DocraftNode>> content_nodes_;
+        std::vector<std::optional<DocraftColor>> title_backgrounds_;
+        std::vector<std::optional<DocraftColor>> htitle_backgrounds_;
+        std::vector<std::optional<DocraftColor>> content_backgrounds_;
+        std::vector<std::optional<DocraftColor>> row_backgrounds_;
+        std::optional<DocraftColor> default_cell_background_;
         float baseline_offset_ = 0.25F;
     };
 } // docraft

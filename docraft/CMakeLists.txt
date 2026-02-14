@@ -137,7 +137,16 @@ set(DOCRAFT_SOURCES src/main.cpp
         src/craft/docraft_craft_language_parser.cc
         include/craft/docraft_craft_language_parser.h
         include/craft/i_docraft_parser.h
-        src/craft/parser/docraft_parser.cc
+        src/craft/parser/docraft_parser_helpers.cc
+        src/craft/parser/docraft_rectangle_parser.cc
+        src/craft/parser/docraft_section_parsers.cc
+        src/craft/parser/docraft_text_parser.cc
+        src/craft/parser/docraft_image_parser.cc
+        src/craft/parser/docraft_table_parser.cc
+        src/craft/parser/docraft_layout_parser.cc
+        src/craft/parser/docraft_list_parser.cc
+        src/craft/parser/docraft_blank_line_parser.cc
+        src/craft/parser/docraft_settings_parser.cc
         include/craft/parser/docraft_parser.h
         include/craft/docraft_craft_language_tokens.h
         src/utils/docraft_logger.cc

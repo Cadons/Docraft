@@ -583,7 +583,7 @@ namespace docraft::test::layout {
             // === COMPUTE LAYOUT ===
             auto result = engine->compute_layout(body);
 
-            const float page_w = context->page_width()-10;
+            const float page_w = context->page_width() - (body->margin_left() + body->margin_right());
 
             // --- Structural assertions ---
 

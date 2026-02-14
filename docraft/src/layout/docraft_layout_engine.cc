@@ -84,8 +84,10 @@ namespace docraft::layout {
         float max_width = context()->available_space();
 
         if (auto section_node = std::dynamic_pointer_cast<model::DocraftSection>(node)) {
-            cursor.move_to(section_node->margin_left(), cursor.y());// Move cursor to the left margin of the section
-            max_width = max_width - section_node->margin_right();//compute the width from left margin to right margin
+            const float left_margin = section_node->margin_left();
+            const float right_margin = section_node->margin_right();
+            cursor.move_to(left_margin, cursor.y());// Move cursor to the left margin of the section
+            max_width = max_width - left_margin - right_margin;// width from left margin to right margin
             context()->set_current_rect_width(max_width);
         }        if (std::dynamic_pointer_cast<model::DocraftLayout>(node)) {
             //Move the cursor direction based on layout orientation to layout children correctly
