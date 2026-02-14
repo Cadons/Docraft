@@ -5,12 +5,14 @@
 #include "layout/handler/docraft_basic_layout_handler.h"
 #include "layout/handler/docraft_layout_blank_line.h"
 #include "layout/handler/docraft_layout_handler.h"
+#include "layout/handler/docraft_layout_list_handler.h"
 #include "layout/handler/docraft_layout_table_handler.h"
 #include "layout/handler/docraft_layout_text_handler.h"
 
 #include "model/docraft_header.h"
 #include "model/docraft_body.h"
 #include "model/docraft_footer.h"
+#include "model/docraft_list.h"
 #include "utils/docraft_logger.h"
 
 namespace docraft::layout {
@@ -28,16 +30,12 @@ namespace docraft::layout {
         handlers_.emplace_back(std::make_unique<handler::DocraftLayoutHandler>(context));
         handlers_.emplace_back(std::make_unique<handler::DocraftLayoutTableHandler>(context));
         handlers_.emplace_back(std::make_unique<handler::DocraftLayoutBlankLine>(context));
+        handlers_.emplace_back(std::make_unique<handler::DocraftLayoutListHandler>(context));
         handlers_.emplace_back(std::make_unique<handler::DocraftBasicLayoutHandler>(context));
     }
 
     const std::shared_ptr<DocraftDocumentContext> &DocraftLayoutEngine::context() const {
         return context_;
-    }
-
-    void DocraftLayoutEngine::layout(const std::shared_ptr<model::DocraftNode> &node,
-                                     const std::shared_ptr<DocraftDocumentContext> &context) {
-        throw std::runtime_error("DocraftLayoutEngine deprecated");
     }
 
     model::DocraftTransform DocraftLayoutEngine::compute_max_rect(const std::vector<model::DocraftTransform> &boxes) {
@@ -99,7 +97,27 @@ namespace docraft::layout {
             }
         }
         //Process nodes from here
-        if (std::dynamic_pointer_cast<model::DocraftChildrenContainerNode>(node)) {
+        if (auto list_node = std::dynamic_pointer_cast<model::DocraftList>(node)) {
+            handler::DocraftLayoutListHandler* list_handler = nullptr;
+            for (const auto &handler : handlers_) {
+                list_handler = dynamic_cast<handler::DocraftLayoutListHandler*>(handler.get());
+                if (list_handler) {
+                    break;
+                }
+            }
+            if (!list_handler) {
+                throw std::runtime_error("DocraftLayoutListHandler not configured");
+            }
+            DocraftCursor list_cursor = cursor;
+            list_handler->compute_children(
+                list_node,
+                list_cursor,
+                child_boxes,
+                [this](const std::shared_ptr<model::DocraftNode>& child, DocraftCursor& child_cursor) {
+                    return compute_layout(child, child_cursor);
+                },
+                max_width);
+        } else if (std::dynamic_pointer_cast<model::DocraftChildrenContainerNode>(node)) {
             auto container_node = std::dynamic_pointer_cast<model::DocraftChildrenContainerNode>(node);
             if (!container_node->children().empty()) {
                 bool no_weigth_assigned = false;

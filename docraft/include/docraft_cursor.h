@@ -5,26 +5,54 @@
 
 namespace docraft {
 
+    /**
+     * @brief Cursor movement direction hints for layout handlers.
+     */
     enum class DocraftCursorDirection {
         kHorizontal,
         kVertical
     };
     /**
      * @class DocraftCursor
-     * @brief Represents a cursor in the 2D space for handling position
+     * @brief Tracks the current position for flow layout.
+     *
+     * The cursor stores a 2D point plus a stack of layout directions,
+     * enabling nested horizontal/vertical layout operations.
      */
     class DocraftCursor {
     public:
+        /**
+         * @brief Creates a cursor at origin with horizontal direction.
+         */
         DocraftCursor();
 
+        /**
+         * @brief Destructor.
+         */
         ~DocraftCursor();
 
+        /**
+         * @brief Returns the current x position.
+         * @return X coordinate.
+         */
         float x() const;
 
+        /**
+         * @brief Returns the current y position.
+         * @return Y coordinate.
+         */
         float y() const;
 
+        /**
+         * @brief Returns whether negative coordinates are allowed.
+         * @return true if negative coordinates are allowed.
+         */
         bool is_negative_coordinates_allowed() const;
 
+        /**
+         * @brief Returns the current direction.
+         * @return Current cursor direction.
+         */
         DocraftCursorDirection direction() const;
 
         /**
@@ -37,23 +65,38 @@ namespace docraft {
          */
         void reset_y();
 
+        /**
+         * @brief Sets the x position.
+         * @param x New x coordinate.
+         */
         void set_x(float x);
 
+        /**
+         * @brief Sets the y position.
+         * @param y New y coordinate.
+         */
         void set_y(float y);
 
+        /**
+         * @brief Pushes a new movement direction onto the stack.
+         * @param direction Direction to push.
+         */
         void push_direction(DocraftCursorDirection direction);
+        /**
+         * @brief Pops the current direction, restoring the previous one.
+         */
         void pop_direction();
 
         /**
          * @brief Moves the cursor to the specified coordinates.
-         * @param x
-         * @param y
+         * @param x New x coordinate.
+         * @param y New y coordinate.
          */
         void move_to(float x, float y);
 
         /**
          * @brief Allows or disallows negative coordinates for the cursor.
-         * @param allow
+         * @param allow true to allow negative coordinates.
          */
         void allow_negative_coordinates(bool allow);
 

@@ -12,6 +12,7 @@
 #include "model/docraft_body.h"
 #include "model/docraft_footer.h"
 #include "model/docraft_children_container_node.h"
+#include "model/docraft_list.h"
 #include "utils/docraft_logger.h"
 
 namespace docraft::craft {
@@ -25,6 +26,8 @@ DocraftCraftLanguageParser::DocraftCraftLanguageParser() {
     parsers_[tag_formatter(elements::kText.data())] = std::make_unique<parser::DocraftTextParser>();
     parsers_[tag_formatter(elements::kImage.data())] = std::make_unique<parser::DocraftImageParser>();
     parsers_[tag_formatter(elements::kTable.data())] = std::make_unique<parser::DocraftTableParser>();
+    parsers_[tag_formatter(elements::kList.data())] = std::make_unique<parser::DocraftListParser>();
+    parsers_[tag_formatter(elements::kUList.data())] = std::make_unique<parser::DocraftUListParser>();
     parsers_[tag_formatter(elements::kLayout.data())] = std::make_unique<parser::DocraftLayoutParser>();
     parsers_[tag_formatter(elements::kBlankLine.data())] = std::make_unique<parser::DocraftBlackLineParser>();
     parsers_[tag_formatter(elements::kRectangle.data())] = std::make_unique<parser::DocraftRectangleParser>();
@@ -72,6 +75,16 @@ std::string DocraftCraftLanguageParser::tag_formatter(const std::string &tag_nam
     if (tag_name.empty()) {
         return tag_name;
     }
+    bool has_upper = false;
+    for (char c : tag_name) {
+        if (std::isupper(static_cast<unsigned char>(c))) {
+            has_upper = true;
+            break;
+        }
+    }
+    if (has_upper) {
+        return tag_name;
+    }
     std::string formatted_tag = tag_name;
     // make all lowercase, then uppercase first letter — avoid UB by casting to unsigned char
     for (char &c: formatted_tag) {
@@ -94,6 +107,11 @@ std::shared_ptr<model::DocraftNode> DocraftCraftLanguageParser::parse_node(const
         for (pugi::xml_node child: xml_node.children()) {
             if (child.type() != pugi::node_element) {
                 continue; // Skip non-element nodes
+            }
+            if (auto list_node = std::dynamic_pointer_cast<model::DocraftList>(result)) {
+                if (child.name() != std::string{elements::kText}) {
+                    throw std::invalid_argument(std::string(child.name()) + " cannot be placed in a list");
+                }
             }
             parent->add_child(parse_node(child));
         }

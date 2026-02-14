@@ -9,6 +9,9 @@ namespace docraft::backend {
      */
     class IDocraftTextRenderingBackend : public virtual IDocraftLineRenderingBackend {
     public:
+        /**
+         * @brief Virtual destructor.
+         */
         ~IDocraftTextRenderingBackend() override = default;
         /**
          * @brief Initializes the text rendering context. Must be called before any text drawing operations.

@@ -3,6 +3,9 @@
 using string = std::string_view;
 
 namespace docraft::craft {
+    /**
+     * @brief Attribute names for basic node properties.
+     */
     namespace basic::attribute {
         constexpr string kId = "id";
         constexpr string kNodeName = "node_name";
@@ -23,6 +26,9 @@ namespace docraft::craft {
         }
     }
 
+    /**
+     * @brief Section-level tags and attributes.
+     */
     namespace section {
         constexpr string kDocument = "document";
         constexpr string kHeader = "header";
@@ -37,6 +43,9 @@ namespace docraft::craft {
         }
     }
 
+    /**
+     * @brief Element tag names and element-specific attributes.
+     */
     namespace elements {
         constexpr string kText = "Text";
         constexpr string kImage = "Image";
@@ -49,6 +58,28 @@ namespace docraft::craft {
         constexpr string kBlankLine = "Blank";
         constexpr string kRectangle = "Rectangle";
         constexpr string kSettings = "Settings";
+        constexpr string kList = "List";
+        constexpr string kUList = "UList";
+        namespace list {
+            namespace attribute {
+                constexpr string kStyle = "style";
+            }
+            namespace style {
+                constexpr string kNumber = "number";
+                constexpr string kRoman = "roman";
+            }
+        }
+        namespace ulist {
+            namespace attribute {
+                constexpr string kDot = "dot";
+            }
+            namespace dot {
+                constexpr string kDash = "-";
+                constexpr string kStar = "*";
+                constexpr string kCircle = "circle";
+                constexpr string kBox = "box";
+            }
+        }
         namespace settings {
             constexpr string kFonts = "Fonts";
             namespace fonts {
@@ -100,6 +131,9 @@ namespace docraft::craft {
         }
     }
 
+    /**
+     * @brief Supported named color values.
+     */
     namespace color {
         constexpr string kBlack = "black";
         constexpr string kWhite = "white";
@@ -112,6 +146,9 @@ namespace docraft::craft {
         constexpr string kPurple = "purple";
     }
 
+    /**
+     * @brief Text style string literals.
+     */
     namespace style {
         constexpr string kNormal = "normal";
         constexpr string kBold = "bold";
@@ -119,12 +156,18 @@ namespace docraft::craft {
         constexpr string kBoldItalic = "bold_italic";
     }
 
+    /**
+     * @brief Alignment string literals.
+     */
     namespace alignment {
         constexpr string kLeft = "left";
         constexpr string kCenter = "center";
         constexpr string kRight = "right";
         constexpr string kJustified = "justified";
     }
+    /**
+     * @brief Layout orientation string literals.
+     */
     namespace orientation {
         constexpr string kHorizontal = "horizontal";
         constexpr string kVertical = "vertical";
