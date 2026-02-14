@@ -24,6 +24,17 @@ namespace docraft::generic {
             }();
             return fonts;
         }
+
+        // normalize a font name for comparison: lowercase and replace hyphen/underscore with space
+        std::string normalize_font_name(const std::string &s) {
+            std::string out;
+            out.reserve(s.size());
+            for (char c : s) {
+                if (c == '-' || c == '_') out.push_back(' ');
+                else out.push_back(std::tolower(static_cast<unsigned char>(c)));
+            }
+            return out;
+        }
     } // namespace
     std::list<std::string> DocraftFontApplier::default_fonts() {
         std::list<std::string> fonts;
@@ -87,7 +98,7 @@ namespace docraft::generic {
         }
     }
 
-    bool DocraftFontApplier::is_font_supported(const std::string &name, const char *encoder) {
+    bool DocraftFontApplier::is_font_supported(const std::string &name, const char *encoder) const {
         auto backend = context_->rendering_backend();
         if (!backend) {
             return false;
@@ -106,7 +117,7 @@ namespace docraft::generic {
         return backend->can_use_font(it->second, encoder);
     }
 
-    const char *DocraftFontApplier::load_font_data(const std::string &name) {
+    const char *DocraftFontApplier::load_font_data(const std::string &name) const {
         // If already mapped, reuse it
         auto it_existing = fonts_.find(name);
         if (it_existing != fonts_.end() && !it_existing->second.empty()) {
@@ -116,16 +127,43 @@ namespace docraft::generic {
         auto &registry = utils::DocraftFontRegistry::instance();
 
         const auto &fonts = builtin_fonts();
-        const bool is_builtin = std::find(fonts.begin(), fonts.end(), name) != fonts.end();
         // Built-in fonts: resolve by the same name.
-        if (is_builtin) {
+        if (std::ranges::find(fonts, name) != fonts.end()) {
             fonts_.insert({name, name});
             registry.register_font(name, nullptr, 0);
             font_utf8_encoding_.insert({name, false});
             return fonts_.at(name).c_str();
         }
 
+        // Try to get resource by the requested name
         const auto *font_resource = registry.get_font(name);
+        std::string resolved_registered_name = name;
+        if (!font_resource || !font_resource->data || font_resource->size == 0) {
+            // tolerant lookup: try to find a registered font with a similar name
+            auto registered = registry.registered_font_names();
+            std::string target_norm = normalize_font_name(name);
+            for (const auto &candidate : registered) {
+                std::string cand_norm = normalize_font_name(candidate);
+                if (cand_norm == target_norm) {
+                    LOG_DEBUG("Using registered font variant '" + candidate + "' for requested font '" + name + "'");
+                    font_resource = registry.get_font(candidate);
+                    resolved_registered_name = candidate;
+                    break;
+                }
+                // try replacing spaces with hyphen in candidate and compare
+                std::string cand_hyphen = cand_norm;
+                for (auto &ch : cand_hyphen) if (ch == ' ') ch = '-';
+                std::string target_hyphen = target_norm;
+                for (auto &ch : target_hyphen) if (ch == ' ') ch = '-';
+                if (cand_hyphen == target_hyphen) {
+                    LOG_DEBUG("Using registered font variant '" + candidate + "' for requested font '" + name + "' (hyphen/space normalized)");
+                    font_resource = registry.get_font(candidate);
+                    resolved_registered_name = candidate;
+                    break;
+                }
+            }
+        }
+
         if (!font_resource || !font_resource->data || font_resource->size == 0) {
             LOG_ERROR("Font resource not found or invalid for font: " + name);
             return nullptr;
@@ -155,6 +193,7 @@ namespace docraft::generic {
             return nullptr;
         }
 
+        // Map the requested name to the internal backend name. Use the original requested name as the key
         fonts_.insert({name, internal_name});
         font_utf8_encoding_.insert({name, true}); // custom fonts are UTF-8 encoded
         return fonts_.at(name).c_str();
@@ -162,7 +201,7 @@ namespace docraft::generic {
 
 
     void DocraftFontApplier::apply_font(
-        const std::shared_ptr<model::DocraftText> &node) {
+        const std::shared_ptr<model::DocraftText> &node) const {
         auto backend = context_->rendering_backend();
         if (!backend) {
             return;
@@ -172,26 +211,26 @@ namespace docraft::generic {
         resolver.rebuild_index(builtin_fonts(), utils::DocraftFontRegistry::instance().registered_font_names());
         std::string selected = resolver.resolve(base_name, node->style());
         const char *internal_name = load_font_data(selected);
-        if (!internal_name || !is_font_supported(selected, nullptr)) {
-            // Final fallback to a known built-in font.
-            load_font_data("Helvetica");
-            node->set_font_name("Helvetica");
-            selected = "Helvetica";
-        } else {
-            node->set_font_name(selected);
-        }
-        char *encoder = const_cast<char *>("UTF-8");
 
-        if (font_utf8_encoding_[selected]) {
-            for (const auto &default_font: default_fonts()) {
-                if (node->font_name() == default_font) {
-                    encoder = nullptr;
-                    break;
-                }
-            }
+        // Determine encoder based on font encoding map (load_font_data sets font_utf8_encoding_ for custom fonts)
+        const char *encoder = nullptr;
+        if (font_utf8_encoding_.contains(selected) && font_utf8_encoding_.at(selected)) {
+            encoder = const_cast<char *>("UTF-8");
         } else {
             encoder = nullptr;
         }
+
+        if (!internal_name || !is_font_supported(selected, encoder)) {
+            LOG_ERROR("Font '" + selected + "' not supported or failed to load; falling back to Helvetica");
+            // Ensure Helvetica is loaded
+            selected = "Helvetica";
+            internal_name = load_font_data(selected);
+            encoder = nullptr; // builtin
+            node->set_font_name("Helvetica");
+        } else {
+            node->set_font_name(selected);
+        }
+
         auto it = fonts_.find(node->font_name());
         if (it == fonts_.end() || it->second.empty()) {
             return;

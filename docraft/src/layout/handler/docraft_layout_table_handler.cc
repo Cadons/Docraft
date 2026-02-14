@@ -8,6 +8,7 @@
 #include "layout/docraft_layout_engine.h"
 #include "model/docraft_layout.h"
 #include "model/docraft_text.h"
+#include "utils/docraft_logger.h"
 
 namespace docraft::layout::handler {
     namespace {
@@ -63,6 +64,21 @@ namespace docraft::layout::handler {
             float w = node->width();
             return (w > 0.0F) ? w : fallback;
         }
+
+        /**
+         * @This function configures the cursor position for the table layout based on the table's position mode and properties.
+         * @param node
+         * @param docraft_cursor
+         */
+        void configure_cursor_position(const std::shared_ptr<model::DocraftTable> & node, DocraftCursor & docraft_cursor) {
+            if (node->position_mode() == model::DocraftPositionType::kBlock) {
+                // For block position, the cursor is already in the correct position, so we do nothing.
+            } else {
+                // For absolute position, we move the cursor to the specified position of the table.
+                docraft_cursor.move_to(node->position().x, node->position().y);
+            }
+        }
+
         /**
          * @brief Layout a table in horizontal orientation.
          * @param node The table node to layout.
@@ -74,6 +90,7 @@ namespace docraft::layout::handler {
                                      const std::shared_ptr<DocraftDocumentContext> &context,
                                      DocraftCursor& cursor) {
             DocraftCursor table_cursor = cursor;//Use a custom cursor to not affect the main one
+            configure_cursor_position(node,table_cursor);
             const float fixed_x = table_cursor.x();
             const float fixed_y = table_cursor.y()-node->padding();//Adjust for some top padding
 
@@ -247,6 +264,7 @@ namespace docraft::layout::handler {
                                    const std::shared_ptr<DocraftDocumentContext> &context,
                                    DocraftCursor& cursor) {
             DocraftCursor table_cursor = cursor;//Use a custom cursor to not affect the main one
+            configure_cursor_position(node,table_cursor);
             const float fixed_x = table_cursor.x();
             const float fixed_y = table_cursor.y();
 
@@ -410,7 +428,11 @@ namespace docraft::layout::handler {
         }
 
         if (node->titles().empty()) {
-            node->set_position({.x = cursor.x(), .y = cursor.y()});
+            if (node->position_mode()==model::DocraftPositionType::kBlock) {
+                node->set_position({.x = cursor.x(), .y = cursor.y()});
+            }else {
+                node->set_position({.x = node->position().x, .y = node->position().y});
+            }
             node->set_width(0.0F);
             node->set_height(0.0F);
             if (box) {
@@ -435,11 +457,7 @@ namespace docraft::layout::handler {
         for (const auto &row: node->content_nodes()) {
             for (const auto &cell: row) {
                 if (cell) {
-                    std::print("Cell at ({}, {}) size ({}, {})\n",
-                               cell->position().x,
-                               cell->position().y,
-                               cell->width(),
-                               cell->height());
+                   LOG_DEBUG(std::format("Cell at ({}, {}) with size ({}, {})", cell->position().x, cell->position().y, cell->width(), cell->height()));
                 }
             }
         }

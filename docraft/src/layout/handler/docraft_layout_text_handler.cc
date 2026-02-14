@@ -38,9 +38,15 @@ namespace docraft::layout::handler {
         generic::DocraftFontApplier font_applier(context());
         font_applier.apply_font(node);
         auto global_cursor = cursor;
-        node->set_position({.x=global_cursor.x(), .y=global_cursor.y()});
-        DocraftCursor text_cursor = cursor;//cursor for the text box, start from the current global cursor
 
+        DocraftCursor text_cursor = cursor;//cursor for the text box, start from the current global cursor
+        if (node->position_mode() == model::DocraftPositionType::kBlock) {
+            node->set_position({.x=global_cursor.x(), .y=global_cursor.y()});
+        }
+        else {
+            node->set_position({.x=node->position().x, .y=node->position().y});
+            text_cursor.move_to(node->position().x, node->position().y);
+        }
 
         node->clear_lines(); // Recompute wrapping from scratch to avoid duplicate lines.
 

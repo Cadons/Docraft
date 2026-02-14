@@ -48,7 +48,25 @@ namespace docraft::craft {
         constexpr string kLayout = "Layout";
         constexpr string kBlankLine = "Blank";
         constexpr string kRectangle = "Rectangle";
-
+        constexpr string kSettings = "Settings";
+        namespace settings {
+            constexpr string kFonts = "Fonts";
+            namespace fonts {
+                constexpr string kFont = "Font";
+                namespace attribute {
+                    constexpr string kName = "name";
+                }
+                namespace font_type {
+                    constexpr string kFontNormal ="FontNormal";
+                    constexpr string kFontBold = "FontBold";
+                    constexpr string kFontItalic = "FontItalic";
+                    constexpr string kFontBoldItalic = "FontBoldItalic";
+                    namespace attribute {
+                        constexpr string kSrc = "src";
+                    }
+                }
+            }
+        }
         namespace image::attribute {
             constexpr string kSrc = "src";
         }
@@ -111,4 +129,5 @@ namespace docraft::craft {
         constexpr string kHorizontal = "horizontal";
         constexpr string kVertical = "vertical";
     }
+
 }

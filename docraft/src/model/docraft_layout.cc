@@ -5,6 +5,8 @@
 #include <ostream>
 #include <utility>
 
+#include "utils/docraft_logger.h"
+
 namespace docraft::model {
     DocraftLayout::DocraftLayout(DocraftLayout *node) : DocraftChildrenContainerNode(node),
                                                         orientation_(node->orientation_) {
@@ -19,7 +21,7 @@ namespace docraft::model {
     }
 
     void DocraftLayout::draw(const std::shared_ptr<DocraftDocumentContext> &context) {
-        std::cout << "draw layout" << std::endl;
+        LOG_DEBUG("Drawing layout with orientation: " + std::string(orientation_ == LayoutOrientation::kVertical ? "Vertical" : "Horizontal"));
         draw_children(context);
     }
 

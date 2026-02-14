@@ -2,6 +2,7 @@
 #include "craft/docraft_craft_language_parser.h"
 #include "craft/i_docraft_parser.h"
 #include "model/docraft_rectangle.h"
+#include "model/docraft_settings.h"
 
 namespace docraft::craft::parser {
     class DocraftRectangleParser : public IDocraftParser {
@@ -41,6 +42,10 @@ namespace docraft::craft::parser {
     };
 
     class DocraftBlackLineParser : public IDocraftParser {
+    public:
+        std::shared_ptr<model::DocraftNode> parse(const pugi::xml_node &craft_language_source) override;
+    };
+    class DocraftSettingsParser : public IDocraftParser {
     public:
         std::shared_ptr<model::DocraftNode> parse(const pugi::xml_node &craft_language_source) override;
     };

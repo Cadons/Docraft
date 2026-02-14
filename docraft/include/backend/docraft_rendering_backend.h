@@ -13,7 +13,7 @@ namespace docraft::backend {
                                      public IDocraftShapeRenderingBackend,
                                      public IDocraftImageRenderingBackend {
     public:
-        virtual ~IDocraftRenderingBackend() = default;
+        ~IDocraftRenderingBackend() override = default;
         /**
          * @brief Returns the current page width in points.
          */

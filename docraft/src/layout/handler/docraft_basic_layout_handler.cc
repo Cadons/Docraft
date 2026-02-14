@@ -13,8 +13,11 @@ namespace docraft::layout::handler {
             throw std::invalid_argument("box is null");
         }
 
-        box->set_position({.x=cursor.x(), .y=cursor.y()});
-
+        if (node->position_mode()==model::DocraftPositionType::kBlock) {
+            box->set_position({.x=cursor.x(), .y=cursor.y()});
+        }else {
+            box->set_position({.x=node->position().x, .y=node->position().y});
+        }
         if (context()->available_space()<node->width()||node->width()==0) {
             //put the node in the available space
             box->set_width(context()->available_space());
