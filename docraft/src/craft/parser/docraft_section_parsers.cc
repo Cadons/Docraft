@@ -12,6 +12,7 @@ namespace docraft::craft::parser {
                 DocraftRectangleParser::parse(craft_language_source));
         apply_attributes_to(rect, header_node);
         detail::configure_section_attributes(header_node, craft_language_source);
+        header_node->set_position_mode(model::DocraftPositionType::kBlock);
         return header_node;
     }
 
@@ -21,6 +22,7 @@ namespace docraft::craft::parser {
                 DocraftRectangleParser::parse(craft_language_source));
         apply_attributes_to(rect, body_node);
         detail::configure_section_attributes(body_node, craft_language_source);
+        body_node->set_position_mode(model::DocraftPositionType::kBlock);
         return body_node;
     }
 
@@ -30,6 +32,7 @@ namespace docraft::craft::parser {
                 DocraftRectangleParser::parse(craft_language_source));
         apply_attributes_to(rect, footer_node);
         detail::configure_section_attributes(footer_node, craft_language_source);
+        footer_node->set_position_mode(model::DocraftPositionType::kBlock);
         return footer_node;
     }
 }

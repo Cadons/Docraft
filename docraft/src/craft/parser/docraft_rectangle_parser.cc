@@ -8,6 +8,7 @@ namespace docraft::craft::parser {
                                                      const std::shared_ptr<model::DocraftRectangle> &to) {
         to->set_background_color(from->background_color());
         to->set_border_color(from->border_color());
+        to->set_border_width(from->border_width());
     }
 
     std::shared_ptr<model::DocraftNode> DocraftRectangleParser::parse(const pugi::xml_node &craft_language_source) {
@@ -19,6 +20,13 @@ namespace docraft::craft::parser {
         if (auto border_color_attr = craft_language_source.attribute(
                 elements::rectangle::attribute::kBorderColor.data())) {
             rectangle->set_border_color(detail::get_docraft_color(border_color_attr));
+        }
+        if (auto border_width_attr = craft_language_source.attribute(
+                elements::rectangle::attribute::kBorderWidth.data())) {
+            rectangle->set_border_width(border_width_attr.as_float());
+        }
+        if (!craft_language_source.attribute(basic::attribute::kPosition.data())) {
+            rectangle->set_position_mode(model::DocraftPositionType::kAbsolute);
         }
         detail::configure_docraft_node_attributes(rectangle, craft_language_source);
         return rectangle;

@@ -2,8 +2,10 @@
 #include <hpdf.h>
 #include <cstddef>
 #include <string>
+#include <vector>
 
 #include "backend/docraft_rendering_backend.h"
+#include "model/docraft_position.h"
 
 namespace docraft::backend::pdf {
 	/**
@@ -91,6 +93,14 @@ namespace docraft::backend::pdf {
 		 * @brief Adds a rectangle path.
 		 */
 		void draw_rectangle(float x, float y, float width, float height) const override;
+		/**
+		 * @brief Adds a circle path.
+		 */
+		void draw_circle(float center_x, float center_y, float radius) const override;
+		/**
+		 * @brief Adds a polygon path.
+		 */
+		void draw_polygon(const std::vector<model::DocraftPoint> &points) const override;
 		/**
 		 * @brief Fills the current path.
 		 */

@@ -2,10 +2,14 @@
 #include <memory>
 
 #include "model/docraft_blank_line.h"
+#include "model/docraft_circle.h"
 #include "model/docraft_image.h"
+#include "model/docraft_line.h"
+#include "model/docraft_polygon.h"
 #include "model/docraft_rectangle.h"
 #include "model/docraft_section.h"
 #include "model/docraft_table.h"
+#include "model/docraft_triangle.h"
 
 namespace docraft::renderer {
     /**
@@ -55,6 +59,26 @@ namespace docraft::renderer {
          * @param rectangle_node Rectangle node.
          */
         virtual void render_rectangle(const model::DocraftRectangle &rectangle_node) = 0;
+        /**
+         * @brief Renders a circle node.
+         * @param circle_node Circle node.
+         */
+        virtual void render_circle(const model::DocraftCircle &circle_node) = 0;
+        /**
+         * @brief Renders a triangle node.
+         * @param triangle_node Triangle node.
+         */
+        virtual void render_triangle(const model::DocraftTriangle &triangle_node) = 0;
+        /**
+         * @brief Renders a line node.
+         * @param line_node Line node.
+         */
+        virtual void render_line(const model::DocraftLine &line_node) = 0;
+        /**
+         * @brief Renders a polygon node.
+         * @param polygon_node Polygon node.
+         */
+        virtual void render_polygon(const model::DocraftPolygon &polygon_node) = 0;
 
         /**
          * @brief Renders a blank line node.

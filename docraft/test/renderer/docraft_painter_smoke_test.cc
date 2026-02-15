@@ -3,13 +3,21 @@
 #include "docraft_document_context.h"
 #include "docraft_color.h"
 #include "generic/docraft_font_applier.h"
+#include "model/docraft_circle.h"
 #include "model/docraft_rectangle.h"
 #include "model/docraft_table.h"
 #include "model/docraft_text.h"
+#include "model/docraft_triangle.h"
+#include "model/docraft_line.h"
+#include "model/docraft_polygon.h"
 #include "renderer/painter/docraft_blank_line_painter.h"
+#include "renderer/painter/docraft_circle_painter.h"
+#include "renderer/painter/docraft_line_painter.h"
+#include "renderer/painter/docraft_polygon_painter.h"
 #include "renderer/painter/docraft_rectangle_painter.h"
 #include "renderer/painter/docraft_table_painter.h"
 #include "renderer/painter/docraft_text_painter.h"
+#include "renderer/painter/docraft_triangle_painter.h"
 
 using namespace docraft;
 
@@ -25,6 +33,63 @@ TEST(DocraftRectanglePainter, DrawsBasicRectangle) {
     rect.set_border_width(1.0F);
 
     renderer::painter::DocraftRectanglePainter painter(rect);
+    EXPECT_NO_THROW(painter.draw(context));
+}
+
+TEST(DocraftCirclePainter, DrawsBasicCircle) {
+    auto context = std::make_shared<DocraftDocumentContext>();
+
+    model::DocraftCircle circle;
+    circle.set_position({.x = 50.0F, .y = 50.0F});
+    circle.set_width(40.0F);
+    circle.set_height(40.0F);
+    circle.set_background_color(DocraftColor(0.2F, 0.2F, 0.8F, 1.0F));
+    circle.set_border_color(DocraftColor(0.0F, 0.0F, 0.0F, 1.0F));
+    circle.set_border_width(1.0F);
+
+    renderer::painter::DocraftCirclePainter painter(circle);
+    EXPECT_NO_THROW(painter.draw(context));
+}
+
+TEST(DocraftTrianglePainter, DrawsBasicTriangle) {
+    auto context = std::make_shared<DocraftDocumentContext>();
+
+    model::DocraftTriangle triangle;
+    triangle.set_position({.x = 20.0F, .y = 80.0F});
+    triangle.set_points({{.x = 0.0F, .y = 0.0F}, {.x = 40.0F, .y = 0.0F}, {.x = 20.0F, .y = 30.0F}});
+    triangle.set_background_color(DocraftColor(0.8F, 0.2F, 0.2F, 1.0F));
+    triangle.set_border_color(DocraftColor(0.0F, 0.0F, 0.0F, 1.0F));
+    triangle.set_border_width(1.0F);
+
+    renderer::painter::DocraftTrianglePainter painter(triangle);
+    EXPECT_NO_THROW(painter.draw(context));
+}
+
+TEST(DocraftLinePainter, DrawsBasicLine) {
+    auto context = std::make_shared<DocraftDocumentContext>();
+
+    model::DocraftLine line;
+    line.set_position({.x = 10.0F, .y = 10.0F});
+    line.set_start({.x = 0.0F, .y = 0.0F});
+    line.set_end({.x = 80.0F, .y = 20.0F});
+    line.set_border_color(DocraftColor(0.0F, 0.0F, 0.0F, 1.0F));
+    line.set_border_width(1.0F);
+
+    renderer::painter::DocraftLinePainter painter(line);
+    EXPECT_NO_THROW(painter.draw(context));
+}
+
+TEST(DocraftPolygonPainter, DrawsBasicPolygon) {
+    auto context = std::make_shared<DocraftDocumentContext>();
+
+    model::DocraftPolygon polygon;
+    polygon.set_position({.x = 30.0F, .y = 90.0F});
+    polygon.set_points({{.x = 0.0F, .y = 0.0F}, {.x = 30.0F, .y = 0.0F}, {.x = 40.0F, .y = 20.0F}, {.x = 10.0F, .y = 30.0F}});
+    polygon.set_background_color(DocraftColor(0.2F, 0.8F, 0.2F, 1.0F));
+    polygon.set_border_color(DocraftColor(0.0F, 0.0F, 0.0F, 1.0F));
+    polygon.set_border_width(1.0F);
+
+    renderer::painter::DocraftPolygonPainter painter(polygon);
     EXPECT_NO_THROW(painter.draw(context));
 }
 

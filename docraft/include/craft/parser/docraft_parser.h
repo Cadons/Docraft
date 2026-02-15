@@ -1,6 +1,10 @@
 #pragma once
 #include "craft/docraft_craft_language_parser.h"
 #include "craft/i_docraft_parser.h"
+#include "craft/parser/docraft_circle_parser.h"
+#include "craft/parser/docraft_line_parser.h"
+#include "craft/parser/docraft_polygon_parser.h"
+#include "craft/parser/docraft_triangle_parser.h"
 #include "model/docraft_rectangle.h"
 #include "model/docraft_settings.h"
 

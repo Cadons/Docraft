@@ -18,10 +18,14 @@ namespace docraft::layout::handler {
         }else {
             box->set_position({.x=node->position().x, .y=node->position().y});
         }
-        if (context()->available_space()<node->width()||node->width()==0) {
-            //put the node in the available space
-            box->set_width(context()->available_space());
-        }else {
+        if (node->position_mode() == model::DocraftPositionType::kBlock) {
+            if (context()->available_space()<node->width()||node->width()==0) {
+                //put the node in the available space
+                box->set_width(context()->available_space());
+            } else {
+                box->set_width(node->width());
+            }
+        } else {
             box->set_width(node->width());
         }
         box->set_height(node->height());

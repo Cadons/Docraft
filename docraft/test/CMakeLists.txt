@@ -14,8 +14,10 @@ set(TEST_SOURCES
         layout/docraft_layout_text_handler_test.cc
         model/docraft_list_test.cc
         craft/docraft_table_parser_test.cc
+        craft/docraft_shape_parser_test.cc
         renderer/docraft_image_painter_test.cc
-        renderer/docraft_painter_smoke_test.cc)
+        renderer/docraft_painter_smoke_test.cc
+        renderer/docraft_section_margin_test.cc)
 
 add_executable(docraft_test
         ${TEST_SOURCES}

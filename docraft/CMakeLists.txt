@@ -126,8 +126,24 @@ set(DOCRAFT_SOURCES src/main.cpp
         include/utils/docraft_font_registry.h
         src/model/docraft_rectangle.cc
         include/model/docraft_rectangle.h
+        src/model/docraft_circle.cc
+        include/model/docraft_circle.h
+        src/model/docraft_triangle.cc
+        include/model/docraft_triangle.h
+        src/model/docraft_line.cc
+        include/model/docraft_line.h
+        src/model/docraft_polygon.cc
+        include/model/docraft_polygon.h
         src/renderer/painter/docraft_rectangle_painter.cc
         include/renderer/painter/docraft_rectangle_painter.h
+        src/renderer/painter/docraft_circle_painter.cc
+        include/renderer/painter/docraft_circle_painter.h
+        src/renderer/painter/docraft_triangle_painter.cc
+        include/renderer/painter/docraft_triangle_painter.h
+        src/renderer/painter/docraft_line_painter.cc
+        include/renderer/painter/docraft_line_painter.h
+        src/renderer/painter/docraft_polygon_painter.cc
+        include/renderer/painter/docraft_polygon_painter.h
         src/model/docraft_blank_line.cc
         include/model/docraft_blank_line.h
         src/layout/handler/docraft_layout_blank_line.cc
@@ -146,8 +162,18 @@ set(DOCRAFT_SOURCES src/main.cpp
         src/craft/parser/docraft_layout_parser.cc
         src/craft/parser/docraft_list_parser.cc
         src/craft/parser/docraft_blank_line_parser.cc
+        src/craft/parser/docraft_circle_parser.cc
+        src/craft/parser/docraft_triangle_parser.cc
+        src/craft/parser/docraft_line_parser.cc
+        src/craft/parser/docraft_polygon_parser.cc
+        src/craft/parser/docraft_shape_parser_utils.cc
         src/craft/parser/docraft_settings_parser.cc
         include/craft/parser/docraft_parser.h
+        include/craft/parser/docraft_circle_parser.h
+        include/craft/parser/docraft_triangle_parser.h
+        include/craft/parser/docraft_line_parser.h
+        include/craft/parser/docraft_polygon_parser.h
+        include/craft/parser/docraft_shape_parser_utils.h
         include/craft/docraft_craft_language_tokens.h
         src/utils/docraft_logger.cc
         src/utils/docraft_font_resolver.cc
