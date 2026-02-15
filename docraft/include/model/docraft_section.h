@@ -12,11 +12,17 @@ namespace docraft::model {
     class DocraftSection : public DocraftRectangle {
     public:
         using DocraftRectangle::DocraftRectangle;
+        DocraftSection();
         DocraftSection(const DocraftSection& node) = default;
         /**
          * @brief Constructs from an existing node pointer (copy).
          */
         explicit DocraftSection(DocraftSection* node);
+        /**
+         * @brief Draws the section using the provided context.
+         * @param context Document context.
+         */
+        void draw(const std::shared_ptr<DocraftDocumentContext> &context) override;
 
         //getter
         /**

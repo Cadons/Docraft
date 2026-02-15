@@ -31,6 +31,10 @@ DocraftCraftLanguageParser::DocraftCraftLanguageParser() {
     parsers_[tag_formatter(elements::kLayout.data())] = std::make_unique<parser::DocraftLayoutParser>();
     parsers_[tag_formatter(elements::kBlankLine.data())] = std::make_unique<parser::DocraftBlackLineParser>();
     parsers_[tag_formatter(elements::kRectangle.data())] = std::make_unique<parser::DocraftRectangleParser>();
+    parsers_[tag_formatter(elements::kCircle.data())] = std::make_unique<parser::DocraftCircleParser>();
+    parsers_[tag_formatter(elements::kTriangle.data())] = std::make_unique<parser::DocraftTriangleParser>();
+    parsers_[tag_formatter(elements::kLine.data())] = std::make_unique<parser::DocraftLineParser>();
+    parsers_[tag_formatter(elements::kPolygon.data())] = std::make_unique<parser::DocraftPolygonParser>();
     // Add more parsers as needed
 }
 

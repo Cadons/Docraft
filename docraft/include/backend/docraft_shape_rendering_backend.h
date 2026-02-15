@@ -1,6 +1,9 @@
 #pragma once
 
+#include <vector>
+
 #include "backend/docraft_line_rendering_backend.h"
+#include "model/docraft_position.h"
 
 namespace docraft::backend {
     /**
@@ -45,6 +48,18 @@ namespace docraft::backend {
          * @param height The rectangle height.
          */
         virtual void draw_rectangle(float x, float y, float width, float height) const = 0;
+        /**
+         * @brief Defines a circle path with the given center and radius.
+         * @param center_x The x-coordinate of the center.
+         * @param center_y The y-coordinate of the center.
+         * @param radius The circle radius.
+         */
+        virtual void draw_circle(float center_x, float center_y, float radius) const = 0;
+        /**
+         * @brief Defines a polygon path with the given points.
+         * @param points Polygon points in document coordinates.
+         */
+        virtual void draw_polygon(const std::vector<model::DocraftPoint> &points) const = 0;
         /**
          * @brief Fills the current path.
          */

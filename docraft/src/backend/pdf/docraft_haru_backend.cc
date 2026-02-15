@@ -4,6 +4,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <unordered_map>
+#include <vector>
 
 #include <hpdf_image.h>
 
@@ -220,7 +221,7 @@ namespace docraft::backend::pdf {
     }
 
     void DocraftHaruBackend::restore_state() const {
-        HPDF_Page_GRestore(page_);
+        HPDF_Page_GRestore(page_);//restore the previous graphics state, which was saved by the last call of HPDF_Page_GSave() or HPDF_Page_SaveToStream().
     }
 
     void DocraftHaruBackend::set_fill_color(float r, float g, float b) const {
@@ -239,6 +240,22 @@ namespace docraft::backend::pdf {
 
     void DocraftHaruBackend::draw_rectangle(float x, float y, float width, float height) const {
         HPDF_Page_Rectangle(page_, x, y, width, height);
+    }
+
+    void DocraftHaruBackend::draw_circle(float center_x, float center_y, float radius) const {
+        HPDF_Page_Circle(page_, center_x, center_y, radius);
+    }
+
+    void DocraftHaruBackend::draw_polygon(const std::vector<model::DocraftPoint> &points) const {
+        if (points.size() < 2U) {
+            return;
+        }
+
+        HPDF_Page_MoveTo(page_, points[0].x, points[0].y);
+        for (size_t i = 1; i < points.size(); ++i) {
+            HPDF_Page_LineTo(page_, points[i].x, points[i].y);
+        }
+        HPDF_Page_ClosePath(page_);
     }
 
     void DocraftHaruBackend::fill() const {

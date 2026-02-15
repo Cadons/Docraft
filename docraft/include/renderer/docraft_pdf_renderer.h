@@ -1,7 +1,11 @@
 #pragma once
+#include "model/docraft_circle.h"
 #include "model/docraft_image.h"
+#include "model/docraft_line.h"
+#include "model/docraft_polygon.h"
 #include "model/docraft_rectangle.h"
 #include "model/docraft_table.h"
+#include "model/docraft_triangle.h"
 #include "renderer/docraft_renderer.h"
 
 namespace docraft::renderer {
@@ -40,6 +44,26 @@ namespace docraft::renderer {
          * @param rectangle_node Rectangle node.
          */
         void render_rectangle(const model::DocraftRectangle &rectangle_node) override;
+        /**
+         * @brief Renders a circle node to PDF.
+         * @param circle_node Circle node.
+         */
+        void render_circle(const model::DocraftCircle &circle_node) override;
+        /**
+         * @brief Renders a triangle node to PDF.
+         * @param triangle_node Triangle node.
+         */
+        void render_triangle(const model::DocraftTriangle &triangle_node) override;
+        /**
+         * @brief Renders a line node to PDF.
+         * @param line_node Line node.
+         */
+        void render_line(const model::DocraftLine &line_node) override;
+        /**
+         * @brief Renders a polygon node to PDF.
+         * @param polygon_node Polygon node.
+         */
+        void render_polygon(const model::DocraftPolygon &polygon_node) override;
 
         /**
          * @brief Renders a blank line node to PDF.

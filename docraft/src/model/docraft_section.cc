@@ -1,12 +1,23 @@
 #include "model/docraft_section.h"
 
+#include "renderer/docraft_renderer.h"
+
 namespace docraft::model {
+    DocraftSection::DocraftSection() {
+        set_border_width(0.0F);
+    }
+
     DocraftSection::DocraftSection(DocraftSection *node) : DocraftRectangle(node),
                                                            margins_(node->margins_),
                                                            margin_top_(node->margin_top_),
                                                            margin_bottom_(node->margin_bottom_),
                                                            margin_left_(node->margin_left_),
                                                            margin_right_(node->margin_right_) {
+    }
+
+    void DocraftSection::draw(const std::shared_ptr<DocraftDocumentContext> &context) {
+        context->renderer()->render_section(*this);
+        draw_children(context);
     }
     float DocraftSection::margins() const {
         return margins_;

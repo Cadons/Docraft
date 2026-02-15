@@ -59,10 +59,13 @@ namespace docraft::layout::handler {
                                   const float fixed_x,
                                   const float fallback) {
             if (node->auto_fill_width()) {
-                return context->available_space();
+                return std::max(0.0F, context->available_space());
             }
             float w = node->width();
-            return (w > 0.0F) ? w : fallback;
+            if (w > 0.0F) {
+                return std::max(0.0F, w);
+            }
+            return std::max(0.0F, fallback);
         }
 
         /**

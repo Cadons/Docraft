@@ -82,20 +82,51 @@ namespace docraft::layout {
                                                                 DocraftCursor& cursor) {
         std::vector<model::DocraftTransform> child_boxes;
         float max_width = context()->available_space();
-
-        if (auto section_node = std::dynamic_pointer_cast<model::DocraftSection>(node)) {
+        const float flow_origin_x = cursor.x();
+        const bool is_absolute = (node->position_mode() == model::DocraftPositionType::kAbsolute);
+        DocraftCursor local_cursor = cursor;
+        DocraftCursor &active_cursor = is_absolute ? local_cursor : cursor;
+        if (is_absolute) {
+            active_cursor.move_to(node->position().x, node->position().y);
+        }
+        DocraftCursor local_node_cursor = active_cursor;
+        DocraftCursor *layout_cursor = &active_cursor;
+        if (!is_absolute &&
+              (std::dynamic_pointer_cast<model::DocraftText>(node) ||
+               std::dynamic_pointer_cast<model::DocraftList>(node))) {
+            local_node_cursor.move_to(active_cursor.x() + 1.5F, active_cursor.y());
+            layout_cursor = &local_node_cursor;
+               }
+        std::shared_ptr<model::DocraftSection> section_node = nullptr;
+        float section_content_bottom = 0.0F;
+        bool section_has_bounds = false;
+        if (auto section = std::dynamic_pointer_cast<model::DocraftSection>(node)) {
+            section_node = section;
             const float left_margin = section_node->margin_left();
             const float right_margin = section_node->margin_right();
-            cursor.move_to(left_margin, cursor.y());// Move cursor to the left margin of the section
-            max_width = max_width - left_margin - right_margin;// width from left margin to right margin
+            const float top_margin = section_node->margin_top();
+            float base_x = section_node->position().x;
+            if (base_x == 0.0F && left_margin > 0.0F) {
+                base_x = left_margin;
+            }
+            active_cursor.move_to(base_x, active_cursor.y() - top_margin);// Move cursor to the content area
+            if (section_node->width() > 0.0F) {
+                max_width = section_node->width();
+            } else {
+                max_width = max_width - left_margin - right_margin;// width from left margin to right margin
+            }
             context()->set_current_rect_width(max_width);
+            if (section_node->height() > 0.0F) {
+                section_content_bottom = section_node->position().y - section_node->height() + section_node->margin_bottom();
+                section_has_bounds = true;
+            }
         }        if (std::dynamic_pointer_cast<model::DocraftLayout>(node)) {
             //Move the cursor direction based on layout orientation to layout children correctly
             auto layout_node = std::dynamic_pointer_cast<model::DocraftLayout>(node);
             if (layout_node->orientation() == model::LayoutOrientation::kHorizontal) {
-                cursor.push_direction(DocraftCursorDirection::kHorizontal);
+                layout_cursor->push_direction(DocraftCursorDirection::kHorizontal);
             } else {
-                cursor.push_direction(DocraftCursorDirection::kVertical);
+                layout_cursor->push_direction(DocraftCursorDirection::kVertical);
             }
         }
         //Process nodes from here
@@ -110,7 +141,7 @@ namespace docraft::layout {
             if (!list_handler) {
                 throw std::runtime_error("DocraftLayoutListHandler not configured");
             }
-            DocraftCursor list_cursor = cursor;
+            DocraftCursor list_cursor = *layout_cursor;
             list_handler->compute_children(
                 list_node,
                 list_cursor,
@@ -139,7 +170,7 @@ namespace docraft::layout {
                 }
             }
             const float saved_available_space = context()->available_space();
-            const bool is_horizontal = (cursor.direction() == DocraftCursorDirection::kHorizontal);
+            const bool is_horizontal = (layout_cursor->direction() == DocraftCursorDirection::kHorizontal);
             const std::size_t child_count = container_node->children().size();
             float available_width_for_children = max_width;
             if (is_horizontal && child_count > 1) {
@@ -153,31 +184,34 @@ namespace docraft::layout {
                 } else {
                     context()->set_current_rect_width(max_width);
                 }
-                auto child_box = compute_layout(child, cursor);
+                auto child_box = compute_layout(child, *layout_cursor);
                 child_boxes.emplace_back(child_box);
+                if (section_has_bounds && layout_cursor->y() < section_content_bottom) {
+                    layout_cursor->set_y(section_content_bottom);
+                }
             }
             context()->set_current_rect_width(saved_available_space);
         }
 
         auto max_rect = compute_max_rect(child_boxes);
 
-        if (!compute_node(node, &max_rect, cursor)) {
+        if (!compute_node(node, &max_rect, *layout_cursor)) {
             throw std::runtime_error("compute node failed");
         }
         node->set_position(max_rect.position());
         node->set_width(max_rect.width());
         node->set_height(max_rect.height());
-        if (cursor.direction() == DocraftCursorDirection::kHorizontal) {
+        if (!is_absolute && active_cursor.direction() == DocraftCursorDirection::kHorizontal) {
             // Advance cursor to the next column start, keeping a fixed horizontal gap.
             cursor.move_to(max_rect.anchors().top_right.x + kHorizontalSpacing_, max_rect.anchors().top_right.y);
-        } else {
+        } else if (!is_absolute) {
             // Advance cursor down with a fixed vertical gap or per-node padding (whichever is larger).
             const float spacing = std::max(kVerticalSpacing_, node->padding());
             float next_y = max_rect.anchors().bottom_left.y - spacing;
             if (next_y < 0.0F) {
                 next_y = 0.0F;
             }
-            cursor.move_to(max_rect.anchors().bottom_left.x, next_y);
+            cursor.move_to(flow_origin_x, next_y);
         }
         return max_rect;
     }
@@ -208,7 +242,10 @@ namespace docraft::layout {
         constexpr float kLineHeightOffset = 12.0F;
         //Layout header
         if (header) {
-            context()->cursor().move_to(0, context()->page_height());
+            header->set_position({.x = header->margin_left(), .y = context()->page_height()});
+            header->set_width(compute_width(header));
+            header->set_height(context()->page_height()*kHeaderHeightRatio_);
+            context()->cursor().move_to(header->position().x, header->position().y);
             (void)compute_layout(header, context()->cursor());
             header->set_position({.x = header->margin_left(), .y = context()->page_height()});
             header->set_width(compute_width(header));
@@ -220,11 +257,18 @@ namespace docraft::layout {
             if (header) {
                 body_start_y = header->anchors().bottom_left.y;
             }
-            context()->cursor().move_to(0, body_start_y - kLineHeightOffset);
+            float body_height = body_start_y;
+            if (footer) {
+                body_height -= context()->page_height() * kFooterHeightRatio_;
+            }
+            body->set_position({.x = body->margin_left(), .y = body_start_y});
+            body->set_width(compute_width(body));
+            body->set_height(body_height);
+            context()->cursor().move_to(body->position().x, body_start_y);
             compute_layout(body, context()->cursor());
             body->set_position({.x = body->margin_left(), .y = body_start_y});
             body->set_width(compute_width(body));
-            body->set_height(context()->page_height()*kBodyHeightRatio_);
+            body->set_height(body_height);
         }
         //Layout footer
         if  (footer) {
@@ -232,7 +276,10 @@ namespace docraft::layout {
             if (body) {
                 footer_start_y = body->anchors().bottom_left.y;
             }
-            context()->cursor().move_to(0, footer_start_y - kLineHeightOffset);
+            footer->set_position({.x = footer->margin_left(), .y = footer_start_y});
+            footer->set_width(compute_width(footer));
+            footer->set_height(context()->page_height()*kFooterHeightRatio_);
+            context()->cursor().move_to(footer->position().x, footer_start_y);
             compute_layout(footer, context()->cursor());
             footer->set_position({.x = footer->margin_left(), .y = footer_start_y});
             footer->set_width(compute_width(footer));

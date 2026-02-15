@@ -60,6 +60,10 @@ namespace docraft::craft {
         constexpr string kLayout = "Layout";
         constexpr string kBlankLine = "Blank";
         constexpr string kRectangle = "Rectangle";
+        constexpr string kCircle = "Circle";
+        constexpr string kTriangle = "Triangle";
+        constexpr string kLine = "Line";
+        constexpr string kPolygon = "Polygon";
         constexpr string kSettings = "Settings";
         constexpr string kList = "List";
         constexpr string kUList = "UList";
@@ -137,7 +141,33 @@ namespace docraft::craft {
         namespace rectangle::attribute {
             constexpr string kBackgroundColor = "background_color";
             constexpr string kBorderColor = "border_color";
+            constexpr string kBorderWidth = "border_width";
 
+        }
+        namespace circle::attribute {
+            constexpr string kBackgroundColor = "background_color";
+            constexpr string kBorderColor = "border_color";
+            constexpr string kBorderWidth = "border_width";
+        }
+        namespace triangle::attribute {
+            constexpr string kBackgroundColor = "background_color";
+            constexpr string kBorderColor = "border_color";
+            constexpr string kBorderWidth = "border_width";
+            constexpr string kPoints = "points";
+        }
+        namespace line::attribute {
+            constexpr string kX1 = "x1";
+            constexpr string kY1 = "y1";
+            constexpr string kX2 = "x2";
+            constexpr string kY2 = "y2";
+            constexpr string kBorderColor = "border_color";
+            constexpr string kBorderWidth = "border_width";
+        }
+        namespace polygon::attribute {
+            constexpr string kBackgroundColor = "background_color";
+            constexpr string kBorderColor = "border_color";
+            constexpr string kBorderWidth = "border_width";
+            constexpr string kPoints = "points";
         }
 
         namespace text::attribute {
