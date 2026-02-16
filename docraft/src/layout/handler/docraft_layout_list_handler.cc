@@ -66,7 +66,10 @@ namespace docraft::layout::handler {
             context()->set_current_rect_width(content_width);
             cursor.move_to(item_x + marker_width + marker_gap, item_y);
 
+            const float original_padding = text_child->padding();
+            text_child->set_padding(original_padding * 0.5F);
             auto child_box = layout_child(text_child, cursor);
+            text_child->set_padding(original_padding);
 
             const auto lines = text_child->lines();
             float marker_y = lines.empty() ? item_y : lines.front()->position().y;

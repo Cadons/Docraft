@@ -78,11 +78,15 @@ namespace docraft::craft::parser::detail {
 
     void configure_docraft_node_attributes(const std::shared_ptr<model::DocraftNode> &node,
                                            const pugi::xml_node &craft_language_source) {
+        bool has_position_attr = false;
+        bool has_xy = false;
         if (auto x_attr = craft_language_source.attribute(basic::attribute::kX.data())) {
             node->set_position({x_attr.as_float(), node->position().y});
+            has_xy = true;
         }
         if (auto y_attr = craft_language_source.attribute(basic::attribute::kY.data())) {
             node->set_position({node->position().x, y_attr.as_float()});
+            has_xy = true;
         }
         if (auto width_attr = craft_language_source.attribute(basic::attribute::kWidth.data())) {
             node->set_width(width_attr.as_float());
@@ -103,6 +107,7 @@ namespace docraft::craft::parser::detail {
         }
         if (auto position_attr = craft_language_source.attribute(basic::attribute::kPosition.data())) {
             std::string position_str = position_attr.as_string();
+            has_position_attr = true;
             if (position_str == std::string{basic::attribute::position_type::kBlock}) {
                 node->set_position_mode(model::DocraftPositionType::kBlock);
             } else if (position_str == std::string{basic::attribute::position_type::kAbsolute}) {
@@ -111,8 +116,14 @@ namespace docraft::craft::parser::detail {
                 throw std::invalid_argument("Invalid position value: " + position_str);
             }
         }
+        if (has_xy && !has_position_attr) {
+            node->set_position_mode(model::DocraftPositionType::kAbsolute);
+        }
         if (auto weight_attr = craft_language_source.attribute(basic::attribute::kWeight.data())) {
             node->set_weight(weight_attr.as_float());
+        }
+        if (auto z_index_attr = craft_language_source.attribute(basic::attribute::kZIndex.data())) {
+            node->set_z_index(z_index_attr.as_int());
         }
     }
 

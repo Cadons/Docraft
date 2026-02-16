@@ -19,11 +19,15 @@ namespace docraft::model {
           auto_fill_height_(node.auto_fill_height_),
           auto_fill_width_(node.auto_fill_width_),
           weight_(node.weight_),
-          position_mode_(node.position_mode_) {
+          position_mode_(node.position_mode_),
+          page_owner_(node.page_owner_),
+          z_index_(node.z_index_) {
     }
 
     DocraftNode::DocraftNode(const DocraftNode *node) : id_(next_id_++),
-                                                        node_name_(node->node_name()) {
+                                                        node_name_(node->node_name()),
+                                                        page_owner_(node->page_owner()),
+                                                        z_index_(node->z_index()) {
         std::cout << "pointer constructor" << std::endl;
     }
 #pragma region Getter
@@ -50,6 +54,14 @@ namespace docraft::model {
 
     DocraftPositionType DocraftNode::position_mode() const {
         return position_mode_;
+    }
+
+    int DocraftNode::page_owner() const {
+        return page_owner_;
+    }
+
+    int DocraftNode::z_index() const {
+        return z_index_;
     }
 #pragma endregion
 #pragma region Setter
@@ -87,6 +99,28 @@ namespace docraft::model {
     }
     void DocraftNode::set_position_mode(DocraftPositionType position_mode) {
         position_mode_ = position_mode;
+    }
+
+    void DocraftNode::set_page_owner(int page_owner) {
+        page_owner_ = page_owner;
+    }
+
+    void DocraftNode::set_z_index(int z_index) {
+        z_index_ = z_index;
+    }
+
+    bool DocraftNode::should_render(const std::shared_ptr<DocraftDocumentContext>& context) const {
+        if (page_owner_ == -1) {
+            return true;
+        }
+        if (!context) {
+            return true;
+        }
+        const auto &page_backend = context->page_backend();
+        if (!page_backend) {
+            return true;
+        }
+        return page_backend->current_page_number() == static_cast<std::size_t>(page_owner_);
     }
 #pragma endregion
 } // Docraft

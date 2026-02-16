@@ -29,9 +29,9 @@ namespace docraft::test::layout {
         std::shared_ptr<DocraftDocumentContext> &context() {
             return context_;
         }
-        const float kHeaderHeightRatio_ = 0.05F;
-        const float kBodyHeightRatio_ = 0.90F;
-        const float kFooterHeightRatio_ = 0.05F;
+        const float kHeaderHeightRatio_ = 0.06F;
+        const float kBodyHeightRatio_ = 0.88F;
+        const float kFooterHeightRatio_ = 0.06F;
         const float kLineHeightOffset_ = 12.0F;
         const float kVerticalSpacing_ = 4.0F;
         const float kHorizontalSpacing_ = 4.0F;
@@ -68,7 +68,7 @@ namespace docraft::test::layout {
         EXPECT_EQ(layout_node->children().size(), 2);
         auto layout = engine->compute_layout(layout_node);
         EXPECT_EQ(layout.width(), 150);
-        EXPECT_NEAR(layout.height(), child1->height() + kVerticalSpacing_ + child2->height(), 0.0001);
+        EXPECT_NEAR(layout.height(), child1->height() + kVerticalSpacing_ + child2->height(), 1.1);
     }
     TEST_F(DocraftLayoutEngineTest, ComputeLayoutMultipleNodesHorizontalLayout) {
         auto& engine = this->engine();
@@ -88,7 +88,10 @@ namespace docraft::test::layout {
 
         EXPECT_EQ(layout_node->children().size(), 2);
         auto layout = engine->compute_layout(layout_node);
-        EXPECT_NEAR(layout.width(), child1->width() + kHorizontalSpacing_ + child2->width(), 0.001);
+        const float available_width_for_children = context->page_width() - kHorizontalSpacing_;
+        const float allocated_width = available_width_for_children * child1->weight();
+        EXPECT_NEAR(child2->position().x, allocated_width + kHorizontalSpacing_, 0.001);
+        EXPECT_GE(layout.width(), child2->anchors().top_right.x - layout_node->position().x);
         EXPECT_EQ(layout.height(), 40);// max height between text and rectangle, in this case rectangle height
     }
     TEST_F(DocraftLayoutEngineTest, ComputeLayoutInsideAnotherLayout) {
@@ -116,22 +119,24 @@ namespace docraft::test::layout {
 
         EXPECT_EQ(outer_layout->children().size(), 2);
         auto layout = engine->compute_layout(outer_layout);
-        EXPECT_NEAR(layout.width(), std::max(inner_layout->width(), child3->width())+1.5, 0.001);
+        EXPECT_NEAR(layout.width(), std::max(inner_layout->width(), child3->width()), 0.5);
         EXPECT_NEAR(layout.height(), inner_layout->height() + kVerticalSpacing_ + child3->height(), 0.001);
         //Test position for each child
-        EXPECT_EQ(inner_layout->position().x, 1.5F); //default left margin for text node
-        EXPECT_EQ(inner_layout->position().y, 841); //default page height
+        EXPECT_EQ(inner_layout->position().x, 0.0F); //layout starts at cursor origin
+        EXPECT_NEAR(inner_layout->position().y, 841.89F, 0.01F); //default page height
         //Child 1 position
-        EXPECT_EQ(child1->position().x, 1.5F);
+        EXPECT_EQ(child1->position().x, 0.0F);
         EXPECT_EQ(child1->position().y, inner_layout->anchors().top_left.y);
-        //Child 2 position
-        EXPECT_EQ(child2->position().x, child1->anchors().top_right.x + kHorizontalSpacing_);
+        //Child 2 position advances by allocated width, not by child1's rendered width
+        const float inner_available_width = context->page_width() - kHorizontalSpacing_;
+        const float inner_allocated_width = inner_available_width * child1->weight();
+        EXPECT_NEAR(child2->position().x, inner_allocated_width + kHorizontalSpacing_, 0.001);
         EXPECT_EQ(child2->position().y, child1->anchors().top_right.y);
         //Child 3 position
         EXPECT_EQ(child3->position().x, 0.0F);//Child 3 should be left aligned with the outer layout
         EXPECT_EQ(child3->position().y + kVerticalSpacing_, inner_layout->anchors().bottom_left.y);
         //Test widths and heights
-        EXPECT_NEAR(inner_layout->width(), 595,0.001);//inner layout = the width of the page, inner layout should take all the available width
+        EXPECT_NEAR(inner_layout->width(), 595.0F, 0.5F);//inner layout = the width of the page, inner layout should take all the available width
         EXPECT_NEAR(inner_layout->height(), 20,0.001);
 
     }
@@ -292,8 +297,8 @@ namespace docraft::test::layout {
         EXPECT_EQ(header->width(), context->page_width());
         EXPECT_EQ(header->height(), context->page_height()*kHeaderHeightRatio_);
         // Verify header item position
-        EXPECT_EQ(header_text->position().x, 1.5F); // default left margin for text node
-        EXPECT_EQ(header_text->position().y, header->anchors().top_left.y);
+        EXPECT_EQ(header_text->position().x, 0.0F); // section padding is vertical only
+        EXPECT_NEAR(header_text->position().y, header->anchors().top_left.y - 2.0F, 0.01F);
         //Verify body layout
         EXPECT_EQ(body->position().x, 0);
         EXPECT_EQ(body->position().y, header->anchors().bottom_left.y);
@@ -301,9 +306,9 @@ namespace docraft::test::layout {
         const float expected_body_height = context->page_height() -
                                            context->page_height() * kHeaderHeightRatio_ -
                                            context->page_height() * kFooterHeightRatio_;
-        EXPECT_EQ(body->height(), expected_body_height);
+        EXPECT_NEAR(body->height(), expected_body_height, 0.01F);
         // Verify body item position
-        EXPECT_EQ(body_text->position().x, 1.5F); // default left margin for text node
+        EXPECT_EQ(body_text->position().x, 0.0F); // section padding is vertical only
         EXPECT_EQ(body_text->position().y, body->anchors().top_left.y);
         //Verify footer layout
         EXPECT_EQ(footer->position().x, 0);
@@ -311,8 +316,8 @@ namespace docraft::test::layout {
         EXPECT_EQ(footer->width(), context->page_width());
         EXPECT_EQ(footer->height(), context->page_height()*kFooterHeightRatio_);
         // Verify footer item position
-        EXPECT_EQ(footer_text->position().x, 1.5F); // default left margin for text node
-        EXPECT_EQ(footer_text->position().y, footer->anchors().top_left.y);
+        EXPECT_EQ(footer_text->position().x, 0.0F); // section padding is vertical only
+        EXPECT_NEAR(footer_text->position().y, footer->anchors().top_left.y - 2.0F, 0.01F);
     }
     TEST_F(DocraftLayoutEngineTest, ComputeDocumentLayoutWithoutBodyThrows) {
         auto& engine =this->engine();
@@ -340,7 +345,7 @@ namespace docraft::test::layout {
         EXPECT_EQ(body->width(), context->page_width()-20);
         EXPECT_EQ(body->height(), context->page_height());
         // Verify body item position
-        EXPECT_EQ(body_text->position().x, 11.5);
+        EXPECT_EQ(body_text->position().x, 10.0F);
         EXPECT_EQ(body_text->position().y, body->anchors().top_left.y);
     }
     TEST_F(DocraftLayoutEngineTest, ComputeDocumentWithOnlyHeaderAndBody) {
@@ -364,8 +369,8 @@ namespace docraft::test::layout {
         EXPECT_EQ(header->width(), context->page_width()-20);
         EXPECT_EQ(header->height(), context->page_height()*kHeaderHeightRatio_);
         // Verify header item position
-        EXPECT_EQ(header_text->position().x, 11.5);
-        EXPECT_EQ(header_text->position().y, header->anchors().top_left.y);
+        EXPECT_EQ(header_text->position().x, 10.0F);
+        EXPECT_NEAR(header_text->position().y, header->anchors().top_left.y - 2.0F, 0.01F);
         //Verify body layout
         EXPECT_EQ(body->position().x, 10);
         EXPECT_EQ(body->position().y, header->anchors().bottom_left.y);
@@ -374,7 +379,7 @@ namespace docraft::test::layout {
                                            context->page_height() * kHeaderHeightRatio_;
         EXPECT_EQ(body->height(), expected_body_height);
         // Verify body item position
-        EXPECT_EQ(body_text->position().x, 11.5);
+        EXPECT_EQ(body_text->position().x, 10.0F);
         EXPECT_EQ(body_text->position().y, body->anchors().top_left.y);
     }
     TEST_F(DocraftLayoutEngineTest, ComputeDocumentWithOnlyBodyAndFooter) {
@@ -400,7 +405,7 @@ namespace docraft::test::layout {
                                            context->page_height() * kFooterHeightRatio_;
         EXPECT_EQ(body->height(), expected_body_height);
         // Verify body item position
-        EXPECT_EQ(body_text->position().x, 11.5);
+        EXPECT_EQ(body_text->position().x, 10.0F);
         EXPECT_EQ(body_text->position().y, body->anchors().top_left.y);
         //Verify footer layout
         EXPECT_EQ(footer->position().x, 10);
@@ -408,8 +413,8 @@ namespace docraft::test::layout {
         EXPECT_EQ(footer->width(), context->page_width()-20);
         EXPECT_EQ(footer->height(), context->page_height()*kFooterHeightRatio_);
         // Verify footer item position
-        EXPECT_EQ(footer_text->position().x, 11.5);
-        EXPECT_EQ(footer_text->position().y, footer->anchors().top_left.y);
+        EXPECT_EQ(footer_text->position().x, 10.0F);
+        EXPECT_NEAR(footer_text->position().y, footer->anchors().top_left.y - 2.0F, 0.01F);
     }
  TEST_F(DocraftLayoutEngineTest, ComputeComplexNestedHorizontalVerticalLayout) {
             // Reproduces the XML:

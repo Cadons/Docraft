@@ -43,11 +43,6 @@ namespace docraft {
          */
         float y() const;
 
-        /**
-         * @brief Returns whether negative coordinates are allowed.
-         * @return true if negative coordinates are allowed.
-         */
-        bool is_negative_coordinates_allowed() const;
 
         /**
          * @brief Returns the current direction.
@@ -94,16 +89,10 @@ namespace docraft {
          */
         void move_to(float x, float y);
 
-        /**
-         * @brief Allows or disallows negative coordinates for the cursor.
-         * @param allow true to allow negative coordinates.
-         */
-        void allow_negative_coordinates(bool allow);
 
 
     private:
         model::DocraftPoint point_;
-        bool allow_negative_coordinates_; ///This flag controls whether negative coordinates are allowed
         std::stack<DocraftCursorDirection> direction_stack_=std::stack<DocraftCursorDirection>();
     };
 } // docraft

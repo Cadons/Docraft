@@ -19,9 +19,6 @@ namespace docraft::craft::parser {
                 elements::circle::attribute::kBorderWidth.data())) {
             circle->set_border_width(border_width_attr.as_float());
         }
-        if (!craft_language_source.attribute(basic::attribute::kPosition.data())) {
-            circle->set_position_mode(model::DocraftPositionType::kAbsolute);
-        }
         detail::configure_docraft_node_attributes(circle, craft_language_source);
         return circle;
     }

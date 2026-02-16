@@ -49,6 +49,24 @@ namespace docraft::test::renderer {
         const char* register_ttf_font_from_file(const std::string&, bool) const override { return ""; }
         bool can_use_font(const std::string&, const char*) const override { return true; }
         void set_font(const std::string&, float, const char*) const override {}
+
+        void add_new_page() override {}
+
+        void move_to_next_page() override {}
+
+        void go_to_page(std::size_t page_number) override {}
+
+        void go_to_first_page() override {}
+
+        void go_to_previous_page() override {}
+
+        void go_to_last_page() override {}
+
+        void set_page_format(model::DocraftPageSize, model::DocraftPageOrientation) override {}
+
+        std::size_t current_page_number() const override { return 1; }
+
+        std::size_t total_page_count() const override { return 1; }
     };
 
     TEST(DocraftSectionMarginTest, DrawsMarginLines) {

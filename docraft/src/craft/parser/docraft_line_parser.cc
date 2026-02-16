@@ -27,9 +27,6 @@ namespace docraft::craft::parser {
                 elements::line::attribute::kBorderWidth.data())) {
             line->set_border_width(border_width_attr.as_float());
         }
-        if (!craft_language_source.attribute(basic::attribute::kPosition.data())) {
-            line->set_position_mode(model::DocraftPositionType::kAbsolute);
-        }
         detail::configure_docraft_node_attributes(line, craft_language_source);
         return line;
     }

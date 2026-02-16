@@ -6,6 +6,7 @@
 
 #include "generic/docraft_font_applier.h"
 #include "model/docraft_layout.h"
+#include "model/docraft_page_number.h"
 #include "utils/docraft_logger.h"
 
 
@@ -50,7 +51,8 @@ namespace docraft::layout::handler {
 
         node->clear_lines(); // Recompute wrapping from scratch to avoid duplicate lines.
 
-        const float available_width = context()->available_space();
+        const float padding = std::max(0.0F, node->padding());
+        const float available_width = std::max(0.0F, context()->available_space() - (2.0F * padding));
         auto add_wrapped_word = [&](const std::string& word) {
             if (word.empty()) {
                 return;
@@ -157,7 +159,7 @@ namespace docraft::layout::handler {
                 } else {
                     // Stretch non-final lines to the full available width for visible justification.
                     line->set_alignment(model::TextAlignment::kJustified);
-                    line->set_width(context()->available_space());
+                    line->set_width(available_width);
                 }
             } else {
                 line->set_alignment(node->alignment());
@@ -165,18 +167,19 @@ namespace docraft::layout::handler {
             }
             line->set_height(line_height);
 
+            const float base_x = text_cursor.x() + padding;
             switch (line->alignment()) {
                 case model::TextAlignment::kLeft:
-                    line->set_position({.x = text_cursor.x(), .y = text_cursor.y()});
+                    line->set_position({.x = base_x, .y = text_cursor.y()});
                     break;
                 case model::TextAlignment::kCenter:
-                    line->set_position({.x = text_cursor.x() + ((context()->available_space() - line_width) / 2), .y = text_cursor.y()});
+                    line->set_position({.x = base_x + ((available_width - line_width) / 2), .y = text_cursor.y()});
                     break;
                 case model::TextAlignment::kRight:
-                    line->set_position({.x = text_cursor.x() + (context()->available_space() - line_width), .y = text_cursor.y()});
+                    line->set_position({.x = base_x + (available_width - line_width), .y = text_cursor.y()});
                     break;
                 case model::TextAlignment::kJustified:
-                    line->set_position({.x = text_cursor.x(), .y = text_cursor.y()});
+                    line->set_position({.x = base_x, .y = text_cursor.y()});
                     break;
             }
 

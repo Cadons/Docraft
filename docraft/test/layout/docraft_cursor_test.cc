@@ -26,16 +26,19 @@ namespace docraft::test::layout {
         cursor.set_y(10);
         EXPECT_EQ(cursor.y(), 10);
 
-        EXPECT_THROW(cursor.set_x(-20), std::out_of_range);
-        EXPECT_THROW(cursor.set_y(-30), std::out_of_range);
+        cursor.set_x(-20);
+        EXPECT_EQ(cursor.x(), -20);
+        cursor.set_y(-30);
+        EXPECT_EQ(cursor.y(), -30);
 
         cursor.move_to(2,30);
         EXPECT_EQ(cursor.x(), 2);
         EXPECT_EQ(cursor.y(), 30);
-        EXPECT_THROW(cursor.move_to(-2,3), std::out_of_range);
+        cursor.move_to(-2,3);
+        EXPECT_EQ(cursor.x(), -2);
+        EXPECT_EQ(cursor.y(), 3);
 
         //test allows negative
-        cursor.allow_negative_coordinates(true);
         cursor.set_x(-2);
         EXPECT_EQ(cursor.x(), -2);
         cursor.set_y(-2);

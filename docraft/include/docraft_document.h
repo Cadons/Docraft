@@ -33,7 +33,7 @@ namespace docraft {
         /**
          * @brief Applies document settings to the underlying rendering context.
          */
-        void configure_document_settings() const;
+        void configure_document_settings();
 
         /**
          * @brief Renders the document using the configured context and renderer.
