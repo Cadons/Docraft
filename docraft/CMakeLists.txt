@@ -67,6 +67,8 @@ set(DOCRAFT_SOURCES src/main.cpp
         include/model/docraft_body.h
         src/model/docraft_text.cc
         include/model/docraft_text.h
+        src/model/docraft_page_number.cc
+        include/model/docraft_page_number.h
         src/docraft_document.cc
         include/docraft_document.h
         src/docraft_document_context.cc
@@ -108,6 +110,7 @@ set(DOCRAFT_SOURCES src/main.cpp
         include/backend/docraft_line_rendering_backend.h
         include/backend/docraft_shape_rendering_backend.h
         include/backend/docraft_image_rendering_backend.h
+        include/backend/docraft_page_rendering_backend.h
         include/backend/docraft_rendering_backend.h
         src/model/docraft_image.cc
         include/model/docraft_image.h
@@ -157,6 +160,7 @@ set(DOCRAFT_SOURCES src/main.cpp
         src/craft/parser/docraft_rectangle_parser.cc
         src/craft/parser/docraft_section_parsers.cc
         src/craft/parser/docraft_text_parser.cc
+        src/craft/parser/docraft_page_number_parser.cc
         src/craft/parser/docraft_image_parser.cc
         src/craft/parser/docraft_table_parser.cc
         src/craft/parser/docraft_layout_parser.cc
@@ -185,6 +189,7 @@ set(DOCRAFT_SOURCES src/main.cpp
         include/backend/pdf/docraft_haru_backend.h
         src/model/docraft_settings.cc
         include/model/docraft_settings.h
+        include/model/docraft_page_format.h
 )
 add_library(docraft_lib STATIC
         ${DOCRAFT_SOURCES}

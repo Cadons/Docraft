@@ -73,6 +73,18 @@ namespace docraft::model {
          */
         [[nodiscard]] DocraftPositionType position_mode() const;
 
+        /**
+         * @brief Returns the page owner for this node.
+         * @return Page number (1-based) or -1 for all pages.
+         */
+        [[nodiscard]] int page_owner() const;
+
+        /**
+         * @brief Returns the z-index for rendering order.
+         * @return Z index (higher renders on top).
+         */
+        [[nodiscard]] int z_index() const;
+
         //setter
         /**
          * @brief Sets the node name.
@@ -116,6 +128,24 @@ namespace docraft::model {
          */
         void set_position_mode(DocraftPositionType position_mode);
 
+        /**
+         * @brief Sets the page owner for this node.
+         * @param page_owner Page number (1-based) or -1 for all pages.
+         */
+        void set_page_owner(int page_owner);
+
+        /**
+         * @brief Sets the z-index for rendering order.
+         * @param z_index Z index (higher renders on top).
+         */
+        void set_z_index(int z_index);
+
+        /**
+         * @brief Returns whether the node should render on the current page.
+         * @param context Document context.
+         */
+        [[nodiscard]] bool should_render(const std::shared_ptr<DocraftDocumentContext>& context) const;
+
     private:
         int id_ = 0;
         static int next_id_;
@@ -125,5 +155,7 @@ namespace docraft::model {
         float weight_ = -1.0F;// -1 means no weight assigned
         DocraftTransform transform_box_;
         DocraftPositionType position_mode_ = DocraftPositionType::kBlock;
+        int page_owner_ = -1;
+        int z_index_ = 0;
     };
 } // Docraft

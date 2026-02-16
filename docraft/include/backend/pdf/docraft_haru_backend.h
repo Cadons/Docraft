@@ -177,17 +177,7 @@ namespace docraft::backend::pdf {
 			float height) const override;
 #pragma endregion
 #pragma region backend lifecycle
-		/**
-		 * @brief Returns the current page width in points.
-		 */
-		float page_width() const override;
-		/**
-		 * @brief Returns the current page height in points.
-		 */
-		float page_height() const override;
-		/**
-		 * @brief Saves the document to a file path.
-		 */
+
 		void save_to_file(const std::string& path) const override;
 		/**
 		 * @brief Registers a TTF font and returns the internal name.
@@ -202,13 +192,79 @@ namespace docraft::backend::pdf {
 		 */
 		void set_font(const std::string& internal_name, float size, const char* encoder) const override;
 #pragma endregion
+#pragma region page management
+/**
+		 * @brief Returns the current page width in points.
+		 */
+		float page_width() const override;
+		/**
+		 * @brief Returns the current page height in points.
+		 */
+		float page_height() const override;
+		/**
+		 * @brief Adds a new page to the document and makes it the current page.
+		 */
+		void add_new_page() override;
+		/**
+		 * @brief Moves the cursor to the next page if it exists.
+		 * @throws std::runtime_error if already at the last page.
+		 */
+		void move_to_next_page() override;
+		/**
+		 * @brief Navigates to a specific page (0-based index).
+		 * @param page_number Destination page index.
+		 * @throws std::runtime_error if the page number is out of range.
+		 */
+		void go_to_page(std::size_t page_number) override;
+		/**
+		 * @brief Navigates to the first page.
+		 */
+		void go_to_first_page() override;
+		/**
+		 * @brief Navigates to the previous page.
+		 * @throws std::runtime_error if already at the first page.
+		 */
+		void go_to_previous_page() override;
+		/**
+		 * @brief Navigates to the last page.
+		 */
+		void go_to_last_page() override;
+		/**
+		 * @brief Sets the page size and orientation.
+		 */
+		void set_page_format(model::DocraftPageSize size,
+		                     model::DocraftPageOrientation orientation) override;
+		/**
+		 * @brief Returns the current page number (1-based index).
+		 */
+		std::size_t current_page_number() const override;
+		/**
+		 * @brief Returns the total number of pages in the document.
+		 */
+		std::size_t total_page_count() const override;
+#pragma endregion
 	private:
+		/**
+		 * @brief Creates a new page and adds it to the document.
+		 */
+		void create_new_page();
+		/**
+		 * @brief Returns the current page index (0-based) for internal use.
+		 */
+		size_t internal_current_page_index() const;
+		/**
+		 * @brief Applies the current page format to a page handle.
+		 */
+		void apply_page_format(HPDF_Page page) const;
+		HPDF_PageSizes page_size_ = HPDF_PAGE_SIZE_A4;
+		HPDF_PageDirection page_direction_ = HPDF_PAGE_PORTRAIT;
 		/**
 		 * @brief Applies the current alpha state to the Haru graphics state.
 		 */
 		void apply_alpha_state() const;
 		HPDF_Doc pdf_;
-		HPDF_Page page_;
+		std::vector<HPDF_Page> pages_;
+		size_t current_page_number_ = 0;
 		mutable float fill_alpha_ = 1.0F;
 		mutable float stroke_alpha_ = 1.0F;
 	};

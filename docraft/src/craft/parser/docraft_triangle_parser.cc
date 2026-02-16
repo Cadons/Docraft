@@ -32,9 +32,6 @@ namespace docraft::craft::parser {
             triangle->set_points(points);
         }
 
-        if (!craft_language_source.attribute(basic::attribute::kPosition.data())) {
-            triangle->set_position_mode(model::DocraftPositionType::kAbsolute);
-        }
         detail::configure_docraft_node_attributes(triangle, craft_language_source);
         return triangle;
     }

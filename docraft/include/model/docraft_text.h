@@ -35,6 +35,10 @@ namespace docraft::model {
     public:
         using DocraftChildrenContainerNode::DocraftChildrenContainerNode;
         /**
+         * @brief Creates an empty text node.
+         */
+        DocraftText();
+        /**
          * @brief Creates a text node with initial text content.
          * @param text Initial text string.
          */
@@ -152,6 +156,7 @@ namespace docraft::model {
         TextStyle style_ = TextStyle::kNormal;
         TextAlignment alignment_ = TextAlignment::kLeft;
         bool underline_ = false;
+        constexpr static float kDefaultTextPadding = 5.0F; // Line spacing multiplier
 
 
 

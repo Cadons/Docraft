@@ -48,6 +48,7 @@ These attributes are recognized on most nodes (including sections, text, layout,
 | `padding`           | float  | Padding in points. |
 | `weight`            | float  | Used by `Layout` to distribute space. |
 | `position`          | string | `block` or `absolute`. |
+| `z_index`           | int    | Render order among siblings in the same container (higher draws on top). |
 
 ### Positioning
 
@@ -133,10 +134,23 @@ Text nodes render inline content with style and alignment.
 | `alignment`| string | `left`, `center`, `right`, `justified` |
 | `underline`| bool   | `true` or `false` |
 
+Notes:
+- `<Text>` is a leaf node. Do not nest other `<Text>` tags inside it.
+- Mixed inline tags may render unpredictably or partially.
+- For structured inline content, split into multiple `<Text>` nodes inside a `<Layout>` and position them using layout rules.
+
 ```xml
 <Text font_name="OpenSans" font_size="12" color="black" style="bold" alignment="left">
   Hello DocCraft
 </Text>
+```
+
+### `<PageNumber>`
+
+Renders the current page number. Supports the same styling attributes as `<Text>`.
+
+```xml
+<PageNumber font_name="Helvetica" font_size="9" alignment="right" />
 ```
 
 ## 8. Images
@@ -268,6 +282,12 @@ Requirements:
 | `border_color`     | color | Border color. |
 | `border_width`     | float | Border width. |
 
+Notes:
+- `<Rectangle>` is a block container that can have children.
+- If `width` or `height` are not set, the rectangle expands to fit its children.
+- When `auto_fill_width="true"` and `width` is unset, it expands to the available layout width.
+- Children are laid out from the rectangle’s top-left corner.
+
 ### `<Circle>`
 
 Same attributes as `<Rectangle>`.
@@ -316,10 +336,20 @@ Same attributes as `<Rectangle>`.
 
 ### `<Settings>`
 
-Used to register external fonts.
+Used to register external fonts and configure page format.
+
+Settings Attributes:
+
+| Attribute          | Type   | Values / Notes |
+|-------------------|--------|----------------|
+| `page_size`        | string | `A4`, `A3`, `A5`, `Letter`, `Legal` |
+| `page_orientation` | string | `portrait`, `landscape` |
+| `header_ratio`     | float  | Fraction of page height reserved for header. |
+| `body_ratio`       | float  | Fraction of page height reserved for body. |
+| `footer_ratio`     | float  | Fraction of page height reserved for footer. |
 
 ```xml
-<Settings>
+<Settings page_size="A4" page_orientation="landscape" header_ratio="0.06" body_ratio="0.88" footer_ratio="0.06">
   <Fonts>
     <Font name="OpenSans">
       <FontNormal src="OpenSans.ttf" />

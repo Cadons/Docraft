@@ -18,6 +18,7 @@ namespace docraft::craft {
         constexpr string kPadding = "padding";
         constexpr string kWeight = "weight";
         constexpr string kPosition = "position";
+        constexpr string kZIndex = "z_index";
         constexpr string kColor = "color";
 
         namespace position_type {
@@ -48,6 +49,7 @@ namespace docraft::craft {
      */
     namespace elements {
         constexpr string kText = "Text";
+        constexpr string kPageNumber = "PageNumber";
         constexpr string kImage = "Image";
         constexpr string kTable = "Table";
         constexpr string kTHead = "THead";
@@ -89,6 +91,13 @@ namespace docraft::craft {
         }
         namespace settings {
             constexpr string kFonts = "Fonts";
+            namespace attribute {
+                constexpr string kPageSize = "page_size";
+                constexpr string kPageOrientation = "page_orientation";
+                constexpr string kHeaderRatio = "header_ratio";
+                constexpr string kBodyRatio = "body_ratio";
+                constexpr string kFooterRatio = "footer_ratio";
+            }
             namespace fonts {
                 constexpr string kFont = "Font";
                 namespace attribute {

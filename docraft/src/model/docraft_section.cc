@@ -5,6 +5,7 @@
 namespace docraft::model {
     DocraftSection::DocraftSection() {
         set_border_width(0.0F);
+        set_padding(2.0F);
     }
 
     DocraftSection::DocraftSection(DocraftSection *node) : DocraftRectangle(node),

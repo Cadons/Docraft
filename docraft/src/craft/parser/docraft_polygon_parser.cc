@@ -27,9 +27,6 @@ namespace docraft::craft::parser {
             polygon->set_points(points);
         }
 
-        if (!craft_language_source.attribute(basic::attribute::kPosition.data())) {
-            polygon->set_position_mode(model::DocraftPositionType::kAbsolute);
-        }
         detail::configure_docraft_node_attributes(polygon, craft_language_source);
         return polygon;
     }

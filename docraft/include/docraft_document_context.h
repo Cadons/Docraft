@@ -4,6 +4,7 @@
 #include "docraft_cursor.h"
 #include "backend/docraft_rendering_backend.h"
 #include "generic/docraft_font_applier.h"
+#include "model/docraft_page_format.h"
 
 namespace docraft {
     namespace renderer {
@@ -139,10 +140,47 @@ namespace docraft {
          */
         [[nodiscard]] const std::shared_ptr<backend::IDocraftImageRenderingBackend>& image_backend() const;
         /**
+         * @brief Returns the page backend (cached).
+         * @return Page rendering backend.
+         */
+        [[nodiscard]] const std::shared_ptr<backend::IDocraftPageRenderingBackend>& page_backend() const;
+        /**
          * @brief Replaces the underlying rendering backend.
          * @param backend New rendering backend.
          */
         void set_backend(const std::shared_ptr<backend::IDocraftRenderingBackend>& backend);
+        /**
+         * @brief Sets the page format for the backend and updates cached size.
+         */
+        void set_page_format(model::DocraftPageSize size, model::DocraftPageOrientation orientation);
+        /**
+         * @brief Moves to the first page (index 0).
+         */
+        void go_to_first_page() const;
+        /**
+         * @brief Moves to the previous page.
+         */
+        void go_to_previous_page() const;
+        /**
+         * @brief Moves to the last page.
+         */
+        void go_to_last_page() const;
+        /**
+         * @brief Sets header/body/footer ratios.
+         */
+        void set_section_ratios(float header_ratio, float body_ratio, float footer_ratio);
+        /**
+         * @brief Returns the header ratio.
+         */
+        [[nodiscard]] float header_ratio() const;
+        /**
+         * @brief Returns the body ratio.
+         */
+        [[nodiscard]] float body_ratio() const;
+        /**
+         * @brief Returns the footer ratio.
+         */
+        [[nodiscard]] float footer_ratio() const;
 
     private:
         DocraftCursor cursor_;
@@ -159,5 +197,9 @@ namespace docraft {
         mutable std::shared_ptr<backend::IDocraftShapeRenderingBackend> shape_backend_;
         mutable std::shared_ptr<backend::IDocraftTextRenderingBackend> text_backend_;
         mutable std::shared_ptr<backend::IDocraftImageRenderingBackend> image_backend_;
+        mutable std::shared_ptr<backend::IDocraftPageRenderingBackend> page_backend_;
+        float header_ratio_ = 0.06F;
+        float body_ratio_ = 0.88F;
+        float footer_ratio_ = 0.06F;
     };
 } // docraft

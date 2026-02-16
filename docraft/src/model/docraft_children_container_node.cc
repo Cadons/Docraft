@@ -24,8 +24,25 @@ namespace docraft::model {
     }
 
     void DocraftChildrenContainerNode::draw_children(const std::shared_ptr<DocraftDocumentContext> &context) const {
-        for (const auto &child: children()) {
-            child->draw(context);
+        auto ordered_children = children();
+        std::ranges::stable_sort(ordered_children,
+                                 [](const std::shared_ptr<DocraftNode> &a,
+                                    const std::shared_ptr<DocraftNode> &b) {
+                                     if (!a && !b) {
+                                         return false;
+                                     }
+                                     if (!a) {
+                                         return true;
+                                     }
+                                     if (!b) {
+                                         return false;
+                                     }
+                                     return a->z_index() < b->z_index();
+                                 });
+        for (const auto &child: ordered_children) {
+            if (child && child->should_render(context)) {
+                child->draw(context);
+            }
         }
     }
 

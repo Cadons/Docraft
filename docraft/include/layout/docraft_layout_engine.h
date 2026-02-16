@@ -67,9 +67,9 @@ namespace docraft::layout {
         void configure_handlers(const std::shared_ptr<DocraftDocumentContext>& context);
         Handlers handlers_;
         std::shared_ptr<DocraftDocumentContext> context_;
-        const float kHeaderHeightRatio_ = 0.05F;
-        const float kBodyHeightRatio_ = 0.90F;
-        const float kFooterHeightRatio_ = 0.05F;
+        const float kHeaderHeightRatio_ = 0.06F;
+        const float kBodyHeightRatio_ = 0.88F;
+        const float kFooterHeightRatio_ = 0.06F;
         const float kVerticalSpacing_ = 4.0F;
         const float kHorizontalSpacing_ = 4.0F;
 
@@ -87,5 +87,11 @@ namespace docraft::layout {
          * @return Available width in points.
          */
         float compute_width(const std::shared_ptr<model::DocraftSection> &node) const;
+        /**
+         * @brief Assigns page owner to a node and its children.
+         * @param node Target node.
+         * @param page Page number (1-based).
+         */
+        void assign_page_owner_recursive(const std::shared_ptr<model::DocraftNode>& node, int page) const;
     };
 } // layout

@@ -90,6 +90,18 @@ namespace docraft::craft::parser {
         std::shared_ptr<model::DocraftNode> parse(const pugi::xml_node &craft_language_source) override;
     };
     /**
+     * @brief Parser for page number nodes.
+     */
+    class DocraftPageNumberParser : public IDocraftParser {
+    public:
+        /**
+         * @brief Parses a page number XML node.
+         * @param craft_language_source XML node.
+         * @return Parsed page number node.
+         */
+        std::shared_ptr<model::DocraftNode> parse(const pugi::xml_node &craft_language_source) override;
+    };
+    /**
      * @brief Parser for image nodes.
      */
     class DocraftImageParser : public IDocraftParser {

@@ -4,6 +4,7 @@
 
 #include "docraft_document.h"
 
+#include <algorithm>
 #include <iostream>
 #include <ostream>
 #include <list>
@@ -17,6 +18,64 @@
 #include "utils/docraft_logger.h"
 
 namespace docraft {
+    namespace {
+        void apply_page_format_settings(const std::shared_ptr<model::DocraftSettings> &settings,
+                                        const std::shared_ptr<DocraftDocumentContext> &context) {
+            if (!settings || !context) {
+                return;
+            }
+            if (settings->has_page_format()) {
+                context->set_page_format(settings->page_size(), settings->page_orientation());
+            }
+        }
+
+        void apply_section_ratio_settings(const std::shared_ptr<model::DocraftSettings> &settings,
+                                          const std::shared_ptr<DocraftDocumentContext> &context) {
+            if (!settings || !context) {
+                return;
+            }
+            if (settings->has_section_ratios()) {
+                context->set_section_ratios(settings->header_ratio(),
+                                            settings->body_ratio(),
+                                            settings->footer_ratio());
+            }
+        }
+
+        void apply_font_settings(const std::shared_ptr<model::DocraftSettings> &settings) {
+            if (!settings) {
+                return;
+            }
+            if (settings->fonts().empty()) {
+                return;
+            }
+            for (const auto &font: settings->fonts()) {
+                for (const auto &external_font: font.external_fonts) {
+                    auto font_path = external_font.path;
+                    std::filesystem::path resolved_path(font_path);
+                    if (!resolved_path.is_absolute()) {
+                        std::filesystem::path tried1 = std::filesystem::current_path() / resolved_path;
+                        if (std::filesystem::exists(tried1)) {
+                            resolved_path = tried1;
+                        } else {
+                            std::filesystem::path tried2 = std::filesystem::current_path().parent_path() / resolved_path;
+                            if (std::filesystem::exists(tried2)) {
+                                resolved_path = tried2;
+                            }
+                        }
+                    }
+
+                    bool ok = utils::DocraftFontRegistry::instance().register_font(external_font.name, resolved_path.string());
+                    if (!ok) {
+                        LOG_ERROR("Failed to register font '" + external_font.name + "' from path '" + font_path +
+                                  "' (resolved: '" + resolved_path.string() + "')");
+                    } else {
+                        LOG_DEBUG("Registered font '" + external_font.name + "' from path '" + resolved_path.string() + "'");
+                    }
+                }
+            }
+        }
+    } // namespace
+
     DocraftDocument::DocraftDocument(std::string document_title) : document_title_(std::move(document_title)) {
     }
 
@@ -27,39 +86,10 @@ namespace docraft {
         dom_.emplace_back(node);
     }
 
-    void DocraftDocument::configure_document_settings() const {
-        if (settings_) {
-            // Apply settings font
-            if (!settings_->fonts().empty()) {
-                for (const auto &font: settings_->fonts()) {
-                    for (const auto &external_font: font.external_fonts) {
-                        //read file content
-                        auto font_path = external_font.path;
-                        // Try to resolve relative paths: prefer absolute as-is, otherwise attempt cwd and executable directory
-                        std::filesystem::path resolved_path(font_path);
-                        if (!resolved_path.is_absolute()) {
-                            std::filesystem::path tried1 = std::filesystem::current_path() / resolved_path;
-                            if (std::filesystem::exists(tried1)) {
-                                resolved_path = tried1;
-                            } else {
-                                // try executable directory (approximation: parent of current path)
-                                std::filesystem::path tried2 = std::filesystem::current_path().parent_path() / resolved_path;
-                                if (std::filesystem::exists(tried2)) {
-                                    resolved_path = tried2;
-                                }
-                            }
-                        }
-
-                        bool ok = utils::DocraftFontRegistry::instance().register_font(external_font.name, resolved_path.string());
-                        if (!ok) {
-                            LOG_ERROR("Failed to register font '" + external_font.name + "' from path '" + font_path + "' (resolved: '" + resolved_path.string() + "')");
-                        } else {
-                            LOG_DEBUG("Registered font '" + external_font.name + "' from path '" + resolved_path.string() + "'");
-                        }
-                    }
-                }
-            }
-        }
+    void DocraftDocument::configure_document_settings() {
+        apply_page_format_settings(settings_, pdf_context_);
+        apply_section_ratio_settings(settings_, pdf_context_);
+        apply_font_settings(settings_);
     }
 
     void DocraftDocument::render() {
@@ -76,9 +106,28 @@ namespace docraft {
         layout_engine.compute_document_layout(dom_);
 
         // Rendering phase
+        const auto &page_backend = pdf_context_->page_backend();
+        if (page_backend) {
+            page_backend->go_to_first_page();
+        }
+        const std::size_t page_count = page_backend ? page_backend->total_page_count() : 1;
+
         for (auto &node : dom_) {
-            if (node) {
-                node->draw(pdf_context_);
+            if (!node) {
+                continue;
+            }
+            if (node->page_owner() == -1 && page_backend) {
+                for (std::size_t i = 0; i < page_count; ++i) {
+                    page_backend->go_to_page(i);
+                    node->draw(pdf_context_);
+                }
+            } else {
+                if (page_backend && node->page_owner() > 0) {
+                    page_backend->go_to_page(static_cast<std::size_t>(node->page_owner() - 1));
+                }
+                if (node->should_render(pdf_context_)) {
+                    node->draw(pdf_context_);
+                }
             }
         }
 

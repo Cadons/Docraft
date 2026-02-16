@@ -4,9 +4,13 @@
 #include <memory>
 
 #include "renderer/docraft_renderer.h"
-
 namespace docraft::model {
+    DocraftText::DocraftText() {
+        set_padding(kDefaultTextPadding);
+    }
+
     DocraftText::DocraftText(const std::string &text) : text_(text) {
+        set_padding(kDefaultTextPadding);
     }
 
     void DocraftText::draw(const std::shared_ptr<DocraftDocumentContext> &context) {

@@ -24,6 +24,7 @@ DocraftCraftLanguageParser::DocraftCraftLanguageParser() {
     parsers_[tag_formatter(section::kBody.data())] = std::make_unique<parser::DocraftBodyParser>();
     parsers_[tag_formatter(section::kFooter.data())] = std::make_unique<parser::DocraftFooterParser>();
     parsers_[tag_formatter(elements::kText.data())] = std::make_unique<parser::DocraftTextParser>();
+    parsers_[tag_formatter(elements::kPageNumber.data())] = std::make_unique<parser::DocraftPageNumberParser>();
     parsers_[tag_formatter(elements::kImage.data())] = std::make_unique<parser::DocraftImageParser>();
     parsers_[tag_formatter(elements::kTable.data())] = std::make_unique<parser::DocraftTableParser>();
     parsers_[tag_formatter(elements::kList.data())] = std::make_unique<parser::DocraftListParser>();

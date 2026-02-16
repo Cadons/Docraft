@@ -148,6 +148,43 @@ namespace {
 } // namespace
 
 namespace docraft::backend::pdf {
+    namespace {
+        HPDF_PageSizes to_hpdf_size(model::DocraftPageSize size) {
+            switch (size) {
+                case model::DocraftPageSize::kA3:
+                    return HPDF_PAGE_SIZE_A3;
+                case model::DocraftPageSize::kA5:
+                    return HPDF_PAGE_SIZE_A5;
+                case model::DocraftPageSize::kLetter:
+                    return HPDF_PAGE_SIZE_LETTER;
+                case model::DocraftPageSize::kLegal:
+                    return HPDF_PAGE_SIZE_LEGAL;
+                case model::DocraftPageSize::kA4:
+                default:
+                    return HPDF_PAGE_SIZE_A4;
+            }
+        }
+
+        HPDF_PageDirection to_hpdf_direction(model::DocraftPageOrientation orientation) {
+            switch (orientation) {
+                case model::DocraftPageOrientation::kLandscape:
+                    return HPDF_PAGE_LANDSCAPE;
+                case model::DocraftPageOrientation::kPortrait:
+                default:
+                    return HPDF_PAGE_PORTRAIT;
+            }
+        }
+    } // namespace
+
+    void DocraftHaruBackend::create_new_page() {
+        HPDF_Page new_page = HPDF_AddPage(pdf_);
+        if (!new_page) {
+            throw std::runtime_error("Failed to create a new page");
+        }
+        apply_page_format(new_page);
+        pages_.push_back(new_page);
+        current_page_number_ = pages_.size() - 1; // Move to the newly created page
+    }
     DocraftHaruBackend::DocraftHaruBackend() {
         pdf_ = HPDF_New(error_handler, NULL);
         if (!pdf_) {
@@ -156,52 +193,51 @@ namespace docraft::backend::pdf {
         HPDF_UseUTFEncodings(pdf_);
         HPDF_SetCurrentEncoder(pdf_, "UTF-8");
         HPDF_SetCompressionMode(pdf_, HPDF_COMP_ALL);
-        page_ = HPDF_AddPage(pdf_);
-        if (!page_) {
-            HPDF_Free(pdf_);
-            pdf_ = nullptr;
-            throw std::runtime_error("Failed to create Haru PDF page");
-        }
+        create_new_page();
     }
     DocraftHaruBackend::~DocraftHaruBackend() {
         if (pdf_) {
             HPDF_Free(pdf_);
             pdf_ = nullptr;
-            page_ = nullptr;
+            for (auto &p: pages_) {
+                // Haru automatically manages page lifetimes, so we don't need to free them individually. Just clear the vector to release references.
+                p = nullptr;
+            }
+            pages_.clear();
         }
     }
 
     void DocraftHaruBackend::begin_text() const {
-        HPDF_Page_BeginText(page_);
+        HPDF_Page_BeginText(pages_[internal_current_page_index()]);
     }
 
     void DocraftHaruBackend::end_text() const {
-        HPDF_Page_EndText(page_);
+        HPDF_Page_EndText(pages_[internal_current_page_index()]);
     }
     void DocraftHaruBackend::draw_text(const std::string &text, float x, float y) const {
-            HPDF_Page_TextOut(page_, x, y, text.c_str());
+            HPDF_Page_TextOut(pages_[internal_current_page_index()], x, y, text.c_str());
     }
 
     void DocraftHaruBackend::set_text_color(float r, float g, float b) const {
-        HPDF_Page_SetRGBFill(page_, r, g, b);
+        HPDF_Page_SetRGBFill(pages_[internal_current_page_index()], r, g, b);
     }
 
     float DocraftHaruBackend::measure_text_width(const std::string &text) const {
-        return HPDF_Page_TextWidth(page_, text.c_str());
+        return HPDF_Page_TextWidth(pages_[internal_current_page_index()], text.c_str());
     }
 
     void DocraftHaruBackend::set_stroke_color(float r, float g, float b) const {
-        HPDF_Page_SetRGBStroke(page_, r, g, b);
+        HPDF_Page_SetRGBStroke(pages_[internal_current_page_index()], r, g, b);
     }
 
     void DocraftHaruBackend::set_line_width(float thickness) const {
-        HPDF_Page_SetLineWidth(page_, thickness);
+        HPDF_Page_SetLineWidth(pages_[internal_current_page_index()], thickness);
     }
 
     void DocraftHaruBackend::draw_line(float x1, float y1, float x2, float y2) const {
-        HPDF_Page_MoveTo(page_, x1, y1);
-        HPDF_Page_LineTo(page_, x2, y2);
-        HPDF_Page_Stroke(page_);
+        HPDF_Page_MoveTo(pages_[internal_current_page_index()], x1, y1);
+        HPDF_Page_LineTo(pages_[internal_current_page_index()], x2, y2);
+        HPDF_Page_Stroke(pages_[internal_current_page_index()]);
     }
 
     void DocraftHaruBackend::draw_text_matrix(
@@ -212,20 +248,20 @@ namespace docraft::backend::pdf {
         float scale_y,
         float translate_x,
         float translate_y) const {
-        HPDF_Page_SetTextMatrix(page_, scale_x, skew_x, skew_y, scale_y, translate_x, translate_y);
-        HPDF_Page_ShowText(page_, text.c_str());
+        HPDF_Page_SetTextMatrix(pages_[internal_current_page_index()], scale_x, skew_x, skew_y, scale_y, translate_x, translate_y);
+        HPDF_Page_ShowText(pages_[internal_current_page_index()], text.c_str());
     }
 
     void DocraftHaruBackend::save_state() const {
-        HPDF_Page_GSave(page_);
+        HPDF_Page_GSave(pages_[internal_current_page_index()]);
     }
 
     void DocraftHaruBackend::restore_state() const {
-        HPDF_Page_GRestore(page_);//restore the previous graphics state, which was saved by the last call of HPDF_Page_GSave() or HPDF_Page_SaveToStream().
+        HPDF_Page_GRestore(pages_[internal_current_page_index()]);//restore the previous graphics state, which was saved by the last call of HPDF_Page_GSave() or HPDF_Page_SaveToStream().
     }
 
     void DocraftHaruBackend::set_fill_color(float r, float g, float b) const {
-        HPDF_Page_SetRGBFill(page_, r, g, b);
+        HPDF_Page_SetRGBFill(pages_[internal_current_page_index()], r, g, b);
     }
 
     void DocraftHaruBackend::set_fill_alpha(float alpha) const {
@@ -239,11 +275,11 @@ namespace docraft::backend::pdf {
     }
 
     void DocraftHaruBackend::draw_rectangle(float x, float y, float width, float height) const {
-        HPDF_Page_Rectangle(page_, x, y, width, height);
+        HPDF_Page_Rectangle(pages_[internal_current_page_index()], x, y, width, height);
     }
 
     void DocraftHaruBackend::draw_circle(float center_x, float center_y, float radius) const {
-        HPDF_Page_Circle(page_, center_x, center_y, radius);
+        HPDF_Page_Circle(pages_[internal_current_page_index()], center_x, center_y, radius);
     }
 
     void DocraftHaruBackend::draw_polygon(const std::vector<model::DocraftPoint> &points) const {
@@ -251,23 +287,23 @@ namespace docraft::backend::pdf {
             return;
         }
 
-        HPDF_Page_MoveTo(page_, points[0].x, points[0].y);
+        HPDF_Page_MoveTo(pages_[internal_current_page_index()], points[0].x, points[0].y);
         for (size_t i = 1; i < points.size(); ++i) {
-            HPDF_Page_LineTo(page_, points[i].x, points[i].y);
+            HPDF_Page_LineTo(pages_[internal_current_page_index()], points[i].x, points[i].y);
         }
-        HPDF_Page_ClosePath(page_);
+        HPDF_Page_ClosePath(pages_[internal_current_page_index()]);
     }
 
     void DocraftHaruBackend::fill() const {
-        HPDF_Page_Fill(page_);
+        HPDF_Page_Fill(pages_[internal_current_page_index()]);
     }
 
     void DocraftHaruBackend::stroke() const {
-        HPDF_Page_Stroke(page_);
+        HPDF_Page_Stroke(pages_[internal_current_page_index()]);
     }
 
     void DocraftHaruBackend::fill_stroke() const {
-        HPDF_Page_FillStroke(page_);
+        HPDF_Page_FillStroke(pages_[internal_current_page_index()]);
     }
 
     void DocraftHaruBackend::draw_png_image(
@@ -280,7 +316,7 @@ namespace docraft::backend::pdf {
         if (!image) {
             throw std::runtime_error("Failed to load PNG image: " + path);
         }
-        HPDF_Page_DrawImage(page_, image, x, y, width, height);
+        HPDF_Page_DrawImage(pages_[internal_current_page_index()], image, x, y, width, height);
     }
 
     void DocraftHaruBackend::draw_png_image_from_memory(
@@ -297,7 +333,7 @@ namespace docraft::backend::pdf {
         if (!image) {
             throw std::runtime_error("Failed to load PNG image from memory");
         }
-        HPDF_Page_DrawImage(page_, image, x, y, width, height);
+        HPDF_Page_DrawImage(pages_[internal_current_page_index()], image, x, y, width, height);
     }
 
     void DocraftHaruBackend::draw_jpeg_image(
@@ -310,7 +346,7 @@ namespace docraft::backend::pdf {
         if (!image) {
             throw std::runtime_error("Failed to load JPEG image: " + path);
         }
-        HPDF_Page_DrawImage(page_, image, x, y, width, height);
+        HPDF_Page_DrawImage(pages_[internal_current_page_index()], image, x, y, width, height);
     }
 
     void DocraftHaruBackend::draw_jpeg_image_from_memory(
@@ -327,7 +363,7 @@ namespace docraft::backend::pdf {
         if (!image) {
             throw std::runtime_error("Failed to load JPEG image from memory");
         }
-        HPDF_Page_DrawImage(page_, image, x, y, width, height);
+        HPDF_Page_DrawImage(pages_[internal_current_page_index()], image, x, y, width, height);
     }
 
     void DocraftHaruBackend::draw_raw_rgb_image(
@@ -347,7 +383,7 @@ namespace docraft::backend::pdf {
         if (!image) {
             throw std::runtime_error("Failed to load raw RGB image: " + path);
         }
-        HPDF_Page_DrawImage(page_, image, x, y, width, height);
+        HPDF_Page_DrawImage(pages_[internal_current_page_index()], image, x, y, width, height);
     }
 
     void DocraftHaruBackend::draw_raw_rgb_image_from_memory(
@@ -369,15 +405,15 @@ namespace docraft::backend::pdf {
         if (!image) {
             throw std::runtime_error("Failed to load raw RGB image from memory");
         }
-        HPDF_Page_DrawImage(page_, image, x, y, width, height);
+        HPDF_Page_DrawImage(pages_[internal_current_page_index()], image, x, y, width, height);
     }
 
     float DocraftHaruBackend::page_width() const {
-        return HPDF_Page_GetWidth(page_);
+        return HPDF_Page_GetWidth(pages_[internal_current_page_index()]);
     }
 
     float DocraftHaruBackend::page_height() const {
-        return HPDF_Page_GetHeight(page_);
+        return HPDF_Page_GetHeight(pages_[internal_current_page_index()]);
     }
 
     void DocraftHaruBackend::save_to_file(const std::string& path) const {
@@ -409,7 +445,7 @@ namespace docraft::backend::pdf {
         if (!font) {
             throw std::runtime_error("Failed to resolve font: " + internal_name);
         }
-        HPDF_Page_SetFontAndSize(page_, font, size);
+        HPDF_Page_SetFontAndSize(pages_[internal_current_page_index()], font, size);
     }
 
     void DocraftHaruBackend::apply_alpha_state() const {
@@ -417,7 +453,74 @@ namespace docraft::backend::pdf {
         if (ext) {
             HPDF_ExtGState_SetAlphaFill(ext, fill_alpha_);
             HPDF_ExtGState_SetAlphaStroke(ext, stroke_alpha_);
-            HPDF_Page_SetExtGState(page_, ext);
+            HPDF_Page_SetExtGState(pages_[internal_current_page_index()], ext);
+        }
+    }
+
+    void DocraftHaruBackend::add_new_page() {
+        create_new_page();
+    }
+
+    void DocraftHaruBackend::move_to_next_page() {
+            if (current_page_number_ + 1 < pages_.size()) {
+                ++current_page_number_;
+            } else {
+                throw std::runtime_error("Already at the last page, cannot move to next page");
+            }
+    }
+
+    void DocraftHaruBackend::go_to_page(std::size_t page_number) {
+        if (page_number < pages_.size()) {
+            current_page_number_ = page_number;
+        } else {
+            throw std::runtime_error("Invalid page number: " + std::to_string(page_number));
+        }
+    }
+
+    void DocraftHaruBackend::go_to_first_page() {
+        if (pages_.empty()) {
+            throw std::runtime_error("No pages in document");
+        }
+        current_page_number_ = 0;
+    }
+
+    void DocraftHaruBackend::go_to_previous_page() {
+        if (current_page_number_ == 0) {
+            throw std::runtime_error("Already at the first page, cannot move to previous page");
+        }
+        --current_page_number_;
+    }
+
+    void DocraftHaruBackend::go_to_last_page() {
+        if (pages_.empty()) {
+            throw std::runtime_error("No pages in document");
+        }
+        current_page_number_ = pages_.size() - 1;
+    }
+
+    std::size_t DocraftHaruBackend::current_page_number() const {
+        return current_page_number_+1; // Return 1-based page number for external use
+    }
+
+    std::size_t DocraftHaruBackend::total_page_count() const {
+        return pages_.size();
+    }
+    size_t DocraftHaruBackend::internal_current_page_index() const {
+        return current_page_number_;
+    }
+
+    void DocraftHaruBackend::apply_page_format(HPDF_Page page) const {
+        HPDF_Page_SetSize(page, page_size_, page_direction_);
+    }
+
+    void DocraftHaruBackend::set_page_format(model::DocraftPageSize size,
+                                             model::DocraftPageOrientation orientation) {
+        page_size_ = to_hpdf_size(size);
+        page_direction_ = to_hpdf_direction(orientation);
+        for (auto &page : pages_) {
+            if (page) {
+                apply_page_format(page);
+            }
         }
     }
 

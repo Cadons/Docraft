@@ -2,6 +2,7 @@
 #include <string>
 
 #include "backend/docraft_image_rendering_backend.h"
+#include "backend/docraft_page_rendering_backend.h"
 #include "backend/docraft_shape_rendering_backend.h"
 #include "backend/docraft_text_rendering_backend.h"
 
@@ -11,22 +12,13 @@ namespace docraft::backend {
      */
     class IDocraftRenderingBackend : public IDocraftTextRenderingBackend,
                                      public IDocraftShapeRenderingBackend,
-                                     public IDocraftImageRenderingBackend {
+                                     public IDocraftImageRenderingBackend,
+                                     public IDocraftPageRenderingBackend {
     public:
         /**
          * @brief Virtual destructor.
          */
         ~IDocraftRenderingBackend() override = default;
-        /**
-         * @brief Returns the current page width in points.
-         * @return Page width in points.
-         */
-        virtual float page_width() const = 0;
-        /**
-         * @brief Returns the current page height in points.
-         * @return Page height in points.
-         */
-        virtual float page_height() const = 0;
         /**
          * @brief Saves the document to a file path.
          * @param path Output file path.
