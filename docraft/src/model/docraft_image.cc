@@ -37,18 +37,18 @@ namespace docraft::model {
                 format_ = ImageFormat::kRaw;
                 break;
         }
-        //
-        // // Retrieve dimensions if not already set
-        // if (width() == 0 || height() == 0) {
-        //     auto [orig_width, orig_height] = get_image_dimensions(path_, format_);
-        //     set_width(orig_width);
-        //
-        //     if (height() <= 0) {
-        //         // Maintain aspect ratio
-        //         float aspect_ratio = orig_height / orig_width;
-        //         set_height(width() * aspect_ratio);
-        //     }
-        // }
+
+        // Retrieve dimensions if not already set
+        if (width() == 0 || height() == 0) {
+            auto [orig_width, orig_height] = get_image_dimensions(path_, format_);
+            set_width(orig_width);
+
+            if (height() <= 0) {
+                // Maintain aspect ratio
+                float aspect_ratio = orig_height / orig_width;
+                set_height(width() * aspect_ratio);
+            }
+        }
     }
 
     void DocraftImage::set_raw_data(const std::vector<unsigned char> &data, int pixel_width, int pixel_height) {
@@ -56,7 +56,13 @@ namespace docraft::model {
         raw_pixel_width_ = pixel_width;
         raw_pixel_height_ = pixel_height;
         format_ = ImageFormat::kRaw;
+        has_raw_data_ = true;
     }
+
+        void DocraftImage::set_has_raw_data(bool has_raw_data) {
+            has_raw_data_ = has_raw_data;
+        }
+
 
     // Helper function to get image dimensions
     std::pair<float, float> DocraftImage::get_image_dimensions(const std::string &path, ImageFormat format) {
@@ -79,5 +85,8 @@ namespace docraft::model {
     }
     int DocraftImage::raw_pixel_height() const {
         return raw_pixel_height_;
+    }
+    bool DocraftImage::has_raw_data() const {
+        return has_raw_data_;
     }
 } // docraft

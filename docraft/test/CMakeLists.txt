@@ -19,11 +19,13 @@ set(TEST_SOURCES
         model/docraft_z_index_test.cc
         craft/docraft_table_parser_test.cc
         craft/docraft_shape_parser_test.cc
+        craft/docraft_image_parser_test.cc
         craft/docraft_settings_parser_test.cc
         backend/docraft_haru_backend_test.cc
         renderer/docraft_image_painter_test.cc
         renderer/docraft_painter_smoke_test.cc
-        renderer/docraft_section_margin_test.cc)
+        renderer/docraft_section_margin_test.cc
+        templating/docraft_template_engine_test.cc)
 
 add_executable(docraft_test
         ${TEST_SOURCES}

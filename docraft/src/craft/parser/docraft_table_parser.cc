@@ -11,10 +11,19 @@ namespace docraft::craft::parser {
     std::shared_ptr<model::DocraftNode> DocraftTableParser::parse(const pugi::xml_node &craft_language_source) {
         auto table_node = std::make_shared<model::DocraftTable>();
 
+        // Baseline tweak for text vertical alignment inside cells.
         if (auto baseline_attr = craft_language_source.attribute(elements::table::attribute::kBaselineOffset.data())) {
             table_node->set_baseline_offset(baseline_attr.as_float());
         }
 
+        // `model` is overloaded:
+        // - "horizontal"/"vertical" -> orientation only
+        // - JSON matrix -> data rows (horizontal only)
+        // - ${var} -> deferred JSON rows (templated)
+        bool has_model_json = false;
+        bool has_model_template = false;
+        bool has_header_json = false;
+        bool has_header_template = false;
         if (auto model_attr = craft_language_source.attribute(elements::table::attribute::kModel.data())) {
             std::string model_str = model_attr.as_string();
             if (model_str == std::string{orientation::kVertical}) {
@@ -22,7 +31,26 @@ namespace docraft::craft::parser {
             } else if (model_str == std::string{orientation::kHorizontal}) {
                 table_node->set_orientation(model::LayoutOrientation::kHorizontal);
             } else {
-                throw std::invalid_argument("Invalid table model: " + model_str);
+                if (model_str.find("${") != std::string::npos) {
+                    table_node->set_model_template(model_str);
+                    has_model_template = true;
+                } else {
+                    table_node->apply_json_rows(model_str);
+                    has_model_json = true;
+                }
+            }
+        }
+        // Optional `header` attribute for column titles:
+        // - JSON array -> titles
+        // - ${var} -> deferred JSON titles (templated)
+        if (auto header_attr = craft_language_source.attribute("header")) {
+            std::string header_str = header_attr.as_string();
+            if (header_str.find("${") != std::string::npos) {
+                table_node->set_header_template(header_str);
+                has_header_template = true;
+            } else {
+                table_node->apply_json_header(header_str);
+                has_header_json = true;
             }
         }
 
@@ -87,6 +115,23 @@ namespace docraft::craft::parser {
 
         const bool is_vertical = table_node->orientation() == model::LayoutOrientation::kVertical;
         auto table_header = craft_language_source.child(elements::kTHead.data());
+        auto table_body = craft_language_source.child(elements::kTBody.data());
+
+        // JSON/templated data is mutually exclusive with explicit body nodes.
+        // `THead` can be used instead of `header`, but not together.
+        if (has_model_json || has_model_template || has_header_json || has_header_template) {
+            if (table_body) {
+                throw std::invalid_argument("Table JSON model cannot be combined with TBody");
+            }
+            if ((has_header_json || has_header_template) && table_header) {
+                throw std::invalid_argument("Table JSON header cannot be combined with THead");
+            }
+            if (table_node->orientation() == model::LayoutOrientation::kVertical) {
+                throw std::invalid_argument("Table JSON model does not support vertical model");
+            }
+        }
+
+        // Parse explicit THead (static titles).
         if (table_header) {
             if (is_vertical) {
                 int header_cols = 0;
@@ -110,6 +155,7 @@ namespace docraft::craft::parser {
                 }
             } else {
                 int col_number = 0;
+                const int existing_cols = table_node->content_cols();
                 std::vector<std::string> titles;
                 for (auto title: table_header.children()) {
                     if (title.name() == std::string{elements::kTitle}) {
@@ -127,16 +173,21 @@ namespace docraft::craft::parser {
                         throw std::invalid_argument(std::string(title.name()) + " cannot be placed in a table header");
                     }
                 }
+                // If JSON rows were already provided, header must match column count.
+                if ((has_model_json || has_model_template) && existing_cols > 0 && existing_cols != col_number) {
+                    throw std::invalid_argument("Table header columns do not match model columns");
+                }
                 table_node->set_titles(titles);
                 table_node->set_cols(col_number);
                 table_node->set_content_cols(col_number);
             }
-        } else if (!is_vertical) {
+        } else if (!is_vertical && !has_model_json && !has_model_template && !has_header_json && !has_header_template) {
             throw std::invalid_argument(std::string(elements::kTHead.data()) +
                                         " tag not found, it is mandatory");
         }
 
-        auto table_body = craft_language_source.child(elements::kTBody.data());
+        // Parse body rows when using explicit TBody.
+        table_body = craft_language_source.child(elements::kTBody.data());
         if (table_body) {
             int row_count = 0;
             int max_value_cols = 0;

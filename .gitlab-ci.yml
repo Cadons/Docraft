@@ -9,7 +9,7 @@ default:
 .build_env: &build_env
   before_script:
     - apt-get update -y
-    - apt-get install -y cmake make libgtest-dev libhpdf-dev libpugixml-dev
+    - apt-get install -y cmake make libgtest-dev libhpdf-dev libpugixml-dev nlohmann-json3-dev
     - g++ --version
     - cmake --version
 

@@ -180,9 +180,11 @@ set(DOCRAFT_SOURCES src/main.cpp
         include/craft/parser/docraft_shape_parser_utils.h
         include/craft/docraft_craft_language_tokens.h
         src/utils/docraft_logger.cc
+        src/utils/docraft_base64.cc
         src/utils/docraft_font_resolver.cc
         src/utils/docraft_font_registry.cc
         include/utils/docraft_logger.h
+        include/utils/docraft_base64.h
         include/model/docraft_position.h
         src/model/docraft_position.cc
         src/backend/pdf/docraft_haru_backend.cc
@@ -190,6 +192,8 @@ set(DOCRAFT_SOURCES src/main.cpp
         src/model/docraft_settings.cc
         include/model/docraft_settings.h
         include/model/docraft_page_format.h
+        src/templating/docraft_template_engine.cc
+        include/templating/docraft_template_engine.h
 )
 add_library(docraft_lib STATIC
         ${DOCRAFT_SOURCES}
@@ -198,7 +202,7 @@ add_library(docraft_lib STATIC
 )
 generate_docraft_fonts(docraft_lib "${CMAKE_CURRENT_SOURCE_DIR}/fonts.json")
 add_executable(docraft_exe src/main.cpp)
-target_link_libraries(docraft_lib PUBLIC pugixml::static pugixml::pugixml ${LIBHARU_TARGET})
+target_link_libraries(docraft_lib PUBLIC pugixml::static pugixml::pugixml nlohmann_json::nlohmann_json ${LIBHARU_TARGET})
 target_link_libraries(docraft_exe PRIVATE docraft_lib)
 target_include_directories(docraft_lib PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 

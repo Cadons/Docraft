@@ -117,3 +117,85 @@ TEST(DocraftTableParserTest, ParsesVerticalTableWithHeaderRow) {
     ASSERT_EQ(table->content_backgrounds().size(), 4U);
     ASSERT_TRUE(table->content_backgrounds()[0].has_value());
 }
+
+TEST(DocraftTableParserTest, ParsesTableFromJsonRowsModelAttribute) {
+    const char *xml = R"XML(
+<Table model='[["v1","v2"],["v3","v4"]]' />
+)XML";
+
+    pugi::xml_document doc;
+    ASSERT_TRUE(doc.load_string(xml));
+
+    docraft::craft::parser::DocraftTableParser parser;
+    auto node = parser.parse(doc.child("Table"));
+    auto table = std::dynamic_pointer_cast<docraft::model::DocraftTable>(node);
+    ASSERT_TRUE(table);
+
+    EXPECT_EQ(table->orientation(), docraft::model::LayoutOrientation::kHorizontal);
+    EXPECT_EQ(table->cols(), 2);
+    EXPECT_EQ(table->content_cols(), 2);
+    EXPECT_EQ(table->rows(), 2);
+    EXPECT_TRUE(table->title_nodes().empty());
+
+    auto content = table->content_nodes();
+    ASSERT_EQ(content.size(), 2U);
+    ASSERT_EQ(content[0].size(), 2U);
+    ASSERT_EQ(content[1].size(), 2U);
+    auto c00 = std::dynamic_pointer_cast<docraft::model::DocraftText>(content[0][0]);
+    auto c01 = std::dynamic_pointer_cast<docraft::model::DocraftText>(content[0][1]);
+    auto c10 = std::dynamic_pointer_cast<docraft::model::DocraftText>(content[1][0]);
+    auto c11 = std::dynamic_pointer_cast<docraft::model::DocraftText>(content[1][1]);
+    ASSERT_TRUE(c00);
+    ASSERT_TRUE(c01);
+    ASSERT_TRUE(c10);
+    ASSERT_TRUE(c11);
+    EXPECT_EQ(c00->text(), "v1");
+    EXPECT_EQ(c01->text(), "v2");
+    EXPECT_EQ(c10->text(), "v3");
+    EXPECT_EQ(c11->text(), "v4");
+}
+
+TEST(DocraftTableParserTest, RejectsInvalidJsonModelAttribute) {
+    const char *xml = R"XML(
+<Table model='[["H1","H2"],["v1"]]' />
+)XML";
+
+    pugi::xml_document doc;
+    ASSERT_TRUE(doc.load_string(xml));
+
+    docraft::craft::parser::DocraftTableParser parser;
+    EXPECT_THROW(parser.parse(doc.child("Table")), std::invalid_argument);
+}
+
+TEST(DocraftTableParserTest, AcceptsTemplateModelAttribute) {
+    const char *xml = R"XML(
+<Table model="${prodotti}" />
+)XML";
+
+    pugi::xml_document doc;
+    ASSERT_TRUE(doc.load_string(xml));
+
+    docraft::craft::parser::DocraftTableParser parser;
+    auto node = parser.parse(doc.child("Table"));
+    auto table = std::dynamic_pointer_cast<docraft::model::DocraftTable>(node);
+    ASSERT_TRUE(table);
+    EXPECT_TRUE(table->has_model_template());
+    EXPECT_EQ(table->model_template(), "${prodotti}");
+}
+
+TEST(DocraftTableParserTest, AcceptsJsonHeaderAttribute) {
+    const char *xml = R"XML(
+<Table model='[["v1","v2"]]' header='["H1","H2"]' />
+)XML";
+
+    pugi::xml_document doc;
+    ASSERT_TRUE(doc.load_string(xml));
+
+    docraft::craft::parser::DocraftTableParser parser;
+    auto node = parser.parse(doc.child("Table"));
+    auto table = std::dynamic_pointer_cast<docraft::model::DocraftTable>(node);
+    ASSERT_TRUE(table);
+    ASSERT_EQ(table->title_nodes().size(), 2U);
+    EXPECT_EQ(table->title_nodes()[0]->text(), "H1");
+    EXPECT_EQ(table->title_nodes()[1]->text(), "H2");
+}

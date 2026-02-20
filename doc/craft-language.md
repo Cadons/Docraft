@@ -157,13 +157,42 @@ Renders the current page number. Supports the same styling attributes as `<Text>
 
 ### `<Image>`
 
-| Attribute | Type   | Notes |
-|----------|--------|-------|
-| `src`    | string | Path to image file. |
+| Attribute     | Type   | Notes |
+|--------------|--------|-------|
+| `src`        | string | Path to image file (PNG/JPEG). |
+| `data`       | string | Raw image source. Either a template id or inline base64. |
+| `data_width` | int    | Required when `data` is base64. Pixel width. |
+| `data_height`| int    | Required when `data` is base64. Pixel height. |
 
 ```xml
 <Image src="images/logo.png" width="120" height="40" />
 ```
+
+#### Raw image data via template id
+
+You can inject raw RGB bytes in the template engine and reference them with `data="image_id"`.
+Raw data must be **RGB 24-bit** (3 bytes per pixel), row-major.
+
+```xml
+<Image data="hero_image" width="200" height="120" />
+```
+
+#### Inline base64
+
+Inline base64 is supported with either:
+- `data="base64:..."`
+- `data="data:application/octet-stream;base64,..."`
+
+`data_width` and `data_height` are **pixel** dimensions and must be present.
+The decoded size must be exactly `data_width * data_height * 3` bytes (RGB).
+
+```xml
+<Image data="base64:AAAA////" data_width="2" data_height="1" width="40" height="20" />
+```
+
+Notes:
+- `data` cannot be combined with `src`.
+- If both `src` and `data` are provided, parsing fails.
 
 ## 9. Blank Spacers
 
@@ -209,11 +238,13 @@ Lists are containers whose children **must be `<Text>`**. Other child tags cause
 
 | Attribute        | Type  | Values / Notes |
 |-----------------|-------|----------------|
-| `model`         | string| `horizontal` (default) or `vertical` |
+| `model`         | string| `horizontal`, `vertical`, or a JSON matrix of strings (rows only) |
+| `header`        | json  | JSON array of strings for column titles (horizontal only). |
 | `baseline_offset` | float | Baseline tweak. |
 | `TableTile`     | color | Default cell background. |
 
 Tables consist of `<THead>` and `<TBody>`.
+If `model` is a JSON matrix, `<TBody>` must be omitted. Titles can be provided via `<THead>` or `header`.
 
 ### 11.1 Horizontal Table
 
@@ -236,6 +267,23 @@ Requirements:
   </TBody>
 </Table>
 ```
+
+#### 11.1.1 JSON Model (Horizontal)
+
+The `model` attribute accepts a JSON matrix of strings representing **rows only**, e.g.
+
+```xml
+<Table model='[["v1","v2"],["v3","v4"]]' header='["H1","H2"]' />
+```
+
+Rules:
+
+- The JSON must be a non-empty array of non-empty arrays of strings.
+- All rows must have the same number of columns.
+- `model="vertical"` is not supported with JSON data.
+- Column titles can be provided via:
+  - Static `<THead><Title>...</Title></THead>`
+  - Or `header='["H1","H2"]'` (JSON array of strings).
 
 ### 11.2 Vertical Table
 

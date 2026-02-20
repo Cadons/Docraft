@@ -57,19 +57,22 @@ namespace docraft {
                         if (std::filesystem::exists(tried1)) {
                             resolved_path = tried1;
                         } else {
-                            std::filesystem::path tried2 = std::filesystem::current_path().parent_path() / resolved_path;
+                            std::filesystem::path tried2 =
+                                    std::filesystem::current_path().parent_path() / resolved_path;
                             if (std::filesystem::exists(tried2)) {
                                 resolved_path = tried2;
                             }
                         }
                     }
 
-                    bool ok = utils::DocraftFontRegistry::instance().register_font(external_font.name, resolved_path.string());
+                    bool ok = utils::DocraftFontRegistry::instance().register_font(
+                        external_font.name, resolved_path.string());
                     if (!ok) {
                         LOG_ERROR("Failed to register font '" + external_font.name + "' from path '" + font_path +
-                                  "' (resolved: '" + resolved_path.string() + "')");
+                            "' (resolved: '" + resolved_path.string() + "')");
                     } else {
-                        LOG_DEBUG("Registered font '" + external_font.name + "' from path '" + resolved_path.string() + "'");
+                        LOG_DEBUG(
+                            "Registered font '" + external_font.name + "' from path '" + resolved_path.string() + "'");
                     }
                 }
             }
@@ -92,6 +95,13 @@ namespace docraft {
         apply_font_settings(settings_);
     }
 
+    void DocraftDocument::template_document() {
+        if (template_engine_) {
+            LOG_DEBUG("Template document: '" + document_title_ + "'");
+            template_engine_->template_nodes(dom_);
+        }
+    }
+
     void DocraftDocument::render() {
         pdf_context_ = std::make_shared<DocraftDocumentContext>();
         pdf_context_->set_renderer(std::make_shared<renderer::DocraftPDFRenderer>(pdf_context_));
@@ -100,6 +110,9 @@ namespace docraft {
 
         //Load settings
         configure_document_settings();
+
+        //replace template variables in the DOM
+        template_document();
 
         // Layout phase
         layout::DocraftLayoutEngine layout_engine(pdf_context_);
@@ -112,7 +125,7 @@ namespace docraft {
         }
         const std::size_t page_count = page_backend ? page_backend->total_page_count() : 1;
 
-        for (auto &node : dom_) {
+        for (auto &node: dom_) {
             if (!node) {
                 continue;
             }
@@ -148,5 +161,18 @@ namespace docraft {
 
     std::shared_ptr<model::DocraftSettings> DocraftDocument::settings() const {
         return settings_;
+    }
+
+    void DocraftDocument::set_document_template_engine(
+        const std::shared_ptr<templating::DocraftTemplateEngine> &template_engine) {
+        template_engine_ = template_engine;
+    }
+
+    std::shared_ptr<templating::DocraftTemplateEngine> DocraftDocument::document_template_engine() const {
+        return template_engine_;
+    }
+
+    const std::vector<std::shared_ptr<model::DocraftNode>> &DocraftDocument::nodes() const {
+        return dom_;
     }
 } // docraft

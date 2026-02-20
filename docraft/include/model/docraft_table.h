@@ -160,6 +160,61 @@ namespace docraft::model {
          * @param background Optional background color.
          */
         void set_default_cell_background(std::optional<DocraftColor> background);
+        /**
+         * @brief Sets a template placeholder for JSON model data.
+         * @param model_template Template string (e.g. "${prodotti}").
+         */
+        void set_model_template(const std::string &model_template);
+        /**
+         * @brief Sets a template placeholder for JSON header data.
+         * @param header_template Template string (e.g. "${prodotti_header}").
+         */
+        void set_header_template(const std::string &header_template);
+        /**
+         * @brief Returns whether a model template is set.
+         * @return true if template is set.
+         */
+        [[nodiscard]] bool has_model_template() const;
+        /**
+         * @brief Returns whether a header template is set.
+         * @return true if template is set.
+         */
+        [[nodiscard]] bool has_header_template() const;
+        /**
+         * @brief Returns the model template string.
+         * @return Template string.
+         */
+        [[nodiscard]] const std::string &model_template() const;
+        /**
+         * @brief Returns the header template string.
+         * @return Template string.
+         */
+        [[nodiscard]] const std::string &header_template() const;
+        /**
+         * @brief Clears the model template string.
+         */
+        void clear_model_template();
+        /**
+         * @brief Clears the header template string.
+         */
+        void clear_header_template();
+        /**
+         * @brief Applies JSON matrix model to the table (horizontal only).
+         * @param json_str JSON matrix string.
+         */
+        void apply_json_rows(const std::string &json_str);
+        /**
+         * @brief Applies JSON header array to the table (horizontal only).
+         * @param json_str JSON array string.
+         */
+        void apply_json_header(const std::string &json_str);
+        /**
+         * @brief Splits the table after the given number of rows.
+         * @param rows_to_keep Number of rows to keep in the current table.
+         * @param repeat_header Whether to repeat titles/header in the remainder table.
+         * @return New table containing the remaining rows, or nullptr if no split.
+         */
+        std::shared_ptr<DocraftTable> split_after_row(std::size_t rows_to_keep, bool repeat_header);
 
         /**
          * @brief Returns the number of rows.
@@ -281,6 +336,8 @@ namespace docraft::model {
         std::vector<std::optional<DocraftColor>> content_backgrounds_;
         std::vector<std::optional<DocraftColor>> row_backgrounds_;
         std::optional<DocraftColor> default_cell_background_;
+        std::optional<std::string> model_template_;
+        std::optional<std::string> header_template_;
         float baseline_offset_ = 0.25F;
     };
 } // docraft

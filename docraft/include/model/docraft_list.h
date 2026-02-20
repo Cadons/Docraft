@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -87,6 +88,11 @@ namespace docraft::model {
          */
         void update_items();
         /**
+         * @brief Applies a text transform to all items and updates cached raw values.
+         * @param transform Text transform function.
+         */
+        void apply_text_transform(const std::function<std::string(const std::string&)> &transform);
+        /**
          * @brief Returns the marker text for a given index.
          * @param index Item index.
          * @return Marker string.
@@ -146,6 +152,8 @@ namespace docraft::model {
         void on_child_removed(int index) override;
 
     private:
+        static std::shared_ptr<DocraftText> as_text_node(const std::shared_ptr<DocraftNode> &node);
+        void sync_raw_texts_with_children();
         /**
          * @brief Returns the ordered list prefix for the index.
          * @param index Item index.

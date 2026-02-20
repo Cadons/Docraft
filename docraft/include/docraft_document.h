@@ -5,6 +5,7 @@
 #include "docraft_document_context.h"
 #include "model/docraft_node.h"
 #include "model/docraft_settings.h"
+#include "templating/docraft_template_engine.h"
 
 namespace docraft {
     /**
@@ -14,21 +15,23 @@ namespace docraft {
      * configuring settings, and invoking rendering.
      */
     class DocraftDocument {
-        public:
+    public:
         /**
          * @brief Creates a document with an optional title.
          * @param document_title Human-readable title for the document metadata.
          */
-        DocraftDocument(std::string document_title="Untitled Document");
+        DocraftDocument(std::string document_title = "Untitled Document");
+
         /**
          * @brief Virtual destructor.
          */
-        virtual ~DocraftDocument()=default;
+        virtual ~DocraftDocument() = default;
+
         /**
          * @brief Adds a node to the document DOM.
          * @param node Node to append to the document.
          */
-        void add_node(const std::shared_ptr<model::DocraftNode>& node);
+        void add_node(const std::shared_ptr<model::DocraftNode> &node);
 
         /**
          * @brief Applies document settings to the underlying rendering context.
@@ -36,33 +39,53 @@ namespace docraft {
         void configure_document_settings();
 
         /**
+         * @brief Applies template processing to the document DOM using the configured template engine.
+         */
+        void template_document();
+
+        /**
          * @brief Renders the document using the configured context and renderer.
          */
         void render();
+
         /**
          * @brief Sets the document title.
          * @param document_title New title value.
          */
         void set_document_title(const std::string &document_title);
+
         /**
          * @brief Returns the current document title.
          * @return Document title string.
          */
         std::string document_title();
+
         /**
          * @brief Sets document settings (fonts, etc.).
          * @param settings Settings node to apply.
          */
         void set_settings(const std::shared_ptr<model::DocraftSettings> &settings);
+
         /**
          * @brief Returns the current settings object.
          * @return Shared pointer to settings or nullptr if not set.
          */
         std::shared_ptr<model::DocraftSettings> settings() const;
+
+        void set_document_template_engine(const std::shared_ptr<templating::DocraftTemplateEngine> &template_engine);
+
+        std::shared_ptr<templating::DocraftTemplateEngine> document_template_engine() const;
+        /**
+         * @brief Returns the document DOM nodes.
+         * @return Vector of root nodes.
+         */
+        const std::vector<std::shared_ptr<model::DocraftNode>> &nodes() const;
+
     private:
         std::shared_ptr<DocraftDocumentContext> pdf_context_;
         std::shared_ptr<model::DocraftSettings> settings_;
         std::string document_title_;
-        std::vector<std::shared_ptr<model::DocraftNode>> dom_;
+        std::vector<std::shared_ptr<model::DocraftNode> > dom_;
+        std::shared_ptr<templating::DocraftTemplateEngine> template_engine_;
     };
 }

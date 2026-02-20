@@ -11,6 +11,7 @@
 #include "model/docraft_header.h"
 #include "model/docraft_page_number.h"
 #include "model/docraft_rectangle.h"
+#include "model/docraft_table.h"
 
 namespace docraft::test::layout {
     class PaginationBackend : public backend::IDocraftRenderingBackend {
@@ -161,5 +162,37 @@ namespace docraft::test::layout {
 
         EXPECT_EQ(header->page_owner(), -1);
         EXPECT_EQ(footer->page_owner(), -1);
+    }
+
+    TEST_F(DocraftPaginationTest, SplitsLargeTableAcrossPages) {
+        auto body = std::make_shared<model::DocraftBody>();
+        body->set_margin_left(0.0F);
+        body->set_margin_right(0.0F);
+
+        auto table = std::make_shared<model::DocraftTable>();
+        table->apply_json_header(R"(["H1","H2"])");
+        table->apply_json_rows(R"([["r1c1","r1c2"],["r2c1","r2c2"],["r3c1","r3c2"],["r4c1","r4c2"],["r5c1","r5c2"]])");
+
+        body->add_child(table);
+
+        std::vector<std::shared_ptr<model::DocraftNode>> nodes{body};
+        engine_->compute_document_layout(nodes);
+
+        ASSERT_EQ(backend_->total_page_count(), 2U);
+        ASSERT_EQ(body->children().size(), 2U);
+
+        auto first_table = std::dynamic_pointer_cast<model::DocraftTable>(body->children()[0]);
+        auto second_table = std::dynamic_pointer_cast<model::DocraftTable>(body->children()[1]);
+        ASSERT_TRUE(first_table);
+        ASSERT_TRUE(second_table);
+
+        EXPECT_EQ(first_table->page_owner(), 1);
+        EXPECT_EQ(second_table->page_owner(), 2);
+
+        const std::size_t total_rows =
+            static_cast<std::size_t>(first_table->rows() + second_table->rows());
+        EXPECT_EQ(total_rows, 5U);
+        EXPECT_GT(first_table->rows(), 0);
+        EXPECT_GT(second_table->rows(), 0);
     }
 } // namespace docraft::test::layout
