@@ -48,6 +48,12 @@ namespace docraft::model {
                 void set_raw_data(const std::vector<unsigned char> &data, int pixel_width, int pixel_height);
 
                 /**
+                 * @brief Sets whether the image has raw pixel data.
+                 * @param has_raw_data True if raw data is set, false otherwise.
+                 */
+                void set_has_raw_data(bool has_raw_data);
+
+                /**
                  * @brief Returns image dimensions from a file path.
                  * @param path Image file path.
                  * @param format Image format.
@@ -81,11 +87,20 @@ namespace docraft::model {
                  */
                 [[nodiscard]] int raw_pixel_height() const;
 
+                /**
+                 * @brief Checks if the image has raw pixel data.
+                 * raw data is considered set if the format is kRaw and the raw_data vector is not empty.
+                 * This is used to determine if the image should be rendered from raw data instead of a file path.
+                 * @return True if raw data is set, false otherwise.
+                 */
+                [[nodiscard]] bool has_raw_data() const;
+
         private:
                 std::string path_;
                 ImageFormat format_=ImageFormat::kPng;
                 std::vector<unsigned char> raw_data_;
                 int raw_pixel_width_ = 0;
                 int raw_pixel_height_ = 0;
+                bool has_raw_data_=false;
         };
 } // docraft

@@ -83,10 +83,7 @@ namespace docraft::model {
             return;
         }
         const auto &child = children().back();
-        auto text_node = std::dynamic_pointer_cast<DocraftText>(child);
-        if (!text_node) {
-            throw std::invalid_argument("List items must be Text nodes");
-        }
+        auto text_node = as_text_node(child);
         raw_texts_.emplace_back(text_node->text());
         update_items();
     }
@@ -100,25 +97,48 @@ namespace docraft::model {
 
     void DocraftList::update_items() {
         const auto &items = children();
-        if (raw_texts_.size() != items.size()) {
-            raw_texts_.clear();
-            raw_texts_.reserve(items.size());
-            for (const auto &child : items) {
-                auto text_node = std::dynamic_pointer_cast<DocraftText>(child);
-                if (!text_node) {
-                    throw std::invalid_argument("List items must be Text nodes");
-                }
-                raw_texts_.emplace_back(text_node->text());
-            }
-        }
+        sync_raw_texts_with_children();
 
         for (size_t i = 0; i < items.size(); ++i) {
-            auto text_node = std::dynamic_pointer_cast<DocraftText>(items[i]);
-            if (!text_node) {
-                throw std::invalid_argument("List items must be Text nodes");
-            }
+            auto text_node = as_text_node(items[i]);
             const std::string &raw = raw_texts_[i];
             text_node->set_text(raw);
+        }
+    }
+
+    void DocraftList::apply_text_transform(const std::function<std::string(const std::string&)> &transform) {
+        if (!transform) {
+            return;
+        }
+        const auto &items = children();
+        sync_raw_texts_with_children();
+
+        for (size_t i = 0; i < items.size(); ++i) {
+            auto text_node = as_text_node(items[i]);
+            const std::string transformed = transform(raw_texts_[i]);
+            raw_texts_[i] = transformed;
+            text_node->set_text(transformed);
+        }
+    }
+
+    std::shared_ptr<DocraftText> DocraftList::as_text_node(const std::shared_ptr<DocraftNode> &node) {
+        auto text_node = std::dynamic_pointer_cast<DocraftText>(node);
+        if (!text_node) {
+            throw std::invalid_argument("List items must be Text nodes");
+        }
+        return text_node;
+    }
+
+    void DocraftList::sync_raw_texts_with_children() {
+        const auto &items = children();
+        if (raw_texts_.size() == items.size()) {
+            return;
+        }
+        raw_texts_.clear();
+        raw_texts_.reserve(items.size());
+        for (const auto &child : items) {
+            auto text_node = as_text_node(child);
+            raw_texts_.emplace_back(text_node->text());
         }
     }
 

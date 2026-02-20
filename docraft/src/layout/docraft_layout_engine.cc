@@ -1,6 +1,7 @@
 #include "layout/docraft_layout_engine.h"
 
 #include <algorithm>
+#include <limits>
 
 #include "layout/handler/docraft_basic_layout_handler.h"
 #include "layout/handler/docraft_layout_blank_line.h"
@@ -15,6 +16,48 @@
 #include "model/docraft_list.h"
 #include "model/docraft_table.h"
 #include "utils/docraft_logger.h"
+
+namespace {
+    std::size_t count_rows_fit_horizontal(const docraft::model::DocraftTable &table, float body_bottom_y) {
+        std::size_t fit = 0;
+        const auto grid = table.content_nodes();
+        for (const auto &row : grid) {
+            float row_bottom = std::numeric_limits<float>::infinity();
+            bool found = false;
+            for (const auto &cell : row) {
+                if (cell) {
+                    row_bottom = cell->anchors().bottom_left.y;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                return fit;
+            }
+            if (row_bottom < body_bottom_y) {
+                return fit;
+            }
+            ++fit;
+        }
+        return fit;
+    }
+
+    std::size_t count_rows_fit_vertical(const docraft::model::DocraftTable &table, float body_bottom_y) {
+        std::size_t fit = 0;
+        const auto &titles = table.title_nodes();
+        for (const auto &title : titles) {
+            if (!title) {
+                return fit;
+            }
+            const float row_bottom = title->anchors().bottom_left.y;
+            if (row_bottom < body_bottom_y) {
+                return fit;
+            }
+            ++fit;
+        }
+        return fit;
+    }
+} // namespace
 
 namespace docraft::layout {
     DocraftLayoutEngine::DocraftLayoutEngine(const std::shared_ptr<DocraftDocumentContext> &context, const bool reset_cursor)
@@ -369,14 +412,41 @@ namespace docraft::layout {
             // we need to do this before computing body's own layout to know the actual height of body content and whether it exceeds the page height
             // If body content exceeds the page height, we will need to split it across multiple pages, and assign page owners accordingly.
             if (auto body_container = std::dynamic_pointer_cast<model::DocraftChildrenContainerNode>(body)) {
-                for (const auto &child : body_container->children()) {
+                std::size_t index = 0;
+                while (index < body_container->children().size()) {
+                    auto child = body_container->children()[index];
                     if (!child) {
+                        ++index;
                         continue;
                     }
                     assign_page_owner_recursive(child, current_page);// Ensure layout sees the correct page owner
+                    DocraftCursor child_start_cursor = body_cursor;
                     auto child_box = compute_layout(child, body_cursor);// This will update body_cursor to the position after laying out the child
                     if (child->position_mode() != model::DocraftPositionType::kAbsolute &&
-                        child_box.anchors().bottom_left.y < body_bottom_y) {// Child content exceeds the bottom of the body area, need to move it to the next page
+                        child_box.anchors().bottom_left.y < body_bottom_y) {// Child content exceeds the bottom of the body area
+                        if (auto table = std::dynamic_pointer_cast<model::DocraftTable>(child)) {
+                            const std::size_t total_rows = static_cast<std::size_t>(table->rows());
+                            const std::size_t fit_rows = table->orientation() == model::LayoutOrientation::kVertical
+                                                             ? count_rows_fit_vertical(*table, body_bottom_y)
+                                                             : count_rows_fit_horizontal(*table, body_bottom_y);
+                            if (fit_rows > 0 && fit_rows < total_rows) {
+                                auto remainder = table->split_after_row(fit_rows, true);
+                                if (remainder) {
+                                    body_container->insert_child(index + 1, remainder);
+                                    body_cursor = child_start_cursor;
+                                    assign_page_owner_recursive(child, current_page);
+                                    (void)compute_layout(child, body_cursor);
+                                    if (page_backend) {
+                                        page_backend->add_new_page();
+                                        ++current_page;
+                                    }
+                                    body_cursor.move_to(body->position().x, body_start_y);
+                                    assign_page_owner_recursive(remainder, current_page);
+                                    ++index;
+                                    continue;
+                                }
+                            }
+                        }
                         if (page_backend) {// Move to next page and update current_page
                             page_backend->add_new_page();
                             ++current_page;
@@ -385,6 +455,7 @@ namespace docraft::layout {
                         assign_page_owner_recursive(child, current_page);// Update page owner before re-layout
                         child_box = compute_layout(child, body_cursor);// Re-layout the child on the new page
                     }
+                    ++index;
                 }
             }
 

@@ -13,6 +13,7 @@ configure_build_folder(artifacts)
 #....
 find_package(pugixml CONFIG REQUIRED)
 find_package(unofficial-libharu QUIET)
+find_package(nlohmann_json CONFIG REQUIRED)
 if(unofficial-libharu_FOUND)
     set(LIBHARU_TARGET unofficial::libharu::hpdf)
 else()
@@ -30,6 +31,7 @@ else()
         message(FATAL_ERROR "libharu not found. Please install libharu or unofficial-libharu package.")
     endif()
 endif()
+
 #artifacts
 add_subdirectory(docraft) #configure docraft artifact
 
@@ -37,5 +39,4 @@ add_subdirectory(docraft) #configure docraft artifact
 include(CTest)
 enable_testing()
 add_subdirectory(docraft/test) #configure tests artifact in test
-
 

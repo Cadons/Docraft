@@ -44,7 +44,6 @@ namespace docraft::renderer::painter {
                     image_node_.width(),
                     image_node_.height());
                 break;
-//TODO: add raw in memory image in the templating user can load byte buffer with the image
             default:
                 throw std::runtime_error("Unsupported image format");
         }

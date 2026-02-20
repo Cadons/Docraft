@@ -23,6 +23,12 @@ namespace docraft::model {
          */
         void add_child(const std::shared_ptr<DocraftNode>& child);
         /**
+         * @brief Inserts a child node at the given index.
+         * @param index Index to insert at (clamped to size).
+         * @param child Child node to insert.
+         */
+        void insert_child(std::size_t index, const std::shared_ptr<DocraftNode>& child);
+        /**
          * @brief Removes a child node.
          * @param child Child node to remove.
          */

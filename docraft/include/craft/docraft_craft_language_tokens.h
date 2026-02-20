@@ -116,6 +116,9 @@ namespace docraft::craft {
         }
         namespace image::attribute {
             constexpr string kSrc = "src";
+            constexpr string kData = "data";
+            constexpr string kDataWidth = "data_width";
+            constexpr string kDataHeight = "data_height";
         }
         namespace table::attribute {
             constexpr string kModel = "model";

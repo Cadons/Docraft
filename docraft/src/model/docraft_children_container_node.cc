@@ -19,6 +19,17 @@ namespace docraft::model {
         on_child_added();
     }
 
+    void DocraftChildrenContainerNode::insert_child(std::size_t index, const std::shared_ptr<DocraftNode> &child) {
+        if (!child) {
+            throw std::invalid_argument("Child node cannot be null");
+        }
+        if (index > children_.size()) {
+            index = children_.size();
+        }
+        children_.insert(children_.begin() + static_cast<std::ptrdiff_t>(index), child);
+        on_child_added();
+    }
+
     const std::vector<std::shared_ptr<DocraftNode> > &DocraftChildrenContainerNode::children() const {
         return children_;
     }
