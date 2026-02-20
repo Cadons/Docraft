@@ -41,6 +41,7 @@ int main() {
         parser.load_from_file("test.craft");
         parser.get_document()->set_document_template_engine(template_engine);
         parser.get_document()->set_document_title("test");
+        auto img = parser.get_document()->get_by_name("myimg");
         parser.get_document()->render();
         return 0;
     } catch (const std::exception &ex) {

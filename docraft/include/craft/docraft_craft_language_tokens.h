@@ -8,7 +8,7 @@ namespace docraft::craft {
      */
     namespace basic::attribute {
         constexpr string kId = "id";
-        constexpr string kNodeName = "node_name";
+        constexpr string kNodeName = "name";
         constexpr string kX = "x";
         constexpr string kY = "y";
         constexpr string kWidth = "width";
@@ -20,6 +20,7 @@ namespace docraft::craft {
         constexpr string kPosition = "position";
         constexpr string kZIndex = "z_index";
         constexpr string kColor = "color";
+        constexpr string kVisible = "visible";
 
         namespace position_type {
             constexpr string kBlock = "block";

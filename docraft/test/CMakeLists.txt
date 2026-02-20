@@ -6,6 +6,7 @@ find_package(GTest REQUIRED)
 #source files
 set(TEST_SOURCES
         main.cpp
+        docraft_document_test.cc
         docraft_color_test.cc
         generic/docraft_font_applier_test.cc
         layout/docraft_cursor_test.cc

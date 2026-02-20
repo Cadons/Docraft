@@ -129,17 +129,19 @@ namespace docraft {
             if (!node) {
                 continue;
             }
-            if (node->page_owner() == -1 && page_backend) {
-                for (std::size_t i = 0; i < page_count; ++i) {
-                    page_backend->go_to_page(i);
-                    node->draw(pdf_context_);
-                }
-            } else {
-                if (page_backend && node->page_owner() > 0) {
-                    page_backend->go_to_page(static_cast<std::size_t>(node->page_owner() - 1));
-                }
-                if (node->should_render(pdf_context_)) {
-                    node->draw(pdf_context_);
+            if (node->visible()) {
+                if (node->page_owner() == -1 && page_backend) {
+                    for (std::size_t i = 0; i < page_count; ++i) {
+                        page_backend->go_to_page(i);
+                        node->draw(pdf_context_);
+                    }
+                } else {
+                    if (page_backend && node->page_owner() > 0) {
+                        page_backend->go_to_page(static_cast<std::size_t>(node->page_owner() - 1));
+                    }
+                    if (node->should_render(pdf_context_)) {
+                        node->draw(pdf_context_);
+                    }
                 }
             }
         }
@@ -174,5 +176,48 @@ namespace docraft {
 
     const std::vector<std::shared_ptr<model::DocraftNode>> &DocraftDocument::nodes() const {
         return dom_;
+    }
+    std::vector<std::shared_ptr<model::DocraftNode>> DocraftDocument::get_by_name(const std::string &name) const {
+        static std::vector<std::shared_ptr<model::DocraftNode>> empty_result;
+        std::vector<std::shared_ptr<model::DocraftNode>> result;
+        traverse_dom([&](const std::shared_ptr<model::DocraftNode> &node, DocraftDomTraverseOp op) {
+            if (op != DocraftDomTraverseOp::kEnter) {
+                return;
+            }
+            if (node && node->node_name() == name) {
+                result.push_back(node);
+            }
+        });
+        return result.empty() ? empty_result : result;
+    }
+
+    std::shared_ptr<model::DocraftNode> DocraftDocument::get_first_by_name(const std::string &name) const {
+        return get_by_name(name).empty() ? nullptr : get_by_name(name).front();
+    }
+
+    std::shared_ptr<model::DocraftNode> DocraftDocument::get_last_by_name(const std::string &name) const {
+        return get_by_name(name).empty() ? nullptr : get_by_name(name).back();
+    }
+
+    void DocraftDocument::traverse_dom(
+        const std::function<void(const std::shared_ptr<model::DocraftNode> &, DocraftDomTraverseOp)> &callback) const {
+        for (const auto &node: dom_) {
+            traverse_node(node, callback);
+        }
+    }
+
+    void DocraftDocument::traverse_node(
+        const std::shared_ptr<model::DocraftNode> &node,
+        const std::function<void(const std::shared_ptr<model::DocraftNode> &, DocraftDomTraverseOp)> &callback) const {
+        if (!node) {
+            return;
+        }
+        callback(node, DocraftDomTraverseOp::kEnter);
+        if (auto parent_node = std::dynamic_pointer_cast<model::DocraftChildrenContainerNode>(node)) {
+            for (const auto &child_node: parent_node->children()) {
+                traverse_node(child_node, callback);
+            }
+        }
+        callback(node, DocraftDomTraverseOp::kExit);
     }
 } // docraft

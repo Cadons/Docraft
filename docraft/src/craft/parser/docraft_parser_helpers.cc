@@ -80,6 +80,9 @@ namespace docraft::craft::parser::detail {
                                            const pugi::xml_node &craft_language_source) {
         bool has_position_attr = false;
         bool has_xy = false;
+        if (auto name_attr = craft_language_source.attribute(basic::attribute::kNodeName.data())) {
+            node->set_name(name_attr.as_string());
+        }
         if (auto x_attr = craft_language_source.attribute(basic::attribute::kX.data())) {
             node->set_position({x_attr.as_float(), node->position().y});
             has_xy = true;
@@ -124,6 +127,9 @@ namespace docraft::craft::parser::detail {
         }
         if (auto z_index_attr = craft_language_source.attribute(basic::attribute::kZIndex.data())) {
             node->set_z_index(z_index_attr.as_int());
+        }
+        if (auto visible_attr = craft_language_source.attribute(basic::attribute::kVisible.data())) {
+            node->set_visible(visible_attr.as_bool());
         }
     }
 

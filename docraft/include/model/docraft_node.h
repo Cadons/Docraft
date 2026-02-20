@@ -85,6 +85,12 @@ namespace docraft::model {
          */
         [[nodiscard]] int z_index() const;
 
+        /**
+         * @brief Returns whether the node is visible.
+         * @return true if the node is visible, false if hidden.
+         */
+        [[nodiscard]] bool visible() const;
+
         //setter
         /**
          * @brief Sets the node name.
@@ -146,6 +152,12 @@ namespace docraft::model {
          */
         [[nodiscard]] bool should_render(const std::shared_ptr<DocraftDocumentContext>& context) const;
 
+        /**
+         * @brief Sets the visibility of the node.
+         * @param visible true to make the node visible, false to hide it.
+         */
+        void set_visible(bool visible);
+
     private:
         int id_ = 0;
         static int next_id_;
@@ -157,5 +169,6 @@ namespace docraft::model {
         DocraftPositionType position_mode_ = DocraftPositionType::kBlock;
         int page_owner_ = -1;
         int z_index_ = 0;
+        bool visible_ = true;
     };
 } // Docraft
