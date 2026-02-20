@@ -37,18 +37,20 @@ Optional elements inside `<Document>`:
 
 These attributes are recognized on most nodes (including sections, text, layout, tables, shapes, etc.).
 
-| Attribute            | Type   | Values / Notes |
-|---------------------|--------|----------------|
-| `x`                 | float  | Top-left X position (points). |
-| `y`                 | float  | Top-left Y position (points). |
-| `width`             | float  | Width in points. |
-| `height`            | float  | Height in points. |
-| `auto_fill_width`   | bool   | `true` or `false`. |
-| `auto_fill_height`  | bool   | `true` or `false`. |
-| `padding`           | float  | Padding in points. |
-| `weight`            | float  | Used by `Layout` to distribute space. |
-| `position`          | string | `block` or `absolute`. |
-| `z_index`           | int    | Render order among siblings in the same container (higher draws on top). |
+| Attribute          | Type   | Values / Notes                                                                  |
+|--------------------|--------|---------------------------------------------------------------------------------|
+| `name`             | string | Optional identifier for template reference.                                     |
+| `x`                | float  | Top-left X position (points).                                                   |
+| `y`                | float  | Top-left Y position (points).                                                   |
+| `width`            | float  | Width in points.                                                                |
+| `height`           | float  | Height in points.                                                               |
+| `auto_fill_width`  | bool   | `true` or `false`.                                                              |
+| `auto_fill_height` | bool   | `true` or `false`.                                                              |
+| `padding`          | float  | Padding in points.                                                              |
+| `weight`           | float  | Used by `Layout` to distribute space.                                           |
+| `position`         | string | `block` or `absolute`.                                                          |
+| `z_index`          | int    | Render order among siblings in the same container (higher draws on top).        |
+| `visible`          | bool   | `true` or `false` enable or disable the item and his children, default **true** |
 
 ### Positioning
 
@@ -69,6 +71,7 @@ Invalid color names or hex strings raise an error.
 ### `<Header>`, `<Body>`, `<Footer>`
 
 Sections are rectangle-like nodes with optional margins and borders.
+Header and footer are optional. If a section is omitted or not visible, its ratio is added to the body, so the body expands to fill the page.
 
 #### Section Attributes
 
@@ -414,6 +417,7 @@ Rules:
 - `<Font>` **must** include a `name` attribute.
 - `<FontNormal>`, `<FontBold>`, `<FontItalic>`, `<FontBoldItalic>` are optional.
 - Each font variant uses `src` to specify the file path.
+- If `<Header>` or `<Footer>` is missing or not visible, its ratio is added to the body, so the body uses the remaining page height.
 
 ## 14. Complete Example
 

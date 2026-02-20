@@ -63,6 +63,22 @@ namespace docraft::model {
     int DocraftNode::z_index() const {
         return z_index_;
     }
+    bool DocraftNode::visible() const {
+        return visible_;
+    }
+    bool DocraftNode::should_render(const std::shared_ptr<DocraftDocumentContext>& context) const {
+        if (page_owner_ == -1) {
+            return true;
+        }
+        if (!context) {
+            return true;
+        }
+        const auto &page_backend = context->page_backend();
+        if (!page_backend) {
+            return true;
+        }
+        return page_backend->current_page_number() == static_cast<std::size_t>(page_owner_);
+    }
 #pragma endregion
 #pragma region Setter
     void DocraftNode::set_name(const std::string &name) {
@@ -109,18 +125,8 @@ namespace docraft::model {
         z_index_ = z_index;
     }
 
-    bool DocraftNode::should_render(const std::shared_ptr<DocraftDocumentContext>& context) const {
-        if (page_owner_ == -1) {
-            return true;
-        }
-        if (!context) {
-            return true;
-        }
-        const auto &page_backend = context->page_backend();
-        if (!page_backend) {
-            return true;
-        }
-        return page_backend->current_page_number() == static_cast<std::size_t>(page_owner_);
+    void DocraftNode::set_visible(bool visible) {
+        visible_ = visible;
     }
 #pragma endregion
 } // Docraft

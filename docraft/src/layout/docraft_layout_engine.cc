@@ -118,12 +118,20 @@ namespace docraft::layout {
 
 
     model::DocraftTransform DocraftLayoutEngine::compute_layout(const std::shared_ptr<model::DocraftNode> &node) {
+        if (!node->visible())
+        {
+            return model::DocraftTransform{};
+        }
         auto& cursor = context()->cursor();
         return compute_layout(node, cursor);
     }
 
     model::DocraftTransform DocraftLayoutEngine::compute_layout(const std::shared_ptr<model::DocraftNode> &node,
                                                                 DocraftCursor& cursor) {
+        if (!node->visible())
+        {
+            return model::DocraftTransform{};
+        }
         std::vector<model::DocraftTransform> child_boxes;
         float max_width = context()->available_space();
         const float flow_origin_x = cursor.x();
@@ -369,14 +377,17 @@ namespace docraft::layout {
         const float header_ratio = header ? base_header_ratio : 0.0F;
         const float footer_ratio = footer ? base_footer_ratio : 0.0F;
         float body_ratio = base_body_ratio;
-        if (!header) {
+        bool header_to_render = header && header->visible();
+        bool body_to_render = body && body->visible();
+        bool footer_to_render = footer && footer->visible();
+        if (!header_to_render) {
             body_ratio += base_header_ratio;
         }
-        if (!footer) {
+        if (!footer_to_render) {
             body_ratio += base_footer_ratio;
         }
         //Layout header
-        if (header) {
+        if (header_to_render) {
             header->set_position({.x = header->margin_left(), .y = context()->page_height()});
             header->set_width(compute_width(header));
             header->set_height(context()->page_height() * header_ratio);
@@ -388,12 +399,13 @@ namespace docraft::layout {
             assign_page_owner_recursive(header, -1);//always
         }
         //Layout body
-        if (body) {
+        if (body_to_render) {
             float body_start_y = context()->page_height();
-            if (header) {
+            if (header_to_render) {
                 body_start_y = header->anchors().bottom_left.y;
             }
             float body_height = context()->page_height() * body_ratio;
+
             body->set_position({.x = body->margin_left(), .y = body_start_y});
             body->set_width(compute_width(body));
             body->set_height(body_height);
@@ -464,9 +476,9 @@ namespace docraft::layout {
             body->set_height(body_height);
         }
         //Layout footer
-        if  (footer) {
+        if  (footer_to_render) {
             float footer_start_y = 0.0F;
-            if (body) {
+            if (body_to_render) {
                 footer_start_y = body->anchors().bottom_left.y;
             }
             footer->set_position({.x = footer->margin_left(), .y = footer_start_y});
