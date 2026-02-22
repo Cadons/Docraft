@@ -57,7 +57,7 @@ namespace docraft::test::utils {
         void draw_raw_rgb_image(const std::string &, int, int, float, float, float, float) const override {}
         void draw_raw_rgb_image_from_memory(const unsigned char *, int, int, float, float, float, float) const override {}
 
-        void save_to_file(const std::string &) const override {}
+        void save_to_file(const std::string &path) const override { last_saved_path_ = path; }
         [[nodiscard]] std::string file_extension() const override { return config_.extension; }
         const char *register_ttf_font_from_file(const std::string &, bool) const override { return "Helvetica"; }
         bool can_use_font(const std::string &, const char *) const override { return config_.can_use_font; }
@@ -120,10 +120,12 @@ namespace docraft::test::utils {
         }
 
         mutable int line_count = 0;
+        [[nodiscard]] const std::string &last_saved_path() const { return last_saved_path_; }
 
     private:
         Config config_;
         std::size_t pages_ = 1;
         std::size_t current_page_ = 0;
+        mutable std::string last_saved_path_;
     };
 } // namespace docraft::test::utils

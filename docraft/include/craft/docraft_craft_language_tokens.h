@@ -43,6 +43,7 @@ namespace docraft::craft {
             constexpr string kMarginBottom = "margin_bottom";
             constexpr string kMarginLeft = "margin_left";
             constexpr string kMarginRight = "margin_right";
+            constexpr string kPath = "path";
         }
     }
 

@@ -182,3 +182,20 @@ TEST(DocraftCraftLanguageParserTest, AutoKeywordsUsesConfiguredStopwordLanguages
     ASSERT_TRUE(metadata.keywords().has_value());
     EXPECT_EQ(metadata.keywords().value(), "analyse, modelo, system");
 }
+
+TEST(DocraftCraftLanguageParserTest, ParsesDocumentPathAttribute) {
+    const char *xml = R"XML(
+<Document path="exports/reports">
+  <Body>
+    <Text>Body copy</Text>
+  </Body>
+</Document>
+)XML";
+
+    docraft::craft::DocraftCraftLanguageParser parser;
+    parser.parse(xml);
+    auto document = parser.get_document();
+    ASSERT_TRUE(document);
+
+    EXPECT_EQ(document->document_path(), "exports/reports");
+}

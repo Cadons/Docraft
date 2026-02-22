@@ -556,6 +556,12 @@ void DocraftCraftLanguageParser::load_document() {
         throw std::runtime_error("Invalid .craft file: missing <Document> root element");
     }
     pugi::xml_node document = root;
+    if (const pugi::xml_attribute path_attr = document.attribute(section::attribute::kPath.data())) {
+        const std::string output_path = trim_copy(path_attr.as_string());
+        if (!output_path.empty()) {
+            document_->set_document_path(output_path);
+        }
+    }
 
     const DocraftMetadataParseOutcome metadata_parse_outcome = parse_metadata_node(document);
     if (metadata_parse_outcome.has_metadata) {

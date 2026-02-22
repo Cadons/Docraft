@@ -1,7 +1,26 @@
 cmake_minimum_required(VERSION 3.16)
 
+# Resolve project/library version from project.json
+set(DOCRAFT_PROJECT_JSON "${CMAKE_CURRENT_SOURCE_DIR}/project.json")
+if(NOT EXISTS "${DOCRAFT_PROJECT_JSON}")
+    message(FATAL_ERROR "Missing ${DOCRAFT_PROJECT_JSON}")
+endif()
+
+file(READ "${DOCRAFT_PROJECT_JSON}" DOCRAFT_PROJECT_JSON_CONTENT)
+string(JSON DOCRAFT_LIBRARY_VERSION
+        ERROR_VARIABLE DOCRAFT_LIBRARY_VERSION_ERROR
+        GET "${DOCRAFT_PROJECT_JSON_CONTENT}" version
+)
+if(DOCRAFT_LIBRARY_VERSION_ERROR)
+    message(FATAL_ERROR "Unable to read \"version\" from ${DOCRAFT_PROJECT_JSON}: ${DOCRAFT_LIBRARY_VERSION_ERROR}")
+endif()
+string(REGEX MATCH "^[0-9]+" DOCRAFT_LIBRARY_SOVERSION "${DOCRAFT_LIBRARY_VERSION}")
+if(DOCRAFT_LIBRARY_SOVERSION STREQUAL "")
+    message(FATAL_ERROR "Invalid version \"${DOCRAFT_LIBRARY_VERSION}\" in ${DOCRAFT_PROJECT_JSON}")
+endif()
+
 # Project name and compiler
-project(DocCraft LANGUAGES CXX)
+project(DocCraft VERSION ${DOCRAFT_LIBRARY_VERSION} LANGUAGES CXX)
 
 # Set C++ standard (change if you need another version)
 set(CMAKE_CXX_STANDARD 23)

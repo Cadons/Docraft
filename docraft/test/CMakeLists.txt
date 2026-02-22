@@ -29,7 +29,8 @@ set(TEST_SOURCES
         renderer/docraft_painter_smoke_test.cc
         renderer/docraft_section_margin_test.cc
         templating/docraft_template_engine_test.cc
-        utils/docraft_keyword_extractor_test.cc)
+        utils/docraft_keyword_extractor_test.cc
+        utils/docraft_logger_test.cc)
 
 add_executable(docraft_test
         ${TEST_SOURCES}

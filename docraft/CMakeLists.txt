@@ -214,6 +214,8 @@ endif()
 add_library(docraft ${DOCRAFT_LIBRARY_TYPE}
         ${DOCRAFT_SOURCES}
 )
+configure_artifact_version(docraft ${PROJECT_VERSION})
+configure_artifact_soversion(docraft ${PROJECT_VERSION_MAJOR})
 
 if(BUILD_SHARED_LIB)
     target_compile_definitions(docraft PRIVATE DOCRAFT_BUILD_SHARED_LIB)#define the macro to build the shared lib
@@ -222,7 +224,16 @@ endif()
 
 generate_docraft_fonts(docraft "${CMAKE_CURRENT_SOURCE_DIR}/fonts.json")
 add_executable(docraft_tool src/main.cpp)
-target_link_libraries(docraft PUBLIC pugixml::static pugixml::pugixml nlohmann_json::nlohmann_json ${LIBHARU_TARGET})
+configure_artifact_version(docraft_tool ${PROJECT_VERSION})
+if(TARGET pugixml::static)
+    set(PUGIXML_TARGET pugixml::static)
+elseif(TARGET pugixml::pugixml)
+    set(PUGIXML_TARGET pugixml::pugixml)
+else()
+    message(FATAL_ERROR "No pugixml CMake target found")
+endif()
+
+target_link_libraries(docraft PUBLIC ${PUGIXML_TARGET} nlohmann_json::nlohmann_json ${LIBHARU_TARGET})
 target_link_libraries(docraft_tool PRIVATE docraft)
 target_include_directories(docraft PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 

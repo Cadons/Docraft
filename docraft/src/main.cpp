@@ -15,28 +15,6 @@ int main() {
         std::cout << "DOCRAFT generator" << std::endl;
         docraft::craft::DocraftCraftLanguageParser parser;
         auto template_engine = std::make_shared<docraft::templating::DocraftTemplateEngine>();
-        // Base64 2x1 RGB image: black then white.
-        //read a file raw file and put in image data
-        std::string path = "test_raw.raw";
-        std::vector<unsigned char> raw_data;
-        try {
-            std::ifstream file(path, std::ios::binary);
-            if (!file) {                std::cerr << "Failed to open file: " << path << std::endl;
-                return 1;
-            }
-            file.seekg(0, std::ios::end);
-            std::streamsize size = file.tellg();
-            file.seekg(0, std::ios::beg);
-            raw_data.resize(size);
-            if (!file.read(reinterpret_cast<char*>(raw_data.data()), size)) {
-                std::cerr << "Failed to read file: " << path << std::endl;
-                return 1;
-            }
-        } catch (const std::exception &e) {
-            std::cerr << "Error reading file: " << e.what() << std::endl;
-            return 1;
-        }
-        template_engine->add_image_data("raw_image", raw_data, 1024, 1024);
 template_engine->add_template_variable("test","[{\"name\": \"Alice\", \"role\": \"Developer\"}, {\"name\": \"Bob\", \"role\": \"Designer\"}]");
         parser.load_from_file("test.craft");
         parser.get_document()->set_document_template_engine(template_engine);
@@ -47,7 +25,7 @@ template_engine->add_template_variable("test","[{\"name\": \"Alice\", \"role\": 
         metadata.set_subject("Testing Docraft Craft Language Parser");
         parser.get_document()->set_document_metadata(metadata);
         parser.get_document()->enable_auto_keywords();
-
+        parser.get_document()->set_document_path("..");
         auto img = parser.get_document()->get_by_name("myimg");
         parser.get_document()->render();
         return 0;

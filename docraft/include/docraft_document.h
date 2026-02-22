@@ -58,6 +58,14 @@ namespace docraft {
         void render();
 
         /**
+         * @brief Overrides the rendering backend used during render.
+         *
+         * Passing nullptr resets to the default backend.
+         * @param backend Rendering backend implementation.
+         */
+        void set_backend(const std::shared_ptr<backend::IDocraftRenderingBackend> &backend);
+
+        /**
          * @brief Sets the document title.
          * @param document_title New title value.
          */
@@ -68,6 +76,18 @@ namespace docraft {
          * @return Document title string.
          */
         std::string document_title();
+
+        /**
+         * @brief Sets the output directory where the rendered file will be saved.
+         * @param document_path Output directory path.
+         */
+        void set_document_path(const std::string &document_path);
+
+        /**
+         * @brief Returns the current output directory path.
+         * @return Output directory path.
+         */
+        std::string document_path();
 
         /**
          * @brief Sets document settings (fonts, etc.).
@@ -169,10 +189,11 @@ namespace docraft {
         std::shared_ptr<DocraftDocumentContext> context_;
         std::shared_ptr<model::DocraftSettings> settings_;
         std::string document_title_;
+        std::string document_path_;
         DocraftDocumentMetadata metadata_;
         bool auto_keywords_enabled_ = false;
         utils::DocraftKeywordExtractor::Config auto_keywords_config_{};
-
+        std::shared_ptr<backend::IDocraftRenderingBackend> backend_override_ = nullptr;
         std::vector<std::shared_ptr<model::DocraftNode> > dom_;
         std::shared_ptr<templating::DocraftTemplateEngine> template_engine_;
     };

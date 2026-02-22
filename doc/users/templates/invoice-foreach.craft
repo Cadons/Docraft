@@ -1,0 +1,26 @@
+<Document>
+  <Body margin_left="30" margin_right="30">
+    <Title>Invoice ${invoice_number}</Title>
+    <Text>Customer: ${customer_name}</Text>
+    <Text>Date: ${invoice_date}</Text>
+
+    <Blank height="8" />
+
+    <Layout orientation="horizontal">
+      <Text weight="0.6" style="bold">Item</Text>
+      <Text weight="0.2" style="bold" alignment="right">Qty</Text>
+      <Text weight="0.2" style="bold" alignment="right">Price</Text>
+    </Layout>
+
+    <Foreach model="${items}">
+      <Layout orientation="horizontal">
+        <Text weight="0.6">${data("name")}</Text>
+        <Text weight="0.2" alignment="right">${data("qty")}</Text>
+        <Text weight="0.2" alignment="right">${data("price")}</Text>
+      </Layout>
+    </Foreach>
+
+    <Blank height="8" />
+    <Text alignment="right" style="bold">Total: ${total}</Text>
+  </Body>
+</Document>

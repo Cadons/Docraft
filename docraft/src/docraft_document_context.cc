@@ -45,7 +45,10 @@ namespace docraft {
     }
 
     void DocraftDocumentContext::set_backend(const std::shared_ptr<backend::IDocraftRenderingBackend> &backend) {
-        backend_ = backend;
+        backend_ = backend ? backend : std::make_shared<backend::pdf::DocraftHaruBackend>();
+        page_height_ = backend_->page_height();
+        page_width_ = backend_->page_width();
+        current_rect_width_ = page_width_;
         line_backend_.reset();
         shape_backend_.reset();
         text_backend_.reset();
