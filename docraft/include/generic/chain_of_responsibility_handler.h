@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include <memory>
 
 namespace docraft {

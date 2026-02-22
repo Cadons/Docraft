@@ -1,5 +1,7 @@
 #pragma once
 
+#include "docraft_lib.h"
+
 #include "docraft_color.h"
 #include "docraft_node.h"
 #include "model/i_docraft_clonable.h"
@@ -8,7 +10,7 @@ namespace docraft::model {
     /**
      * @brief Circle node with background and border styling.
      */
-    class DocraftCircle : public DocraftNode, public IDocraftClonable {
+    class DOCRAFT_LIB DocraftCircle : public DocraftNode, public IDocraftClonable {
     public:
         using DocraftNode::DocraftNode;
         /**

@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include <memory>
 
 #include "docraft_document_context.h"
@@ -7,7 +9,7 @@ namespace docraft::renderer::painter {
     /**
      * @brief Interface for painter classes responsible for drawing elements onto a PDF context.
      */
-    class IPainter {
+    class DOCRAFT_LIB IPainter {
         public:
         /**
          * @brief Virtual destructor.

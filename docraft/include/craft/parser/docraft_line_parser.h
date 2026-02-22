@@ -1,12 +1,14 @@
 #pragma once
 
+#include "docraft_lib.h"
+
 #include "craft/i_docraft_parser.h"
 
 namespace docraft::craft::parser {
     /**
      * @brief Parser for line nodes.
      */
-    class DocraftLineParser : public IDocraftParser {
+    class DOCRAFT_LIB DocraftLineParser : public IDocraftParser {
     public:
         /**
          * @brief Parses a line XML node.

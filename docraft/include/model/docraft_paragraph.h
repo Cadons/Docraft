@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include "docraft_section.h"
 #include "model/i_docraft_clonable.h"
 
@@ -8,7 +10,7 @@ namespace docraft::model {
          *
          * Currently inherits DocraftNode without additional data or rendering logic.
          */
-        class DocraftParagraph : public DocraftNode, public IDocraftClonable {
+        class DOCRAFT_LIB DocraftParagraph : public DocraftNode, public IDocraftClonable {
         public:
             /**
              * @brief Draws the paragraph using the provided context.

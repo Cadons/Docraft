@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include <hpdf.h>
 #include <cstddef>
 #include <string>
@@ -12,7 +14,7 @@ namespace docraft::backend::pdf {
 	/**
 	 * @brief This class is responsible for managing the Haru PDF document and providing an interface for rendering operations.
 	 */
-	class DocraftHaruBackend : public docraft::backend::IDocraftRenderingBackend {
+	class DOCRAFT_LIB DocraftHaruBackend : public docraft::backend::IDocraftRenderingBackend {
 	public:
 		/**
 		 * @brief Creates a Haru PDF backend with a new document and page.

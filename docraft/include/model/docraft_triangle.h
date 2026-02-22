@@ -1,5 +1,7 @@
 #pragma once
 
+#include "docraft_lib.h"
+
 #include <vector>
 
 #include "docraft_color.h"
@@ -11,7 +13,7 @@ namespace docraft::model {
     /**
      * @brief Triangle node defined by three points.
      */
-    class DocraftTriangle : public DocraftNode, public IDocraftClonable {
+    class DOCRAFT_LIB DocraftTriangle : public DocraftNode, public IDocraftClonable {
     public:
         using DocraftNode::DocraftNode;
         /**

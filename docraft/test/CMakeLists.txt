@@ -34,7 +34,7 @@ set(TEST_SOURCES
 add_executable(docraft_test
         ${TEST_SOURCES}
 )
-target_link_libraries(docraft_test PRIVATE docraft_lib GTest::GTest)
+target_link_libraries(docraft_test PRIVATE docraft GTest::GTest)
 target_include_directories(docraft_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 gtest_discover_tests(docraft_test
         DISCOVERY_MODE PRE_TEST

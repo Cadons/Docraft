@@ -44,7 +44,10 @@ template_engine->add_template_variable("test","[{\"name\": \"Alice\", \"role\": 
         docraft::DocraftDocumentMetadata metadata;
         metadata.set_title("Test Document");
         metadata.set_author("Docraft");
+        metadata.set_subject("Testing Docraft Craft Language Parser");
         parser.get_document()->set_document_metadata(metadata);
+        parser.get_document()->enable_auto_keywords();
+
         auto img = parser.get_document()->get_by_name("myimg");
         parser.get_document()->render();
         return 0;

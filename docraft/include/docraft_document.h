@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include <vector>
 #include <memory>
 #include <functional>
@@ -21,7 +23,7 @@ namespace docraft {
      * DocraftDocument is the primary API surface for building a document tree,
      * configuring settings, and invoking rendering.
      */
-    class DocraftDocument {
+    class DOCRAFT_LIB DocraftDocument {
     public:
         /**
          * @brief Creates a document with an optional title.

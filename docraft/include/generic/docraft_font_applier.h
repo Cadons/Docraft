@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include <atomic>
 #include <filesystem>
 #include <list>
@@ -18,7 +20,7 @@ namespace docraft::generic {
      * Uses the document context backend to register fonts and select
      * appropriate encodings for text rendering.
      */
-    class DocraftFontApplier {
+    class DOCRAFT_LIB DocraftFontApplier {
     public:
         /**
          * @brief Applies font selection and encoding to a text node.

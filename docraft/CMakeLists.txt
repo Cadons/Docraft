@@ -58,7 +58,7 @@ function(generate_docraft_fonts artifact json_config_path)
     target_include_directories(${artifact}  PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 endfunction()
 
-set(DOCRAFT_SOURCES src/main.cpp
+set(DOCRAFT_SOURCES
         src/model/docraft_node.cc
         include/model/docraft_node.h
         src/model/docraft_clone_utils.cc
@@ -206,15 +206,24 @@ set(DOCRAFT_SOURCES src/main.cpp
         include/model/docraft_foreach.h
         src/craft/parser/docraft_foreach_parser.cc
 )
-add_library(docraft_lib STATIC
-        ${DOCRAFT_SOURCES}
-        ${GENERATED_BISON_SOURCES}
-        ${GENERATED_FLEX_SOURCES}
-)
-generate_docraft_fonts(docraft_lib "${CMAKE_CURRENT_SOURCE_DIR}/fonts.json")
-add_executable(docraft_exe src/main.cpp)
-target_link_libraries(docraft_lib PUBLIC pugixml::static pugixml::pugixml nlohmann_json::nlohmann_json ${LIBHARU_TARGET})
-target_link_libraries(docraft_exe PRIVATE docraft_lib)
-target_include_directories(docraft_lib PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+set(DOCRAFT_LIBRARY_TYPE STATIC)
+if(BUILD_SHARED_LIB)
+    set(DOCRAFT_LIBRARY_TYPE SHARED)
+endif()
 
-target_include_directories(docraft_lib PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
+add_library(docraft ${DOCRAFT_LIBRARY_TYPE}
+        ${DOCRAFT_SOURCES}
+)
+
+if(BUILD_SHARED_LIB)
+    target_compile_definitions(docraft PRIVATE DOCRAFT_BUILD_SHARED_LIB)#define the macro to build the shared lib
+    target_compile_definitions(docraft INTERFACE DOCRAFT_USE_SHARED_LIB)#define the macro to use the shared lib
+endif()
+
+generate_docraft_fonts(docraft "${CMAKE_CURRENT_SOURCE_DIR}/fonts.json")
+add_executable(docraft_tool src/main.cpp)
+target_link_libraries(docraft PUBLIC pugixml::static pugixml::pugixml nlohmann_json::nlohmann_json ${LIBHARU_TARGET})
+target_link_libraries(docraft_tool PRIVATE docraft)
+target_include_directories(docraft PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+
+target_include_directories(docraft PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)

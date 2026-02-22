@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include "docraft_node.h"
 #include "model/i_docraft_clonable.h"
 
@@ -6,7 +8,7 @@ namespace docraft::model {
         /**
          * @brief Blank line node used to add vertical spacing in flow layout.
          */
-        class DocraftBlankLine : public DocraftNode, public IDocraftClonable {
+        class DOCRAFT_LIB DocraftBlankLine : public DocraftNode, public IDocraftClonable {
         public:
             using DocraftNode::DocraftNode;
             /**

@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include "abstract_docraft_layout_handler.h"
 #include "generic/chain_of_responsibility_handler.h"
 #include "model/docraft_layout.h"
@@ -10,7 +12,7 @@ namespace docraft::layout::handler {
      *
      * Computes child boxes based on orientation and weights.
      */
-    class DocraftLayoutHandler:public AbstractDocraftLayoutHandler<model::DocraftLayout> {
+    class DOCRAFT_LIB DocraftLayoutHandler :public AbstractDocraftLayoutHandler<model::DocraftLayout> {
     public:
         using AbstractDocraftLayoutHandler<model::DocraftLayout>::AbstractDocraftLayoutHandler;
         /**

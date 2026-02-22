@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include "docraft_node.h"
 #include <vector>
 namespace docraft::model {
@@ -7,7 +9,7 @@ namespace docraft::model {
      *
      * Used by composite nodes such as layout, rectangles, lists, and text.
      */
-    class DocraftChildrenContainerNode : public DocraftNode {
+    class DOCRAFT_LIB DocraftChildrenContainerNode : public DocraftNode {
     public:
         using DocraftNode::DocraftNode;
 

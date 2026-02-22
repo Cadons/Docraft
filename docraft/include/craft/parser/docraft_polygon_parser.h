@@ -1,12 +1,14 @@
 #pragma once
 
+#include "docraft_lib.h"
+
 #include "craft/i_docraft_parser.h"
 
 namespace docraft::craft::parser {
     /**
      * @brief Parser for polygon nodes.
      */
-    class DocraftPolygonParser : public IDocraftParser {
+    class DOCRAFT_LIB DocraftPolygonParser : public IDocraftParser {
     public:
         /**
          * @brief Parses a polygon XML node.

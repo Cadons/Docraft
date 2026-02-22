@@ -1,5 +1,7 @@
 #pragma once
 
+#include "docraft_lib.h"
+
 #include "docraft_text.h"
 
 namespace docraft::model {
@@ -9,7 +11,7 @@ namespace docraft::model {
      * The value is managed by the library and resolved from the document context
      * at layout/render time.
      */
-    class DocraftPageNumber : public DocraftText {
+    class DOCRAFT_LIB DocraftPageNumber : public DocraftText {
     public:
         using DocraftText::DocraftText;
         DocraftPageNumber();

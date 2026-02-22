@@ -1,12 +1,14 @@
 #pragma once
 
+#include "docraft_lib.h"
+
 #include "craft/i_docraft_parser.h"
 
 namespace docraft::craft::parser {
     /**
      * @brief Parser for triangle nodes.
      */
-    class DocraftTriangleParser : public IDocraftParser {
+    class DOCRAFT_LIB DocraftTriangleParser : public IDocraftParser {
     public:
         /**
          * @brief Parses a triangle XML node.

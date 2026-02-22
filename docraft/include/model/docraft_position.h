@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include <string>
 
 namespace docraft::model {
@@ -41,7 +43,7 @@ namespace docraft::model {
     /**
      * @brief Position and size transform with cached anchors.
      */
-    class DocraftTransform {
+    class DOCRAFT_LIB DocraftTransform {
     public:
         /**
          * @brief Creates a zero-sized transform at origin.

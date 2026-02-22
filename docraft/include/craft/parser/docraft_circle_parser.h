@@ -1,12 +1,14 @@
 #pragma once
 
+#include "docraft_lib.h"
+
 #include "craft/i_docraft_parser.h"
 
 namespace docraft::craft::parser {
     /**
      * @brief Parser for circle nodes.
      */
-    class DocraftCircleParser : public IDocraftParser {
+    class DOCRAFT_LIB DocraftCircleParser : public IDocraftParser {
     public:
         /**
          * @brief Parses a circle XML node.

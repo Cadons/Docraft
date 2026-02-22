@@ -1,10 +1,12 @@
 #pragma once
 
+#include "docraft_lib.h"
+
 namespace docraft::backend {
     /**
      * @brief Interface for line rendering backends used by Docraft.
      */
-    class IDocraftLineRenderingBackend {
+    class DOCRAFT_LIB IDocraftLineRenderingBackend {
     public:
         /**
          * @brief Virtual destructor.

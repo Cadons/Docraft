@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include <list>
 #include "backend/docraft_text_rendering_backend.h"
 
@@ -11,7 +13,7 @@ namespace docraft::renderer::painter {
      *
      * Handles alignment, justification, and optional underline rendering.
      */
-    class DocraftTextPainter : public IPainter{
+    class DOCRAFT_LIB DocraftTextPainter : public IPainter{
     public:
         /**
          * @brief Creates a painter for a given text node.

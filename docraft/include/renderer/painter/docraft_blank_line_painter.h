@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include "i_painter.h"
 #include "model/docraft_blank_line.h"
 
@@ -8,7 +10,7 @@ namespace docraft::renderer::painter {
      *
      * Performs no drawing but updates the cursor state.
      */
-    class docraft_blank_line_painter : public renderer::painter::IPainter {
+    class DOCRAFT_LIB docraft_blank_line_painter : public renderer::painter::IPainter {
     public:
         /**
          * @brief Creates a blank-line painter bound to the blank line node.

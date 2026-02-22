@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include "model/docraft_triangle.h"
 #include "renderer/painter/i_painter.h"
 
@@ -6,7 +8,7 @@ namespace docraft::renderer::painter {
     /**
      * @brief Painter that draws DocraftTriangle nodes.
      */
-    class DocraftTrianglePainter : public IPainter {
+    class DOCRAFT_LIB DocraftTrianglePainter : public IPainter {
     public:
         /**
          * @brief Creates a triangle painter bound to the triangle node.

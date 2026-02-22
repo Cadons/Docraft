@@ -1,5 +1,7 @@
 #pragma once
 
+#include "docraft_lib.h"
+
 #include <vector>
 
 #include "backend/docraft_line_rendering_backend.h"
@@ -9,7 +11,7 @@ namespace docraft::backend {
     /**
      * @brief Interface for shape rendering backends used by Docraft.
      */
-    class IDocraftShapeRenderingBackend : public virtual IDocraftLineRenderingBackend {
+    class DOCRAFT_LIB IDocraftShapeRenderingBackend : public virtual IDocraftLineRenderingBackend {
     public:
         /**
          * @brief Virtual destructor.

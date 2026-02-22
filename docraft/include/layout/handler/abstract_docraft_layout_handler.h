@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include <memory>
 
 #include "docraft_document_context.h"

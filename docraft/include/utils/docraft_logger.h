@@ -1,10 +1,12 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include <string>
 namespace docraft::utils {
         /**
          * @brief Simple logging utility for console output.
          */
-        class DocraftLogger {
+        class DOCRAFT_LIB DocraftLogger {
                 public:
               /**
                * @brief Logs a debug-level message.

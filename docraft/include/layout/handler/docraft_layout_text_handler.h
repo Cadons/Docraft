@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include "abstract_docraft_layout_handler.h"
 #include "generic/chain_of_responsibility_handler.h"
 #include "model/docraft_layout.h"
@@ -10,7 +12,7 @@ namespace docraft::layout::handler {
      *
      * Measures text width, handles alignment, and manages line breaks.
      */
-    class DocraftLayoutTextHandler : public AbstractDocraftLayoutHandler<model::DocraftText> {
+    class DOCRAFT_LIB DocraftLayoutTextHandler : public AbstractDocraftLayoutHandler<model::DocraftText> {
     public:
 
         /**

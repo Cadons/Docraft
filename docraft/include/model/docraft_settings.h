@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include <string>
 #include <vector>
 #include "model/docraft_node.h"
@@ -28,7 +30,7 @@ namespace docraft::model {
      * Settings are interpreted by the document context to register fonts
      * and configure rendering behavior.
      */
-    class DocraftSettings : public DocraftNode {
+    class DOCRAFT_LIB DocraftSettings : public DocraftNode {
     public:
         DocraftSettings() = default;
 

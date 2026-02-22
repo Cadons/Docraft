@@ -1,5 +1,7 @@
 // C++
 #pragma once
+
+#include "docraft_lib.h"
 #include <memory>
 #include <vector>
 
@@ -20,7 +22,7 @@ namespace docraft::layout {
      * The engine walks node trees and delegates box computation to specialized
      * handlers (text, table, list, etc.), maintaining a cursor for flow layout.
      */
-    class DocraftLayoutEngine {
+    class DOCRAFT_LIB DocraftLayoutEngine {
     public:
         /**
          * @brief Creates a layout engine for the given document context.

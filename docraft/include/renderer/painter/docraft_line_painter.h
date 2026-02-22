@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include "model/docraft_line.h"
 #include "renderer/painter/i_painter.h"
 
@@ -6,7 +8,7 @@ namespace docraft::renderer::painter {
     /**
      * @brief Painter that draws DocraftLine nodes.
      */
-    class DocraftLinePainter : public IPainter {
+    class DOCRAFT_LIB DocraftLinePainter : public IPainter {
     public:
         /**
          * @brief Creates a line painter bound to the line node.

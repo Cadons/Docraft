@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include <vector>
 
 #include "model/docraft_node.h"
@@ -18,7 +20,7 @@ namespace docraft::model {
          *
          * Images can be loaded from file or provided as raw pixel data.
          */
-        class DocraftImage : public DocraftNode, public IDocraftClonable {
+        class DOCRAFT_LIB DocraftImage : public DocraftNode, public IDocraftClonable {
         public:
                 /**
                  * @brief Creates an empty image node.

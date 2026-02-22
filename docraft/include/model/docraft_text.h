@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include <list>
 #include <memory>
 #include <vector>
@@ -32,7 +34,7 @@ namespace docraft::model {
      *
      * Text nodes can generate internal line children for wrapping/justification.
      */
-    class DocraftText : public DocraftChildrenContainerNode, public IDocraftClonable {
+    class DOCRAFT_LIB DocraftText : public DocraftChildrenContainerNode, public IDocraftClonable {
     public:
         using DocraftChildrenContainerNode::DocraftChildrenContainerNode;
         /**

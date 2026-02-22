@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include "docraft_children_container_node.h"
 #include "model/i_docraft_clonable.h"
 #include "docraft_node.h"
@@ -17,7 +19,7 @@ namespace docraft::model {
      *
      * Children can be weighted to control how available space is distributed.
      */
-    class DocraftLayout : public DocraftChildrenContainerNode, public IDocraftClonable {
+    class DOCRAFT_LIB DocraftLayout : public DocraftChildrenContainerNode, public IDocraftClonable {
     public:
         using DocraftChildrenContainerNode::DocraftChildrenContainerNode;
         DocraftLayout(const DocraftLayout& node) = default;

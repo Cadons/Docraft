@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include <stack>
 
 #include "model/docraft_position.h"
@@ -19,7 +21,7 @@ namespace docraft {
      * The cursor stores a 2D point plus a stack of layout directions,
      * enabling nested horizontal/vertical layout operations.
      */
-    class DocraftCursor {
+    class DOCRAFT_LIB DocraftCursor {
     public:
         /**
          * @brief Creates a cursor at origin with horizontal direction.
