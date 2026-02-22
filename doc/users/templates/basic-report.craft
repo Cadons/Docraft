@@ -1,0 +1,36 @@
+<Document>
+  <Settings page_size="A4" page_orientation="portrait" header_ratio="0.10" body_ratio="0.82" footer_ratio="0.08" />
+
+  <Metadata>
+    <DocumentTitle>Basic Report</DocumentTitle>
+    <Author>Docraft User</Author>
+    <Subject>Starter Report Template</Subject>
+  </Metadata>
+
+  <Header margin_left="30" margin_right="30" border_width="0.5" border_color="#DDDDDD">
+    <Text style="bold" font_size="14">Basic Report</Text>
+  </Header>
+
+  <Body margin_left="30" margin_right="30">
+    <Title>Executive Summary</Title>
+    <Text alignment="justified">
+      Replace this text with your report summary. This template shows header, body, footer, list, and pagination.
+    </Text>
+
+    <Subtitle>Highlights</Subtitle>
+    <UList dot="circle">
+      <Text>Point one</Text>
+      <Text>Point two</Text>
+      <Text>Point three</Text>
+    </UList>
+
+    <NewPage />
+
+    <Subtitle>Second Page</Subtitle>
+    <Text>Use NewPage to force a manual page break.</Text>
+  </Body>
+
+  <Footer margin_left="30" margin_right="30" border_width="0.5" border_color="#DDDDDD">
+    <PageNumber alignment="center" />
+  </Footer>
+</Document>

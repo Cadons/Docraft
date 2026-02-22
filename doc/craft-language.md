@@ -17,6 +17,7 @@ The parser expects:
 
 - root tag: `<Document>`
 - required section: `<Body>`
+- optional root attribute: `path` (output directory for rendered file)
 
 Optional top-level sections:
 
@@ -28,7 +29,7 @@ Optional top-level sections:
 Canonical skeleton:
 
 ```xml
-<Document>
+<Document path="exports/reports">
   <Settings>...</Settings>
   <Metadata>...</Metadata>
   <Header>...</Header>

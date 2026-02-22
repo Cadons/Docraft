@@ -107,6 +107,13 @@ namespace docraft {
             return base_name + "." + extension;
         }
 
+        std::string with_directory(const std::string &directory, const std::string &file_name) {
+            if (directory.empty()) {
+                return file_name;
+            }
+            return (std::filesystem::path(directory) / file_name).string();
+        }
+
         void apply_page_format_settings(const std::shared_ptr<model::DocraftSettings> &settings,
                                         const std::shared_ptr<DocraftDocumentContext> &context) {
             if (!settings || !context) {
@@ -169,6 +176,7 @@ namespace docraft {
 
     DocraftDocument::DocraftDocument(std::string document_title) : document_title_(std::move(document_title)) {
         metadata_.set_title(document_title_);
+        context_ = std::make_shared<DocraftDocumentContext>();
     }
 
     void DocraftDocument::add_node(const std::shared_ptr<model::DocraftNode> &node) {
@@ -192,7 +200,7 @@ namespace docraft {
     }
 
     void DocraftDocument::render() {
-        context_ = std::make_shared<DocraftDocumentContext>();
+        context_->set_backend(backend_override_);
         context_->set_renderer(std::make_shared<renderer::DocraftPDFRenderer>(context_));
         context_->set_font_applier(std::make_shared<generic::DocraftFontApplier>(context_));
         LOG_DEBUG("Rendering document: " + document_title_);
@@ -201,7 +209,6 @@ namespace docraft {
         configure_document_settings();
 
         //replace template variables in the DOM
-        //TODO: here if there is a foreach template engine must add to the defined structure the same node with different data
         template_document();
         refresh_auto_keywords();
 
@@ -238,8 +245,14 @@ namespace docraft {
         }
 
         context_->rendering_backend()->set_document_metadata(metadata_);
-        context_->rendering_backend()->save_to_file(
-            with_extension(document_title_, context_->rendering_backend()->file_extension()));
+        const std::string output_file_name = with_extension(
+            document_title_, context_->rendering_backend()->file_extension());
+        context_->rendering_backend()->save_to_file(with_directory(document_path_, output_file_name));
+    }
+
+    void DocraftDocument::set_backend(const std::shared_ptr<backend::IDocraftRenderingBackend> &backend) {
+        backend_override_ = backend;
+        context_->set_backend(backend_override_);
     }
 
     void DocraftDocument::set_document_title(const std::string &document_title) {
@@ -249,6 +262,14 @@ namespace docraft {
 
     std::string DocraftDocument::document_title() {
         return document_title_;
+    }
+
+    void DocraftDocument::set_document_path(const std::string &document_path) {
+        document_path_ = document_path;
+    }
+
+    std::string DocraftDocument::document_path() {
+        return document_path_;
     }
 
     void DocraftDocument::set_settings(const std::shared_ptr<model::DocraftSettings> &settings) {

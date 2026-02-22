@@ -10,6 +10,7 @@
 #include "model/docraft_list.h"
 #include "model/docraft_rectangle.h"
 #include "model/docraft_text.h"
+#include "utils/docraft_mock_rendering_backend.h"
 
 namespace docraft::test {
     namespace {
@@ -165,6 +166,14 @@ namespace docraft::test {
         EXPECT_EQ(document.document_metadata().title().value(), "Updated Title");
     }
 
+    TEST(DocraftDocumentTest, SettingDocumentPathUpdatesOutputDirectory) {
+        DocraftDocument document("Initial Title");
+
+        document.set_document_path("exports/reports");
+
+        EXPECT_EQ(document.document_path(), "exports/reports");
+    }
+
     TEST(DocraftDocumentTest, SettingMetadataWithTitleUpdatesDocumentTitle) {
         DocraftDocument document("Original Title");
         DocraftDocumentMetadata metadata;
@@ -231,6 +240,69 @@ namespace docraft::test {
             output_path, "/Subject " + encode_pdf_utf16_hex_ascii("Docraft Subject From Code")));
         EXPECT_TRUE(file_contains_text(
             output_path, "/Keywords " + encode_pdf_utf16_hex_ascii("alpha,beta")));
+
+        std::filesystem::remove(output_path, ec);
+    }
+
+    TEST(DocraftDocumentTest, RenderUsesBackendSetOnDocument) {
+        DocraftDocument document("custom_backend_test");
+        auto body = std::make_shared<model::DocraftBody>();
+        body->add_child(std::make_shared<model::DocraftText>("Simple text"));
+        document.add_node(body);
+
+        auto mock_backend = std::make_shared<docraft::test::utils::MockRenderingBackend>(
+            docraft::test::utils::MockRenderingBackend::Config{
+                .extension = ".mock"
+            });
+
+        document.set_backend(mock_backend);
+        document.render();
+
+        EXPECT_EQ(mock_backend->last_saved_path(), "custom_backend_test.mock");
+    }
+
+    TEST(DocraftDocumentTest, RenderUsesDocumentPathWhenSet) {
+        DocraftDocument document("custom_backend_test");
+        auto body = std::make_shared<model::DocraftBody>();
+        body->add_child(std::make_shared<model::DocraftText>("Simple text"));
+        document.add_node(body);
+
+        auto mock_backend = std::make_shared<docraft::test::utils::MockRenderingBackend>(
+            docraft::test::utils::MockRenderingBackend::Config{
+                .extension = ".mock"
+            });
+
+        document.set_backend(mock_backend);
+        document.set_document_path("exports/reports");
+        document.set_document_title("monthly_summary");
+        document.render();
+
+        EXPECT_EQ(
+            mock_backend->last_saved_path(),
+            (std::filesystem::path("exports/reports") / "monthly_summary.mock").string());
+    }
+
+    TEST(DocraftDocumentTest, ResetBackendRestoresDefaultBackend) {
+        const std::string output_path = "reset_backend_test.pdf";
+        std::error_code ec;
+        std::filesystem::remove(output_path, ec);
+
+        DocraftDocument document("reset_backend_test");
+        auto body = std::make_shared<model::DocraftBody>();
+        body->add_child(std::make_shared<model::DocraftText>("Simple text"));
+        document.add_node(body);
+
+        auto mock_backend = std::make_shared<docraft::test::utils::MockRenderingBackend>(
+            docraft::test::utils::MockRenderingBackend::Config{
+                .extension = ".mock"
+            });
+
+        document.set_backend(mock_backend);
+        document.set_backend(nullptr);
+        document.render();
+
+        EXPECT_TRUE(mock_backend->last_saved_path().empty());
+        EXPECT_TRUE(std::filesystem::exists(output_path));
 
         std::filesystem::remove(output_path, ec);
     }

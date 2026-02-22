@@ -148,7 +148,7 @@ namespace docraft {
         [[nodiscard]] const std::shared_ptr<backend::IDocraftPageRenderingBackend>& page_backend() const;
         /**
          * @brief Replaces the underlying rendering backend.
-         * @param backend New rendering backend.
+         * @param backend New rendering backend. Pass nullptr to restore the default backend.
          */
         void set_backend(const std::shared_ptr<backend::IDocraftRenderingBackend>& backend);
         /**

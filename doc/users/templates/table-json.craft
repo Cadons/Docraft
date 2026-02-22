@@ -1,0 +1,17 @@
+<Document>
+  <Body margin_left="30" margin_right="30">
+    <Title>Table from JSON Variables</Title>
+
+    <Text>
+      Provide two template variables from your app:
+      products_header (JSON array) and products_rows (JSON matrix).
+    </Text>
+
+    <Table
+      name="products_table"
+      header="${products_header}"
+      model="${products_rows}"
+      baseline_offset="0.10"
+      TableTile="#F8F8F8" />
+  </Body>
+</Document>
