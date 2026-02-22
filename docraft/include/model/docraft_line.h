@@ -1,5 +1,7 @@
 #pragma once
 
+#include "docraft_lib.h"
+
 #include "docraft_color.h"
 #include "docraft_node.h"
 #include "model/docraft_position.h"
@@ -9,7 +11,7 @@ namespace docraft::model {
     /**
      * @brief Line node defined by start and end points.
      */
-    class DocraftLine : public DocraftNode, public IDocraftClonable {
+    class DOCRAFT_LIB DocraftLine : public DocraftNode, public IDocraftClonable {
     public:
         using DocraftNode::DocraftNode;
         /**

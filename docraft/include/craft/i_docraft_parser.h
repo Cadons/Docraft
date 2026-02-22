@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include <pugixml.hpp>
 
 #include "model/docraft_node.h"
@@ -9,7 +11,7 @@ namespace docraft::craft {
          *
          * Implementations translate a single XML node into a Docraft model node.
          */
-        class IDocraftParser {
+        class DOCRAFT_LIB IDocraftParser {
         public:
                 /**
                  * @brief Virtual destructor.

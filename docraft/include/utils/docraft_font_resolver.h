@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -13,7 +15,7 @@ namespace docraft::utils {
      * based on a list of built-in fonts and fonts registered in DocraftFontRegistry.
      * It returns the closest available variant when an exact match is missing.
      */
-    class DocraftFontResolver {
+    class DOCRAFT_LIB DocraftFontResolver {
     public:
         /**
          * @brief Creates a font resolver with an empty index.

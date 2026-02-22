@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include <cstddef>
 
 #include "model/docraft_page_format.h"
@@ -7,7 +9,7 @@ namespace docraft::backend {
     /**
      * @brief Interface for page-level operations and page metadata.
      */
-    class IDocraftPageRenderingBackend {
+    class DOCRAFT_LIB IDocraftPageRenderingBackend {
     public:
         /**
          * @brief Virtual destructor.

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "docraft_lib.h"
+
 #include <functional>
 #include <string>
 #include <vector>
@@ -40,7 +42,7 @@ namespace docraft::model {
      *
      * Markers are computed from the list style and stored for layout and rendering.
      */
-    class DocraftList : public DocraftChildrenContainerNode, public IDocraftClonable {
+    class DOCRAFT_LIB DocraftList : public DocraftChildrenContainerNode, public IDocraftClonable {
     public:
         using DocraftChildrenContainerNode::DocraftChildrenContainerNode;
         DocraftList(const DocraftList& node) = default;

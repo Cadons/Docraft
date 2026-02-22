@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include "i_painter.h"
 #include "model/docraft_image.h"
 
@@ -9,7 +11,7 @@ namespace docraft::renderer::painter {
      *
      * Supports file-based and in-memory image sources.
      */
-    class DocraftImagePainter : public renderer::painter::IPainter{
+    class DOCRAFT_LIB DocraftImagePainter : public renderer::painter::IPainter{
         public:
         /**
          * @brief Creates an image painter bound to the image node.

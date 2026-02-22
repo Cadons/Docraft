@@ -1,5 +1,7 @@
 #pragma once
 
+#include "docraft_lib.h"
+
 #include <optional>
 #include <string>
 
@@ -10,7 +12,7 @@ namespace docraft {
      * Supports all document info fields exposed by libharu
      * (string attributes plus creation and modification dates).
      */
-    class DocraftDocumentMetadata {
+    class DOCRAFT_LIB DocraftDocumentMetadata {
     public:
         /**
          * @brief Date/time structure compatible with libharu info dates.

@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include "docraft_children_container_node.h"
 #include "docraft_node.h"
 #include "model/i_docraft_clonable.h"
@@ -9,7 +11,7 @@ namespace docraft::model {
      * The foreach node should have a "model" attribute that specifies the collection to iterate over,
      * and its children will be rendered for each item in the collection with template variables available for the current item.
      */
-    class DocraftForeach : public DocraftChildrenContainerNode, public IDocraftClonable {
+    class DOCRAFT_LIB DocraftForeach : public DocraftChildrenContainerNode, public IDocraftClonable {
     public:
         DocraftForeach() = default;
         DocraftForeach(const DocraftForeach &) = default;

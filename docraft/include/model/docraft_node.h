@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include <string>
 
 #include "docraft_document_context.h"
@@ -11,7 +13,7 @@ namespace docraft::model {
      * A node carries layout properties (position, size, weight, autofill flags)
      * and exposes a draw hook used by renderers/painters.
      */
-    class DocraftNode : public DocraftTransform {
+    class DOCRAFT_LIB DocraftNode : public DocraftTransform {
     public:
         /**
          * @brief Creates a node with a unique id.

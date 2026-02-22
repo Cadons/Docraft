@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include <string>
 
 #include "backend/docraft_image_rendering_backend.h"
@@ -14,7 +16,7 @@ namespace docraft::backend {
     /**
      * @brief Aggregated rendering backend interface.
      */
-    class IDocraftRenderingBackend : public IDocraftTextRenderingBackend,
+    class DOCRAFT_LIB IDocraftRenderingBackend : public IDocraftTextRenderingBackend,
                                      public IDocraftShapeRenderingBackend,
                                      public IDocraftImageRenderingBackend,
                                      public IDocraftPageRenderingBackend {

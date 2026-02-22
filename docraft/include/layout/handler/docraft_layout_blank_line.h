@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include "abstract_docraft_layout_handler.h"
 #include "generic/chain_of_responsibility_handler.h"
 #include "model/docraft_blank_line.h"
@@ -9,7 +11,7 @@ namespace docraft::layout::handler {
      *
      * Advances the cursor to create vertical spacing.
      */
-    class DocraftLayoutBlankLine :public AbstractDocraftLayoutHandler<model::DocraftBlankLine> {
+    class DOCRAFT_LIB DocraftLayoutBlankLine :public AbstractDocraftLayoutHandler<model::DocraftBlankLine> {
     public:
         using AbstractDocraftLayoutHandler<model::DocraftBlankLine>::AbstractDocraftLayoutHandler;
         /**

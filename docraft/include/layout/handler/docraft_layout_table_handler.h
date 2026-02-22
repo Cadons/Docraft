@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include "abstract_docraft_layout_handler.h"
 #include "generic/chain_of_responsibility_handler.h"
 #include "model/docraft_table.h"
@@ -9,7 +11,7 @@ namespace docraft::layout::handler {
      *
      * Calculates cell boxes and header/content areas based on weights.
      */
-    class DocraftLayoutTableHandler : public AbstractDocraftLayoutHandler<model::DocraftTable> {
+    class DOCRAFT_LIB DocraftLayoutTableHandler : public AbstractDocraftLayoutHandler<model::DocraftTable> {
     public:
         using AbstractDocraftLayoutHandler<model::DocraftTable>::AbstractDocraftLayoutHandler;
         /**

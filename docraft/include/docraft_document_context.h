@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include <memory>
 
 #include "docraft_cursor.h"
@@ -22,7 +24,7 @@ namespace docraft {
      * The context holds the active rendering backend, cached backend interfaces,
      * page metrics, section nodes, and the layout cursor used by the engine.
      */
-    class DocraftDocumentContext {
+    class DOCRAFT_LIB DocraftDocumentContext {
         public:
         /**
          * @brief Constructs a context with a default backend.

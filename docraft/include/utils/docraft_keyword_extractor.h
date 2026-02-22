@@ -1,5 +1,7 @@
 #pragma once
 
+#include "docraft_lib.h"
+
 #include <cstddef>
 #include <string>
 #include <unordered_set>
@@ -17,7 +19,7 @@ namespace docraft::utils {
      * Words are tokenized from text nodes, normalized to lowercase, filtered
      * by min length and stopwords, then ranked by descending frequency.
      */
-    class DocraftKeywordExtractor {
+    class DOCRAFT_LIB DocraftKeywordExtractor {
     public:
         struct Config {
             std::size_t max_keywords = 10;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "docraft_lib.h"
+
 #include <memory>
 
 namespace docraft::model {
@@ -9,7 +11,7 @@ namespace docraft::model {
      * @brief Interface for clonable Docraft nodes.
      * Nodes that implement this interface can be cloned, which is useful for templating and other operations that require copying nodes.
      */
-    class IDocraftClonable {
+    class DOCRAFT_LIB IDocraftClonable {
     public:
         virtual ~IDocraftClonable() = default;
         /**

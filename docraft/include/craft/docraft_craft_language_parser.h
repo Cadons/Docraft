@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include <pugixml.hpp>
 #include <string>
 
@@ -14,7 +16,7 @@ namespace docraft::craft {
      * Uses an XML parser (pugixml) and a registry of node parsers to
      * build the document tree.
      */
-    class DocraftCraftLanguageParser {
+    class DOCRAFT_LIB DocraftCraftLanguageParser {
     public:
         /**
          * @brief Constructs a parser and registers default node parsers.

@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include <string>
 
 namespace docraft {
@@ -45,7 +47,7 @@ namespace docraft {
     /**
      * @brief Color helper that supports named, RGB, and hex representations.
      */
-    class DocraftColor {
+    class DOCRAFT_LIB DocraftColor {
     public:
 
         /**

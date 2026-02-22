@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include "abstract_docraft_layout_handler.h"
 #include "model/docraft_layout.h"
 #include "model/docraft_node.h"
@@ -9,7 +11,7 @@ namespace docraft::layout::handler {
      *
      * Used when no specialized handler claims the node.
      */
-    class DocraftBasicLayoutHandler : public AbstractDocraftLayoutHandler<model::DocraftNode> {
+    class DOCRAFT_LIB DocraftBasicLayoutHandler : public AbstractDocraftLayoutHandler<model::DocraftNode> {
     public:
         using AbstractDocraftLayoutHandler::AbstractDocraftLayoutHandler;
 

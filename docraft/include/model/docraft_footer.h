@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include <memory>
 
 #include "docraft_document_context.h"
@@ -8,7 +10,7 @@ namespace docraft::model {
     /**
      * @brief Footer section of the document.
      */
-    class DocraftFooter : public DocraftSection {
+    class DOCRAFT_LIB DocraftFooter : public DocraftSection {
     public:
         /**
          * @brief Creates a footer section with default margins.

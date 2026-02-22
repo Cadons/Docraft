@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include "model/docraft_polygon.h"
 #include "renderer/painter/i_painter.h"
 
@@ -6,7 +8,7 @@ namespace docraft::renderer::painter {
     /**
      * @brief Painter that draws DocraftPolygon nodes.
      */
-    class DocraftPolygonPainter : public IPainter {
+    class DOCRAFT_LIB DocraftPolygonPainter : public IPainter {
     public:
         /**
          * @brief Creates a polygon painter bound to the polygon node.

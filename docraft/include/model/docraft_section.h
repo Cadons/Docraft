@@ -1,5 +1,7 @@
 #pragma once
 
+#include "docraft_lib.h"
+
 #include "docraft_rectangle.h"
 #include "model/docraft_children_container_node.h"
 
@@ -9,7 +11,7 @@ namespace docraft::model {
      *
      * Used as a base for header, body, and footer containers.
      */
-    class DocraftSection : public DocraftRectangle {
+    class DOCRAFT_LIB DocraftSection : public DocraftRectangle {
     public:
         using DocraftRectangle::DocraftRectangle;
         DocraftSection();

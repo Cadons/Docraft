@@ -7,6 +7,9 @@ project(DocCraft LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+option(BUILD_SHARED_LIB "Build docraft as a shared library" OFF)
+
 include(.cmake/utils.cmake)
 configure_build_folder(artifacts)
 #find packages
@@ -39,4 +42,3 @@ add_subdirectory(docraft) #configure docraft artifact
 include(CTest)
 enable_testing()
 add_subdirectory(docraft/test) #configure tests artifact in test
-

@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include "model/docraft_circle.h"
 #include "renderer/painter/i_painter.h"
 
@@ -6,7 +8,7 @@ namespace docraft::renderer::painter {
     /**
      * @brief Painter that draws DocraftCircle nodes.
      */
-    class DocraftCirclePainter : public IPainter {
+    class DOCRAFT_LIB DocraftCirclePainter : public IPainter {
     public:
         /**
          * @brief Creates a circle painter bound to the circle node.

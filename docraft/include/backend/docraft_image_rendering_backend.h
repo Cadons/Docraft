@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include <cstddef>
 #include <string>
 
@@ -6,7 +8,7 @@ namespace docraft::backend {
     /**
      * @brief Interface for image rendering backends used by Docraft.
      */
-    class IDocraftImageRenderingBackend {
+    class DOCRAFT_LIB IDocraftImageRenderingBackend {
     public:
         /**
          * @brief Virtual destructor.

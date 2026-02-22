@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include "model/docraft_rectangle.h"
 #include "renderer/painter/i_painter.h"
 
@@ -8,7 +10,7 @@ namespace docraft::renderer::painter {
      *
      * Renders background and border before child content.
      */
-    class DocraftRectanglePainter :public IPainter{
+    class DOCRAFT_LIB DocraftRectanglePainter :public IPainter{
     public:
         /**
          * @brief Creates a rectangle painter bound to the rectangle node.

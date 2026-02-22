@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include "model/docraft_circle.h"
 #include "model/docraft_image.h"
 #include "model/docraft_line.h"
@@ -14,7 +16,7 @@ namespace docraft::renderer {
      *
      * Dispatches each node type to the appropriate painter implementation.
      */
-    class DocraftPDFRenderer : public DocraftAbstractRenderer {
+    class DOCRAFT_LIB DocraftPDFRenderer : public DocraftAbstractRenderer {
     public:
         using DocraftAbstractRenderer::DocraftAbstractRenderer;
         /**

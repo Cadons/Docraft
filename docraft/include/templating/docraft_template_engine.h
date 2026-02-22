@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -15,7 +17,7 @@ namespace docraft::templating {
          * and generating the final document output. It takes a parsed document tree
          * and applies template logic to produce the rendered output.
          */
-        class DocraftTemplateEngine {
+        class DOCRAFT_LIB DocraftTemplateEngine {
         public:
                 DocraftTemplateEngine() = default;
                 /**

@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include <filesystem>
 #include <string>
 #include <unordered_map>
@@ -18,7 +20,7 @@ namespace docraft::utils {
      *
      * Stores raw font data so backends can register fonts without re-reading files.
      */
-    class DocraftFontRegistry {
+    class DOCRAFT_LIB DocraftFontRegistry {
     public:
         /**
          * @brief Returns the singleton instance.

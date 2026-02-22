@@ -1,5 +1,7 @@
 #pragma once
 
+#include "docraft_lib.h"
+
 #include <functional>
 
 #include "abstract_docraft_layout_handler.h"
@@ -11,7 +13,7 @@ namespace docraft::layout::handler {
      *
      * Computes marker positions and lays out list item content.
      */
-    class DocraftLayoutListHandler : public AbstractDocraftLayoutHandler<model::DocraftList> {
+    class DOCRAFT_LIB DocraftLayoutListHandler : public AbstractDocraftLayoutHandler<model::DocraftList> {
     public:
         using AbstractDocraftLayoutHandler<model::DocraftList>::AbstractDocraftLayoutHandler;
 

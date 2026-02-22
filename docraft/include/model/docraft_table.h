@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include <optional>
 #include "docraft_text.h"
 #include "docraft_color.h"
@@ -13,7 +15,7 @@ namespace docraft::model {
      * Supports horizontal or vertical models, with per-row/column weights
      * and title/content nodes stored separately.
      */
-    class DocraftTable : public DocraftNode, public IDocraftClonable {
+    class DOCRAFT_LIB DocraftTable : public DocraftNode, public IDocraftClonable {
     public:
         /**
          * @brief Creates an empty table.

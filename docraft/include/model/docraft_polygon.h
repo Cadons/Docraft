@@ -1,5 +1,7 @@
 #pragma once
 
+#include "docraft_lib.h"
+
 #include <vector>
 
 #include "docraft_color.h"
@@ -11,7 +13,7 @@ namespace docraft::model {
     /**
      * @brief Polygon node defined by a list of points.
      */
-    class DocraftPolygon : public DocraftNode, public IDocraftClonable {
+    class DOCRAFT_LIB DocraftPolygon : public DocraftNode, public IDocraftClonable {
     public:
         using DocraftNode::DocraftNode;
         /**

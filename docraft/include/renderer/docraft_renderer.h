@@ -1,4 +1,6 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include <memory>
 
 #include "model/docraft_blank_line.h"
@@ -18,7 +20,7 @@ namespace docraft::renderer {
      * Concrete renderers (e.g., PDF) implement each node type using painters
      * and the document context's rendering backend.
      */
-    class DocraftAbstractRenderer {
+    class DOCRAFT_LIB DocraftAbstractRenderer {
     public:
         /**
          * @brief Creates a renderer bound to a document context.

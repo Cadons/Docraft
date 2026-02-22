@@ -1,11 +1,13 @@
 #pragma once
+
+#include "docraft_lib.h"
 #include <string>
 
 namespace docraft::backend {
         /**
          * This is the interface for the PDF backend of Docraft.
          */
-        class IDocraftPDFBackend {
+        class DOCRAFT_LIB IDocraftPDFBackend {
         public:
                /**
                 * @brief Measures the width of text using the current font state.
