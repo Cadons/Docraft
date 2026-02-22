@@ -58,6 +58,7 @@ namespace docraft::craft {
         constexpr string kRow = "Row";
         constexpr string kCell = "Cell";
         constexpr string kTitle = "Title";
+        constexpr string kSubtitle = "Subtitle";
         constexpr string kHTitle = "HTitle";
         constexpr string kVTitle = "VTitle";
         constexpr string kLayout = "Layout";

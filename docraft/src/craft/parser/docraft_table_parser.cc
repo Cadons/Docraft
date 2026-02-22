@@ -144,7 +144,7 @@ namespace docraft::craft::parser {
                             elements::table_htitle::attribute::kBackgroundColor.data());
                         table_node->add_htitle_node(title_node, bg);
                     } else if (title.name() == std::string{elements::kTitle}) {
-                        throw std::invalid_argument("Title is only allowed for horizontal tables");
+                        throw std::invalid_argument("Title is reserved for text headings; use HTitle in table headers");
                     } else {
                         throw std::invalid_argument(std::string(title.name()) + " cannot be placed in a table header");
                     }
@@ -158,17 +158,17 @@ namespace docraft::craft::parser {
                 const int existing_cols = table_node->content_cols();
                 std::vector<std::string> titles;
                 for (auto title: table_header.children()) {
-                    if (title.name() == std::string{elements::kTitle}) {
+                    if (title.name() == std::string{elements::kHTitle}) {
                         col_number++;
                         auto title_node = parse_title_node(title);
                         const auto bg = parse_background_color(
                             title,
-                            elements::table_title::attribute::kBackgroundColor.data());
+                            elements::table_htitle::attribute::kBackgroundColor.data());
                         table_node->add_title_node(title_node, bg);
                         titles.emplace_back(title.child_value());
-                    } else if (title.name() == std::string{elements::kHTitle} ||
+                    } else if (title.name() == std::string{elements::kTitle} ||
                                title.name() == std::string{elements::kVTitle}) {
-                        throw std::invalid_argument("HTitle/VTitle are only allowed for vertical tables");
+                        throw std::invalid_argument("Use HTitle in table headers (VTitle is only for vertical row labels)");
                     } else {
                         throw std::invalid_argument(std::string(title.name()) + " cannot be placed in a table header");
                     }

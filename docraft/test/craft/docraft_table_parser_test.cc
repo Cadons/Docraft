@@ -14,8 +14,8 @@ TEST(DocraftTableParserTest, ParsesHorizontalTableWithBackgrounds) {
     const char *xml = R"XML(
 <Table TableTile="#CCCCCC">
   <THead>
-    <Title background_color="#FF0000">ColA</Title>
-    <Title>ColB</Title>
+    <HTitle background_color="#FF0000">ColA</HTitle>
+    <HTitle>ColB</HTitle>
   </THead>
   <TBody>
     <Row background_color="#00FF00">
@@ -66,6 +66,27 @@ TEST(DocraftTableParserTest, ParsesHorizontalTableWithBackgrounds) {
     EXPECT_NEAR(default_rgb.r, 0.8F, 0.01F);
     EXPECT_NEAR(default_rgb.g, 0.8F, 0.01F);
     EXPECT_NEAR(default_rgb.b, 0.8F, 0.01F);
+}
+
+TEST(DocraftTableParserTest, RejectsLegacyTitleTagInTableHeader) {
+    const char *xml = R"XML(
+<Table>
+  <THead>
+    <Title>ColA</Title>
+  </THead>
+  <TBody>
+    <Row>
+      <Cell><Text>v1</Text></Cell>
+    </Row>
+  </TBody>
+</Table>
+)XML";
+
+    pugi::xml_document doc;
+    ASSERT_TRUE(doc.load_string(xml));
+
+    docraft::craft::parser::DocraftTableParser parser;
+    EXPECT_THROW(parser.parse(doc.child("Table")), std::invalid_argument);
 }
 
 TEST(DocraftTableParserTest, ParsesVerticalTableWithHeaderRow) {

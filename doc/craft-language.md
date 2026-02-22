@@ -49,6 +49,8 @@ Notes:
 - `Body`
 - `Footer`
 - `Text`
+- `Title`
+- `Subtitle`
 - `PageNumber`
 - `Image`
 - `Table`
@@ -56,7 +58,6 @@ Notes:
 - `TBody`
 - `Row`
 - `Cell`
-- `Title`
 - `HTitle`
 - `VTitle`
 - `Layout`
@@ -161,7 +162,37 @@ Example:
 </Text>
 ```
 
-### 7.2 `PageNumber`
+### 7.2 `Title`
+
+`Title` is a predefined heading text node (h1-like).
+
+Default style:
+
+- `font_size=24`
+- `style=bold`
+
+All standard text attributes are supported and can override these defaults.
+
+```xml
+<Title>Main Heading</Title>
+```
+
+### 7.3 `Subtitle`
+
+`Subtitle` is a predefined heading text node (h2-like).
+
+Default style:
+
+- `font_size=18`
+- `style=bold`
+
+All standard text attributes are supported and can override these defaults.
+
+```xml
+<Subtitle>Section Heading</Subtitle>
+```
+
+### 7.4 `PageNumber`
 
 `PageNumber` supports the same style/alignment attributes as `Text`.
 
@@ -282,15 +313,15 @@ Mutual exclusivity:
 Requirements:
 
 - `<THead>` is mandatory.
-- `<THead>` must contain `<Title>` children.
+- `<THead>` must contain `<HTitle>` children.
 
 Example:
 
 ```xml
 <Table TableTile="#EEEEEE">
   <THead>
-    <Title background_color="#DDDDDD">Name</Title>
-    <Title background_color="#DDDDDD">Value</Title>
+    <HTitle background_color="#DDDDDD">Name</HTitle>
+    <HTitle background_color="#DDDDDD">Value</HTitle>
   </THead>
   <TBody>
     <Row>
@@ -349,7 +380,7 @@ Example:
 - Cell content supports `Text` or `Image` as first child.
 - Extra children in the same cell are not validated and should be avoided.
 
-Title styling attributes (`Title`, `HTitle`, `VTitle`):
+Title styling attributes (`HTitle`, `VTitle`):
 
 - `alignment`: `left`, `center`, `right`, `justified`
 - `style`: `normal`, `bold`, `italic`, `bold_italic`
