@@ -4,9 +4,11 @@
 #include <functional>
 
 #include "docraft_document_context.h"
+#include "docraft_document_metadata.h"
 #include "model/docraft_node.h"
 #include "model/docraft_settings.h"
 #include "templating/docraft_template_engine.h"
+#include "utils/docraft_keyword_extractor.h"
 
 namespace docraft {
     enum class DocraftDomTraverseOp {
@@ -77,6 +79,47 @@ namespace docraft {
          */
         std::shared_ptr<model::DocraftSettings> settings() const;
 
+        /**
+         * @brief Sets document metadata values.
+         * @param metadata Metadata values supported by libharu.
+         */
+        void set_document_metadata(const DocraftDocumentMetadata &metadata);
+
+        /**
+         * @brief Returns current document metadata values.
+         * @return Metadata object.
+         */
+        [[nodiscard]] const DocraftDocumentMetadata &document_metadata() const;
+
+        /**
+         * @brief Enables or disables automatic keyword extraction for metadata.
+         * @param enabled true to enable, false to disable.
+         */
+        void enable_auto_keywords(bool enabled = true);
+
+        /**
+         * @brief Returns whether automatic keyword extraction is enabled.
+         */
+        [[nodiscard]] bool auto_keywords_enabled() const;
+
+        /**
+         * @brief Sets configuration for automatic keyword extraction.
+         * @param config Extractor configuration.
+         */
+        void set_auto_keywords_config(const utils::DocraftKeywordExtractor::Config &config);
+
+        /**
+         * @brief Returns the current automatic keyword extraction configuration.
+         */
+        [[nodiscard]] const utils::DocraftKeywordExtractor::Config &auto_keywords_config() const;
+
+        /**
+         * @brief Extracts keywords from the current document and merges them into metadata.
+         *
+         * No-op when auto-keyword extraction is disabled.
+         */
+        void refresh_auto_keywords();
+
         void set_document_template_engine(const std::shared_ptr<templating::DocraftTemplateEngine> &template_engine);
 
         std::shared_ptr<templating::DocraftTemplateEngine> document_template_engine() const;
@@ -121,9 +164,13 @@ namespace docraft {
         void traverse_node(
             const std::shared_ptr<model::DocraftNode> &node,
             const std::function<void(const std::shared_ptr<model::DocraftNode> &, DocraftDomTraverseOp)> &callback) const;
-        std::shared_ptr<DocraftDocumentContext> pdf_context_;
+        std::shared_ptr<DocraftDocumentContext> context_;
         std::shared_ptr<model::DocraftSettings> settings_;
         std::string document_title_;
+        DocraftDocumentMetadata metadata_;
+        bool auto_keywords_enabled_ = false;
+        utils::DocraftKeywordExtractor::Config auto_keywords_config_{};
+
         std::vector<std::shared_ptr<model::DocraftNode> > dom_;
         std::shared_ptr<templating::DocraftTemplateEngine> template_engine_;
     };

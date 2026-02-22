@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "backend/docraft_rendering_backend.h"
+#include "docraft_document_metadata.h"
 #include "model/docraft_position.h"
 
 namespace docraft::backend::pdf {
@@ -179,6 +180,7 @@ namespace docraft::backend::pdf {
 #pragma region backend lifecycle
 
 		void save_to_file(const std::string& path) const override;
+		[[nodiscard]] std::string file_extension() const override;
 		/**
 		 * @brief Registers a TTF font and returns the internal name.
 		 */
@@ -191,6 +193,10 @@ namespace docraft::backend::pdf {
 		 * @brief Sets the current font and size.
 		 */
 		void set_font(const std::string& internal_name, float size, const char* encoder) const override;
+		/**
+		 * @brief Applies document metadata to the PDF info dictionary.
+		 */
+		void set_document_metadata(const DocraftDocumentMetadata &metadata) override;
 #pragma endregion
 #pragma region page management
 /**

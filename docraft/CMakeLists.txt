@@ -188,9 +188,11 @@ set(DOCRAFT_SOURCES src/main.cpp
         src/utils/docraft_logger.cc
         src/utils/docraft_base64.cc
         src/utils/docraft_font_resolver.cc
+        src/utils/docraft_keyword_extractor.cc
         src/utils/docraft_font_registry.cc
         include/utils/docraft_logger.h
         include/utils/docraft_base64.h
+        include/utils/docraft_keyword_extractor.h
         include/model/docraft_position.h
         src/model/docraft_position.cc
         src/backend/pdf/docraft_haru_backend.cc

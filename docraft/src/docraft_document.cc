@@ -1,15 +1,15 @@
-//
-// Created by Matteo on 28/12/25.
-//
-
 #include "docraft_document.h"
 
 #include <algorithm>
+#include <cctype>
+#include <optional>
 #include <iostream>
 #include <ostream>
 #include <list>
 #include <sstream>
 #include <filesystem>
+#include <string_view>
+#include <unordered_set>
 
 #include "layout/docraft_layout_engine.h"
 #include "layout/handler/docraft_layout_handler.h"
@@ -19,6 +19,94 @@
 
 namespace docraft {
     namespace {
+        std::string trim_copy(std::string_view source) {
+            std::size_t start = 0;
+            std::size_t end = source.size();
+            while (start < end && std::isspace(static_cast<unsigned char>(source[start]))) {
+                ++start;
+            }
+            while (end > start && std::isspace(static_cast<unsigned char>(source[end - 1]))) {
+                --end;
+            }
+            return std::string(source.substr(start, end - start));
+        }
+
+        std::vector<std::string> split_keywords(const std::string &value) {
+            std::vector<std::string> keywords;
+            std::string current;
+            for (const char ch: value) {
+                if (ch == ',' || ch == ';') {
+                    const std::string candidate = trim_copy(current);
+                    if (!candidate.empty()) {
+                        keywords.push_back(candidate);
+                    }
+                    current.clear();
+                } else {
+                    current.push_back(ch);
+                }
+            }
+            const std::string candidate = trim_copy(current);
+            if (!candidate.empty()) {
+                keywords.push_back(candidate);
+            }
+            return keywords;
+        }
+
+        std::string normalize_token(const std::string &token) {
+            std::string normalized = trim_copy(token);
+            for (char &ch: normalized) {
+                ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
+            }
+            return normalized;
+        }
+
+        std::string merge_keywords(const std::optional<std::string> &existing_keywords,
+                                   const std::vector<std::string> &generated_keywords) {
+            std::vector<std::string> merged;
+            std::unordered_set<std::string> seen;
+
+            if (existing_keywords && !existing_keywords->empty()) {
+                for (const std::string &candidate: split_keywords(*existing_keywords)) {
+                    const std::string normalized = normalize_token(candidate);
+                    if (normalized.empty()) {
+                        continue;
+                    }
+                    if (seen.insert(normalized).second) {
+                        merged.push_back(candidate);
+                    }
+                }
+            }
+
+            for (const std::string &generated: generated_keywords) {
+                const std::string normalized = normalize_token(generated);
+                if (normalized.empty()) {
+                    continue;
+                }
+                if (seen.insert(normalized).second) {
+                    merged.push_back(generated);
+                }
+            }
+
+            std::string result;
+            for (std::size_t i = 0; i < merged.size(); ++i) {
+                if (i > 0) {
+                    result += ", ";
+                }
+                result += merged[i];
+            }
+            return result;
+        }
+
+        std::string with_extension(const std::string &base_name, const std::string &extension) {
+            if (extension.empty()) {
+                return base_name;
+            }
+            if (extension.front() == '.') {
+                return base_name + extension;
+            }
+            return base_name + "." + extension;
+        }
+
         void apply_page_format_settings(const std::shared_ptr<model::DocraftSettings> &settings,
                                         const std::shared_ptr<DocraftDocumentContext> &context) {
             if (!settings || !context) {
@@ -80,6 +168,7 @@ namespace docraft {
     } // namespace
 
     DocraftDocument::DocraftDocument(std::string document_title) : document_title_(std::move(document_title)) {
+        metadata_.set_title(document_title_);
     }
 
     void DocraftDocument::add_node(const std::shared_ptr<model::DocraftNode> &node) {
@@ -90,8 +179,8 @@ namespace docraft {
     }
 
     void DocraftDocument::configure_document_settings() {
-        apply_page_format_settings(settings_, pdf_context_);
-        apply_section_ratio_settings(settings_, pdf_context_);
+        apply_page_format_settings(settings_, context_);
+        apply_section_ratio_settings(settings_, context_);
         apply_font_settings(settings_);
     }
 
@@ -103,9 +192,9 @@ namespace docraft {
     }
 
     void DocraftDocument::render() {
-        pdf_context_ = std::make_shared<DocraftDocumentContext>();
-        pdf_context_->set_renderer(std::make_shared<renderer::DocraftPDFRenderer>(pdf_context_));
-        pdf_context_->set_font_applier(std::make_shared<generic::DocraftFontApplier>(pdf_context_));
+        context_ = std::make_shared<DocraftDocumentContext>();
+        context_->set_renderer(std::make_shared<renderer::DocraftPDFRenderer>(context_));
+        context_->set_font_applier(std::make_shared<generic::DocraftFontApplier>(context_));
         LOG_DEBUG("Rendering document: " + document_title_);
 
         //Load settings
@@ -114,13 +203,14 @@ namespace docraft {
         //replace template variables in the DOM
         //TODO: here if there is a foreach template engine must add to the defined structure the same node with different data
         template_document();
+        refresh_auto_keywords();
 
         // Layout phase
-        layout::DocraftLayoutEngine layout_engine(pdf_context_);
+        layout::DocraftLayoutEngine layout_engine(context_);
         layout_engine.compute_document_layout(dom_);
 
         // Rendering phase
-        const auto &page_backend = pdf_context_->page_backend();
+        const auto &page_backend = context_->page_backend();
         if (page_backend) {
             page_backend->go_to_first_page();
         }
@@ -134,24 +224,27 @@ namespace docraft {
                 if (node->page_owner() == -1 && page_backend) {
                     for (std::size_t i = 0; i < page_count; ++i) {
                         page_backend->go_to_page(i);
-                        node->draw(pdf_context_);
+                        node->draw(context_);
                     }
                 } else {
                     if (page_backend && node->page_owner() > 0) {
                         page_backend->go_to_page(static_cast<std::size_t>(node->page_owner() - 1));
                     }
-                    if (node->should_render(pdf_context_)) {
-                        node->draw(pdf_context_);
+                    if (node->should_render(context_)) {
+                        node->draw(context_);
                     }
                 }
             }
         }
 
-        pdf_context_->rendering_backend()->save_to_file(document_title_ + ".pdf");
+        context_->rendering_backend()->set_document_metadata(metadata_);
+        context_->rendering_backend()->save_to_file(
+            with_extension(document_title_, context_->rendering_backend()->file_extension()));
     }
 
     void DocraftDocument::set_document_title(const std::string &document_title) {
         document_title_ = document_title;
+        metadata_.set_title(document_title);
     }
 
     std::string DocraftDocument::document_title() {
@@ -164,6 +257,50 @@ namespace docraft {
 
     std::shared_ptr<model::DocraftSettings> DocraftDocument::settings() const {
         return settings_;
+    }
+
+    void DocraftDocument::set_document_metadata(const DocraftDocumentMetadata &metadata) {
+        metadata_ = metadata;
+        if (metadata_.title().has_value()) {
+            document_title_ = metadata_.title().value();
+        } else {
+            metadata_.set_title(document_title_);
+        }
+    }
+
+    const DocraftDocumentMetadata &DocraftDocument::document_metadata() const {
+        return metadata_;
+    }
+
+    void DocraftDocument::enable_auto_keywords(bool enabled) {
+        auto_keywords_enabled_ = enabled;
+    }
+
+    bool DocraftDocument::auto_keywords_enabled() const {
+        return auto_keywords_enabled_;
+    }
+
+    void DocraftDocument::set_auto_keywords_config(const utils::DocraftKeywordExtractor::Config &config) {
+        auto_keywords_config_ = config;
+    }
+
+    const utils::DocraftKeywordExtractor::Config &DocraftDocument::auto_keywords_config() const {
+        return auto_keywords_config_;
+    }
+
+    void DocraftDocument::refresh_auto_keywords() {
+        if (!auto_keywords_enabled_) {
+            return;
+        }
+        utils::DocraftKeywordExtractor extractor(auto_keywords_config_);
+        const std::vector<std::string> extracted_keywords = extractor.extract(*this);
+        if (extracted_keywords.empty()) {
+            return;
+        }
+
+        DocraftDocumentMetadata metadata = metadata_;
+        metadata.set_keywords(merge_keywords(metadata.keywords(), extracted_keywords));
+        set_document_metadata(metadata);
     }
 
     void DocraftDocument::set_document_template_engine(

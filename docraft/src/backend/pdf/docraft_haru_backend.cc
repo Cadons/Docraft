@@ -1,6 +1,7 @@
 #include "backend/pdf/docraft_haru_backend.h"
 
 #include <iostream>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <unordered_map>
@@ -173,6 +174,51 @@ namespace docraft::backend::pdf {
                 default:
                     return HPDF_PAGE_PORTRAIT;
             }
+        }
+
+        void throw_if_hpdf_error(HPDF_STATUS status, const std::string &operation) {
+            if (status == HPDF_OK) {
+                return;
+            }
+            std::ostringstream stream;
+            stream << operation << " (HPDF status 0x" << std::hex << status << ")";
+            throw std::runtime_error(stream.str());
+        }
+
+        HPDF_Date to_hpdf_date(const DocraftDocumentMetadata::DateTime &date) {
+            return HPDF_Date{
+                .year = date.year,
+                .month = date.month,
+                .day = date.day,
+                .hour = date.hour,
+                .minutes = date.minutes,
+                .seconds = date.seconds,
+                .ind = date.ind,
+                .off_hour = date.off_hour,
+                .off_minutes = date.off_minutes
+            };
+        }
+
+        void set_info_attr_if_present(HPDF_Doc pdf,
+                                      HPDF_InfoType type,
+                                      const std::optional<std::string> &value,
+                                      const std::string &field_name) {
+            if (!value || value->empty()) {
+                return;
+            }
+            const HPDF_STATUS status = HPDF_SetInfoAttr(pdf, type, value->c_str());
+            throw_if_hpdf_error(status, "Failed to set PDF metadata '" + field_name + "'");
+        }
+
+        void set_info_date_attr_if_present(HPDF_Doc pdf,
+                                           HPDF_InfoType type,
+                                           const std::optional<DocraftDocumentMetadata::DateTime> &value,
+                                           const std::string &field_name) {
+            if (!value) {
+                return;
+            }
+            const HPDF_STATUS status = HPDF_SetInfoDateAttr(pdf, type, to_hpdf_date(*value));
+            throw_if_hpdf_error(status, "Failed to set PDF metadata '" + field_name + "'");
         }
     } // namespace
 
@@ -420,6 +466,10 @@ namespace docraft::backend::pdf {
         HPDF_SaveToFile(pdf_, path.c_str());
     }
 
+    std::string DocraftHaruBackend::file_extension() const {
+        return ".pdf";
+    }
+
     const char* DocraftHaruBackend::register_ttf_font_from_file(
         const std::string& path,
         bool embed) const {
@@ -446,6 +496,19 @@ namespace docraft::backend::pdf {
             throw std::runtime_error("Failed to resolve font: " + internal_name);
         }
         HPDF_Page_SetFontAndSize(pages_[internal_current_page_index()], font, size);
+    }
+
+    void DocraftHaruBackend::set_document_metadata(const DocraftDocumentMetadata &metadata) {
+        set_info_date_attr_if_present(pdf_, HPDF_INFO_CREATION_DATE, metadata.creation_date(), "creation_date");
+        set_info_date_attr_if_present(pdf_, HPDF_INFO_MOD_DATE, metadata.modification_date(), "modification_date");
+        set_info_attr_if_present(pdf_, HPDF_INFO_AUTHOR, metadata.author(), "author");
+        set_info_attr_if_present(pdf_, HPDF_INFO_CREATOR, metadata.creator(), "creator");
+        set_info_attr_if_present(pdf_, HPDF_INFO_PRODUCER, metadata.producer(), "producer");
+        set_info_attr_if_present(pdf_, HPDF_INFO_TITLE, metadata.title(), "title");
+        set_info_attr_if_present(pdf_, HPDF_INFO_SUBJECT, metadata.subject(), "subject");
+        set_info_attr_if_present(pdf_, HPDF_INFO_KEYWORDS, metadata.keywords(), "keywords");
+        set_info_attr_if_present(pdf_, HPDF_INFO_TRAPPED, metadata.trapped(), "trapped");
+        set_info_attr_if_present(pdf_, HPDF_INFO_GTS_PDFX, metadata.gts_pdfx(), "gts_pdfx");
     }
 
     void DocraftHaruBackend::apply_alpha_state() const {
