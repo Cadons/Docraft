@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 
+#include "model/docraft_clone_utils.h"
 #include "renderer/docraft_renderer.h"
 
 namespace docraft::model {
@@ -49,6 +50,16 @@ namespace docraft::model {
             context->renderer()->render_text(marker_text);
         }
         draw_children(context);
+    }
+
+    std::shared_ptr<DocraftNode> DocraftList::clone() const {
+        auto copy = std::make_shared<DocraftList>(*this);
+        copy->clear_children();
+        for (const auto &child : children()) {
+            copy->add_child(clone_node(child));
+        }
+        copy->update_items();
+        return copy;
     }
 
     ListKind DocraftList::kind() const {

@@ -21,7 +21,8 @@ namespace docraft::model {
           weight_(node.weight_),
           position_mode_(node.position_mode_),
           page_owner_(node.page_owner_),
-          z_index_(node.z_index_) {
+          z_index_(node.z_index_),
+          visible_(node.visible_) {
     }
 
     DocraftNode::DocraftNode(const DocraftNode *node) : id_(next_id_++),

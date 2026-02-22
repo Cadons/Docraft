@@ -25,5 +25,10 @@ namespace docraft::model {
          * @param context Document context.
          */
         void draw(const std::shared_ptr<DocraftDocumentContext>& context) override;
+        /**
+         * @brief Clones the page number node and its line children.
+         * @return Shared pointer to the cloned node.
+         */
+        std::shared_ptr<DocraftNode> clone() const override;
     };
 } // docraft::model

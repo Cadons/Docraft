@@ -2,6 +2,7 @@
 #include <vector>
 
 #include "model/docraft_node.h"
+#include "model/i_docraft_clonable.h"
 
 namespace docraft::model {
         /**
@@ -17,7 +18,7 @@ namespace docraft::model {
          *
          * Images can be loaded from file or provided as raw pixel data.
          */
-        class DocraftImage : public DocraftNode {
+        class DocraftImage : public DocraftNode, public IDocraftClonable {
         public:
                 /**
                  * @brief Creates an empty image node.
@@ -34,6 +35,11 @@ namespace docraft::model {
                  * @param context Document context.
                  */
                 void draw(const std::shared_ptr<DocraftDocumentContext> &context) override;
+                /**
+                 * @brief Clones the image node.
+                 * @return Shared pointer to the cloned node.
+                 */
+                std::shared_ptr<DocraftNode> clone() const override;
                 /**
                  * @brief Sets the image file path.
                  * @param path Image file path.

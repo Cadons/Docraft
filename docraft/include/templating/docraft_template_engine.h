@@ -3,6 +3,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <nlohmann/json.hpp>
 
 namespace docraft::model {
     class DocraftNode;
@@ -114,8 +115,19 @@ namespace docraft::templating {
 
         private:
                 static std::string normalize_name(const std::string &name);
-                void template_node(const std::shared_ptr<model::DocraftNode> &node);
-                std::string render_template_string(const std::string &text);
+                void template_node(const std::shared_ptr<model::DocraftNode> &node,
+                                   const nlohmann::json *foreach_item = nullptr);
+                /**
+                 * @brief Renders a template string by replacing template variables with their values.
+                 * @note input data = ${data("field_name")), json cannot have multiple levels of nested,
+                 * @param text Template string to render.
+                 * @return Rendered string with template variables replaced.
+                 */
+                std::string render_template_string_foreach_item(const std::string &text,
+                                                                const nlohmann::json &item);
+
+                std::string render_template_string(const std::string &text,
+                                                   const nlohmann::json *foreach_item = nullptr);
                 std::unordered_map<std::string, std::string> template_variables_;
                 std::unordered_map<std::string, RawImageData> image_data_;
         };

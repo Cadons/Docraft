@@ -40,4 +40,8 @@ namespace docraft::model {
     float DocraftPolygon::border_width() const {
         return border_width_;
     }
+
+    std::shared_ptr<DocraftNode> DocraftPolygon::clone() const {
+        return std::make_shared<DocraftPolygon>(*this);
+    }
 } // docraft::model

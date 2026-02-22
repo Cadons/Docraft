@@ -6,6 +6,7 @@
 #include "docraft_children_container_node.h"
 #include "docraft_color.h"
 #include "docraft_node.h"
+#include "model/i_docraft_clonable.h"
 
 namespace docraft::model {
     /**
@@ -31,7 +32,7 @@ namespace docraft::model {
      *
      * Text nodes can generate internal line children for wrapping/justification.
      */
-    class DocraftText : public DocraftChildrenContainerNode {
+    class DocraftText : public DocraftChildrenContainerNode, public IDocraftClonable {
     public:
         using DocraftChildrenContainerNode::DocraftChildrenContainerNode;
         /**
@@ -50,6 +51,11 @@ namespace docraft::model {
          * @param context Document context.
          */
         void draw(const std::shared_ptr<DocraftDocumentContext>& context) override;
+        /**
+         * @brief Clones the text node and its line children.
+         * @return Shared pointer to the cloned node.
+         */
+        std::shared_ptr<DocraftNode> clone() const override;
 
         //getter
         /**

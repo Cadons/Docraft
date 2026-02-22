@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "model/docraft_children_container_node.h"
+#include "model/i_docraft_clonable.h"
 #include "model/docraft_text.h"
 
 namespace docraft::model {
@@ -39,7 +40,7 @@ namespace docraft::model {
      *
      * Markers are computed from the list style and stored for layout and rendering.
      */
-    class DocraftList : public DocraftChildrenContainerNode {
+    class DocraftList : public DocraftChildrenContainerNode, public IDocraftClonable {
     public:
         using DocraftChildrenContainerNode::DocraftChildrenContainerNode;
         DocraftList(const DocraftList& node) = default;
@@ -50,6 +51,11 @@ namespace docraft::model {
          * @param context Document context.
          */
         void draw(const std::shared_ptr<DocraftDocumentContext> &context) override;
+        /**
+         * @brief Clones the list node and its children.
+         * @return Shared pointer to the cloned node.
+         */
+        std::shared_ptr<DocraftNode> clone() const override;
 
         /**
          * @brief Returns the list kind.

@@ -15,5 +15,10 @@ namespace docraft::model {
          */
         DocraftFooter();
         ~DocraftFooter() override = default;
+        /**
+         * @brief Clones the footer node and its children.
+         * @return Shared pointer to the cloned node.
+         */
+        std::shared_ptr<DocraftNode> clone() const override;
     };
 } // docraft

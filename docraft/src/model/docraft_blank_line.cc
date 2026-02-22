@@ -11,4 +11,8 @@ namespace docraft::model {
         // std::cout << "Drawing an empty line at position (" << x() << ", " << y() << ")\n";
 
     }
+
+    std::shared_ptr<DocraftNode> DocraftBlankLine::clone() const {
+        return std::make_shared<DocraftBlankLine>(*this);
+    }
 } // docraft

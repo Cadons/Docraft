@@ -61,6 +61,9 @@ endfunction()
 set(DOCRAFT_SOURCES src/main.cpp
         src/model/docraft_node.cc
         include/model/docraft_node.h
+        src/model/docraft_clone_utils.cc
+        include/model/docraft_clone_utils.h
+        include/model/i_docraft_clonable.h
         src/model/docraft_section.cc
         include/model/docraft_section.h
         src/model/docraft_body.cc
@@ -69,6 +72,8 @@ set(DOCRAFT_SOURCES src/main.cpp
         include/model/docraft_text.h
         src/model/docraft_page_number.cc
         include/model/docraft_page_number.h
+        src/model/docraft_new_page.cc
+        include/model/docraft_new_page.h
         src/docraft_document.cc
         include/docraft_document.h
         src/docraft_document_context.cc
@@ -166,6 +171,7 @@ set(DOCRAFT_SOURCES src/main.cpp
         src/craft/parser/docraft_layout_parser.cc
         src/craft/parser/docraft_list_parser.cc
         src/craft/parser/docraft_blank_line_parser.cc
+        src/craft/parser/docraft_new_page_parser.cc
         src/craft/parser/docraft_circle_parser.cc
         src/craft/parser/docraft_triangle_parser.cc
         src/craft/parser/docraft_line_parser.cc
@@ -194,6 +200,9 @@ set(DOCRAFT_SOURCES src/main.cpp
         include/model/docraft_page_format.h
         src/templating/docraft_template_engine.cc
         include/templating/docraft_template_engine.h
+        src/model/docraft_foreach.cc
+        include/model/docraft_foreach.h
+        src/craft/parser/docraft_foreach_parser.cc
 )
 add_library(docraft_lib STATIC
         ${DOCRAFT_SOURCES}

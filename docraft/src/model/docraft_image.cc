@@ -89,4 +89,8 @@ namespace docraft::model {
     bool DocraftImage::has_raw_data() const {
         return has_raw_data_;
     }
+
+    std::shared_ptr<DocraftNode> DocraftImage::clone() const {
+        return std::make_shared<DocraftImage>(*this);
+    }
 } // docraft

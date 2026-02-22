@@ -1,5 +1,6 @@
 #pragma once
 #include "docraft_children_container_node.h"
+#include "model/i_docraft_clonable.h"
 #include "docraft_node.h"
 
 namespace docraft::model {
@@ -16,7 +17,7 @@ namespace docraft::model {
      *
      * Children can be weighted to control how available space is distributed.
      */
-    class DocraftLayout : public DocraftChildrenContainerNode {
+    class DocraftLayout : public DocraftChildrenContainerNode, public IDocraftClonable {
     public:
         using DocraftChildrenContainerNode::DocraftChildrenContainerNode;
         DocraftLayout(const DocraftLayout& node) = default;
@@ -41,6 +42,11 @@ namespace docraft::model {
          * @param context Document context.
          */
         void draw(const std::shared_ptr<DocraftDocumentContext> &context) override;
+        /**
+         * @brief Clones the layout node and its children.
+         * @return Shared pointer to the cloned node.
+         */
+        std::shared_ptr<DocraftNode> clone() const override;
         /**
          * @brief Sets the layout weight for a child at the given index.
          * @param index Child index.

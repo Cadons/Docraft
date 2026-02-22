@@ -1,5 +1,6 @@
 #include "model/docraft_section.h"
 
+#include "model/docraft_clone_utils.h"
 #include "renderer/docraft_renderer.h"
 
 namespace docraft::model {
@@ -49,5 +50,14 @@ namespace docraft::model {
     }
     void DocraftSection::set_margin_right(float margin_right) {
         margin_right_ = margin_right;
+    }
+
+    std::shared_ptr<DocraftNode> DocraftSection::clone() const {
+        auto copy = std::make_shared<DocraftSection>(*this);
+        copy->clear_children();
+        for (const auto &child : children()) {
+            copy->add_child(clone_node(child));
+        }
+        return copy;
     }
 } // Docraft

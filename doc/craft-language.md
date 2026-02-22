@@ -1,28 +1,30 @@
 # DocCraft `.craft` Language Specification
 
-This document describes the `.craft` XML grammar implemented by the DocCraft parser (current codebase). It is intentionally technical and mirrors parser behavior and validation rules.
+This document describes the XML grammar currently implemented by the DocCraft parser in this repository.
+It is intentionally implementation-oriented and focuses on what the parser actually accepts and enforces.
 
-## 1. Conformance and Parsing Model
+## 1. Parsing Model
 
-- `.craft` is XML (parsed with `pugixml`).
-- Tag and attribute names are **case-sensitive**. Use exact spellings.
-- Unknown tags or invalid attribute values throw parsing errors.
-- The parser constructs a document tree of model nodes (text, layout, table, shapes, etc.).
+- `.craft` files are XML parsed with `pugixml`.
+- Tag names and attribute names are case-sensitive.
+- Unknown tags in parsed subtrees raise an error (`No parser registered for node: ...`).
+- Unknown attributes are currently ignored (unless a known attribute value is invalid).
+- Attribute values are parsed with `pugixml` conversions (`as_float`, `as_bool`, etc.).
 
 ## 2. Required Structure
 
-A valid `.craft` file must contain:
+The parser expects:
 
-- Exactly one root `<Document>` element.
-- A `<Body>` element inside `<Document>`.
+- root tag: `<Document>`
+- required section: `<Body>`
 
-Optional elements inside `<Document>`:
+Optional top-level sections:
 
 - `<Settings>`
 - `<Header>`
 - `<Footer>`
 
-### Skeleton
+Canonical skeleton:
 
 ```xml
 <Document>
@@ -33,228 +35,256 @@ Optional elements inside `<Document>`:
 </Document>
 ```
 
-## 3. Global Node Attributes (All Elements)
+Notes:
 
-These attributes are recognized on most nodes (including sections, text, layout, tables, shapes, etc.).
+- Tag casing must match exactly (`<Document>`, not `<document>`).
+- The loader reads the first matching top-level section for each known tag.
+- Unknown top-level tags are ignored unless they are inside a parsed subtree.
 
-| Attribute          | Type   | Values / Notes                                                                  |
-|--------------------|--------|---------------------------------------------------------------------------------|
-| `name`             | string | Optional identifier for template reference.                                     |
-| `x`                | float  | Top-left X position (points).                                                   |
-| `y`                | float  | Top-left Y position (points).                                                   |
-| `width`            | float  | Width in points.                                                                |
-| `height`           | float  | Height in points.                                                               |
-| `auto_fill_width`  | bool   | `true` or `false`.                                                              |
-| `auto_fill_height` | bool   | `true` or `false`.                                                              |
-| `padding`          | float  | Padding in points.                                                              |
-| `weight`           | float  | Used by `Layout` to distribute space.                                           |
-| `position`         | string | `block` or `absolute`.                                                          |
-| `z_index`          | int    | Render order among siblings in the same container (higher draws on top).        |
-| `visible`          | bool   | `true` or `false` enable or disable the item and his children, default **true** |
+## 3. Supported Tags (Canonical Names)
 
-### Positioning
+- `Document`
+- `Settings`
+- `Header`
+- `Body`
+- `Footer`
+- `Text`
+- `PageNumber`
+- `Image`
+- `Table`
+- `THead`
+- `TBody`
+- `Row`
+- `Cell`
+- `Title`
+- `HTitle`
+- `VTitle`
+- `Layout`
+- `Blank`
+- `NewPage`
+- `List`
+- `UList`
+- `Rectangle`
+- `Circle`
+- `Triangle`
+- `Line`
+- `Polygon`
+- `Foreach`
 
-- `position="block"` (default): participates in layout flow.
-- `position="absolute"`: uses explicit `x`/`y` without flow.
+`Foreach` is parsed with uppercase `F` in XML.
 
-## 4. Colors
+## 4. Common Node Attributes
 
-Color attributes accept either:
+Most nodes call the shared attribute configurator and accept:
 
-- Named colors: `black`, `white`, `red`, `green`, `blue`, `yellow`, `magenta`, `cyan`, `purple`
-- Hex: `#RRGGBB` or `#RRGGBBAA`
-
-Invalid color names or hex strings raise an error.
-
-## 5. Sections
-
-### `<Header>`, `<Body>`, `<Footer>`
-
-Sections are rectangle-like nodes with optional margins and borders.
-Header and footer are optional. If a section is omitted or not visible, its ratio is added to the body, so the body expands to fill the page.
-
-#### Section Attributes
-
-| Attribute       | Type  | Notes |
-|----------------|-------|-------|
-| `margin_top`    | float | Margin above section. |
-| `margin_bottom` | float | Margin below section. |
-| `margin_left`   | float | Left margin. |
-| `margin_right`  | float | Right margin. |
-
-#### Rectangle Attributes (also valid on sections)
-
-| Attribute           | Type  | Notes |
-|--------------------|-------|-------|
-| `background_color` | color | Fill color. |
-| `border_color`     | color | Border color. |
-| `border_width`     | float | Border width. |
-
-#### Example
-
-```xml
-<Body margin_left="16" margin_right="16" margin_top="12" margin_bottom="10"
-      background_color="#FFFFFF" border_color="#DDDDDD" border_width="1">
-  <Text>Body content</Text>
-</Body>
-```
-
-## 6. Layout Containers
-
-### `<Layout>`
-
-Arranges child elements along one axis.
-
-| Attribute     | Type   | Values |
-|--------------|--------|--------|
-| `orientation`| string | `horizontal` or `vertical` |
-
-Children can include any supported node. `weight` on child nodes controls proportional sizing.
-
-```xml
-<Layout orientation="horizontal">
-  <Layout orientation="vertical" weight="0.7">
-    <Text>Left</Text>
-  </Layout>
-  <Layout orientation="vertical" weight="0.3">
-    <Text alignment="right">Right</Text>
-  </Layout>
-</Layout>
-```
-
-## 7. Text
-
-### `<Text>`
-
-Text nodes render inline content with style and alignment.
-
-| Attribute   | Type   | Values |
-|------------|--------|--------|
-| `font_size`| float  | Font size in points. |
-| `font_name`| string | Font family name. |
-| `color`    | color  | Text color. |
-| `style`    | string | `normal`, `bold`, `italic`, `bold_italic` |
-| `alignment`| string | `left`, `center`, `right`, `justified` |
-| `underline`| bool   | `true` or `false` |
+| Attribute | Type | Notes |
+| --- | --- | --- |
+| `name` | string | Optional logical identifier. |
+| `x` | float | Position x. If `x`/`y` is set and `position` is omitted, node becomes absolute. |
+| `y` | float | Position y. |
+| `width` | float | Width in points. |
+| `height` | float | Height in points. |
+| `auto_fill_width` | bool | `true` / `false`. |
+| `auto_fill_height` | bool | `true` / `false`. |
+| `padding` | float | Padding in points. |
+| `weight` | float | Must be `> 0` and `<= 1`. |
+| `position` | string | `block` or `absolute`. |
+| `z_index` | int | Rendering order among siblings. |
+| `visible` | bool | Defaults to `true`. |
 
 Notes:
-- `<Text>` is a leaf node. Do not nest other `<Text>` tags inside it.
-- Mixed inline tags may render unpredictably or partially.
-- For structured inline content, split into multiple `<Text>` nodes inside a `<Layout>` and position them using layout rules.
+
+- `id` exists as a token name but is not consumed by current parsers.
+- Invalid `position` or invalid `weight` raises an exception.
+
+## 5. Colors
+
+Color attributes accept:
+
+- named colors: `black`, `white`, `red`, `green`, `blue`, `yellow`, `magenta`, `cyan`, `purple`
+- hex: `#RRGGBB` or `#RRGGBBAA`
+
+Invalid color strings raise `invalid_argument`.
+
+## 6. Sections: `Header`, `Body`, `Footer`
+
+Sections are rectangle-like containers with margins.
+
+Section-specific attributes:
+
+| Attribute | Type | Notes |
+| --- | --- | --- |
+| `margin_top` | float | Top margin. |
+| `margin_bottom` | float | Bottom margin. |
+| `margin_left` | float | Left margin. |
+| `margin_right` | float | Right margin. |
+
+Rectangle attributes also apply:
+
+| Attribute | Type | Notes |
+| --- | --- | --- |
+| `background_color` | color | Fill. |
+| `border_color` | color | Stroke color. |
+| `border_width` | float | Stroke width. |
+
+Important behavior:
+
+- Header and Footer are optional.
+- If Header/Footer is missing or `visible="false"`, their configured ratio is added to Body during layout.
+
+## 7. Text Nodes
+
+### 7.1 `Text`
+
+Attributes:
+
+| Attribute | Type | Values |
+| --- | --- | --- |
+| `font_size` | float | Font size in points. |
+| `font_name` | string | Font family name. |
+| `color` | color | Text color. |
+| `style` | string | `normal`, `bold`, `italic`, `bold_italic` |
+| `alignment` | string | `left`, `center`, `right`, `justified` |
+| `underline` | bool | `true` / `false` |
+
+Notes:
+
+- Text content is taken from `child_value()`.
+- Leading/trailing whitespace is trimmed by the model.
+- Nested element tags inside `Text` are technically parsed but not a supported authoring pattern.
+
+Example:
 
 ```xml
-<Text font_name="OpenSans" font_size="12" color="black" style="bold" alignment="left">
+<Text font_name="OpenSans" font_size="12" style="bold" color="#111111">
   Hello DocCraft
 </Text>
 ```
 
-### `<PageNumber>`
+### 7.2 `PageNumber`
 
-Renders the current page number. Supports the same styling attributes as `<Text>`.
-
-```xml
-<PageNumber font_name="Helvetica" font_size="9" alignment="right" />
-```
-
-## 8. Images
-
-### `<Image>`
-
-| Attribute     | Type   | Notes |
-|--------------|--------|-------|
-| `src`        | string | Path to image file (PNG/JPEG). |
-| `data`       | string | Raw image source. Either a template id or inline base64. |
-| `data_width` | int    | Required when `data` is base64. Pixel width. |
-| `data_height`| int    | Required when `data` is base64. Pixel height. |
+`PageNumber` supports the same style/alignment attributes as `Text`.
 
 ```xml
-<Image src="images/logo.png" width="120" height="40" />
+<PageNumber font_size="9" alignment="right" />
 ```
 
-#### Raw image data via template id
+## 8. Layout and Flow Helpers
 
-You can inject raw RGB bytes in the template engine and reference them with `data="image_id"`.
-Raw data must be **RGB 24-bit** (3 bytes per pixel), row-major.
+### 8.1 `Layout`
 
-```xml
-<Image data="hero_image" width="200" height="120" />
-```
+Attribute:
 
-#### Inline base64
-
-Inline base64 is supported with either:
-- `data="base64:..."`
-- `data="data:application/octet-stream;base64,..."`
-
-`data_width` and `data_height` are **pixel** dimensions and must be present.
-The decoded size must be exactly `data_width * data_height * 3` bytes (RGB).
-
-```xml
-<Image data="base64:AAAA////" data_width="2" data_height="1" width="40" height="20" />
-```
+| Attribute | Type | Values |
+| --- | --- | --- |
+| `orientation` | string | `horizontal` or `vertical` |
 
 Notes:
-- `data` cannot be combined with `src`.
-- If both `src` and `data` are provided, parsing fails.
 
-## 9. Blank Spacers
+- Always set `orientation`. Current model does not define a safe default.
+- Child `weight` controls width distribution in horizontal layouts.
 
-### `<Blank>`
+### 8.2 `Blank`
 
-A vertical spacer. Typically used with `height`.
+A spacer node, typically used with `height`.
 
 ```xml
 <Blank height="8" />
 ```
 
-## 10. Lists
+### 8.3 `NewPage`
 
-Lists are containers whose children **must be `<Text>`**. Other child tags cause errors.
-
-### `<List>` (Ordered)
-
-| Attribute | Type   | Values |
-|----------|--------|--------|
-| `style`  | string | `number` or `roman` |
-
-### `<UList>` (Unordered)
-
-| Attribute | Type   | Values |
-|----------|--------|--------|
-| `dot`    | string | `-`, `*`, `circle`, `box` |
+Manual page break marker used by body pagination logic.
 
 ```xml
-<List style="roman">
-  <Text>First item</Text>
-  <Text>Second item</Text>
-</List>
+<NewPage />
+```
 
-<UList dot="*">
-  <Text>Alpha</Text>
-  <Text>Beta</Text>
-</UList>
+## 9. Lists
+
+### 9.1 `List` (ordered)
+
+| Attribute | Type | Values |
+| --- | --- | --- |
+| `style` | string | `number` or `roman` |
+
+### 9.2 `UList` (unordered)
+
+| Attribute | Type | Values |
+| --- | --- | --- |
+| `dot` | string | `-`, `*`, `circle`, `box` |
+
+Rules:
+
+- Children must be exactly `<Text>` nodes.
+- Any other child tag causes a parse error.
+
+Defaults:
+
+- `List`: ordered style `number`
+- `UList`: dot style `circle`
+
+## 10. Images
+
+### 10.1 `Image`
+
+| Attribute | Type | Notes |
+| --- | --- | --- |
+| `src` | string | File path (PNG/JPEG typically). |
+| `data` | string | Raw source reference or inline base64 payload. |
+| `data_width` | int | Required for base64 payloads. |
+| `data_height` | int | Required for base64 payloads. |
+
+Rules:
+
+- `src` and `data` are mutually exclusive.
+- Base64 is detected when `data` starts with `base64:` or contains `base64,`.
+- For base64 payloads, decoded byte length must be `data_width * data_height * 3` (RGB24).
+- If `data` is not base64, it is treated as a raw image id for templating.
+
+Examples:
+
+```xml
+<Image src="images/logo.png" width="120" height="40" />
+<Image data="base64:AAAA////" data_width="2" data_height="1" width="40" height="20" />
+<Image data="hero_image" width="200" height="120" />
 ```
 
 ## 11. Tables
 
-### `<Table>`
+### 11.1 `Table` attributes
 
-| Attribute        | Type  | Values / Notes |
-|-----------------|-------|----------------|
-| `model`         | string| `horizontal`, `vertical`, or a JSON matrix of strings (rows only) |
-| `header`        | json  | JSON array of strings for column titles (horizontal only). |
-| `baseline_offset` | float | Baseline tweak. |
-| `TableTile`     | color | Default cell background. |
+| Attribute | Type | Notes |
+| --- | --- | --- |
+| `model` | string | `horizontal`, `vertical`, JSON matrix, or template placeholder. |
+| `header` | string | JSON array, or template placeholder for header titles. |
+| `baseline_offset` | float | Text baseline tweak. Default is `0.25`. |
+| `TableTile` | color | Default content-cell background. |
 
-Tables consist of `<THead>` and `<TBody>`.
-If `model` is a JSON matrix, `<TBody>` must be omitted. Titles can be provided via `<THead>` or `header`.
+`model` behavior:
 
-### 11.1 Horizontal Table
+- `horizontal` / `vertical`: sets orientation
+- JSON matrix: loads table body rows (horizontal only)
+- `${...}`: deferred JSON matrix resolved by template engine
+
+`header` behavior:
+
+- JSON array of strings or `${...}` deferred value
+- not allowed together with explicit `<THead>`
+
+Mutual exclusivity:
+
+- If `model`/`header` is JSON/template driven, `<TBody>` is not allowed.
+- JSON/template table data is not allowed with vertical orientation.
+
+### 11.2 Horizontal table (explicit XML mode)
 
 Requirements:
 
-- `<THead>` is **required**.
-- `<THead>` must contain one or more `<Title>` elements.
+- `<THead>` is mandatory.
+- `<THead>` must contain `<Title>` children.
+
+Example:
 
 ```xml
 <Table TableTile="#EEEEEE">
@@ -271,40 +301,40 @@ Requirements:
 </Table>
 ```
 
-#### 11.1.1 JSON Model (Horizontal)
+### 11.3 Horizontal table (JSON/template mode)
 
-The `model` attribute accepts a JSON matrix of strings representing **rows only**, e.g.
+Examples:
 
 ```xml
 <Table model='[["v1","v2"],["v3","v4"]]' header='["H1","H2"]' />
+<Table model='${rows_json}' header='${header_json}' />
 ```
 
 Rules:
 
-- The JSON must be a non-empty array of non-empty arrays of strings.
-- All rows must have the same number of columns.
-- `model="vertical"` is not supported with JSON data.
-- Column titles can be provided via:
-  - Static `<THead><Title>...</Title></THead>`
-  - Or `header='["H1","H2"]'` (JSON array of strings).
+- matrix must be non-empty, rectangular, and string-only.
+- header array must be non-empty and string-only.
+- header size must match model columns.
 
-### 11.2 Vertical Table
+### 11.4 Vertical table
 
 Requirements:
 
-- `model="vertical"`
-- Each `<Row>` must contain **exactly one** `<VTitle>`.
-- `<THead>` (with `<HTitle>`) is optional.
+- set `model="vertical"`
+- each `<Row>` must contain exactly one `<VTitle>`
+- optional `<THead>` can contain `<HTitle>` nodes
+
+Example:
 
 ```xml
 <Table model="vertical">
   <THead>
-    <HTitle background_color="#EEEEEE">Q1</HTitle>
-    <HTitle background_color="#EEEEEE">Q2</HTitle>
+    <HTitle>Q1</HTitle>
+    <HTitle>Q2</HTitle>
   </THead>
   <TBody>
     <Row>
-      <VTitle background_color="#DDDDDD">Revenue</VTitle>
+      <VTitle>Revenue</VTitle>
       <Cell><Text>100</Text></Cell>
       <Cell><Text>120</Text></Cell>
     </Row>
@@ -312,98 +342,98 @@ Requirements:
 </Table>
 ```
 
-### 11.3 Table Child Rules
+### 11.5 Table child rules
 
-- `<Row>` may specify `background_color`.
-- `<Cell>` may specify `background_color` or `TableTile`.
-- A `<Cell>` may contain a **single** child of type `<Text>` or `<Image>`.
-- `<Title>`, `<HTitle>`, `<VTitle>` text supports:
-  - `alignment`: `left`, `center`, `right`, `justified`
-  - `style`: `normal`, `bold`, `italic`, `bold_italic`
-  - `color`
-  - `background_color` (varies by title type)
+- `<Row>` may use `background_color`.
+- `<Cell>` may use `background_color` or `TableTile`.
+- Cell content supports `Text` or `Image` as first child.
+- Extra children in the same cell are not validated and should be avoided.
+
+Title styling attributes (`Title`, `HTitle`, `VTitle`):
+
+- `alignment`: `left`, `center`, `right`, `justified`
+- `style`: `normal`, `bold`, `italic`, `bold_italic`
+- `color`
+- `background_color`
 
 ## 12. Shapes
 
-### `<Rectangle>`
+### 12.1 `Rectangle`
 
-| Attribute           | Type  | Notes |
-|--------------------|-------|-------|
-| `background_color` | color | Fill color. |
-| `border_color`     | color | Border color. |
-| `border_width`     | float | Border width. |
+Attributes:
 
-Notes:
-- `<Rectangle>` is a block container that can have children.
-- If `width` or `height` are not set, the rectangle expands to fit its children.
-- When `auto_fill_width="true"` and `width` is unset, it expands to the available layout width.
-- Children are laid out from the rectangle’s top-left corner.
+- `background_color`
+- `border_color`
+- `border_width`
 
-### `<Circle>`
+`Rectangle` is a container and can have children.
 
-Same attributes as `<Rectangle>`.
+### 12.2 `Circle`
 
-### `<Triangle>`
+Same visual attributes as `Rectangle`.
 
-| Attribute           | Type  | Notes |
-|--------------------|-------|-------|
-| `points`           | string| Format: `x1,y1 x2,y2 x3,y3` (exactly 3 points). |
-| `background_color` | color | Fill color. |
-| `border_color`     | color | Border color. |
-| `border_width`     | float | Border width. |
+### 12.3 `Line`
 
-### `<Polygon>`
+Attributes:
 
-| Attribute           | Type  | Notes |
-|--------------------|-------|-------|
-| `points`           | string| Format: `x1,y1 x2,y2 x3,y3 ...` |
-| `background_color` | color | Fill color. |
-| `border_color`     | color | Border color. |
-| `border_width`     | float | Border width. |
+- `x1`, `y1`, `x2`, `y2`
+- `border_color`
+- `border_width`
 
-### `<Line>`
+### 12.4 `Triangle`
 
-| Attribute       | Type  | Notes |
-|----------------|-------|-------|
-| `x1`, `y1`      | float | Start point. |
-| `x2`, `y2`      | float | End point. |
-| `border_color`  | color | Line color. |
-| `border_width`  | float | Line width. |
+Attributes:
 
-#### Example
+- `points` format: `x1,y1 x2,y2 x3,y3`
+- `background_color`
+- `border_color`
+- `border_width`
 
-```xml
-<Rectangle x="10" y="20" width="100" height="50"
-           background_color="#F0F0F0" border_color="#333333" border_width="1" />
+Rule:
 
-<Line x1="0" y1="0" x2="100" y2="0" border_color="black" border_width="2" />
+- if `points` is provided, it must contain exactly 3 points.
 
-<Triangle points="0,0 40,0 20,30" background_color="red" />
+### 12.5 `Polygon`
 
-<Polygon points="0,0 40,0 40,40 0,40" background_color="#FFFFFF" border_color="#000000" border_width="0.5" />
-```
+Attributes:
+
+- `points` format: `x1,y1 x2,y2 x3,y3 ...`
+- `background_color`
+- `border_color`
+- `border_width`
+
+Point parsing notes:
+
+- points are split by spaces, each token must be `x,y`.
+- malformed tokens raise parse errors.
 
 ## 13. Settings and Fonts
 
-### `<Settings>`
+### 13.1 `Settings` attributes
 
-Used to register external fonts and configure page format.
-
-Settings Attributes:
-
-| Attribute          | Type   | Values / Notes |
-|-------------------|--------|----------------|
-| `page_size`        | string | `A4`, `A3`, `A5`, `Letter`, `Legal` |
+| Attribute | Type | Accepted values |
+| --- | --- | --- |
+| `page_size` | string | `A3`, `a3`, `A4`, `a4`, `A5`, `a5`, `Letter`, `letter`, `Legal`, `legal` |
 | `page_orientation` | string | `portrait`, `landscape` |
-| `header_ratio`     | float  | Fraction of page height reserved for header. |
-| `body_ratio`       | float  | Fraction of page height reserved for body. |
-| `footer_ratio`     | float  | Fraction of page height reserved for footer. |
+| `header_ratio` | float | non-negative |
+| `body_ratio` | float | non-negative |
+| `footer_ratio` | float | non-negative |
+
+Rules:
+
+- if only `page_orientation` is provided, page size defaults to `A4`.
+- if any ratio is provided, missing ones default to `0.06 / 0.88 / 0.06`.
+- ratio sum must be `<= 1.0`.
+
+### 13.2 Fonts in settings
+
+`Settings` may contain `Fonts`, with `Font` entries:
 
 ```xml
-<Settings page_size="A4" page_orientation="landscape" header_ratio="0.06" body_ratio="0.88" footer_ratio="0.06">
+<Settings page_size="A4" page_orientation="portrait">
   <Fonts>
     <Font name="OpenSans">
-      <FontNormal src="OpenSans.ttf" />
+      <FontNormal src="OpenSans-Regular.ttf" />
       <FontBold src="OpenSans-Bold.ttf" />
       <FontItalic src="OpenSans-Italic.ttf" />
       <FontBoldItalic src="OpenSans-BoldItalic.ttf" />
@@ -414,98 +444,115 @@ Settings Attributes:
 
 Rules:
 
-- `<Font>` **must** include a `name` attribute.
-- `<FontNormal>`, `<FontBold>`, `<FontItalic>`, `<FontBoldItalic>` are optional.
-- Each font variant uses `src` to specify the file path.
-- If `<Header>` or `<Footer>` is missing or not visible, its ratio is added to the body, so the body uses the remaining page height.
+- `Font` requires `name`.
+- `FontNormal`, `FontBold`, `FontItalic`, `FontBoldItalic` are optional.
+- each variant uses `src`.
 
-## 14. Complete Example
+## 14. Templating and `Foreach`
+
+DocCraft templating is handled by `DocraftTemplateEngine` before layout/render.
+
+### 14.1 Variable replacement
+
+General placeholder format:
+
+- `${variable_name}`
+
+Used in:
+
+- `Text` content
+- `Image src` / raw image id
+- `Table model` and `Table header` when template strings are used
+- other string fields processed by the template engine
+
+### 14.2 `Foreach`
+
+`Foreach` requires attribute:
+
+- `model`: JSON array string or placeholder that resolves to a JSON array
+
+Example:
+
+```xml
+<Foreach model='${employees}'>
+  <Text>${data("name")}</Text>
+  <Text>${data("role")}</Text>
+</Foreach>
+```
+
+Rules:
+
+- `Foreach` without `model` raises an error.
+- Child nodes are stored as template nodes and expanded at template phase.
+- `data("field")` (or single-quoted variant) reads fields from current foreach item.
+- non-string field values are rendered as JSON text.
+
+Single-quoted JSON in `model` is normalized by the parser before evaluation.
+
+## 15. Validation Summary
+
+Guaranteed parser validations:
+
+- `<Document>` root must exist.
+- `<Body>` must exist.
+- unknown child tags in parsed node trees are rejected.
+- invalid enum-like values (`style`, `alignment`, `orientation`, `position`, list options) are rejected.
+- invalid colors are rejected.
+- list children must be `Text`.
+- `Image` cannot use both `src` and `data`.
+- base64 image payloads must match RGB byte size.
+- table structural constraints (as documented above) are enforced.
+- `Foreach` requires `model`.
+
+Important non-validations:
+
+- unknown attributes are generally ignored.
+- `Layout` without `orientation` is not rejected by parser; always set it explicitly.
+
+## 16. Full Example
 
 ```xml
 <Document>
-  <Settings>
+  <Settings page_size="A4" page_orientation="portrait" header_ratio="0.08" body_ratio="0.84" footer_ratio="0.08">
     <Fonts>
       <Font name="OpenSans">
-        <FontNormal src="OpenSans.ttf" />
+        <FontNormal src="OpenSans-Regular.ttf" />
         <FontBold src="OpenSans-Bold.ttf" />
       </Font>
     </Fonts>
   </Settings>
 
-  <Header margin_left="16" margin_right="16" background_color="#F2F4F7" border_color="#2B2B2B" border_width="1">
+  <Header margin_left="16" margin_right="16" background_color="#F2F4F7">
     <Layout orientation="horizontal">
       <Layout orientation="vertical" weight="0.7">
-        <Text font_name="OpenSans" font_size="14" color="#111111">Monthly Report</Text>
-        <Text font_name="OpenSans" font_size="10" color="#555555">Summary</Text>
+        <Text font_name="OpenSans" font_size="14" style="bold">Monthly Report</Text>
+        <Text font_name="OpenSans" font_size="10">Summary</Text>
       </Layout>
       <Layout orientation="vertical" weight="0.3">
-        <Text font_name="OpenSans" font_size="10" color="#111111" alignment="right">Date: 2026-02-15</Text>
-        <Text font_name="OpenSans" font_size="10" color="#111111" alignment="right">ID: REP-2026-0215</Text>
+        <PageNumber font_name="OpenSans" font_size="9" alignment="right" />
       </Layout>
     </Layout>
-    <Blank height="4" />
   </Header>
 
-  <Body margin_left="16" margin_right="16" margin_top="12" margin_bottom="10">
-    <Text font_name="OpenSans" font_size="11" color="#111111">Summary Table</Text>
-    <Table>
-      <THead>
-        <Title background_color="#E6E6E6">Field</Title>
-        <Title background_color="#E6E6E6">Value</Title>
-      </THead>
-      <TBody>
-        <Row background_color="#F9F9F9">
-          <Cell><Text font_name="OpenSans" font_size="10">Alpha</Text></Cell>
-          <Cell><Text font_name="OpenSans" font_size="10">12.4</Text></Cell>
-        </Row>
-        <Row>
-          <Cell><Text font_name="OpenSans" font_size="10">Beta</Text></Cell>
-          <Cell><Text font_name="OpenSans" font_size="10">7.9</Text></Cell>
-        </Row>
-      </TBody>
-    </Table>
+  <Body margin_left="16" margin_right="16" margin_top="8">
+    <Text>Summary Table</Text>
+    <Table model='${summary_rows}' header='${summary_header}' />
+    <Blank height="10" />
 
-    <Blank height="8" />
-
-    <Text font_name="OpenSans" font_size="11" color="#111111">Items</Text>
-    <UList dot="*">
+    <UList dot="circle">
       <Text>First item</Text>
       <Text>Second item</Text>
     </UList>
+
+    <NewPage />
+
+    <Foreach model='${employees}'>
+      <Text>${data("name")} - ${data("role")}</Text>
+    </Foreach>
   </Body>
 
-  <Footer margin_left="16" margin_right="16" background_color="#F2F4F7" border_color="#2B2B2B" border_width="1">
-    <Blank height="4" />
-    <Text font_name="OpenSans" font_size="9" color="#333333">Footer text</Text>
-    <Blank height="4" />
+  <Footer margin_left="16" margin_right="16" background_color="#F2F4F7">
+    <Text font_size="9" alignment="center">Confidential</Text>
   </Footer>
 </Document>
 ```
-
-## 15. Application Domains
-
-The `.craft` format is designed for structured documents and simple graphics composition. Common applications:
-
-- Generated reports and dashboards
-- Invoices, receipts, and billing documents
-- Certificates and badges
-- Medical and lab reports
-- Logistics paperwork (packing slips, manifests)
-- Compliance and audit documents
-- Educational worksheets
-- Light diagramming and annotation (via shapes + layout)
-
-## 16. Validation Summary
-
-The parser enforces the following constraints:
-
-- `<Document>` root is required.
-- `<Body>` is required.
-- Unknown tags are rejected.
-- `<List>` / `<UList>` children must be `<Text>`.
-- `<Triangle>` must contain exactly 3 points in `points`.
-- Horizontal `<Table>` requires `<THead>` and `<Title>` columns.
-- Vertical `<Table>` requires one `<VTitle>` per `<Row>`.
-- `<Cell>` supports only a single `<Text>` or `<Image>` child.
-
-Violations result in parsing exceptions.

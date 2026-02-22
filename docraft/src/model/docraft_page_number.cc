@@ -1,8 +1,10 @@
 #include "model/docraft_page_number.h"
 
 #include <string>
+#include <stdexcept>
 
 #include "backend/docraft_page_rendering_backend.h"
+#include "model/docraft_clone_utils.h"
 #include "renderer/docraft_renderer.h"
 
 namespace docraft::model {
@@ -25,5 +27,19 @@ namespace docraft::model {
     void DocraftPageNumber::draw(const std::shared_ptr<DocraftDocumentContext>& context) {
         update_text_from_context(context);
         context->renderer()->render_text(*this);
+    }
+
+    std::shared_ptr<DocraftNode> DocraftPageNumber::clone() const {
+        auto copy = std::make_shared<DocraftPageNumber>(*this);
+        copy->clear_lines();
+        for (const auto &child : children()) {
+            auto cloned_child = clone_node(child);
+            auto text_child = std::dynamic_pointer_cast<DocraftText>(cloned_child);
+            if (!text_child) {
+                throw std::runtime_error("Page number line child does not clone to DocraftText");
+            }
+            copy->add_line(text_child);
+        }
+        return copy;
     }
 } // docraft::model

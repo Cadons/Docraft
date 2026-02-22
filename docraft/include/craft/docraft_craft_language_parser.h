@@ -41,18 +41,18 @@ namespace docraft::craft {
          */
         std::shared_ptr<DocraftDocument> get_document() const;
 
-    private:
-        /**
-         * @brief Constructs the document from the parsed XML.
-         */
-        void load_document();
-
         /**
          * @brief Parses a single XML node into a Docraft node.
          * @param xml_node XML node.
          * @return Parsed Docraft node.
          */
         std::shared_ptr<model::DocraftNode> parse_node(const pugi::xml_node &xml_node);
+
+    private:
+        /**
+         * @brief Constructs the document from the parsed XML.
+         */
+        void load_document();
 
         /**
          * @brief Debug function to print the XML node structure

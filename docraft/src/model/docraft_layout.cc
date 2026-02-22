@@ -5,6 +5,7 @@
 #include <ostream>
 #include <utility>
 
+#include "model/docraft_clone_utils.h"
 #include "utils/docraft_logger.h"
 
 namespace docraft::model {
@@ -23,6 +24,15 @@ namespace docraft::model {
     void DocraftLayout::draw(const std::shared_ptr<DocraftDocumentContext> &context) {
         LOG_DEBUG("Drawing layout with orientation: " + std::string(orientation_ == LayoutOrientation::kVertical ? "Vertical" : "Horizontal"));
         draw_children(context);
+    }
+
+    std::shared_ptr<DocraftNode> DocraftLayout::clone() const {
+        auto copy = std::make_shared<DocraftLayout>(*this);
+        copy->clear_children();
+        for (const auto &child : children()) {
+            copy->add_child(clone_node(child));
+        }
+        return copy;
     }
 
      std::vector<float> DocraftLayout::weights() const {

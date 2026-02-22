@@ -50,4 +50,8 @@ namespace docraft {
             direction_stack_.pop();
         }
     }
+
+    void DocraftCursor::reset_direction() {
+        direction_stack_ = std::stack<DocraftCursorDirection>();
+    }
 } // docraft

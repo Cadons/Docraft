@@ -5,12 +5,13 @@
 #include "docraft_color.h"
 #include "docraft_node.h"
 #include "model/docraft_position.h"
+#include "model/i_docraft_clonable.h"
 
 namespace docraft::model {
     /**
      * @brief Triangle node defined by three points.
      */
-    class DocraftTriangle : public DocraftNode {
+    class DocraftTriangle : public DocraftNode, public IDocraftClonable {
     public:
         using DocraftNode::DocraftNode;
         /**
@@ -18,6 +19,11 @@ namespace docraft::model {
          * @param context Document context.
          */
         void draw(const std::shared_ptr<DocraftDocumentContext> &context) override;
+        /**
+         * @brief Clones the triangle node.
+         * @return Shared pointer to the cloned node.
+         */
+        std::shared_ptr<DocraftNode> clone() const override;
         /**
          * @brief Sets the triangle points (local coordinates).
          * @param points Points vector (size must be 3).

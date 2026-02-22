@@ -13,6 +13,8 @@
 #include "model/docraft_footer.h"
 #include "model/docraft_children_container_node.h"
 #include "model/docraft_list.h"
+#include "model/docraft_foreach.h"
+#include "model/docraft_new_page.h"
 #include "utils/docraft_logger.h"
 
 namespace docraft::craft {
@@ -20,6 +22,7 @@ namespace docraft::craft {
 DocraftCraftLanguageParser::DocraftCraftLanguageParser() {
     // Register parsers for different node types
     parsers_[tag_formatter(elements::kSettings.data())] = std::make_unique<parser::DocraftSettingsParser>(); // settings should be parsed before any other node, so it is registered first
+    parsers_[tag_formatter(elements::templating::kForeach.data())] = std::make_unique<parser::DocraftForeachParser>(this);
     parsers_[tag_formatter(section::kHeader.data())] = std::make_unique<parser::DocraftHeaderParser>();
     parsers_[tag_formatter(section::kBody.data())] = std::make_unique<parser::DocraftBodyParser>();
     parsers_[tag_formatter(section::kFooter.data())] = std::make_unique<parser::DocraftFooterParser>();
@@ -31,6 +34,7 @@ DocraftCraftLanguageParser::DocraftCraftLanguageParser() {
     parsers_[tag_formatter(elements::kUList.data())] = std::make_unique<parser::DocraftUListParser>();
     parsers_[tag_formatter(elements::kLayout.data())] = std::make_unique<parser::DocraftLayoutParser>();
     parsers_[tag_formatter(elements::kBlankLine.data())] = std::make_unique<parser::DocraftBlackLineParser>();
+    parsers_[tag_formatter(elements::kNewPage.data())] = std::make_unique<parser::DocraftNewPageParser>();
     parsers_[tag_formatter(elements::kRectangle.data())] = std::make_unique<parser::DocraftRectangleParser>();
     parsers_[tag_formatter(elements::kCircle.data())] = std::make_unique<parser::DocraftCircleParser>();
     parsers_[tag_formatter(elements::kTriangle.data())] = std::make_unique<parser::DocraftTriangleParser>();
@@ -107,6 +111,10 @@ std::shared_ptr<model::DocraftNode> DocraftCraftLanguageParser::parse_node(const
     }
 
     auto result = it->second->parse(xml_node);
+    if (std::dynamic_pointer_cast<model::DocraftForeach>(result)) {
+        // Foreach parser already captures template nodes; don't add them as children.
+        return result;
+    }
     if (auto parent = std::dynamic_pointer_cast<model::DocraftChildrenContainerNode>(result)) {
         // if the node can have children parse them
         for (pugi::xml_node child: xml_node.children()) {

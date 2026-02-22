@@ -40,4 +40,8 @@ namespace docraft::model {
     float DocraftLine::border_width() const {
         return border_width_;
     }
+
+    std::shared_ptr<DocraftNode> DocraftLine::clone() const {
+        return std::make_shared<DocraftLine>(*this);
+    }
 } // docraft::model

@@ -9,6 +9,10 @@
 #include "model/docraft_section.h"
 
 namespace docraft::layout {
+    namespace handler {
+        class DocraftLayoutListHandler;
+    }
+
     using Handlers = std::vector<std::unique_ptr<generic::DocraftChainOfResponsibilityHandler<model::DocraftNode, model::DocraftTransform>>>;
     /**
      * @brief Computes layout boxes for document nodes using a chain of handlers.
@@ -61,6 +65,20 @@ namespace docraft::layout {
         static model::DocraftTransform compute_max_rect(const std::vector<model::DocraftTransform>& boxes) ;
 
     private:
+        struct Sections {
+            std::shared_ptr<model::DocraftHeader> header;
+            std::shared_ptr<model::DocraftBody> body;
+            std::shared_ptr<model::DocraftFooter> footer;
+        };
+        struct SectionPlan {
+            bool header_to_render = false;
+            bool body_to_render = false;
+            bool footer_to_render = false;
+            float header_ratio = 0.0F;
+            float body_ratio = 0.0F;
+            float footer_ratio = 0.0F;
+        };
+
         /**
          * @brief Configures the handler chain for the current context.
          */
@@ -72,6 +90,7 @@ namespace docraft::layout {
         const float kFooterHeightRatio_ = 0.06F;
         const float kVerticalSpacing_ = 4.0F;
         const float kHorizontalSpacing_ = 4.0F;
+        handler::DocraftLayoutListHandler* list_handler_ = nullptr;
 
         /**
          * @brief Execute the correct handler to compute the layout for the given node.
@@ -93,5 +112,14 @@ namespace docraft::layout {
          * @param page Page number (1-based).
          */
         void assign_page_owner_recursive(const std::shared_ptr<model::DocraftNode>& node, int page) const;
+        Sections split_sections(const std::vector<std::shared_ptr<model::DocraftNode>>& nodes) const;
+        SectionPlan build_section_plan(const Sections& sections) const;
+        void layout_header_section(const std::shared_ptr<model::DocraftHeader>& header, float header_ratio);
+        void layout_body_section(const std::shared_ptr<model::DocraftBody>& body,
+                                 const std::shared_ptr<model::DocraftHeader>& header,
+                                 const SectionPlan& plan);
+        void layout_footer_section(const std::shared_ptr<model::DocraftFooter>& footer,
+                                   const std::shared_ptr<model::DocraftBody>& body,
+                                   const SectionPlan& plan);
     };
 } // layout

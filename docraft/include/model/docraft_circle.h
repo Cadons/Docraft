@@ -2,12 +2,13 @@
 
 #include "docraft_color.h"
 #include "docraft_node.h"
+#include "model/i_docraft_clonable.h"
 
 namespace docraft::model {
     /**
      * @brief Circle node with background and border styling.
      */
-    class DocraftCircle : public DocraftNode {
+    class DocraftCircle : public DocraftNode, public IDocraftClonable {
     public:
         using DocraftNode::DocraftNode;
         /**
@@ -15,6 +16,11 @@ namespace docraft::model {
          * @param context Document context.
          */
         void draw(const std::shared_ptr<DocraftDocumentContext> &context) override;
+        /**
+         * @brief Clones the circle node.
+         * @return Shared pointer to the cloned node.
+         */
+        std::shared_ptr<DocraftNode> clone() const override;
         /**
          * @brief Sets the background color.
          * @param color Background color.

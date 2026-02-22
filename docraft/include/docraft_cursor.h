@@ -81,6 +81,10 @@ namespace docraft {
          * @brief Pops the current direction, restoring the previous one.
          */
         void pop_direction();
+        /**
+         * @brief Clears all direction hints, restoring default vertical flow.
+         */
+        void reset_direction();
 
         /**
          * @brief Moves the cursor to the specified coordinates.

@@ -1,6 +1,7 @@
 #pragma once
 #include "docraft_children_container_node.h"
 #include "docraft_color.h"
+#include "model/i_docraft_clonable.h"
 #include "docraft_node.h"
 
 namespace docraft::model {
@@ -9,7 +10,7 @@ namespace docraft::model {
      *
      * Often used as a container to draw a box behind its children.
      */
-    class DocraftRectangle : public DocraftChildrenContainerNode {
+    class DocraftRectangle : public DocraftChildrenContainerNode, public IDocraftClonable {
     public:
         using DocraftChildrenContainerNode::DocraftChildrenContainerNode;
         /**
@@ -17,6 +18,11 @@ namespace docraft::model {
          * @param context Document context.
          */
         void draw(const std::shared_ptr<DocraftDocumentContext> &context) override;
+        /**
+         * @brief Clones the rectangle node and its children.
+         * @return Shared pointer to the cloned node.
+         */
+        std::shared_ptr<DocraftNode> clone() const override;
         /**
          * @brief Sets the background color.
          * @param color Background color.
