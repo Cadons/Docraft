@@ -4,6 +4,7 @@
 #include "docraft_color.h"
 #include "model/docraft_children_container_node.h"
 #include "model/docraft_layout.h"
+#include "model/i_docraft_clonable.h"
 
 namespace docraft::model {
     /**
@@ -12,7 +13,7 @@ namespace docraft::model {
      * Supports horizontal or vertical models, with per-row/column weights
      * and title/content nodes stored separately.
      */
-    class DocraftTable : public DocraftNode {
+    class DocraftTable : public DocraftNode, public IDocraftClonable {
     public:
         /**
          * @brief Creates an empty table.
@@ -26,6 +27,11 @@ namespace docraft::model {
          * @param context Document context.
          */
         void draw(const std::shared_ptr<DocraftDocumentContext> &context) override;
+        /**
+         * @brief Clones the table node and its content.
+         * @return Shared pointer to the cloned node.
+         */
+        std::shared_ptr<DocraftNode> clone() const override;
 
         /**
          * @brief Sets the number of rows.

@@ -2,7 +2,9 @@
 
 #include <ostream>
 #include <memory>
+#include <stdexcept>
 
+#include "model/docraft_clone_utils.h"
 #include "renderer/docraft_renderer.h"
 namespace docraft::model {
     DocraftText::DocraftText() {
@@ -16,6 +18,20 @@ namespace docraft::model {
     void DocraftText::draw(const std::shared_ptr<DocraftDocumentContext> &context) {
         context->renderer()->render_text(*this);
 
+    }
+
+    std::shared_ptr<DocraftNode> DocraftText::clone() const {
+        auto copy = std::make_shared<DocraftText>(*this);
+        copy->clear_lines();
+        for (const auto &child : children()) {
+            auto cloned_child = clone_node(child);
+            auto text_child = std::dynamic_pointer_cast<DocraftText>(cloned_child);
+            if (!text_child) {
+                throw std::runtime_error("Text line child does not clone to DocraftText");
+            }
+            copy->add_line(text_child);
+        }
+        return copy;
     }
 #pragma region Getters
     const std::string &DocraftText::text() const {

@@ -45,4 +45,8 @@ namespace docraft::model {
     float DocraftTriangle::border_width() const {
         return border_width_;
     }
+
+    std::shared_ptr<DocraftNode> DocraftTriangle::clone() const {
+        return std::make_shared<DocraftTriangle>(*this);
+    }
 } // docraft::model

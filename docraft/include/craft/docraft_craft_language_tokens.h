@@ -67,9 +67,16 @@ namespace docraft::craft {
         constexpr string kTriangle = "Triangle";
         constexpr string kLine = "Line";
         constexpr string kPolygon = "Polygon";
+        constexpr string kNewPage = "NewPage";
         constexpr string kSettings = "Settings";
         constexpr string kList = "List";
         constexpr string kUList = "UList";
+        namespace templating {
+            constexpr string kForeach = "foreach";
+            namespace foreach::attribute {
+                constexpr string kModel = "model";
+            }
+        }
         namespace list {
             namespace attribute {
                 constexpr string kStyle = "style";

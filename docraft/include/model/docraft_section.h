@@ -23,6 +23,11 @@ namespace docraft::model {
          * @param context Document context.
          */
         void draw(const std::shared_ptr<DocraftDocumentContext> &context) override;
+        /**
+         * @brief Clones the section node and its children.
+         * @return Shared pointer to the cloned node.
+         */
+        std::shared_ptr<DocraftNode> clone() const override;
 
         //getter
         /**

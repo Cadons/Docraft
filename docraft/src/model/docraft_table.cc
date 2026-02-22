@@ -2,7 +2,9 @@
 
 #include <utility>
 #include <nlohmann/json.hpp>
+#include <stdexcept>
 
+#include "model/docraft_clone_utils.h"
 #include "renderer/docraft_pdf_renderer.h"
 
 namespace docraft::model {
@@ -81,6 +83,46 @@ namespace docraft::model {
             row_weights_.resize(rows_, default_weight);
         }
         context->renderer()->render_table(*this);
+    }
+
+    std::shared_ptr<DocraftNode> DocraftTable::clone() const {
+        auto copy = std::make_shared<DocraftTable>(*this);
+        const auto &titles = title_nodes();
+        for (std::size_t i = 0; i < titles.size(); ++i) {
+            auto cloned = clone_node(titles[i]);
+            auto text = std::dynamic_pointer_cast<DocraftText>(cloned);
+            if (!text) {
+                throw std::runtime_error("Title node does not clone to DocraftText");
+            }
+            copy->set_title_node(static_cast<int>(i), text);
+        }
+
+        const auto &htitles = htitle_nodes();
+        for (std::size_t i = 0; i < htitles.size(); ++i) {
+            auto cloned = clone_node(htitles[i]);
+            auto text = std::dynamic_pointer_cast<DocraftText>(cloned);
+            if (!text) {
+                throw std::runtime_error("Header title node does not clone to DocraftText");
+            }
+            copy->set_htitle_node(static_cast<int>(i), text);
+        }
+
+        int content_count = static_cast<int>(content_backgrounds().size());
+        auto content_rows = content_nodes();
+        int current_index = 0;
+        for (const auto &row : content_rows) {
+            for (const auto &cell : row) {
+                if (current_index >= content_count) {
+                    break;
+                }
+                copy->set_content_node(current_index, clone_node(cell));
+                ++current_index;
+            }
+            if (current_index >= content_count) {
+                break;
+            }
+        }
+        return copy;
     }
 
 #pragma region setter

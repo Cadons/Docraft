@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "docraft_document.h"
+#include "model/docraft_foreach.h"
 #include "model/docraft_list.h"
 #include "model/docraft_table.h"
 #include "model/docraft_text.h"
@@ -123,5 +124,54 @@ namespace docraft::test::templating {
         EXPECT_EQ(text_node1->text(), "Docraft is a great library!");
         EXPECT_EQ(text_node2->text(), "Docraft");
         EXPECT_EQ(text_node3->text(), "${description");
+    }
+
+    TEST_F(DocraftTemplateEngineTest, NestedForeachRendersUsingParentItemContext) {
+        docraft::DocraftDocument document("Test Document");
+        auto template_engine = std::make_shared<docraft::templating::DocraftTemplateEngine>();
+        template_engine->add_template_variable(
+            "employees",
+            R"([{"name":"Alice","tasks":[{"task":"Plan"},{"task":"Review"}]},{"name":"Bob","tasks":[{"task":"Ship"}]}])");
+        document.set_document_template_engine(template_engine);
+
+        auto outer = std::make_shared<model::DocraftForeach>();
+        outer->set_model("${employees}");
+
+        auto employee_name = std::make_shared<model::DocraftText>("Employee ${data(\"name\")}");
+        auto inner = std::make_shared<model::DocraftForeach>();
+        inner->set_model("${data(\"tasks\")}");
+        auto task_text = std::make_shared<model::DocraftText>("Task ${data(\"task\")}");
+        inner->set_template_nodes({task_text});
+
+        outer->set_template_nodes({employee_name, inner});
+        document.add_node(outer);
+        document.template_document();
+
+        ASSERT_EQ(outer->children().size(), 4U);
+
+        auto name_1 = std::dynamic_pointer_cast<model::DocraftText>(outer->children()[0]);
+        auto tasks_1 = std::dynamic_pointer_cast<model::DocraftForeach>(outer->children()[1]);
+        auto name_2 = std::dynamic_pointer_cast<model::DocraftText>(outer->children()[2]);
+        auto tasks_2 = std::dynamic_pointer_cast<model::DocraftForeach>(outer->children()[3]);
+
+        ASSERT_TRUE(name_1);
+        ASSERT_TRUE(tasks_1);
+        ASSERT_TRUE(name_2);
+        ASSERT_TRUE(tasks_2);
+        EXPECT_EQ(name_1->text(), "Employee Alice");
+        EXPECT_EQ(name_2->text(), "Employee Bob");
+
+        ASSERT_EQ(tasks_1->children().size(), 2U);
+        ASSERT_EQ(tasks_2->children().size(), 1U);
+
+        auto task_1 = std::dynamic_pointer_cast<model::DocraftText>(tasks_1->children()[0]);
+        auto task_2 = std::dynamic_pointer_cast<model::DocraftText>(tasks_1->children()[1]);
+        auto task_3 = std::dynamic_pointer_cast<model::DocraftText>(tasks_2->children()[0]);
+        ASSERT_TRUE(task_1);
+        ASSERT_TRUE(task_2);
+        ASSERT_TRUE(task_3);
+        EXPECT_EQ(task_1->text(), "Task Plan");
+        EXPECT_EQ(task_2->text(), "Task Review");
+        EXPECT_EQ(task_3->text(), "Task Ship");
     }
 }

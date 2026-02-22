@@ -3,6 +3,7 @@
 #include <iostream>
 #include <ostream>
 
+#include "model/docraft_clone_utils.h"
 #include "renderer/docraft_renderer.h"
 #include "utils/docraft_logger.h"
 
@@ -32,5 +33,14 @@ namespace docraft::model {
     }
     float DocraftRectangle::border_width() const {
         return border_width_;
+    }
+
+    std::shared_ptr<DocraftNode> DocraftRectangle::clone() const {
+        auto copy = std::make_shared<DocraftRectangle>(*this);
+        copy->clear_children();
+        for (const auto &child : children()) {
+            copy->add_child(clone_node(child));
+        }
+        return copy;
     }
 } // docraft

@@ -1,5 +1,6 @@
 #pragma once
 #include "docraft_section.h"
+#include "model/i_docraft_clonable.h"
 
 namespace docraft::model {
         /**
@@ -7,6 +8,16 @@ namespace docraft::model {
          *
          * Currently inherits DocraftNode without additional data or rendering logic.
          */
-        class DocraftParagraph : public DocraftNode {
+        class DocraftParagraph : public DocraftNode, public IDocraftClonable {
+        public:
+            /**
+             * @brief Draws the paragraph using the provided context.
+             */
+            void draw(const std::shared_ptr<DocraftDocumentContext> &context) override;
+            /**
+             * @brief Clones the paragraph node.
+             * @return Shared pointer to the cloned node.
+             */
+            std::shared_ptr<DocraftNode> clone() const override;
         };
 } // docraft

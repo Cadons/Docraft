@@ -163,6 +163,18 @@ namespace docraft::craft::parser {
         std::shared_ptr<model::DocraftNode> parse(const pugi::xml_node &craft_language_source) override;
     };
     /**
+     * @brief Parser for manual page break nodes.
+     */
+    class DocraftNewPageParser : public IDocraftParser {
+    public:
+        /**
+         * @brief Parses a NewPage XML node.
+         * @param craft_language_source XML node.
+         * @return Parsed NewPage node.
+         */
+        std::shared_ptr<model::DocraftNode> parse(const pugi::xml_node &craft_language_source) override;
+    };
+    /**
      * @brief Parser for settings nodes.
      */
     class DocraftSettingsParser : public IDocraftParser {
@@ -173,6 +185,23 @@ namespace docraft::craft::parser {
          * @return Parsed settings node.
          */
         std::shared_ptr<model::DocraftNode> parse(const pugi::xml_node &craft_language_source) override;
+    };
+    /**
+     * @brief Parser for foreach nodes.
+     * @param craft_language_source XML node.
+     * @return Parsed foreach node.
+     */
+    class DocraftForeachParser : public IDocraftParser {
+    public:
+        DocraftForeachParser(DocraftCraftLanguageParser* craft_language_parser);
+        /**
+         * @brief Parses a foreach XML node.
+         * @param craft_language_source XML node.
+         * @return Parsed foreach node.
+         */
+        std::shared_ptr<model::DocraftNode> parse(const pugi::xml_node &craft_language_source) override;
+    private:
+        DocraftCraftLanguageParser* craft_language_parser_;
     };
 
 } // docraft

@@ -112,6 +112,7 @@ namespace docraft {
         configure_document_settings();
 
         //replace template variables in the DOM
+        //TODO: here if there is a foreach template engine must add to the defined structure the same node with different data
         template_document();
 
         // Layout phase

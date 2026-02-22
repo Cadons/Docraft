@@ -32,4 +32,8 @@ namespace docraft::model {
     float DocraftCircle::border_width() const {
         return border_width_;
     }
+
+    std::shared_ptr<DocraftNode> DocraftCircle::clone() const {
+        return std::make_shared<DocraftCircle>(*this);
+    }
 } // docraft::model

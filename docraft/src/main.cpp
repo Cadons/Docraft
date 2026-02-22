@@ -37,7 +37,7 @@ int main() {
             return 1;
         }
         template_engine->add_image_data("raw_image", raw_data, 1024, 1024);
-
+template_engine->add_template_variable("test","[{\"name\": \"Alice\", \"role\": \"Developer\"}, {\"name\": \"Bob\", \"role\": \"Designer\"}]");
         parser.load_from_file("test.craft");
         parser.get_document()->set_document_template_engine(template_engine);
         parser.get_document()->set_document_title("test");

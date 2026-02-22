@@ -3,12 +3,13 @@
 #include "docraft_color.h"
 #include "docraft_node.h"
 #include "model/docraft_position.h"
+#include "model/i_docraft_clonable.h"
 
 namespace docraft::model {
     /**
      * @brief Line node defined by start and end points.
      */
-    class DocraftLine : public DocraftNode {
+    class DocraftLine : public DocraftNode, public IDocraftClonable {
     public:
         using DocraftNode::DocraftNode;
         /**
@@ -16,6 +17,11 @@ namespace docraft::model {
          * @param context Document context.
          */
         void draw(const std::shared_ptr<DocraftDocumentContext> &context) override;
+        /**
+         * @brief Clones the line node.
+         * @return Shared pointer to the cloned node.
+         */
+        std::shared_ptr<DocraftNode> clone() const override;
         /**
          * @brief Sets the line start point (local coordinates).
          * @param point Start point.

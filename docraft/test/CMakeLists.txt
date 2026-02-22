@@ -15,6 +15,7 @@ set(TEST_SOURCES
         layout/docraft_layout_engine_test.cc
         layout/docraft_layout_text_handler_test.cc
         model/docraft_list_test.cc
+        model/docraft_clone_test.cc
         model/docraft_settings_test.cc
         model/docraft_node_test.cc
         model/docraft_z_index_test.cc
