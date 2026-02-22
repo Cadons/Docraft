@@ -6,6 +6,10 @@
 #include "backend/docraft_shape_rendering_backend.h"
 #include "backend/docraft_text_rendering_backend.h"
 
+namespace docraft {
+    class DocraftDocumentMetadata;
+}
+
 namespace docraft::backend {
     /**
      * @brief Aggregated rendering backend interface.
@@ -24,6 +28,11 @@ namespace docraft::backend {
          * @param path Output file path.
          */
         virtual void save_to_file(const std::string& path) const = 0;
+        /**
+         * @brief Returns the preferred file extension for this backend.
+         * @return Extension with or without leading dot (e.g. ".pdf" or "pdf").
+         */
+        [[nodiscard]] virtual std::string file_extension() const = 0;
         /**
          * @brief Registers a TTF font and returns the internal name.
          * @param path Font file path.
@@ -45,5 +54,10 @@ namespace docraft::backend {
          * @param encoder Backend encoder name.
          */
         virtual void set_font(const std::string& internal_name, float size, const char* encoder) const = 0;
+        /**
+         * @brief Applies document metadata to the backend document.
+         * @param metadata Metadata values to apply.
+         */
+        virtual void set_document_metadata(const DocraftDocumentMetadata &metadata) = 0;
     };
 } // docraft::backend

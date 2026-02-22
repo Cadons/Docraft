@@ -103,6 +103,10 @@ TEST_F(DocraftHaruBackendTest, SupportsBuiltInFontAndTextMeasure) {
     EXPECT_GT(backend().measure_text_width("Hello backend"), 0.0F);
 }
 
+TEST_F(DocraftHaruBackendTest, ReportsPdfFileExtension) {
+    EXPECT_EQ(backend().file_extension(), ".pdf");
+}
+
 TEST_F(DocraftHaruBackendTest, ThrowsWhenSettingUnknownFont) {
     EXPECT_THROW(backend().set_font("__missing_font__", 12.0F, nullptr), std::runtime_error);
     EXPECT_FALSE(backend().can_use_font("__missing_font__", nullptr));
@@ -111,6 +115,30 @@ TEST_F(DocraftHaruBackendTest, ThrowsWhenSettingUnknownFont) {
 TEST_F(DocraftHaruBackendTest, SavesPdfToFile) {
     const auto output_path = std::filesystem::temp_directory_path() / "docraft_haru_backend_test_output.pdf";
 
+    backend().save_to_file(output_path.string());
+
+    ASSERT_TRUE(std::filesystem::exists(output_path));
+    EXPECT_GT(std::filesystem::file_size(output_path), 0U);
+
+    std::filesystem::remove(output_path);
+}
+
+TEST_F(DocraftHaruBackendTest, SavesPdfWithMetadataInfo) {
+    DocraftDocumentMetadata metadata;
+    metadata.set_title("Docraft Metadata Title");
+    metadata.set_author("Docraft Metadata Author");
+    metadata.set_creator("Docraft Metadata Creator");
+    metadata.set_producer("Docraft Metadata Producer");
+    metadata.set_subject("Docraft Metadata Subject");
+    metadata.set_keywords("docraft,metadata,test");
+    metadata.set_trapped("False");
+    metadata.set_gts_pdfx("PDF/X-3:2002");
+    metadata.set_creation_date({2026, 2, 20, 8, 30, 15, '+', 0, 0});
+    metadata.set_modification_date({2026, 2, 20, 9, 45, 10, '+', 0, 0});
+
+    EXPECT_NO_THROW(backend().set_document_metadata(metadata));
+
+    const auto output_path = std::filesystem::temp_directory_path() / "docraft_haru_backend_test_metadata_output.pdf";
     backend().save_to_file(output_path.string());
 
     ASSERT_TRUE(std::filesystem::exists(output_path));

@@ -36,6 +36,7 @@ namespace docraft::craft {
         constexpr string kHeader = "header";
         constexpr string kBody = "body";
         constexpr string kFooter = "footer";
+        constexpr string kMetadata = "metadata";
 
         namespace attribute {
             constexpr string kMarginTop = "margin_top";
@@ -72,6 +73,47 @@ namespace docraft::craft {
         constexpr string kSettings = "Settings";
         constexpr string kList = "List";
         constexpr string kUList = "UList";
+        namespace metadata {
+            constexpr string kDocumentTitle = "DocumentTitle";
+            constexpr string kAuthor = "Author";
+            constexpr string kCreator = "Creator";
+            constexpr string kProducer = "Producer";
+            constexpr string kSubject = "Subject";
+            constexpr string kKeywords = "Keywords";
+            constexpr string kTrapped = "Trapped";
+            constexpr string kGtsPdfx = "GtsPdfx";
+            constexpr string kCreationDate = "CreationDate";
+            constexpr string kModificationDate = "ModificationDate";
+            constexpr string kAutoKeywords = "AutoKeywords";
+            namespace date_component {
+                constexpr string kYear = "Year";
+                constexpr string kMonth = "Month";
+                constexpr string kDay = "Day";
+                constexpr string kHour = "Hour";
+                constexpr string kMinutes = "Minutes";
+                constexpr string kSeconds = "Seconds";
+                constexpr string kInd = "Ind";
+                constexpr string kOffHour = "OffHour";
+                constexpr string kOffMinutes = "OffMinutes";
+            }
+            namespace date::attribute {
+                constexpr string kYear = "year";
+                constexpr string kMonth = "month";
+                constexpr string kDay = "day";
+                constexpr string kHour = "hour";
+                constexpr string kMinutes = "minutes";
+                constexpr string kSeconds = "seconds";
+                constexpr string kInd = "ind";
+                constexpr string kOffHour = "off_hour";
+                constexpr string kOffMinutes = "off_minutes";
+            }
+            namespace auto_keywords::attribute {
+                constexpr string kEnabled = "enabled";
+                constexpr string kMaxKeywords = "max_keywords";
+                constexpr string kMinLength = "min_length";
+                constexpr string kLanguage = "language";
+            }
+        }
         namespace templating {
             constexpr string kForeach = "foreach";
             namespace foreach::attribute {

@@ -21,6 +21,7 @@ The parser expects:
 Optional top-level sections:
 
 - `<Settings>`
+- `<Metadata>`
 - `<Header>`
 - `<Footer>`
 
@@ -29,6 +30,7 @@ Canonical skeleton:
 ```xml
 <Document>
   <Settings>...</Settings>
+  <Metadata>...</Metadata>
   <Header>...</Header>
   <Body>...</Body>
   <Footer>...</Footer>
@@ -45,6 +47,7 @@ Notes:
 
 - `Document`
 - `Settings`
+- `Metadata`
 - `Header`
 - `Body`
 - `Footer`
@@ -132,6 +135,104 @@ Important behavior:
 
 - Header and Footer are optional.
 - If Header/Footer is missing or `visible="false"`, their configured ratio is added to Body during layout.
+
+## 6.1 Document Metadata
+
+Top-level `<Metadata>` can be used to set PDF metadata fields.
+
+Supported subtags:
+
+- `DocumentTitle`
+- `Author`
+- `Creator`
+- `Producer`
+- `Subject`
+- `Keywords`
+- `Trapped`
+- `GtsPdfx`
+- `CreationDate`
+- `ModificationDate`
+- `AutoKeywords`
+
+Example:
+
+```xml
+<Metadata>
+  <DocumentTitle>Q1 Report</DocumentTitle>
+  <Author>Mario Rossi</Author>
+  <Creator>Docraft CLI</Creator>
+  <Producer>Docraft Engine</Producer>
+  <Subject>Sales summary</Subject>
+  <Keywords>report, q1, sales</Keywords>
+  <CreationDate year="2026" month="2" day="22" hour="10" minutes="15" seconds="5" ind="+" off_hour="1" off_minutes="0" />
+  <AutoKeywords enabled="true" max_keywords="8" min_length="5" />
+</Metadata>
+```
+
+Notes:
+
+- `DocumentTitle` updates both PDF metadata title and Docraft document title.
+- `CreationDate` and `ModificationDate` accept either attributes (`year`, `month`, etc.) or child tags (`Year`, `Month`, etc.).
+- Required date fields: `year`, `month`, `day`. Other fields are optional.
+- `AutoKeywords` is optional and disabled by default unless the tag is present.
+- `AutoKeywords` attributes:
+  - `enabled` (bool): `true/false`, `1/0`, `yes/no`, `on/off`
+  - `max_keywords` (int > 0, default `10`)
+  - `min_length` (int > 0, default `4`)
+  - `language` (string list, default `it,en,fr,de,es`): comma/semicolon/space-separated language codes.
+    Supported values: `it`, `en`, `fr`, `de`, `es`.
+- When enabled, extracted keywords are merged with existing `Keywords`, avoiding duplicates.
+
+## 6.2 Metadata and AutoKeywords from C++ API
+
+You can configure and apply document metadata directly from C++ through `DocraftDocument`.
+
+Metadata API:
+
+- `set_document_metadata(const DocraftDocumentMetadata&)`
+- `document_metadata()`
+
+Auto-keywords API:
+
+- `enable_auto_keywords(bool)`
+- `set_auto_keywords_config(const utils::DocraftKeywordExtractor::Config&)`
+- `auto_keywords_enabled()`
+- `auto_keywords_config()`
+- `refresh_auto_keywords()`
+
+Behavior notes:
+
+- If auto-keywords is enabled, `DocraftDocument::render()` automatically calls `refresh_auto_keywords()` before applying metadata to the PDF backend.
+- Calling `refresh_auto_keywords()` manually is optional and useful when you need metadata keywords before rendering.
+- Extracted keywords are merged with existing `Keywords` metadata and duplicates are removed.
+
+Example:
+
+```cpp
+#include "docraft_document.h"
+#include "model/docraft_text.h"
+
+docraft::DocraftDocument doc("Q1 Report");
+doc.add_node(std::make_shared<docraft::model::DocraftText>(
+    "il parser parser metadata metadata engine engine engine and parser documento"));
+
+docraft::DocraftDocumentMetadata metadata;
+metadata.set_author("Mario Rossi");
+metadata.set_keywords("manuale");
+doc.set_document_metadata(metadata);
+
+doc.set_auto_keywords_config({
+    .max_keywords = 8,
+    .min_length = 4,
+    .stop_word_languages = {"it", "en", "fr", "de", "es"}
+});
+doc.enable_auto_keywords(true);
+
+// Optional: force extraction before render.
+doc.refresh_auto_keywords();
+
+doc.render();
+```
 
 ## 7. Text Nodes
 

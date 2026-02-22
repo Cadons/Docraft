@@ -28,12 +28,14 @@ set(TEST_SOURCES
         renderer/docraft_image_painter_test.cc
         renderer/docraft_painter_smoke_test.cc
         renderer/docraft_section_margin_test.cc
-        templating/docraft_template_engine_test.cc)
+        templating/docraft_template_engine_test.cc
+        utils/docraft_keyword_extractor_test.cc)
 
 add_executable(docraft_test
         ${TEST_SOURCES}
 )
 target_link_libraries(docraft_test PRIVATE docraft_lib GTest::GTest)
+target_include_directories(docraft_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 gtest_discover_tests(docraft_test
         DISCOVERY_MODE PRE_TEST
 )

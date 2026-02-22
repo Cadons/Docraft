@@ -41,6 +41,10 @@ template_engine->add_template_variable("test","[{\"name\": \"Alice\", \"role\": 
         parser.load_from_file("test.craft");
         parser.get_document()->set_document_template_engine(template_engine);
         parser.get_document()->set_document_title("test");
+        docraft::DocraftDocumentMetadata metadata;
+        metadata.set_title("Test Document");
+        metadata.set_author("Docraft");
+        parser.get_document()->set_document_metadata(metadata);
         auto img = parser.get_document()->get_by_name("myimg");
         parser.get_document()->render();
         return 0;
