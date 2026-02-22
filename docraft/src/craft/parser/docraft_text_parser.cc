@@ -6,6 +6,18 @@
 namespace docraft::craft::parser {
     std::shared_ptr<model::DocraftNode> DocraftTextParser::parse(const pugi::xml_node &craft_language_source) {
         auto text_node = std::make_shared<model::DocraftText>();
+        const std::string tag_name = craft_language_source.name();
+
+        // Predefined heading-like tags:
+        // - Title    -> h1-like defaults
+        // - Subtitle -> h2-like defaults
+        if (tag_name == std::string{elements::kTitle}) {
+            text_node->set_font_size(24.0F);
+            text_node->set_style(model::TextStyle::kBold);
+        } else if (tag_name == std::string{elements::kSubtitle}) {
+            text_node->set_font_size(18.0F);
+            text_node->set_style(model::TextStyle::kBold);
+        }
 
         text_node->set_text(craft_language_source.child_value());
 

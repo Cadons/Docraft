@@ -20,6 +20,7 @@ set(TEST_SOURCES
         model/docraft_node_test.cc
         model/docraft_z_index_test.cc
         craft/docraft_table_parser_test.cc
+        craft/docraft_craft_language_parser_test.cc
         craft/docraft_shape_parser_test.cc
         craft/docraft_image_parser_test.cc
         craft/docraft_settings_parser_test.cc
