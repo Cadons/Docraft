@@ -38,7 +38,9 @@ function(generate_docraft_fonts artifact json_config_path)
     endforeach()
 
     set(FINAL_FONTS_H "${CMAKE_CURRENT_BINARY_DIR}/fonts.h")
+    if(NOT WIN32)
     string(REPLACE ";" "|" FONT_FRAGMENTS_JOINED "${FONT_FRAGMENTS}")
+    endif()
     add_custom_command(
             OUTPUT ${FINAL_FONTS_H}
             COMMAND ${CMAKE_COMMAND} -E echo "/* Auto-generated fonts header */" > ${FINAL_FONTS_H}

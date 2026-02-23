@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include <hpdf_image.h>
+#include <hpdf.h>
 
 namespace {
     struct HPDFErrorMap {

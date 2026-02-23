@@ -30,6 +30,8 @@ namespace docraft::layout {
          * @param reset_cursor Whether to reset the cursor before layout.
          */
         explicit DocraftLayoutEngine(const std::shared_ptr<DocraftDocumentContext>& context, bool reset_cursor = true);
+        DocraftLayoutEngine(const DocraftLayoutEngine&) = delete;
+        DocraftLayoutEngine& operator=(const DocraftLayoutEngine&) = delete;
         /**
          * @brief Destructor.
          */
