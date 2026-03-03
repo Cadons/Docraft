@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-
+option(BUILD_TESTS "Build tests" ON)
 # Resolve project/library version from project.json
 set(DOCRAFT_PROJECT_JSON "${CMAKE_CURRENT_SOURCE_DIR}/project.json")
 if(NOT EXISTS "${DOCRAFT_PROJECT_JSON}")
@@ -59,5 +59,7 @@ add_subdirectory(docraft) #configure docraft artifact
 
 #test
 include(CTest)
-enable_testing()
-add_subdirectory(docraft/test) #configure tests artifact in test
+if(BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(docraft/test) #configure tests artifact in test
+endif()
