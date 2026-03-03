@@ -45,6 +45,20 @@ cmake --build build --config Release -j
 bash
 ctest --test-dir build -C Release --output-on-failure
 ```
+
+### 5) Run `docraft_tool`
+```
+bash
+./build/artifacts/bin/docraft_tool <file.craft> <output.pdf>
+./build/artifacts/bin/docraft_tool <file.craft> <output.pdf> -d <data.txt>
+```
+
+`data.txt` format:
+```
+invoice_number: INV-2026-0008
+customer_name: Alice Rossi
+items: [{"name":"Keyboard","qty":1,"price":"49.99"}]
+```
 ---
 
 ## Platform notes
@@ -129,6 +143,19 @@ cmake -S . -B build
 ```
 bash
 ctest --test-dir build --output-on-failure -VV
+```
+
+## Docker
+
+Build image:
+```bash
+docker build -f docker/Dockerfile -t docraft_tool:latest .
+```
+
+Run:
+```bash
+docker run --rm -v "$PWD:/work" -w /work docraft_tool:latest test.craft out.pdf
+docker run --rm -v "$PWD:/work" -w /work docraft_tool:latest test.craft out.pdf -d data.txt
 ```
 ---
 
