@@ -332,7 +332,9 @@ Use the templates in `doc/users/templates/`:
 - missing `<Body>`,
 - invalid JSON in `Table model` or `Foreach model`,
 - using both `src` and `data` attributes on the same `Image`,
-- invalid enum values in attributes (`alignment`, `style`, `position`).
+- invalid enum values in attributes (`alignment`, `style`, `position`),
+- `weight` outside `0..1` (weights must always stay in the inclusive range `0` to `1`),
+- using `<Title>` inside tables (use `<HTitle>` for horizontal headers or `<VTitle>` for vertical titles).
 
 ## 10. Related docs
 

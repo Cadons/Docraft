@@ -20,7 +20,7 @@ if(DOCRAFT_LIBRARY_SOVERSION STREQUAL "")
 endif()
 
 # Project name and compiler
-project(DocCraft VERSION ${DOCRAFT_LIBRARY_VERSION} LANGUAGES CXX)
+project(Docraft VERSION ${DOCRAFT_LIBRARY_VERSION} LANGUAGES CXX)
 
 # Set C++ standard (change if you need another version)
 set(CMAKE_CXX_STANDARD 23)

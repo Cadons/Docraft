@@ -5,6 +5,7 @@
 #include "layout/docraft_layout_engine.h"
 #include "model/docraft_layout.h"
 #include "model/docraft_rectangle.h"
+#include "model/docraft_section.h"
 
 namespace docraft::layout::handler {
     void DocraftBasicLayoutHandler::compute(const std::shared_ptr<model::DocraftNode> &node,
@@ -43,7 +44,16 @@ namespace docraft::layout::handler {
         if (node->height() > 0.0F) {
             box->set_height(node->height());
         } else if (is_rectangle) {
-            box->set_height(child_height);
+            // Check if this is a rectangle with children (not a Section, which handles its own padding)
+            auto rect = std::dynamic_pointer_cast<model::DocraftRectangle>(node);
+            const bool is_section = static_cast<bool>(std::dynamic_pointer_cast<model::DocraftSection>(node));
+            if (rect && !rect->children().empty() && !is_section) {
+                // Add default bottom padding when rectangle has children
+                const float k_rectangle_bottom_padding = rect->padding();
+                box->set_height(child_height + k_rectangle_bottom_padding);
+            } else {
+                box->set_height(child_height);
+            }
         } else {
             box->set_height(node->height());
         }

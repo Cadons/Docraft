@@ -15,6 +15,7 @@
 #include "model/docraft_foreach.h"
 #include "model/docraft_image.h"
 #include "model/docraft_list.h"
+#include "model/docraft_rectangle.h"
 #include "model/docraft_table.h"
 #include "model/docraft_text.h"
 #include "utils/docraft_logger.h"
@@ -112,6 +113,26 @@ namespace docraft::templating {
                     text_node->set_color(DocraftColor(resolved_color));
                 } catch (const std::exception &e) {
                     LOG_ERROR("Failed to resolve color template expression: " + std::string(e.what()));
+                }
+            }
+        }
+        if (auto rectangle = std::dynamic_pointer_cast<model::DocraftRectangle>(node)) {
+            // Handle background color template expression
+            if (rectangle->background_color().is_template_expression()) {
+                try {
+                    std::string resolved_color = render_template_string(rectangle->background_color_template_expression(), foreach_item);
+                    rectangle->set_background_color(DocraftColor(resolved_color));
+                } catch (const std::exception &e) {
+                    LOG_ERROR("Failed to resolve background color template expression: " + std::string(e.what()));
+                }
+            }
+            // Handle border color template expression
+            if (rectangle->border_color().is_template_expression()) {
+                try {
+                    std::string resolved_color = render_template_string(rectangle->border_color_template_expression(), foreach_item);
+                    rectangle->set_border_color(DocraftColor(resolved_color));
+                } catch (const std::exception &e) {
+                    LOG_ERROR("Failed to resolve border color template expression: " + std::string(e.what()));
                 }
             }
         }

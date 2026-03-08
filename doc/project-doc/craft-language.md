@@ -1,6 +1,6 @@
-# DocCraft `.craft` Language Specification
+# Docraft `.craft` Language Specification
 
-This document describes the XML grammar currently implemented by the DocCraft parser in this repository.
+This document describes the XML grammar currently implemented by the Docraft parser in this repository.
 It is intentionally implementation-oriented and focuses on what the parser actually accepts and enforces.
 
 ## 1. Parsing Model
@@ -282,7 +282,7 @@ Example:
 
 ```xml
 <Text font_name="OpenSans" font_size="12" style="bold" color="#111111">
-  Hello DocCraft
+  Hello Docraft
 </Text>
 ```
 
@@ -623,7 +623,7 @@ Rules:
 
 ## 14. Templating and `Foreach`
 
-DocCraft templating is handled by `DocraftTemplateEngine` before layout/render.
+Docraft templating is handled by `DocraftTemplateEngine` before layout/render.
 
 ### 14.1 Variable replacement
 
