@@ -174,12 +174,17 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set vcpkg binary cache
+        run: |
+          New-Item -ItemType Directory -Force -Path "${{ github.workspace }}/vcpkg-cache"
+          echo "VCPKG_BINARY_CACHE=${{ github.workspace }}/vcpkg-cache" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
       - name: Setup vcpkg cache
         uses: actions/cache@v3
         with:
           path: |
             vcpkg
-            ${{ env.VCPKG_BINARY_CACHE }}
+            ${{ github.workspace }}/vcpkg-cache
           key: vcpkg-windows-x64-${{ hashFiles('vcpkg.json', '.github/workflows/build.yml') }}
           restore-keys: |
             vcpkg-windows-x64-
@@ -206,10 +211,6 @@ jobs:
           .\bootstrap-vcpkg.bat -disableMetrics
           .\vcpkg integrate install
 
-      - name: Set vcpkg binary cache
-        run: |
-          mkdir -p "${{ github.workspace }}/vcpkg-cache"
-          echo "VCPKG_BINARY_CACHE=${{ github.workspace }}/vcpkg-cache" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Display versions
         run: |
@@ -220,7 +221,7 @@ jobs:
         run: |
           cd vcpkg
           .\vcpkg install libharu:x64-windows pugixml:x64-windows nlohmann-json:x64-windows gtest:x64-windows `
-            --binary-cache="${{ env.VCPKG_BINARY_CACHE }}" `
+            --binarysource="clear;files,${{ env.VCPKG_BINARY_CACHE }},readwrite" `
             --downloads-root="${{ github.workspace }}/vcpkg-downloads"
         timeout-minutes: 60
 
@@ -234,7 +235,6 @@ jobs:
             -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" `
             -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL `
             -DVCPKG_TARGET_TRIPLET=x64-windows `
-            -DVCPKG_BINARY_CACHE="${{ env.VCPKG_BINARY_CACHE }}" `
             -DBUILD_TESTS=ON
 
       - name: Build
