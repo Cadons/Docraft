@@ -221,8 +221,7 @@ jobs:
           cd vcpkg
           .\vcpkg install libharu:x64-windows pugixml:x64-windows nlohmann-json:x64-windows gtest:x64-windows `
             --binary-cache="${{ env.VCPKG_BINARY_CACHE }}" `
-            --downloads-root="${{ github.workspace }}/vcpkg-downloads" `
-            -j:${{ runner.cpu-count }}
+            --downloads-root="${{ github.workspace }}/vcpkg-downloads"
         timeout-minutes: 60
 
       - name: Configure CMake
