@@ -132,9 +132,11 @@ set(DOCRAFT_SOURCES
         src/utils/docraft_font_resolver.cc
         src/utils/docraft_keyword_extractor.cc
         src/utils/docraft_font_registry.cc
+        src/utils/docraft_parser_utilis.cc
         include/utils/docraft_logger.h
         include/utils/docraft_base64.h
         include/utils/docraft_keyword_extractor.h
+        include/utils/docraft_parser_utilis.h
         include/model/docraft_position.h
         src/model/docraft_position.cc
         src/backend/pdf/docraft_haru_backend.cc
@@ -152,12 +154,17 @@ set(DOCRAFT_LIBRARY_TYPE STATIC)
 if(BUILD_SHARED_LIB)
     set(DOCRAFT_LIBRARY_TYPE SHARED)
 endif()
-
 add_library(docraft ${DOCRAFT_LIBRARY_TYPE}
         ${DOCRAFT_SOURCES}
 )
 configure_artifact_version(docraft ${PROJECT_VERSION})
 configure_artifact_soversion(docraft ${PROJECT_VERSION_MAJOR})
+
+# Export debug compile flags to dependents (tool/tests) only for Debug config.
+target_compile_definitions(docraft PUBLIC
+        $<$<CONFIG:Debug>:DOCRAFT_DEBUG>
+        $<$<CONFIG:Debug>:docraft_debugf>
+)
 
 if(BUILD_SHARED_LIB)
     target_compile_definitions(docraft PRIVATE DOCRAFT_BUILD_SHARED_LIB)#define the macro to build the shared lib
@@ -166,7 +173,6 @@ endif()
 
 generate_docraft_fonts(docraft "${CMAKE_CURRENT_SOURCE_DIR}/fonts.json")
 add_executable(docraft_tool src/main.cpp)
-
 #declare define in the c++ code to export version
 target_compile_definitions(docraft_tool PRIVATE DOCRAFT_VERSION="${DOCRAFT_LIBRARY_VERSION}")
 configure_artifact_version(docraft_tool ${PROJECT_VERSION})

@@ -105,9 +105,22 @@ namespace docraft {
          */
         static DocraftColor fromRGB(float r, float g, float b, float a = 1.0F);
 
+        /**
+         * @brief Checks if this color is a template expression.
+         * @return true if the color is a template expression like ${data("field")} or ${variable}
+         */
+        [[nodiscard]] bool is_template_expression() const;
+
+        /**
+         * @brief Gets the template expression string if this is a template color.
+         * @return Template expression string (e.g., "${data("field")}")
+         */
+        [[nodiscard]] const std::string& template_expression() const;
+
     private:
         ColorName color_name_;
         RGB rgb_;
+        std::string template_expression_;  // Stores template expressions like ${data("field")} or ${variable}
         void convert_known_color(ColorName name);
 
     };

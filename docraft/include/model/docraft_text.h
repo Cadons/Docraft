@@ -156,11 +156,30 @@ namespace docraft::model {
          */
         void set_y_for_children(float y) override;
 
+        /**
+         * @brief Sets the text color from a template expression.
+         * @param color_template Template expression like ${data("field")} or ${variable}
+         */
+        void set_color_template_expression(const std::string &color_template);
+
+        /**
+         * @brief Gets the color template expression if this text has a templated color.
+         * @return Color template expression or empty string if color is static.
+         */
+        [[nodiscard]] const std::string& color_template_expression() const;
+
+        /**
+         * @brief Checks if this text has a templated color.
+         * @return true if color is a template expression.
+         */
+        [[nodiscard]] bool has_color_template_expression() const;
+
     private:
         std::string text_;
         float font_size_ = 12.0F;
         std::string font_name_ = "OpenSans";
         DocraftColor color_;
+        std::string color_template_expression_;  // Stores color template expressions
         TextStyle style_ = TextStyle::kNormal;
         TextAlignment alignment_ = TextAlignment::kLeft;
         bool underline_ = false;

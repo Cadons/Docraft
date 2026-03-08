@@ -220,3 +220,36 @@ TEST(DocraftTableParserTest, AcceptsJsonHeaderAttribute) {
     EXPECT_EQ(table->title_nodes()[0]->text(), "H1");
     EXPECT_EQ(table->title_nodes()[1]->text(), "H2");
 }
+
+TEST(DocraftTableParserTest, ParsesCellWidthAttribute) {
+    const char *xml = R"XML(
+<Table>
+  <THead>
+    <HTitle>ColA</HTitle>
+    <HTitle>ColB</HTitle>
+  </THead>
+  <TBody>
+    <Row>
+      <Cell width="120"><Text>v1</Text></Cell>
+      <Cell><Text>v2</Text></Cell>
+    </Row>
+  </TBody>
+</Table>
+)XML";
+
+    pugi::xml_document doc;
+    ASSERT_TRUE(doc.load_string(xml));
+
+    docraft::craft::parser::DocraftTableParser parser;
+    auto node = parser.parse(doc.child("Table"));
+    auto table = std::dynamic_pointer_cast<docraft::model::DocraftTable>(node);
+    ASSERT_TRUE(table);
+
+    auto content = table->content_nodes();
+    ASSERT_EQ(content.size(), 1U);
+    ASSERT_EQ(content[0].size(), 2U);
+    ASSERT_TRUE(content[0][0]);
+    ASSERT_TRUE(content[0][1]);
+    EXPECT_FLOAT_EQ(content[0][0]->width(), 120.0F);
+    EXPECT_FLOAT_EQ(content[0][1]->width(), 0.0F);
+}

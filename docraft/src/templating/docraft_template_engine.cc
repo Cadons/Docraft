@@ -9,6 +9,7 @@
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
 
+#include "docraft_color.h"
 #include "model/docraft_children_container_node.h"
 #include "model/docraft_clone_utils.h"
 #include "model/docraft_foreach.h"
@@ -18,6 +19,7 @@
 #include "model/docraft_text.h"
 #include "utils/docraft_logger.h"
 #include "utils/docraft_base64.h"
+#include "utils/docraft_parser_utilis.h"
 
 namespace docraft::templating {
     void DocraftTemplateEngine::template_nodes(const std::vector<std::shared_ptr<model::DocraftNode> > &nodes) {
@@ -102,6 +104,16 @@ namespace docraft::templating {
         }
         if (auto text_node = std::dynamic_pointer_cast<model::DocraftText>(node)) {
             text_node->set_text(render_template_string(text_node->text(), foreach_item));
+
+            // Handle color template expressions
+            if (text_node->color().is_template_expression()) {
+                try {
+                    std::string resolved_color = render_template_string(text_node->color().template_expression(), foreach_item);
+                    text_node->set_color(DocraftColor(resolved_color));
+                } catch (const std::exception &e) {
+                    LOG_ERROR("Failed to resolve color template expression: " + std::string(e.what()));
+                }
+            }
         }
         if (auto image = std::dynamic_pointer_cast<model::DocraftImage>(node)) {
             //handle image path templates and raw data templates if needed
@@ -179,42 +191,18 @@ namespace docraft::templating {
             if (end_pos == std::string::npos) {
                 break;
             }
+            std::string variable_expression = result.substr(pos, end_pos - pos + 1);
             std::string variable_name = result.substr(pos + 2, end_pos - pos - 2);
             std::string variable_value;
             try {
-                //handle data("fieldName") syntax for foreach item fields, trim spaces and handle quoted field names
+                // Handle data("fieldName") syntax for foreach item fields using the utility method
                 if (variable_name.rfind("data(", 0) == 0) {
-                    std::string field = variable_name.substr(5);//remove data( prefix
-                    if (!field.empty() && field.back() == ')') {//remove trailing )
-                        field.pop_back();
-                    }
-                    field.erase(0, field.find_first_not_of(" \t\n\r"));//trim leading spaces
-                    const auto last_non_space = field.find_last_not_of(" \t\n\r");//trim trailing spaces
-                    if (last_non_space == std::string::npos) {//all spaces
-                        field.clear();
-                    } else {
-                        field.erase(last_non_space + 1);//trim trailing spaces
-                    }
-                    //handle quoted field names, remove quotes if present
-                    if (field.size() >= 2 &&
-                        ((field.front() == '"' && field.back() == '"') ||
-                         (field.front() == '\'' && field.back() == '\''))) {
-                        field = field.substr(1, field.size() - 2);//remove quotes
-                    }
-                    //get the value from the item json object, if the field is not present log a warning and use an empty string as value
-                    if (!field.empty() && item.is_object() && item.contains(field)) {
-                        const auto &value = item.at(field);
-                        if (value.is_string()) {
-                            variable_value = value.get<std::string>();//use the string value directly if it's a string
-                        } else {
-                            variable_value = value.dump();//for non-string values, dump them to a json string (e.g. for numbers, booleans, nested objects or arrays)
-                        }
-                    } else {
+                    variable_value = utils::DocraftParserUtilis::extract_data_attribute(variable_expression, item);
+                    if (variable_value.empty()) {
                         LOG_WARNING("Template variable '" + variable_name + "' not found in foreach item.");
-                        variable_value = "";
                     }
                 } else if (has_template_variable(variable_name)) {
-                    //handle normal template variables if they are used in foreach item templates
+                    // Handle normal template variables if they are used in foreach item templates
                     variable_value = get_template_variable(variable_name);
                 } else {
                     LOG_WARNING("Template variable '" + variable_name + "' not found in template engine.");

@@ -1,0 +1,175 @@
+<Document>
+  <Settings page_size="A4" page_orientation="portrait" header_ratio="0.08" body_ratio="0.84" footer_ratio="0.08" />
+
+  <Metadata>
+    <DocumentTitle>Industrial Equipment Maintenance Report</DocumentTitle>
+    <Author>Maintenance Department</Author>
+    <Subject>Monthly Preventive Maintenance Report</Subject>
+    <CreationDate>${report_date}</CreationDate>
+  </Metadata>
+
+  <Header margin_left="20" margin_right="20" border_width="1" border_color="#1F4788">
+    <Layout orientation="horizontal">
+      <Text style="bold" font_size="16" color="#1F4788" weight="0.7">MAINTENANCE REPORT</Text>
+      <Text alignment="right" font_size="10" color="#666666" weight="0.3">${facility_name}</Text>
+    </Layout>
+  </Header>
+
+  <Body margin_left="20" margin_right="20">
+    <!-- Title Section -->
+    <Title color="#1F4788">Equipment Maintenance Status Report</Title>
+    <Text font_size="9" color="#999999">Report Period: ${start_date} to ${end_date}</Text>
+
+    <!-- Executive Summary -->
+    <Subtitle color="#2E5C9A" style="bold">Executive Summary</Subtitle>
+    <Layout orientation="horizontal">
+      <Text weight="0.25" alignment="center" style="bold" color="#0D7E3D">
+        <Text>${total_equipment}</Text>
+        <Text font_size="9" color="#666666">Equipment Inspected</Text>
+      </Text>
+      <Text weight="0.25" alignment="center" style="bold" color="#0D7E3D">
+        <Text>${operational_count}</Text>
+        <Text font_size="9" color="#666666">Operational</Text>
+      </Text>
+      <Text weight="0.25" alignment="center" style="bold" color="#FF6B35">
+        <Text>${maintenance_count}</Text>
+        <Text font_size="9" color="#666666">Maintenance Required</Text>
+      </Text>
+      <Text weight="0.25" alignment="center" style="bold" color="#D32F2F">
+        <Text>${critical_count}</Text>
+        <Text font_size="9" color="#666666">Critical Issues</Text>
+      </Text>
+    </Layout>
+
+    <Blank height="10" />
+
+    <!-- Overall Status -->
+    <Subtitle color="#2E5C9A" style="bold">Overall Status</Subtitle>
+    <Text alignment="justified">
+      During this reporting period, a comprehensive preventive maintenance program was executed across all critical equipment. The overall equipment effectiveness (OEE) stands at ${oee_percentage}%. All critical systems have been inspected and scheduled maintenance has been completed on ${completed_percentage}% of planned activities.
+    </Text>
+
+    <Blank height="8" />
+
+    <!-- Equipment Inspection Results Table -->
+    <Subtitle color="#2E5C9A" style="bold">Equipment Inspection Results</Subtitle>
+    <Table model='${equipment_list}'>
+      <THead>
+        <HTitle color="#FFFFFF" background_color="#1F4788" style="bold">Equipment ID</HTitle>
+        <HTitle color="#FFFFFF" background_color="#1F4788" style="bold">Type</HTitle>
+        <HTitle color="#FFFFFF" background_color="#1F4788" style="bold">Location</HTitle>
+        <HTitle color="#FFFFFF" background_color="#1F4788" style="bold">Status</HTitle>
+        <HTitle color="#FFFFFF" background_color="#1F4788" style="bold">Last Service</HTitle>
+      </THead>
+      <TBody>
+        <Row>
+          <Cell width="60"><Text font_size="9">${data("equipment_id")}</Text></Cell>
+          <Cell width="70"><Text font_size="9">${data("type")}</Text></Cell>
+          <Cell width="80"><Text font_size="9">${data("location")}</Text></Cell>
+          <Cell width="65">
+                        <Text font_size="9" style="bold" color="#0D7E3D">${data("status")}</Text>
+          </Cell>
+          <Cell width="75"><Text font_size="9">${data("last_service_date")}</Text></Cell>
+        </Row>
+      </TBody>
+    </Table>
+
+    <Blank height="8" />
+
+    <!-- Maintenance Activities -->
+    <Subtitle color="#2E5C9A" style="bold">Completed Maintenance Activities</Subtitle>
+    <Table model='${maintenance_activities}'>
+      <THead>
+        <HTitle color="#FFFFFF" background_color="#1F4788" style="bold">Date</HTitle>
+        <HTitle color="#FFFFFF" background_color="#1F4788" style="bold">Equipment</HTitle>
+        <HTitle color="#FFFFFF" background_color="#1F4788" style="bold">Activity</HTitle>
+        <HTitle color="#FFFFFF" background_color="#1F4788" style="bold">Duration (hrs)</HTitle>
+        <HTitle color="#FFFFFF" background_color="#1F4788" style="bold">Technician</HTitle>
+      </THead>
+      <TBody>
+        <Row>
+          <Cell width="50"><Text font_size="9">${data("date")}</Text></Cell>
+          <Cell width="70"><Text font_size="9">${data("equipment")}</Text></Cell>
+          <Cell width="90"><Text font_size="9">${data("activity")}</Text></Cell>
+          <Cell width="60" alignment="center"><Text font_size="9">${data("duration")}</Text></Cell>
+          <Cell width="80"><Text font_size="9">${data("technician")}</Text></Cell>
+        </Row>
+      </TBody>
+    </Table>
+
+    <NewPage />
+
+    <!-- Issues and Findings -->
+    <Subtitle color="#2E5C9A" style="bold">Critical Findings and Issues</Subtitle>
+    <Foreach model="${critical_issues}">
+      <Layout orientation="horizontal">
+        <Text weight="0.05" color="#D32F2F" style="bold">●</Text>
+        <Text weight="0.95" color="#333333">
+          <Text style="bold">${data("equipment")}</Text>
+          <Text color="#666666">Issue: ${data("description")}</Text>
+          <Text color="#D32F2F" style="bold">Priority: ${data("priority")}</Text>
+          <Text color="#666666">Recommended Action: ${data("action")}</Text>
+        </Text>
+      </Layout>
+      <Blank height="6" />
+    </Foreach>
+
+    <Blank height="8" />
+
+    <!-- Performance Metrics -->
+    <Subtitle color="#2E5C9A" style="bold">Key Performance Indicators</Subtitle>
+    <UList dot="none">
+      <Text><Text style="bold">Mean Time Between Failures (MTBF):</Text> ${mtbf_hours} hours</Text>
+      <Text><Text style="bold">Mean Time To Repair (MTTR):</Text> ${mttr_hours} hours</Text>
+      <Text><Text style="bold">Equipment Availability Rate:</Text> ${availability_percentage}%</Text>
+      <Text><Text style="bold">Preventive vs Reactive Maintenance Ratio:</Text> ${maintenance_ratio}</Text>
+      <Text><Text style="bold">Total Maintenance Cost:</Text> ${total_cost}</Text>
+    </UList>
+
+    <Blank height="8" />
+
+    <!-- Recommendations -->
+    <Subtitle color="#2E5C9A" style="bold">Recommendations for Next Period</Subtitle>
+    <Text alignment="justified">
+      Based on the findings from this inspection cycle:
+    </Text>
+    <UList dot="circle">
+      <Text>Schedule immediate maintenance for critical equipment listed in findings section</Text>
+      <Text>Implement enhanced monitoring for equipment showing early wear patterns</Text>
+      <Text>Replace worn components identified during inspections to prevent unexpected downtime</Text>
+      <Text>Increase preventive maintenance frequency for equipment approaching service life limits</Text>
+      <Text>Provide additional training to operations team on early failure detection</Text>
+    </UList>
+
+    <Blank height="8" />
+
+    <!-- Sign-Off Section -->
+    <Subtitle color="#2E5C9A" style="bold">Approval and Sign-Off</Subtitle>
+    <Layout orientation="horizontal">
+      <Text weight="0.5">
+        <Text style="bold">Prepared by:</Text>
+        <Text color="#666666">${prepared_by}</Text>
+        <Text font_size="9" color="#666666">Date: ${prepared_date}</Text>
+      </Text>
+      <Text weight="0.5">
+        <Text style="bold">Reviewed by:</Text>
+        <Text color="#666666">${reviewed_by}</Text>
+        <Text font_size="9" color="#666666">Date: ${reviewed_date}</Text>
+      </Text>
+    </Layout>
+
+  </Body>
+
+  <Footer margin_left="20" margin_right="20" border_width="0.5" border_color="#DDDDDD">
+    <Layout orientation="horizontal">
+      <Text weight="0.3" font_size="8" color="#999999">${facility_name} | Industrial Maintenance</Text>
+      <Text weight="0.4" font_size="8" color="#999999" alignment="center">Confidential - Internal Use Only</Text>
+      <Text weight="0.3" font_size="8" color="#999999" alignment="right">
+        <Text>Page</Text>
+        <PageNumber />
+      </Text>
+    </Layout>
+  </Footer>
+
+</Document>
+

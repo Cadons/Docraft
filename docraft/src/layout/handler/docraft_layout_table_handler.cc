@@ -141,6 +141,23 @@ namespace docraft::layout::handler {
             const float natural_sum = std::accumulate(natural_widths.begin(), natural_widths.end(), 0.0F);
             const float available_width = available_width_for(node, context, fixed_x, natural_sum);
 
+            // Optional per-column fixed widths coming from <Cell width="...">.
+            std::vector<float> explicit_col_widths(cols, 0.0F);
+            const auto grid = node->content_nodes();
+            for (const auto &row: grid) {
+                for (std::size_t c = 0; c < std::min(row.size(), cols); ++c) {
+                    const auto &cell = row[c];
+                    if (!cell) {
+                        continue;
+                    }
+                    if (cell->width() > 0.0F) {
+                        explicit_col_widths[c] = std::max(explicit_col_widths[c], cell->width());
+                    }
+                }
+            }
+            const bool has_explicit_col_width =
+                std::any_of(explicit_col_widths.begin(), explicit_col_widths.end(), [](const float w) { return w > 0.0F; });
+
             // --- Column widths from weights (respect natural minima) ---
             std::vector<float> weights = node->column_weights();
             if (weights.size() != cols) {
@@ -155,12 +172,16 @@ namespace docraft::layout::handler {
             std::vector<float> col_widths(cols, 0.0F);
             float widths_sum = 0.0F;
             for (std::size_t i = 0; i < cols; ++i) {
-                const float target = available_width * (weights[i] / total_weight);
-                col_widths[i] = std::max(natural_widths[i], target);
+                if (explicit_col_widths[i] > 0.0F) {
+                    col_widths[i] = explicit_col_widths[i];
+                } else {
+                    const float target = available_width * (weights[i] / total_weight);
+                    col_widths[i] = std::max(natural_widths[i], target);
+                }
                 widths_sum += col_widths[i];
             }
 
-            if (available_width > 0.0F && widths_sum > 0.0F && widths_sum != available_width) {
+            if (!has_explicit_col_width && available_width > 0.0F && widths_sum > 0.0F && widths_sum != available_width) {
                 const float scale = available_width / widths_sum;
                 for (auto &w: col_widths) {
                     w *= scale;
@@ -207,8 +228,6 @@ namespace docraft::layout::handler {
             }
 
             // --- Place content rows ---
-            const auto grid = node->content_nodes();
-
             float y = fixed_y - title_row_height;
             float total_content_height = 0.0F;
 
@@ -335,9 +354,20 @@ namespace docraft::layout::handler {
             const float title_col_width = std::max(title_col_natural_width,
                                                    available_width * (weights[0] / total_weight));
             const float values_block_width = std::max(0.0F, available_width - title_col_width);
-            const float value_col_width = (value_cols > 0)
-                                              ? (values_block_width / static_cast<float>(value_cols))
-                                              : values_block_width;
+            float value_col_width = (value_cols > 0)
+                                        ? (values_block_width / static_cast<float>(value_cols))
+                                        : values_block_width;
+
+            // Respect explicit widths set on value cells (<Cell width="...">) in vertical tables.
+            float explicit_value_col_width = 0.0F;
+            for (std::size_t idx = 0; idx < flat.size(); ++idx) {
+                if (flat[idx] && flat[idx]->width() > 0.0F) {
+                    explicit_value_col_width = std::max(explicit_value_col_width, flat[idx]->width());
+                }
+            }
+            if (explicit_value_col_width > 0.0F) {
+                value_col_width = explicit_value_col_width;
+            }
 
             float y = fixed_y;
             float total_height = 0.0F;

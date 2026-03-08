@@ -28,7 +28,12 @@ namespace docraft::craft::parser {
             text_node->set_font_name(font_name_attr.as_string());
         }
         if (auto color_attr = craft_language_source.attribute(basic::attribute::kColor.data())) {
-            text_node->set_color(detail::get_docraft_color(color_attr));
+            DocraftColor parsed_color = detail::get_docraft_color(color_attr);
+            text_node->set_color(parsed_color);
+            // Store template expression if this is a template color
+            if (parsed_color.is_template_expression()) {
+                text_node->set_color_template_expression(parsed_color.template_expression());
+            }
         }
         if (auto style_attr = craft_language_source.attribute(elements::text::attribute::kStyle.data())) {
             std::string style_str = style_attr.as_string();

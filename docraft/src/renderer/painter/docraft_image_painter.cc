@@ -13,6 +13,9 @@ namespace docraft::renderer::painter {
         auto backend = context->image_backend();
         if (!backend) return;
 
+        if (!image_node_.visible()) {
+            return;
+        }
         //start with pdf, then other formats will be supported
         switch (image_node_.format()) {
             case model::ImageFormat::kPng:

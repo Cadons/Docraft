@@ -199,3 +199,98 @@ TEST(DocraftCraftLanguageParserTest, ParsesDocumentPathAttribute) {
 
     EXPECT_EQ(document->document_path(), "exports/reports");
 }
+
+TEST(DocraftCraftLanguageParserTest, RejectsNestedTextInText) {
+    const char *xml = R"XML(
+<Document>
+  <Body>
+    <Text>
+      <Text>Nested text</Text>
+    </Text>
+  </Body>
+</Document>
+)XML";
+
+    docraft::craft::DocraftCraftLanguageParser parser;
+    EXPECT_THROW({
+        parser.parse(xml);
+    }, std::invalid_argument);
+}
+
+TEST(DocraftCraftLanguageParserTest, RejectsTitleInText) {
+    const char *xml = R"XML(
+<Document>
+  <Body>
+    <Text>
+      <Title>Nested title</Title>
+    </Text>
+  </Body>
+</Document>
+)XML";
+
+    docraft::craft::DocraftCraftLanguageParser parser;
+    EXPECT_THROW({
+        parser.parse(xml);
+    }, std::invalid_argument);
+}
+
+TEST(DocraftCraftLanguageParserTest, RejectsSubtitleInText) {
+    const char *xml = R"XML(
+<Document>
+  <Body>
+    <Text>
+      <Subtitle>Nested subtitle</Subtitle>
+    </Text>
+  </Body>
+</Document>
+)XML";
+
+    docraft::craft::DocraftCraftLanguageParser parser;
+    EXPECT_THROW({
+        parser.parse(xml);
+    }, std::invalid_argument);
+}
+
+TEST(DocraftCraftLanguageParserTest, RejectsPageNumberInText) {
+    const char *xml = R"XML(
+<Document>
+  <Body>
+    <Text>
+      Page: <PageNumber />
+    </Text>
+  </Body>
+</Document>
+)XML";
+
+    docraft::craft::DocraftCraftLanguageParser parser;
+    EXPECT_THROW({
+        parser.parse(xml);
+    }, std::invalid_argument);
+}
+
+TEST(DocraftCraftLanguageParserTest, AllowsLayoutInBodyWithMultipleText) {
+    const char *xml = R"XML(
+<Document>
+  <Body>
+    <Layout orientation="vertical">
+      <Text>First line</Text>
+      <Text>Second line</Text>
+    </Layout>
+  </Body>
+</Document>
+)XML";
+
+    docraft::craft::DocraftCraftLanguageParser parser;
+    EXPECT_NO_THROW({
+        parser.parse(xml);
+    });
+
+    auto document = parser.get_document();
+    ASSERT_TRUE(document);
+
+    const auto texts = document->get_by_type<docraft::model::DocraftText>();
+    ASSERT_EQ(texts.size(), 2U);
+    EXPECT_EQ(texts[0]->text(), "First line");
+    EXPECT_EQ(texts[1]->text(), "Second line");
+}
+

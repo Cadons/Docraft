@@ -254,7 +254,29 @@ Notes:
 
 - Text content is taken from `child_value()`.
 - Leading/trailing whitespace is trimmed by the model.
-- Nested element tags inside `Text` are technically parsed but not a supported authoring pattern.
+- **`Text` nodes cannot contain child `Text` nodes.** `Text` is a leaf node and only accepts text content, not nested elements.
+- If you need complex layouts with multiple text elements, use `Layout` as a container instead.
+
+**Invalid (will cause parse error):**
+
+```xml
+<Text style="bold">
+  <Text>Nested text</Text>  <!-- ❌ NOT ALLOWED -->
+</Text>
+```
+
+**Valid alternatives:**
+
+```xml
+<!-- Use Layout as container -->
+<Layout orientation="vertical">
+  <Text style="bold">First line</Text>
+  <Text>Second line</Text>
+</Layout>
+
+<!-- Or concatenate text within a single Text node -->
+<Text style="bold">First line Second line</Text>
+```
 
 Example:
 
@@ -434,6 +456,23 @@ Example:
 </Table>
 ```
 
+Example with explicit cell width (`width` is optional):
+
+```xml
+<Table>
+  <THead>
+    <HTitle>Product</HTitle>
+    <HTitle>Notes</HTitle>
+  </THead>
+  <TBody>
+    <Row>
+      <Cell width="120"><Text>Paper A4</Text></Cell>
+      <Cell><Text>Default width behavior</Text></Cell>
+    </Row>
+  </TBody>
+</Table>
+```
+
 ### 11.3 Horizontal table (JSON/template mode)
 
 Examples:
@@ -479,6 +518,7 @@ Example:
 
 - `<Row>` may use `background_color`.
 - `<Cell>` may use `background_color` or `TableTile`.
+- `<Cell>` may use optional `width` (float, points). If omitted, current automatic width behavior is used.
 - Cell content supports `Text` or `Image` as first child.
 - Extra children in the same cell are not validated and should be avoided.
 
@@ -632,6 +672,7 @@ Guaranteed parser validations:
 - invalid enum-like values (`style`, `alignment`, `orientation`, `position`, list options) are rejected.
 - invalid colors are rejected.
 - list children must be `Text`.
+- **`Text` nodes cannot contain child `Text`, `Title`, `Subtitle`, or `PageNumber` nodes.**
 - `Image` cannot use both `src` and `data`.
 - base64 image payloads must match RGB byte size.
 - table structural constraints (as documented above) are enforced.

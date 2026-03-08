@@ -31,6 +31,7 @@ set(TEST_SOURCES
         templating/docraft_template_engine_test.cc
         utils/docraft_keyword_extractor_test.cc
         utils/docraft_logger_test.cc
+        utils/docraft_parser_utils.cc
 )
 
 add_executable(docraft_test

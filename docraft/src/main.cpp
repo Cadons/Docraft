@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <cctype>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -14,6 +13,10 @@
 #include "craft/docraft_craft_language_parser.h"
 #include "docraft_document.h"
 #include "templating/docraft_template_engine.h"
+#include "nlohmann/json.hpp"
+#include "utils/docraft_logger.h"
+
+using json = nlohmann::json;
 
 namespace {
     struct CliOptions {
@@ -66,14 +69,95 @@ namespace {
     }
 
     /**
+     * @brief Checks if the given file path has a .json extension (case-insensitive).
+     * @param file_path Path to check.
+     * @return True if the file has a .json extension, false otherwise.
+     */
+    bool has_json_extension(const std::filesystem::path &file_path) {
+        std::string extension = file_path.extension().string();
+        std::ranges::transform(extension, extension.begin(), [](const unsigned char ch) {
+            return static_cast<char>(std::tolower(ch));
+        });
+        return extension == ".json";
+    }
+
+    /**
+     * @brief Recursively converts JSON values to strings and stores them in a flat map.
+     * Handles nested objects by flattening keys with dot notation (e.g., "parent.child").
+     * @param json_obj JSON object to process.
+     * @param prefix Prefix for nested keys (used recursively).
+     * @return An unordered map with flattened keys and string values.
+     */
+    std::unordered_map<std::string, std::pair<std::string, std::string> > flatten_json(
+        const json &json_obj, const std::string &prefix = "") {
+        std::unordered_map<std::string, std::pair<std::string, std::string> > mappings;
+
+        for (auto &[key, value] : json_obj.items()) {
+            std::string full_key = prefix.empty() ? key : prefix + "." + key;
+            std::string normalized_key = normalize_key(full_key);
+
+            if (value.is_object()) {
+                // Recursively flatten nested objects
+                auto nested_mappings = flatten_json(value, full_key);
+                mappings.insert(nested_mappings.begin(), nested_mappings.end());
+            } else if (value.is_array()) {
+                std::string value_str = value.dump();
+                mappings[normalized_key] = {std::move(full_key), std::move(value_str)};
+            } else {
+                // Convert all other types to strings
+                std::string value_str;
+                if (value.is_string()) {
+                    value_str = value.get<std::string>();
+                } else if (value.is_number_integer()) {
+                    value_str = std::to_string(value.get<int64_t>());
+                } else if (value.is_number_float()) {
+                    value_str = std::to_string(value.get<double>());
+                } else if (value.is_boolean()) {
+                    value_str = value.get<bool>() ? "true" : "false";
+                } else if (value.is_null()) {
+                    value_str = "null";
+                } else {
+                    value_str = value.dump();
+                }
+                mappings[normalized_key] = {std::move(full_key), std::move(value_str)};
+            }
+        }
+
+        return mappings;
+    }
+
+    /**
+     * @brief Parses a JSON file into an unordered map.
+     * @param json_file Path to the JSON file.
+     * @return An unordered map where keys are normalized (lowercase) and values are pairs of original key and value.
+     * @throws std::runtime_error if the file cannot be opened or if JSON is invalid.
+     */
+    std::unordered_map<std::string, std::pair<std::string, std::string> > parse_json_file(
+        const std::filesystem::path &json_file) {
+        std::ifstream input(json_file);
+        if (!input) {
+            throw std::runtime_error("Unable to open JSON file: " + json_file.string());
+        }
+
+        try {
+            json json_obj = json::parse(input);
+            return flatten_json(json_obj);
+        } catch (const json::parse_error &ex) {
+            throw std::runtime_error(
+                "Invalid JSON in file '" + json_file.string() +
+                "': " + std::string(ex.what()));
+        }
+    }
+
+    /**
      * @brief Prints usage information for the command-line tool.
      * @param output Output stream to print to (e.g., std::cout or std::cerr).
      * @param program_name Name of the program (typically argv[0]).
      */
     void print_usage(std::ostream &output, const char *program_name) {
-        output << "Usage: " << program_name << " <file.craft> <output.pdf> [-d <data.txt>]\n";
+        output << "Usage: " << program_name << " <file.craft> <output.pdf> [-d <data.txt|data.json>]\n";
         output << "Options:\n";
-        output << "  -d, --data <file>  Mapping file with one 'key: value' entry per line.\n";
+        output << "  -d, --data <file>  Data file with either 'key: value' entries per line or JSON format.\n";
         output << "  -h, --help         Show this help message.\n";
         output << "  -v, --version      Show version information.\n";
     }
@@ -206,9 +290,17 @@ namespace {
         return mappings;
     }
 } // namespace
-
 int main(int argc, char *argv[]) {
+    docraft::utils::DocraftLogger::enable_error();
+    docraft::utils::DocraftLogger::enable_warning();
+    docraft::utils::DocraftLogger::enable_info();
+#ifdef DOCRAFT_DEBUG
+   // docraft::utils::DocraftLogger::enable_debug();
+#endif
     try {
+        LOG_INFO("Welcome to Docraft Generation Tool!");
+        LOG_INFO("Docraft version " + std::string(DOCRAFT_VERSION));
+
         const CliOptions options = parse_args(argc, argv);
         if (!std::filesystem::exists(options.craft_file)) {
             throw std::runtime_error("Craft file not found: " + options.craft_file.string());
@@ -230,7 +322,17 @@ int main(int argc, char *argv[]) {
             if (!std::filesystem::exists(options.data_file)) {
                 throw std::runtime_error("Data file not found: " + options.data_file.string());
             }
-            const auto mappings = parse_data_mapping_file(options.data_file);
+
+            std::unordered_map<std::string, std::pair<std::string, std::string> > mappings;
+
+            // Determine file type and parse accordingly
+            if (has_json_extension(options.data_file)) {
+                mappings = parse_json_file(options.data_file);
+            } else {
+                // Default to key:value format
+                mappings = parse_data_mapping_file(options.data_file);
+            }
+
             auto template_engine = std::make_shared<docraft::templating::DocraftTemplateEngine>();
             //load mappings into template engine, using normalized keys for lookup but preserving original keys for variable names
             for (const auto &[_, mapping]: mappings) {
@@ -240,13 +342,17 @@ int main(int argc, char *argv[]) {
         }
 
         std::filesystem::create_directories(document->document_path());//ensure output directory exists
+        LOG_INFO("Rendering document to PDF...");
+        auto timer = std::chrono::high_resolution_clock::now();
         document->render();//render the document to PDF
-
-        std::cout << "Generated: " << options.output_file.string() << '\n';
+        auto end_time = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - timer).count();
+        LOG_INFO("Document rendered in " + std::to_string(duration) + " ms");
+        LOG_INFO("Generated: " + options.output_file.string());
         return 0;
     } catch (const std::exception &ex) {
-        std::cerr << "Error: " << ex.what() << '\n';
-        std::cerr << "Run 'docraft_tool --help' for usage.\n";
+        LOG_ERROR("Error: " + std::string(ex.what()));
+        LOG_INFO("Use -h or --help for usage information.");
         return 1;
     }
 }
