@@ -1,5 +1,6 @@
 # Docraft
-[![CI/CD](https://gitlab.umbranet.ovh/openprojects/doc-craft/badges/dev/pipeline.svg)](https://gitlab.umbranet.ovh/openprojects/doc-craft/-/pipelines)
+[![Build and Test](https://github.com/Cadons/Docraft/actions/workflows/build.yml/badge.svg)](https://github.com/Cadons/Docraft/actions/workflows/build.yml)
+[![Documentation](https://github.com/Cadons/Docraft/actions/workflows/docs.yml/badge.svg)](https://github.com/Cadons/Docraft/actions/workflows/docs.yml)
 
 Why Docraft?
 ------------
