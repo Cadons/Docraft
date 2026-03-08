@@ -75,6 +75,8 @@ Key Features
 Docraft is licensed under the **Apache License 2.0**.
 See the full text in [`LICENSE`](LICENSE).
 
+For contribution workflow, coding style, and PR rules, see [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
 ---
 
 ## Requirements
