@@ -473,7 +473,11 @@ namespace docraft::backend::pdf {
     const char* DocraftHaruBackend::register_ttf_font_from_file(
         const std::string& path,
         bool embed) const {
-        return HPDF_LoadTTFontFromFile(pdf_, path.c_str(), embed ? HPDF_TRUE : HPDF_FALSE);
+        const char* result = HPDF_LoadTTFontFromFile(pdf_, path.c_str(), embed ? HPDF_TRUE : HPDF_FALSE);
+        if (!result) {
+            HPDF_ResetError(pdf_);
+        }
+        return result;
     }
 
     bool DocraftHaruBackend::can_use_font(

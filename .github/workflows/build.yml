@@ -219,8 +219,8 @@ jobs:
 
       - name: Install dependencies via vcpkg (cached)
         run: |
-          cd vcpkg
-          .\vcpkg install libharu:x64-windows pugixml:x64-windows nlohmann-json:x64-windows gtest:x64-windows `
+          .\vcpkg\vcpkg install `
+            --triplet=x64-windows `
             --binarysource="clear;files,${{ env.VCPKG_BINARY_CACHE }},readwrite" `
             --downloads-root="${{ github.workspace }}/vcpkg-downloads"
         timeout-minutes: 60
