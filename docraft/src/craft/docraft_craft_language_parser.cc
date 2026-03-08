@@ -540,6 +540,21 @@ std::shared_ptr<model::DocraftNode> DocraftCraftLanguageParser::parse_node(const
                     throw std::invalid_argument(std::string(child.name()) + " cannot be placed in a list");
                 }
             }
+
+            // Validate that Text nodes cannot contain Text-like child nodes
+            if (std::dynamic_pointer_cast<model::DocraftText>(result)) {
+                const std::string child_name = child.name();
+                if (child_name == std::string{elements::kText} ||
+                    child_name == std::string{elements::kTitle} ||
+                    child_name == std::string{elements::kSubtitle} ||
+                    child_name == std::string{elements::kPageNumber}) {
+                    throw std::invalid_argument(
+                        "Text nodes cannot contain child <" + child_name + "> nodes. " +
+                        "Text is a leaf node and only accepts text content. " +
+                        "Use <Layout> as a container for multiple text elements instead.");
+                }
+            }
+
             parent->add_child(parse_node(child));
         }
     }

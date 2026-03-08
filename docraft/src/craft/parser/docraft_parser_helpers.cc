@@ -25,6 +25,14 @@ namespace docraft::craft::parser::detail {
             throw std::invalid_argument("Color attribute cannot be empty");
         }
 
+        // Support template expressions: ${data("fieldname")} or ${variable_name}
+        // These will be resolved during the templating phase
+        if (color_name_str.find("${") != std::string::npos && color_name_str.find("}") != std::string::npos) {
+            // For template expressions, use a neutral default color that will be overridden during templating
+            // We store the template expression as a special hex value and the templating engine will resolve it
+            return DocraftColor(color_name_str);
+        }
+
         if (color_name_str[0] == '#') {
             if (!is_hex_color(color_name_str)) {
                 throw std::invalid_argument("Invalid hex color: " + color_name_str);

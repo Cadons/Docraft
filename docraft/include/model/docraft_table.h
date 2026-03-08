@@ -9,6 +9,11 @@
 #include "model/i_docraft_clonable.h"
 
 namespace docraft::model {
+    enum class DocraftModelType {
+        kNone, // No model or unrecognized format
+        kStringMatrix,//[["A1", "B1"], ["A2", "B2"]]
+        kJsonObject//[{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}]
+    };
     /**
      * @brief Table node with titles and cell content.
      *
@@ -326,7 +331,18 @@ namespace docraft::model {
          * @return Baseline offset.
          */
         [[nodiscard]] float baseline_offset() const;
+        /**
+         * @brief Returns the model type.
+         * @return Model type enum.
+         */
+        [[nodiscard]] DocraftModelType model_type() const;
+        /**
+         * @brief Sets the model type.
+         * @param model_type Model type enum.
+         */
+        void set_model_type(DocraftModelType model_type);
 
+        static DocraftModelType identify_model_type(const std::string &model_str);
     private:
         int rows_;
         int cols_;
@@ -346,6 +362,7 @@ namespace docraft::model {
         std::optional<DocraftColor> default_cell_background_;
         std::optional<std::string> model_template_;
         std::optional<std::string> header_template_;
+        DocraftModelType model_type_ = DocraftModelType::kNone;
         float baseline_offset_ = 0.25F;
     };
 } // docraft

@@ -446,7 +446,8 @@ namespace docraft::layout {
         body->set_position({.x = body->margin_left(), .y = body_start_y});
         body->set_width(compute_width(body));
         body->set_height(body_height);
-        const float body_bottom_y = body_start_y - body_height;
+        const float footer_height = plan.footer_to_render ? context()->page_height() * plan.footer_ratio : 0.0F;
+        const float body_bottom_y = (body_start_y - body_height)+ body->margin_bottom()+footer_height; // The y-coordinate of the bottom of the body content area, accounting for footer if present
         context()->set_current_rect_width(body->width());
 
         DocraftCursor body_cursor; //Use a custom cursor to not affect the main one
@@ -471,7 +472,7 @@ namespace docraft::layout {
             std::function<void(const std::shared_ptr<model::DocraftNode> &, std::size_t *)> process_child;
             // Use a lambda to allow recursion while maintaining access to local variables like body_cursor and current_page
             process_child = [&](const std::shared_ptr<model::DocraftNode> &child,
-                                std::size_t *index_ptr) {
+                                const std::size_t *index_ptr) {
                 if (!child) {
                     return;
                 }
@@ -517,8 +518,8 @@ namespace docraft::layout {
                 //Handle table splitting across pages if the overflowing child is a table. If it can be split, we split it and insert the remainder
                 //back into the container to be processed on the next page. If it can't be split, we just move it to the next page.
                 if (auto table = std::dynamic_pointer_cast<model::DocraftTable>(child)) {
-                    const std::size_t total_rows = static_cast<std::size_t>(table->rows());
-                    const std::size_t fit_rows = table->orientation() == model::LayoutOrientation::kVertical
+                    const auto total_rows = static_cast<std::size_t>(table->rows());
+                    const auto fit_rows = table->orientation() == model::LayoutOrientation::kVertical
                                                      ? count_rows_fit_vertical(*table, body_bottom_y)
                                                      : count_rows_fit_horizontal(*table, body_bottom_y);
                     if (fit_rows > 0 && fit_rows < total_rows) {
@@ -542,9 +543,6 @@ namespace docraft::layout {
                             body_cursor.reset_direction();
                             body_cursor.move_to(body->position().x, body_start_y);
                             assign_page_owner_recursive(remainder, current_page);
-                            if (index_ptr) {
-                                ++(*index_ptr);
-                            }
                             return;
                         }
                     }

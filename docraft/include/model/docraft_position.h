@@ -148,7 +148,7 @@ namespace docraft::model {
         DocraftPoint center_;
         float width_=0.0F;
         float height_=0.0F;
-        float padding_ = 0.0F;
+        float padding_ = 10.0F;
         float rotation_ = 0.0F;
         DocraftAnchor anchor_; ///This is the anchor box of the component
         DocraftAnchor content_anchor_; ///This is the anchor box of the content, padding is applied

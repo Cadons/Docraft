@@ -127,6 +127,18 @@ namespace docraft::model {
             line->set_position({.x=line->position().x,.y=line->position().y-y});
         }
     }
+
+    void DocraftText::set_color_template_expression(const std::string &color_template) {
+        color_template_expression_ = color_template;
+    }
+
+    const std::string& DocraftText::color_template_expression() const {
+        return color_template_expression_;
+    }
+
+    bool DocraftText::has_color_template_expression() const {
+        return !color_template_expression_.empty();
+    }
 #pragma endregion
 
 } // docraft

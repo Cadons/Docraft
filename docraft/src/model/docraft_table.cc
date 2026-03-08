@@ -6,6 +6,8 @@
 
 #include "model/docraft_clone_utils.h"
 #include "renderer/docraft_pdf_renderer.h"
+#include "utils/docraft_base64.h"
+#include "utils/docraft_parser_utilis.h"
 
 namespace docraft::model {
     namespace {
@@ -67,6 +69,102 @@ namespace docraft::model {
                 header.emplace_back(cell.get<std::string>());
             }
             return header;
+        }
+        /**
+         * @brief Parses a JSON array of objects and create a row for each item following the table body template
+         * JSON must be mono level for each level (no nested arrays or objects) and must contain only string values
+         * Example JSON: [{"name": "Alice", "age": "30"}, {"name": "Bob", "age": "25"}]
+         * The table body template must have placeholders like ${data(name)} and ${data(age)}
+         * which will be replaced by the corresponding values from the JSON objects
+         **/
+        std::vector<std::shared_ptr<DocraftNode>> parse_json_object_for_templated_table(const std::string &json_str,const std::vector<std::shared_ptr<DocraftNode>>& template_nodes) {
+            nlohmann::json parsed;
+            std::vector<std::shared_ptr<DocraftNode>> result;
+            try {
+               parsed = nlohmann::json::parse(json_str);
+            }catch (const nlohmann::json::parse_error &e) {
+                throw std::invalid_argument(
+                    std::string("Table model must be a JSON array of objects: ") + e.what());
+            }
+            if (!parsed.is_array() || parsed.empty()) {
+                throw std::invalid_argument("Table model must be a non-empty JSON array of objects");
+            }
+            //build content items for each item in the array
+            for (const auto &item : parsed) {
+                if (!item.is_object()) {
+                    throw std::invalid_argument("Table model must be a JSON array of objects");
+                }
+                for (const auto &value : item.items()) {
+                    if (!value.value().is_string()) {
+                        throw std::invalid_argument("Table model objects must contain only string values");
+                    }
+
+                }
+                for (const auto& node : template_nodes) {
+                    auto cloned_node = clone_node(node);
+                    if (std::dynamic_pointer_cast<DocraftText>(cloned_node)) {
+                        auto text_node = std::dynamic_pointer_cast<DocraftText>(cloned_node);
+                        text_node->set_text(utils::DocraftParserUtilis::extract_data_attribute(text_node->text(), item));
+                    }else if (std::dynamic_pointer_cast<DocraftImage>(cloned_node)) {
+                        auto image_node = std::dynamic_pointer_cast<DocraftImage>(cloned_node);
+                        if (!image_node->path().empty()) {
+                            std::string rendered_path = utils::DocraftParserUtilis::extract_data_attribute(image_node->path(), item);
+                            image_node->set_path(rendered_path);
+                        }
+                        else if (image_node->has_raw_data() && utils::DocraftParserUtilis::is_data_request(image_node->raw_data())) {
+                            std::string data = utils::DocraftParserUtilis::extract_data_attribute(image_node->raw_data(), item);
+                            // Here we assume that the extracted data is a base64-encoded string representing the image data.
+                            image_node->set_raw_data(docraft::utils::decode_base64(data), image_node->width(), image_node->height());
+                        }
+                    }
+                    result.push_back(std::move(cloned_node));
+                }
+            }
+
+            return result;
+        }
+
+        template <typename T>
+        std::vector<T> split_tail(std::vector<T> &source, std::size_t split_index) {
+            split_index = std::min(split_index, source.size());
+            auto split_it = source.begin() + static_cast<std::ptrdiff_t>(split_index);
+            std::vector<T> tail(split_it, source.end());
+            source.erase(split_it, source.end());
+            return tail;
+        }
+
+        void clone_text_nodes_with_backgrounds(
+            const std::vector<std::shared_ptr<DocraftText>> &source_nodes,
+            const std::vector<std::optional<DocraftColor>> &source_backgrounds,
+            std::vector<std::shared_ptr<DocraftText>> &target_nodes,
+            std::vector<std::optional<DocraftColor>> &target_backgrounds) {
+            target_nodes.clear();
+            target_backgrounds.clear();
+            target_nodes.reserve(source_nodes.size());
+            target_backgrounds.reserve(source_nodes.size());
+            for (std::size_t i = 0; i < source_nodes.size(); ++i) {
+                target_nodes.emplace_back(source_nodes[i] ? std::make_shared<DocraftText>(*source_nodes[i]) : nullptr);
+                target_backgrounds.emplace_back(i < source_backgrounds.size() ? source_backgrounds[i] : std::nullopt);
+            }
+        }
+
+        void copy_split_common_state(const DocraftTable &source, const std::shared_ptr<DocraftTable> &remainder) {
+            remainder->set_orientation(source.orientation());
+            remainder->set_baseline_offset(source.baseline_offset());
+            remainder->set_default_cell_background(source.default_cell_background());
+            remainder->set_auto_fill_height(source.auto_fill_height());
+            remainder->set_auto_fill_width(source.auto_fill_width());
+            if (source.weight() > 0.0F && source.weight() <= 1.0F) {
+                remainder->set_weight(source.weight());
+            }
+            remainder->set_position_mode(source.position_mode());
+            remainder->set_z_index(source.z_index());
+            remainder->set_padding(source.padding());
+            remainder->set_name(source.node_name());
+            remainder->set_column_weights(source.column_weights());
+            remainder->set_content_cols(source.content_cols());
+            remainder->set_cols(source.cols());
+            remainder->set_model_type(source.model_type());
         }
     } // namespace
     DocraftTable::DocraftTable() {
@@ -228,6 +326,8 @@ namespace docraft::model {
             const int cols = content_cols();
             const int inferred_rows = static_cast<int>((nodes.size() + cols - 1) / cols);
             set_rows(inferred_rows);
+            // Ensure row_backgrounds_ has the correct size
+            row_backgrounds_.resize(inferred_rows, std::nullopt);
         }
     }
 
@@ -318,35 +418,45 @@ namespace docraft::model {
     }
 
     void DocraftTable::apply_json_rows(const std::string &json_str) {
-        const auto matrix = parse_json_matrix(json_str);
-        if (matrix.empty()) {
-            throw std::invalid_argument("Table model must be a non-empty JSON matrix of strings");
-        }
+        //parse json and check if it is a matrix of strings or a array of objects
+        nlohmann::json json = nlohmann::json::parse(json_str);
+        if (model_type()==DocraftModelType::kJsonObject|| (json.is_array() && !json.empty() && json.front().is_object())) {
+            //handle the tamplated rows case
+            const auto content_nodes = parse_json_object_for_templated_table(json_str, content_nodes_);
+            set_content_nodes(content_nodes);
+        }else {
+            //handle the normal case of json matrix
 
-        const std::size_t cols = matrix.front().size();
-        const std::size_t rows = matrix.size();
+            const auto matrix = parse_json_matrix(json_str);
+            if (matrix.empty()) {
+                throw std::invalid_argument("Table model must be a non-empty JSON matrix of strings");
+            }
 
-        if (!titles_.empty() && titles_.size() != cols) {
-            throw std::invalid_argument("Table model columns do not match header size");
-        }
+            const std::size_t cols = matrix.front().size();
+            const std::size_t rows = matrix.size();
 
-        orientation_ = LayoutOrientation::kHorizontal;
-        cols_ = static_cast<int>(cols);
-        content_cols_ = static_cast<int>(cols);
-        rows_ = static_cast<int>(rows);
+            if (!titles_.empty() && titles_.size() != cols) {
+                throw std::invalid_argument("Table model columns do not match header size");
+            }
 
-        content_nodes_.clear();
-        content_backgrounds_.clear();
-        row_backgrounds_.clear();
+            orientation_ = LayoutOrientation::kHorizontal;
+            cols_ = static_cast<int>(cols);
+            content_cols_ = static_cast<int>(cols);
+            rows_ = static_cast<int>(rows);
 
-        if (rows > 0) {
-            content_nodes_.reserve(rows * cols);
-            content_backgrounds_.reserve(rows * cols);
-            for (const auto &row : matrix) {
-                row_backgrounds_.emplace_back(std::nullopt);
-                for (const auto &cell_text : row) {
-                    content_nodes_.emplace_back(std::make_shared<DocraftText>(cell_text));
-                    content_backgrounds_.emplace_back(std::nullopt);
+            content_nodes_.clear();
+            content_backgrounds_.clear();
+            row_backgrounds_.clear();
+
+            if (rows > 0) {
+                content_nodes_.reserve(rows * cols);
+                content_backgrounds_.reserve(rows * cols);
+                for (const auto &row : matrix) {
+                    row_backgrounds_.emplace_back(std::nullopt);
+                    for (const auto &cell_text : row) {
+                        content_nodes_.emplace_back(std::make_shared<DocraftText>(cell_text));
+                        content_backgrounds_.emplace_back(std::nullopt);
+                    }
                 }
             }
         }
@@ -388,134 +498,44 @@ namespace docraft::model {
         }
 
         auto remainder = std::make_shared<DocraftTable>();
-        remainder->set_orientation(orientation_);
-        remainder->set_baseline_offset(baseline_offset_);
-        remainder->set_default_cell_background(default_cell_background_);
-        remainder->set_auto_fill_height(auto_fill_height());
-        remainder->set_auto_fill_width(auto_fill_width());
-        if (weight() > 0.0F && weight() <= 1.0F) {
-            remainder->set_weight(weight());
-        }
-        remainder->set_position_mode(position_mode());
-        remainder->set_z_index(z_index());
-        remainder->set_padding(padding());
-        remainder->set_name(node_name());
-
-        remainder->set_column_weights(column_weights_);
-        remainder->set_content_cols(content_cols_);
-        remainder->set_cols(cols_);
+        copy_split_common_state(*this, remainder);
 
         if (repeat_header) {
             remainder->titles_ = titles_;
-            remainder->title_nodes_.clear();
-            remainder->title_backgrounds_.clear();
-            for (std::size_t i = 0; i < title_nodes_.size(); ++i) {
-                if (title_nodes_[i]) {
-                    remainder->title_nodes_.emplace_back(std::make_shared<DocraftText>(*title_nodes_[i]));
-                } else {
-                    remainder->title_nodes_.emplace_back(nullptr);
-                }
-                if (i < title_backgrounds_.size()) {
-                    remainder->title_backgrounds_.emplace_back(title_backgrounds_[i]);
-                } else {
-                    remainder->title_backgrounds_.emplace_back(std::nullopt);
-                }
-            }
-            remainder->htitle_nodes_.clear();
-            remainder->htitle_backgrounds_.clear();
-            for (std::size_t i = 0; i < htitle_nodes_.size(); ++i) {
-                if (htitle_nodes_[i]) {
-                    remainder->htitle_nodes_.emplace_back(std::make_shared<DocraftText>(*htitle_nodes_[i]));
-                } else {
-                    remainder->htitle_nodes_.emplace_back(nullptr);
-                }
-                if (i < htitle_backgrounds_.size()) {
-                    remainder->htitle_backgrounds_.emplace_back(htitle_backgrounds_[i]);
-                } else {
-                    remainder->htitle_backgrounds_.emplace_back(std::nullopt);
-                }
-            }
+            clone_text_nodes_with_backgrounds(
+                title_nodes_, title_backgrounds_, remainder->title_nodes_, remainder->title_backgrounds_);
+            clone_text_nodes_with_backgrounds(
+                htitle_nodes_, htitle_backgrounds_, remainder->htitle_nodes_, remainder->htitle_backgrounds_);
         }
 
         const std::size_t total_rows = static_cast<std::size_t>(rows_);
         const std::size_t keep_rows = std::min(rows_to_keep, total_rows);
         const std::size_t remain_rows = total_rows - keep_rows;
+        const std::size_t value_cols = static_cast<std::size_t>(content_cols());
+        const std::size_t content_split_index = keep_rows * value_cols;
 
-        if (orientation_ == LayoutOrientation::kHorizontal) {
-            const std::size_t cols = static_cast<std::size_t>(content_cols());
-            const std::size_t split_index = keep_rows * cols;
+        remainder->content_nodes_ = split_tail(content_nodes_, content_split_index);
+        remainder->content_backgrounds_ = split_tail(content_backgrounds_, content_split_index);
+        remainder->row_backgrounds_ = split_tail(row_backgrounds_, keep_rows);
 
-            std::vector<std::shared_ptr<DocraftNode>> remaining_nodes(
-                content_nodes_.begin() + static_cast<std::ptrdiff_t>(split_index), content_nodes_.end());
-            content_nodes_.erase(content_nodes_.begin() + static_cast<std::ptrdiff_t>(split_index), content_nodes_.end());
-
-            std::vector<std::optional<DocraftColor>> remaining_bgs(
-                content_backgrounds_.begin() + static_cast<std::ptrdiff_t>(split_index), content_backgrounds_.end());
-            content_backgrounds_.erase(content_backgrounds_.begin() + static_cast<std::ptrdiff_t>(split_index),
-                                       content_backgrounds_.end());
-
-            std::vector<std::optional<DocraftColor>> remaining_row_bgs(
-                row_backgrounds_.begin() + static_cast<std::ptrdiff_t>(keep_rows), row_backgrounds_.end());
-            row_backgrounds_.erase(row_backgrounds_.begin() + static_cast<std::ptrdiff_t>(keep_rows),
-                                   row_backgrounds_.end());
-
-            remainder->content_nodes_ = std::move(remaining_nodes);
-            remainder->content_backgrounds_ = std::move(remaining_bgs);
-            remainder->row_backgrounds_ = std::move(remaining_row_bgs);
-
-            rows_ = static_cast<int>(keep_rows);
-            remainder->rows_ = static_cast<int>(remain_rows);
-        } else {
-            const std::size_t value_cols = static_cast<std::size_t>(content_cols());
-            const std::size_t split_index = keep_rows * value_cols;
-
-            std::vector<std::shared_ptr<DocraftNode>> remaining_nodes(
-                content_nodes_.begin() + static_cast<std::ptrdiff_t>(split_index), content_nodes_.end());
-            content_nodes_.erase(content_nodes_.begin() + static_cast<std::ptrdiff_t>(split_index), content_nodes_.end());
-
-            std::vector<std::optional<DocraftColor>> remaining_bgs(
-                content_backgrounds_.begin() + static_cast<std::ptrdiff_t>(split_index), content_backgrounds_.end());
-            content_backgrounds_.erase(content_backgrounds_.begin() + static_cast<std::ptrdiff_t>(split_index),
-                                       content_backgrounds_.end());
-
-            std::vector<std::optional<DocraftColor>> remaining_row_bgs(
-                row_backgrounds_.begin() + static_cast<std::ptrdiff_t>(keep_rows), row_backgrounds_.end());
-            row_backgrounds_.erase(row_backgrounds_.begin() + static_cast<std::ptrdiff_t>(keep_rows),
-                                   row_backgrounds_.end());
-
-            std::vector<std::shared_ptr<DocraftText>> remaining_titles(
-                title_nodes_.begin() + static_cast<std::ptrdiff_t>(keep_rows), title_nodes_.end());
-            title_nodes_.erase(title_nodes_.begin() + static_cast<std::ptrdiff_t>(keep_rows), title_nodes_.end());
-
-            std::vector<std::optional<DocraftColor>> remaining_title_bgs(
-                title_backgrounds_.begin() + static_cast<std::ptrdiff_t>(keep_rows), title_backgrounds_.end());
-            title_backgrounds_.erase(title_backgrounds_.begin() + static_cast<std::ptrdiff_t>(keep_rows),
-                                     title_backgrounds_.end());
-
-            std::vector<std::string> remaining_titles_text(
-                titles_.begin() + static_cast<std::ptrdiff_t>(keep_rows), titles_.end());
-            titles_.erase(titles_.begin() + static_cast<std::ptrdiff_t>(keep_rows), titles_.end());
-
-            remainder->content_nodes_ = std::move(remaining_nodes);
-            remainder->content_backgrounds_ = std::move(remaining_bgs);
-            remainder->row_backgrounds_ = std::move(remaining_row_bgs);
-            remainder->title_nodes_ = std::move(remaining_titles);
-            remainder->title_backgrounds_ = std::move(remaining_title_bgs);
-            remainder->titles_ = std::move(remaining_titles_text);
-
-            rows_ = static_cast<int>(keep_rows);
-            remainder->rows_ = static_cast<int>(remain_rows);
+        if (orientation_ != LayoutOrientation::kHorizontal) {
+            remainder->title_nodes_ = split_tail(title_nodes_, keep_rows);
+            remainder->title_backgrounds_ = split_tail(title_backgrounds_, keep_rows);
+            remainder->titles_ = split_tail(titles_, keep_rows);
         }
 
+        rows_ = static_cast<int>(keep_rows);
+        remainder->rows_ = static_cast<int>(remain_rows);
+
         if (!row_weights_.empty()) {
-            const std::size_t split_index = std::min(keep_rows, row_weights_.size());
-            std::vector<float> remaining_weights(row_weights_.begin() + static_cast<std::ptrdiff_t>(split_index),
-                                                 row_weights_.end());
-            row_weights_.erase(row_weights_.begin() + static_cast<std::ptrdiff_t>(split_index), row_weights_.end());
-            remainder->row_weights_ = std::move(remaining_weights);
+            remainder->row_weights_ = split_tail(row_weights_, keep_rows);
         }
 
         return remainder;
+    }
+
+    void DocraftTable::set_model_type(DocraftModelType model_type) {
+        model_type_ = model_type;
     }
 #pragma endregion
 #pragma region getter
@@ -625,5 +645,24 @@ namespace docraft::model {
         return default_cell_background_;
     }
 
+    DocraftModelType DocraftTable::model_type() const {
+        return model_type_;
+    }
+
 #pragma endregion
+    DocraftModelType DocraftTable::identify_model_type(const std::string &model_str) {
+        try {
+            auto json = nlohmann::json::parse(model_str);
+            if (json.is_array() && !json.empty()) {
+                if (json.front().is_array()) {
+                    return DocraftModelType::kStringMatrix;
+                } else if (json.front().is_object()) {
+                    return DocraftModelType::kJsonObject;
+                }
+            }
+        } catch (const nlohmann::json::parse_error &) {
+            throw std::invalid_argument("Table model must be a JSON array of arrays or a JSON array of objects");
+        }
+        return DocraftModelType::kNone;
+    }
 } // docraft

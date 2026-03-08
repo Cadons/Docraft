@@ -93,8 +93,8 @@ namespace docraft::test::layout {
         std::vector<std::shared_ptr<model::DocraftNode>> nodes{body};
         engine_->compute_document_layout(nodes);
 
-        ASSERT_EQ(backend_->total_page_count(), 2U);
-        ASSERT_EQ(body->children().size(), 2U);
+        ASSERT_EQ(backend_->total_page_count(), 3U);
+        ASSERT_EQ(body->children().size(), 3U);
 
         auto first_table = std::dynamic_pointer_cast<model::DocraftTable>(body->children()[0]);
         auto second_table = std::dynamic_pointer_cast<model::DocraftTable>(body->children()[1]);
@@ -104,10 +104,14 @@ namespace docraft::test::layout {
         EXPECT_EQ(first_table->page_owner(), 1);
         EXPECT_EQ(second_table->page_owner(), 2);
 
-        const std::size_t total_rows =
+        const auto total_rows =
             static_cast<std::size_t>(first_table->rows() + second_table->rows());
-        EXPECT_EQ(total_rows, 5U);
+        EXPECT_EQ(total_rows, 4U);
         EXPECT_GT(first_table->rows(), 0);
         EXPECT_GT(second_table->rows(), 0);
+
+        // Remainder table must be re-laid out at the top of the new page.
+        EXPECT_FLOAT_EQ(second_table->position().y+10, body->position().y); // 10 is the padding of the body section (defaultì)
+        EXPECT_GE(second_table->anchors().bottom_left.y, body->anchors().bottom_left.y);
     }
 } // namespace docraft::test::layout

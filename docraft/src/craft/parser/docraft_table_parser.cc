@@ -24,6 +24,7 @@ namespace docraft::craft::parser {
         bool has_model_template = false;
         bool has_header_json = false;
         bool has_header_template = false;
+        bool require_body = false;
         if (auto model_attr = craft_language_source.attribute(elements::table::attribute::kModel.data())) {
             std::string model_str = model_attr.as_string();
             if (model_str == std::string{orientation::kVertical}) {
@@ -31,13 +32,21 @@ namespace docraft::craft::parser {
             } else if (model_str == std::string{orientation::kHorizontal}) {
                 table_node->set_orientation(model::LayoutOrientation::kHorizontal);
             } else {
-                if (model_str.find("${") != std::string::npos) {
-                    table_node->set_model_template(model_str);
+                if (model_str.contains("${")) {
                     has_model_template = true;
                 } else {
-                    table_node->apply_json_rows(model_str);
+                    auto model_type = model::DocraftTable::identify_model_type(model_str);
                     has_model_json = true;
+                    if (model_type == model::DocraftModelType::kStringMatrix) {
+                        table_node->set_model_type(model::DocraftModelType::kStringMatrix);
+                        table_node->apply_json_rows(model_str);
+                    } else if (model_type == model::DocraftModelType::kJsonObject) {
+                        table_node->set_model_type(model::DocraftModelType::kJsonObject);
+                        require_body = true;
+                    }
                 }
+                table_node->set_model_template(model_str);
+
             }
         }
         // Optional `header` attribute for column titles:
@@ -45,7 +54,7 @@ namespace docraft::craft::parser {
         // - ${var} -> deferred JSON titles (templated)
         if (auto header_attr = craft_language_source.attribute("header")) {
             std::string header_str = header_attr.as_string();
-            if (header_str.find("${") != std::string::npos) {
+            if (header_str.contains("${")) {
                 table_node->set_header_template(header_str);
                 has_header_template = true;
             } else {
@@ -121,7 +130,7 @@ namespace docraft::craft::parser {
         // `THead` can be used instead of `header`, but not together.
         if (has_model_json || has_model_template || has_header_json || has_header_template) {
             if (table_body) {
-                throw std::invalid_argument("Table JSON model cannot be combined with TBody");
+                //Tbody is template for each item
             }
             if ((has_header_json || has_header_template) && table_header) {
                 throw std::invalid_argument("Table JSON header cannot be combined with THead");
@@ -168,7 +177,8 @@ namespace docraft::craft::parser {
                         titles.emplace_back(title.child_value());
                     } else if (title.name() == std::string{elements::kTitle} ||
                                title.name() == std::string{elements::kVTitle}) {
-                        throw std::invalid_argument("Use HTitle in table headers (VTitle is only for vertical row labels)");
+                        throw std::invalid_argument(
+                            "Use HTitle in table headers (VTitle is only for vertical row labels)");
                     } else {
                         throw std::invalid_argument(std::string(title.name()) + " cannot be placed in a table header");
                     }
@@ -227,6 +237,13 @@ namespace docraft::craft::parser {
                             if (child.name() == std::string{elements::kText}) {
                                 DocraftTextParser text_parser;
                                 auto text_node = text_parser.parse(child);
+                                if (auto width_attr = col.attribute(basic::attribute::kWidth.data())) {
+                                    const float explicit_width = width_attr.as_float();
+                                    if (explicit_width <= 0.0F) {
+                                        throw std::invalid_argument("Cell width must be > 0");
+                                    }
+                                    text_node->set_width(explicit_width);
+                                }
                                 const auto cell_bg = parse_background_color(
                                     col,
                                     elements::table_column::attribute::kBackgroundColor.data(),
@@ -236,6 +253,13 @@ namespace docraft::craft::parser {
                             } else if (child.name() == std::string{elements::kImage}) {
                                 DocraftImageParser image_parser;
                                 auto image = image_parser.parse(child);
+                                if (auto width_attr = col.attribute(basic::attribute::kWidth.data())) {
+                                    const float explicit_width = width_attr.as_float();
+                                    if (explicit_width <= 0.0F) {
+                                        throw std::invalid_argument("Cell width must be > 0");
+                                    }
+                                    image->set_width(explicit_width);
+                                }
                                 const auto cell_bg = parse_background_color(
                                     col,
                                     elements::table_column::attribute::kBackgroundColor.data(),
@@ -276,7 +300,9 @@ namespace docraft::craft::parser {
                 table_node->set_rows(row_count);
             }
         }
-
+        if (require_body) {
+            table_node->apply_json_rows(table_node->model_template());
+        }
         detail::configure_docraft_node_attributes(table_node, craft_language_source);
         return table_node;
     }

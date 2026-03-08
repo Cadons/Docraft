@@ -1,0 +1,214 @@
+<Document>
+  <Settings page_size="A4" page_orientation="portrait" header_ratio="0.10" body_ratio="0.80" footer_ratio="0.10" />
+
+  <Metadata>
+    <DocumentTitle>Industrial Manufacturing Report</DocumentTitle>
+    <Author>Production Department</Author>
+    <Subject>Monthly Production and Quality Control Report</Subject>
+    <CreationDate>${report_date}</CreationDate>
+  </Metadata>
+
+  <Header margin_left="25" margin_right="25" border_width="1.5" border_color="#0A3D62">
+    <Layout orientation="horizontal">
+      <Text style="bold" font_size="18" color="#0A3D62" weight="0.7">MANUFACTURING REPORT</Text>
+      <Text alignment="right" font_size="11" color="#555555" weight="0.3">${company_name}</Text>
+    </Layout>
+    <Text font_size="9" color="#888888" margin_top="5">Production Report for Period: ${report_period}</Text>
+  </Header>
+
+  <Body margin_left="25" margin_right="25">
+    <!-- Title Section -->
+    <Title color="#0A3D62" style="bold">Production & Quality Control Summary</Title>
+    <Text font_size="10" color="#666666" style="italic">Report Generated: ${generation_date} | Facility: ${facility_location}</Text>
+
+    <Blank height="12" />
+
+    <!-- Key Performance Indicators -->
+    <Subtitle color="#1E5F9E" style="bold">Key Performance Indicators (KPIs)</Subtitle>
+    <Layout orientation="horizontal">
+      <Rectangle width="100%" height="80" padding="12" background_color="#E8F4F8" border_width="1" border_color="#1E5F9E">
+        <Layout orientation="horizontal">
+          <Text weight="0.25" alignment="center">
+            <Text style="bold" font_size="14" color="#0A3D62">${total_units_produced}</Text>
+            <Text font_size="9" color="#555555" margin_top="4">Total Units Produced</Text>
+          </Text>
+          <Text weight="0.25" alignment="center">
+            <Text style="bold" font_size="14" color="#27AE60">${production_efficiency}%</Text>
+            <Text font_size="9" color="#555555" margin_top="4">Production Efficiency</Text>
+          </Text>
+          <Text weight="0.25" alignment="center">
+            <Text style="bold" font_size="14" color="#E74C3C">${defect_rate}%</Text>
+            <Text font_size="9" color="#555555" margin_top="4">Defect Rate</Text>
+          </Text>
+          <Text weight="0.25" alignment="center">
+            <Text style="bold" font_size="14" color="#3498DB">${uptime_percentage}%</Text>
+            <Text font_size="9" color="#555555" margin_top="4">Equipment Uptime</Text>
+          </Text>
+        </Layout>
+      </Rectangle>
+    </Layout>
+
+    <Blank height="14" />
+
+    <!-- Production Overview -->
+    <Subtitle color="#1E5F9E" style="bold">Production Overview</Subtitle>
+    <Text alignment="justified">
+      During this reporting period, the manufacturing facility achieved a total production output of ${total_units_produced} units across all production lines. The overall production efficiency stood at ${production_efficiency}%, with equipment uptime reaching ${uptime_percentage}%. Quality control initiatives resulted in a defect rate of ${defect_rate}%, reflecting our commitment to maintaining high manufacturing standards. The facility operated with ${number_of_shifts} shifts daily, utilizing ${active_production_lines} out of ${total_production_lines} available production lines.
+    </Text>
+
+    <Blank height="10" />
+
+    <!-- Production by Line -->
+    <Subtitle color="#1E5F9E" style="bold">Production Output by Line</Subtitle>
+    <Table model='${production_lines}'>
+      <THead>
+        <HTitle color="#FFFFFF" background_color="#0A3D62" style="bold">Production Line</HTitle>
+        <HTitle color="#FFFFFF" background_color="#0A3D62" style="bold">Product Type</HTitle>
+        <HTitle color="#FFFFFF" background_color="#0A3D62" style="bold">Units Produced</HTitle>
+        <HTitle color="#FFFFFF" background_color="#0A3D62" style="bold">Target Units</HTitle>
+        <HTitle color="#FFFFFF" background_color="#0A3D62" style="bold">Achievement %</HTitle>
+      </THead>
+      <TBody>
+        <Row>
+          <Cell width="70"><Text font_size="9" style="bold">${data("line_name")}</Text></Cell>
+          <Cell width="80"><Text font_size="9">${data("product_type")}</Text></Cell>
+          <Cell width="60" alignment="center"><Text font_size="9">${data("units_produced")}</Text></Cell>
+          <Cell width="60" alignment="center"><Text font_size="9">${data("target_units")}</Text></Cell>
+          <Cell width="70" alignment="center">
+            <Text font_size="9" style="bold" color="#27AE60">${data("achievement_percentage")}%</Text>
+          </Cell>
+        </Row>
+      </TBody>
+    </Table>
+
+    <Blank height="12" />
+
+    <!-- Quality Control Results -->
+    <Subtitle color="#1E5F9E" style="bold">Quality Control & Defect Analysis</Subtitle>
+    <Table model='${quality_metrics}'>
+      <THead>
+        <HTitle color="#FFFFFF" background_color="#0A3D62" style="bold">Inspection Point</HTitle>
+        <HTitle color="#FFFFFF" background_color="#0A3D62" style="bold">Items Inspected</HTitle>
+        <HTitle color="#FFFFFF" background_color="#0A3D62" style="bold">Defects Found</HTitle>
+        <HTitle color="#FFFFFF" background_color="#0A3D62" style="bold">Defect Rate %</HTitle>
+        <HTitle color="#FFFFFF" background_color="#0A3D62" style="bold">Status</HTitle>
+      </THead>
+      <TBody>
+        <Row>
+          <Cell width="80"><Text font_size="9">${data("inspection_point")}</Text></Cell>
+          <Cell width="70" alignment="center"><Text font_size="9">${data("items_inspected")}</Text></Cell>
+          <Cell width="60" alignment="center"><Text font_size="9" color="#E74C3C" style="bold">${data("defects_found")}</Text></Cell>
+          <Cell width="70" alignment="center"><Text font_size="9">${data("defect_rate")}%</Text></Cell>
+          <Cell width="65" alignment="center">
+            <Text font_size="9" style="bold" color="#27AE60">${data("status")}</Text>
+          </Cell>
+        </Row>
+      </TBody>
+    </Table>
+
+    <NewPage />
+
+    <!-- Equipment Performance -->
+    <Subtitle color="#1E5F9E" style="bold">Equipment Performance & Maintenance</Subtitle>
+    <Text font_size="10" color="#666666" margin_bottom="10">
+      Equipment operational status and scheduled maintenance activities for the reporting period.
+    </Text>
+    <Table model='${equipment_status}'>
+      <THead>
+        <HTitle color="#FFFFFF" background_color="#0A3D62" style="bold">Equipment ID</HTitle>
+        <HTitle color="#FFFFFF" background_color="#0A3D62" style="bold">Equipment Type</HTitle>
+        <HTitle color="#FFFFFF" background_color="#0A3D62" style="bold">Operating Hours</HTitle>
+        <HTitle color="#FFFFFF" background_color="#0A3D62" style="bold">Maintenance Status</HTitle>
+        <HTitle color="#FFFFFF" background_color="#0A3D62" style="bold">Next Service</HTitle>
+      </THead>
+      <TBody>
+        <Row>
+          <Cell width="60"><Text font_size="9" style="bold">${data("equipment_id")}</Text></Cell>
+          <Cell width="70"><Text font_size="9">${data("equipment_type")}</Text></Cell>
+          <Cell width="70" alignment="center"><Text font_size="9">${data("operating_hours")}</Text></Cell>
+          <Cell width="85"><Text font_size="9" color="#27AE60">${data("maintenance_status")}</Text></Cell>
+          <Cell width="75"><Text font_size="9">${data("next_service_date")}</Text></Cell>
+        </Row>
+      </TBody>
+    </Table>
+
+    <Blank height="12" />
+
+    <!-- Work Shifts & Labor -->
+    <Subtitle color="#1E5F9E" style="bold">Labor & Shift Performance</Subtitle>
+    <Table model='${shift_data}'>
+      <THead>
+        <HTitle color="#FFFFFF" background_color="#0A3D62" style="bold">Shift</HTitle>
+        <HTitle color="#FFFFFF" background_color="#0A3D62" style="bold">Personnel</HTitle>
+        <HTitle color="#FFFFFF" background_color="#0A3D62" style="bold">Production Output</HTitle>
+        <HTitle color="#FFFFFF" background_color="#0A3D62" style="bold">Defects</HTitle>
+        <HTitle color="#FFFFFF" background_color="#0A3D62" style="bold">Incidents</HTitle>
+      </THead>
+      <TBody>
+        <Row>
+          <Cell width="60"><Text font_size="9" style="bold">${data("shift_name")}</Text></Cell>
+          <Cell width="60" alignment="center"><Text font_size="9">${data("personnel_count")}</Text></Cell>
+          <Cell width="80" alignment="center"><Text font_size="9">${data("shift_output")}</Text></Cell>
+          <Cell width="60" alignment="center"><Text font_size="9" color="#E74C3C">${data("shift_defects")}</Text></Cell>
+          <Cell width="60" alignment="center"><Text font_size="9">${data("incidents")}</Text></Cell>
+        </Row>
+      </TBody>
+    </Table>
+
+    <Blank height="12" />
+
+    <!-- Safety Metrics -->
+    <Subtitle color="#1E5F9E" style="bold">Safety & Compliance</Subtitle>
+    <Layout orientation="horizontal">
+      <Rectangle width="100%" padding="10" background_color="#FFF3E0" border_width="1" border_color="#E67E22">
+        <Layout orientation="horizontal">
+          <Text weight="0.5">
+            <Text style="bold" color="#E67E22" font_size="11">Safety Incidents This Period: </Text>
+            <Text font_size="11" color="#555555">${safety_incidents}</Text>
+          </Text>
+          <Text weight="0.5">
+            <Text style="bold" color="#27AE60" font_size="11">Days Without Lost Time: </Text>
+            <Text font_size="11" color="#555555">${days_without_incident}</Text>
+          </Text>
+        </Layout>
+      </Rectangle>
+    </Layout>
+
+    <Blank height="12" />
+
+    <!-- Issues & Recommendations -->
+    <Subtitle color="#1E5F9E" style="bold">Issues Identified & Recommendations</Subtitle>
+    <UList dot="circle">
+      <Text>Equipment EQ-${equipment_issue_id}: ${equipment_issue_description} - Recommended action: ${equipment_recommendation}</Text>
+      <Text>Quality concern: ${quality_issue_description} - Mitigation strategy implemented: ${quality_mitigation}</Text>
+      <Text>Process optimization opportunity: ${process_optimization}</Text>
+      <Text>Preventive maintenance scheduled: ${preventive_maintenance_plan}</Text>
+    </UList>
+
+    <Blank height="12" />
+
+    <!-- Conclusion -->
+    <Subtitle color="#1E5F9E" style="bold">Summary & Next Steps</Subtitle>
+    <Text alignment="justified">
+      The manufacturing facility has demonstrated solid performance during this reporting period with production targets being ${target_achievement}% achieved. Quality standards have been maintained with a defect rate of ${defect_rate}%, and equipment uptime has reached ${uptime_percentage}%. Continuous improvement initiatives are being pursued to enhance production efficiency and reduce defect rates further. All personnel safety protocols have been followed, with ${safety_incidents} incident(s) recorded this period. Management is committed to maintaining these standards and implementing the recommended improvements outlined in this report.
+    </Text>
+
+    <Blank height="10" />
+
+    <Layout orientation="horizontal">
+      <Text weight="0.5" font_size="9" color="#666666" style="italic">Prepared by: ${prepared_by} | Department: Production Management</Text>
+      <Text weight="0.5" alignment="right" font_size="9" color="#666666" style="italic">Report Date: ${report_date}</Text>
+    </Layout>
+  </Body>
+
+  <Footer margin_left="25" margin_right="25" border_width="1" border_color="#DDDDDD">
+    <Layout orientation="horizontal">
+      <Text weight="0.5" font_size="9" color="#999999">© ${company_name} - Industrial Manufacturing</Text>
+      <Text weight="0.5" alignment="right" font_size="9" color="#999999">
+        <Text>Page </Text>
+        <PageNumber />
+      </Text>
+    </Layout>
+  </Footer>
+</Document>
+
