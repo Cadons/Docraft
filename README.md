@@ -1,5 +1,7 @@
 # Docraft
 [![Build and Test](https://github.com/Cadons/Docraft/actions/workflows/build.yml/badge.svg)](https://github.com/Cadons/Docraft/actions/workflows/build.yml)
+[![Documentation](https://github.com/Cadons/Docraft/actions/workflows/docs.yml/badge.svg)](https://github.com/Cadons/Docraft/actions/workflows/docs.yml)
+
 Why Docraft?
 ------------
 
