@@ -151,3 +151,5 @@ License & Credits
 
 Docraft is developed by `Cadons <https://github.com/Cadons>`_.
 
+Docraft is licensed under the **Apache License 2.0**.
+See the full text in the root ``LICENSE`` file.
