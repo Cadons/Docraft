@@ -16,6 +16,9 @@ namespace docraft::utils {
                 static std::string extract_data_attribute(const std::vector<unsigned char>& data_request, const nlohmann::json& item);
 
                 static bool is_data_request(const std::string &data_request);
+
+                static bool is_template_variable(const std::string &variable);
+
                 static bool is_data_request(const std::vector<unsigned char> &data);
         };
 } // docraft

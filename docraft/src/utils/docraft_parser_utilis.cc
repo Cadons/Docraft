@@ -54,6 +54,9 @@ namespace docraft::utils {
     bool DocraftParserUtilis::is_data_request(const std::string &data_request) {
         return data_request.starts_with("${data(") && data_request.ends_with(")}");
     }
+    bool DocraftParserUtilis::is_template_variable(const std::string &variable) {
+        return variable.starts_with("${") && variable.ends_with("}") && !is_data_request(variable);
+    }
     bool DocraftParserUtilis::is_data_request(const std::vector<unsigned char> &data) {
         constexpr std::string_view kPrefix = "${data(";
         constexpr std::string_view kSuffix = ")}";

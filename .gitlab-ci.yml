@@ -1,6 +1,8 @@
 stages:
   - build
   - test
+  - docs
+  - deploy
 
 
 default:
@@ -46,3 +48,39 @@ test:
     reports:
       junit: build/test-results.xml
     expire_in: 1 week
+
+docs:
+  stage: docs
+  image: python:3.9
+  before_script:
+    - apt-get update -y
+    - apt-get install -y doxygen graphviz
+    - python --version
+    - doxygen --version
+  script:
+    - cd doc
+    - pip install -r requirements.txt
+    - sphinx-build -b html source build/html
+  artifacts:
+    paths:
+      - doc/build/html/
+    expire_in: 1 week
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+
+pages:
+  stage: deploy
+  image: busybox
+  needs:
+    - docs
+  script:
+    - mkdir -p public
+    - cp -r doc/build/html/* public/
+    - touch public/.nojekyll
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'

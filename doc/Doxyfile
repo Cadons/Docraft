@@ -1,0 +1,120 @@
+# Doxyfile for Docraft C++ Project
+# Optimized for Sphinx + Breathe XML output
+
+#---------------------------------------------------------------------------
+# Project
+#---------------------------------------------------------------------------
+PROJECT_NAME           = "Docraft"
+PROJECT_NUMBER         = 1.0.0
+PROJECT_BRIEF          = "A document generation and rendering library"
+OUTPUT_DIRECTORY       = ./doxy_files
+CREATE_SUBDIRS         = NO
+OUTPUT_LANGUAGE        = English
+
+#---------------------------------------------------------------------------
+# Build
+#---------------------------------------------------------------------------
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = NO
+EXTRACT_STATIC         = NO
+EXTRACT_LOCAL_CLASSES  = NO
+EXTRACT_ANON_NSPACES   = NO
+
+HIDE_UNDOC_MEMBERS     = NO
+HIDE_UNDOC_CLASSES     = NO
+HIDE_FRIEND_COMPOUNDS  = YES
+HIDE_IN_BODY_DOCS      = YES
+HIDE_SCOPE_NAMES       = NO
+
+INTERNAL_DOCS          = NO
+SHOW_INCLUDE_FILES     = NO
+SHOW_GROUPED_MEMB_INC  = NO
+SHOW_USED_FILES        = NO
+SHOW_FILES             = NO
+SHOW_NAMESPACES        = YES
+INLINE_INFO            = NO
+
+SORT_MEMBER_DOCS       = YES
+SORT_BRIEF_DOCS        = NO
+SORT_MEMBERS_CTORS_1ST = YES
+
+GENERATE_TODOLIST      = NO
+GENERATE_TESTLIST      = NO
+GENERATE_BUGLIST       = NO
+GENERATE_DEPRECATEDLIST= NO
+
+BRIEF_MEMBER_DESC      = YES
+REPEAT_BRIEF           = YES
+ALWAYS_DETAILED_SEC    = NO
+INLINE_INHERITED_MEMB  = NO
+FULL_PATH_NAMES        = NO
+STRIP_FROM_PATH        = ../docraft
+JAVADOC_AUTOBRIEF      = YES
+MARKDOWN_SUPPORT       = YES
+INHERIT_DOCS           = YES
+SEPARATE_MEMBER_PAGES  = NO
+TAB_SIZE               = 4
+
+#---------------------------------------------------------------------------
+# Warnings
+#---------------------------------------------------------------------------
+QUIET                  = YES
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = NO
+WARN_IF_DOC_ERROR      = YES
+WARN_IF_INCOMPLETE_DOC = YES
+WARN_FORMAT            = "$file:$line: $text"
+WARN_LOGFILE           = ./build/doxygen/warnings.log
+
+#---------------------------------------------------------------------------
+# Input
+#---------------------------------------------------------------------------
+INPUT                  = ../docraft/include
+INPUT_ENCODING         = UTF-8
+FILE_PATTERNS          = *.h *.hpp
+RECURSIVE              = YES
+EXCLUDE_PATTERNS       = */third_party/*
+EXCLUDE_SYMBOLS        =
+
+#---------------------------------------------------------------------------
+# Source browsing
+#---------------------------------------------------------------------------
+SOURCE_BROWSER         = NO
+INLINE_SOURCES         = NO
+STRIP_CODE_COMMENTS    = YES
+REFERENCED_BY_RELATION = NO
+REFERENCES_RELATION    = NO
+VERBATIM_HEADERS       = NO
+
+#---------------------------------------------------------------------------
+# Output formats — XML only (for Breathe)
+#---------------------------------------------------------------------------
+GENERATE_HTML          = NO
+GENERATE_LATEX         = NO
+GENERATE_RTF           = NO
+GENERATE_MAN           = NO
+GENERATE_DOCBOOK       = NO
+
+GENERATE_XML           = YES
+XML_PROGRAMLISTING     = NO
+XML_NS_MEMB_FILE_SCOPE = YES
+
+#---------------------------------------------------------------------------
+# Alphabetical index
+#---------------------------------------------------------------------------
+ALPHABETICAL_INDEX     = NO
+
+#---------------------------------------------------------------------------
+# Preprocessor
+#---------------------------------------------------------------------------
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = NO
+SEARCH_INCLUDES        = YES
+INCLUDE_PATH           = ../docraft/include
+INCLUDE_FILE_PATTERNS  = *.h *.hpp
+SKIP_FUNCTION_MACROS   = YES
+
+#---------------------------------------------------------------------------
+# Dot
+#---------------------------------------------------------------------------
+HAVE_DOT               = NO

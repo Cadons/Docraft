@@ -1,7 +1,72 @@
-# DocCraft
+# Docraft
 [![CI/CD](https://gitlab.umbranet.ovh/openprojects/doc-craft/badges/dev/pipeline.svg)](https://gitlab.umbranet.ovh/openprojects/doc-craft/-/pipelines)
 
-DocCraft is a C++23 project built with **CMake**, with a build pipeline that uses **Flex**/**Bison** and runs tests via **CTest** (GoogleTest).
+Why Docraft?
+------------
+
+Generating PDF documents from C++ has always been a painful experience.
+The ecosystem is fragmented: developers must either call low-level libraries
+that expose raw page-drawing primitives (coordinates, fonts, streams) or
+shell out to external tools like LaTeX, wkhtmltopdf, or headless browsers.
+
+None of the existing solutions offer what modern C++ applications actually
+need: **a library-level, declarative approach to PDF generation** that runs
+entirely inside your process with no external dependencies.
+
+Docraft solves this problem.
+
+What is Docraft?
+----------------
+
+Docraft is a **C++23 library** that lets you define documents using an
+XML-based markup language called the **Craft Language**. You describe *what*
+your document looks like — text, tables, images, shapes, headers, footers —
+and Docraft takes care of *how* to lay it out and render it to PDF.
+
+It ships as a static or shared library that you link into your CMake project.
+The rendering pipeline runs entirely in-process using [libharu](https://github.com/libharu/libharu) as the PDF backend — no spawning of
+external processes, no temporary files, no network calls.
+
+Key Features
+------------
+
+- **Declarative XML markup** — Define documents with the Craft Language
+  instead of writing coordinate-level drawing code.
+- **Automatic page layout** — Flow-based layout engine with automatic page
+  breaking; no manual page management required.
+- **Header / Body / Footer sections** — Define them once; Docraft repeats
+  headers and footers on every page automatically.
+- **Automatic page numbering** — Insert ``<PageNumber/>`` and the library
+  fills in the correct number on each page.
+- **Template engine** — Bind ``${variables}`` and iterate over JSON arrays
+  with ``<Foreach>`` to generate data-driven documents at runtime.
+- **Rich text styling** — Font family, size, bold, italic, underline,
+  alignment (left, center, right, justified), and color.
+- **External font support** — Register custom TTF fonts (regular, bold,
+  italic, bold-italic variants) for full typographic control.
+- **Shapes** — Rectangle, Circle, Triangle, Line, Polygon with background
+  color, border color, and border width.
+- **Tables** — Column titles, row/column weights, per-cell backgrounds, and
+  JSON model binding for data-driven tables.
+- **Ordered & unordered lists** — Number, roman numeral, dash, star, circle,
+  and box markers.
+- **Horizontal & vertical layouts** — Nest ``<Layout>`` elements with
+  weights to build multi-column or multi-row compositions.
+- **Image support** — PNG, JPEG from file, and raw RGB pixel data injected
+  at runtime via the template engine (including base64 decoding).
+- **Document metadata** — Author, title, subject, keywords, creation date,
+  and automatic keyword extraction from document content.
+- **Page format control** — A3, A4, A5, Letter, Legal in portrait or
+  landscape orientation; configurable header/body/footer ratios.
+- **Absolute positioning** — Place any element at exact (x, y) coordinates
+  when flow layout is not appropriate.
+- **Z-index stacking** — Control rendering order with ``z_index``.
+- **DOM traversal & lookup** — Query the document tree by name or type after
+  parsing, before rendering.
+- **Pluggable backend** — The rendering backend is abstracted behind
+  interfaces; swap or extend it without changing the document model.
+- **CLI tool** — The ``docraft_tool`` executable renders ``.craft`` files
+  to PDF from the command line, with optional JSON / key-value data files.
 
 ---
 
@@ -15,10 +80,10 @@ DocCraft is a C++23 project built with **CMake**, with a build pipeline that use
   - Windows: MSVC (Visual Studio 2022) or LLVM/Clang
 
 ### Dependencies
-- **Flex**
-- **Bison**
-- **GoogleTest** (for tests)
-- **libharu** (`libhpdf`) if your build links against it
+- **libharu** (`libhpdf`) — PDF generation backend
+- **pugixml** — XML parsing for Craft Language
+- **nlohmann-json** — JSON data parsing for templates
+- **GoogleTest** — Testing framework (optional, only if `BUILD_TESTS=ON`)
 
 ---
 
@@ -67,22 +132,18 @@ items: [{"name":"Keyboard","qty":1,"price":"49.99"}]
 Install prerequisites:
 ```
 bash
-brew install cmake flex bison
-brew install googletest
-brew install libharu
+brew install cmake ninja
+brew install libharu pugixml nlohmann-json googletest
 ```
 Notes:
-- Homebrew’s `bison`/`flex` may not be the system default. If CMake can’t find them, ensure Homebrew is first in your `PATH`:
-  ```bash
-  echo 'export PATH="/opt/homebrew/opt/bison/bin:/opt/homebrew/opt/flex/bin:$PATH"' >> ~/.zshrc
-  source ~/.zshrc
-  ```
+- Use consistent package manager for all dependencies
+- Ensure CMake can find the installed libraries
 
 ## Ubuntu / Debian
 ```
 bash
 sudo apt-get update
-sudo apt-get install -y cmake make bison flex libgtest-dev libhpdf-dev
+sudo apt-get install -y cmake ninja-build g++-14 libhpdf-dev libpugixml-dev nlohmann-json3-dev libgtest-dev
 ```
 ## Windows
 
@@ -106,7 +167,7 @@ cd vcpkg
 3) Install dependencies (example triplet: x64-windows):
 ```
 powershell
-.\vcpkg install flex bison gtest libharu --triplet x64-windows
+.\vcpkg install libharu pugixml nlohmann-json gtest --triplet x64-windows
 ```
 4) Configure your project using the vcpkg toolchain:
 ```
@@ -123,27 +184,11 @@ ctest --test-dir build -C Release --output-on-failure
 ```
 Notes:
 - If you use the Visual Studio generator, `--config Release` matters (multi-config).
-- If CMake still can’t locate Flex/Bison, verify `flex.exe` / `bison.exe` are installed by vcpkg and that you configured with the toolchain file.
+- Ensure the vcpkg toolchain file is correctly specified during configuration.
 
 ---
 
-## Common issues
-
-### CMake can’t find Flex/Bison
-- Confirm they are installed and available:
-    - macOS/Linux: `flex --version`, `bison --version`
-    - Windows: check the tool installation method (vcpkg/MSYS2/WSL)
-- Re-configure after installing dependencies:
-```
-bash
-cmake -S . -B build
-```
-### Tests don’t run / no tests discovered
-- Build first, then run:
-```
-bash
-ctest --test-dir build --output-on-failure -VV
-```
+---
 
 ## Docker
 
@@ -164,4 +209,5 @@ docker run --rm -v "$PWD:/work" -w /work docraft_tool:latest test.craft out.pdf 
 - `docraft/` — main library / sources
 - `docraft/test/` — tests
 - `build/` — build output (generated)
-```
+- `build/artifacts/` — final binaries (e.g. `docraft_tool`)
+- `doc` — documentation (Sphinx and Doxygen)

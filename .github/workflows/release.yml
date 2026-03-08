@@ -1,0 +1,122 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+      - 'release/*'
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    name: Create Release
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version from tag
+        id: tag_name
+        run: |
+          echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Create Release Notes
+        id: release_notes
+        run: |
+          {
+            echo "## Release ${{ steps.tag_name.outputs.version }}"
+            echo ""
+            echo "### Changes"
+            echo ""
+            echo "See [commit log](https://github.com/${{ github.repository }}/commits/${{ github.ref }})"
+          } > release_notes.md
+          cat release_notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: release_notes.project-doc
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-release-artifacts:
+    needs: create-release
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: linux-x64
+            artifact-name: docraft_tool-linux-x64
+
+          - os: macos-latest
+            name: macos-x64
+            artifact-name: docraft_tool-macos-x64
+
+          - os: windows-latest
+            name: windows-x64
+            artifact-name: docraft_tool-windows-x64.exe
+
+    runs-on: ${{ matrix.os }}
+    name: Build Release - ${{ matrix.name }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build g++-14 \
+            libhpdf-dev libpugixml-dev nlohmann-json3-dev libgtest-dev
+
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install cmake ninja libharu pugixml nlohmann-json googletest
+
+      - name: Install dependencies (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git
+          cd vcpkg
+          .\bootstrap-vcpkg.bat
+          .\vcpkg integrate install
+          .\vcpkg install libharu:x64-windows pugixml:x64-windows nlohmann-json:x64-windows gtest:x64-windows
+
+      - name: Configure CMake (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF
+
+      - name: Configure CMake (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          cmake -S . -B build `
+            -G "Visual Studio 17 2022" `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" `
+            -DVCPKG_TARGET_TRIPLET=x64-windows `
+            -DBUILD_TESTS=OFF
+
+      - name: Build
+        run: |
+          cmake --build build --config Release -j
+
+      - name: Prepare artifacts
+        run: |
+          mkdir -p release-artifacts
+          cp build/artifacts/bin/* release-artifacts/ || true
+          ls -la release-artifacts/
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release-artifacts/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

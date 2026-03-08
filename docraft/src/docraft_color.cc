@@ -40,7 +40,7 @@ namespace docraft {
 
     DocraftColor::DocraftColor(const std::string &hex_code) {
         // Support template expressions: ${data("fieldname")} or ${variable_name}
-        if (docraft::utils::DocraftParserUtilis::is_data_request(hex_code)){
+        if (docraft::utils::DocraftParserUtilis::is_data_request(hex_code)|| docraft::utils::DocraftParserUtilis::is_template_variable(hex_code)){
             // Store as template expression and use default black color
             template_expression_ = hex_code;
             color_name_ = ColorName::kBlack;

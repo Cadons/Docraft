@@ -27,7 +27,7 @@ namespace docraft::craft::parser::detail {
 
         // Support template expressions: ${data("fieldname")} or ${variable_name}
         // These will be resolved during the templating phase
-        if (color_name_str.find("${") != std::string::npos && color_name_str.find("}") != std::string::npos) {
+        if (color_name_str.contains("${") && color_name_str.contains("}")) {
             // For template expressions, use a neutral default color that will be overridden during templating
             // We store the template expression as a special hex value and the templating engine will resolve it
             return DocraftColor(color_name_str);

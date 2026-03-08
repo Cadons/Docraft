@@ -1,0 +1,280 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, develop, dev ]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    name: Build on Linux (GCC 14)
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup apt cache
+        uses: actions/cache@v3
+        with:
+          path: /var/cache/apt/archives
+          key: apt-cache-linux-${{ hashFiles('.github/workflows/build.yml') }}
+          restore-keys: |
+            apt-cache-linux-
+
+      - name: Setup CMake cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            build/.cmake/api
+            build/CMakeFiles
+          key: cmake-linux-${{ hashFiles('CMakeLists.txt', 'docraft/CMakeLists.txt') }}
+          restore-keys: |
+            cmake-linux-
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build g++-14 \
+            libhpdf-dev libpugixml-dev nlohmann-json3-dev libgtest-dev ccache
+
+      - name: Setup ccache
+        uses: actions/cache@v3
+        with:
+          path: ~/.ccache
+          key: ccache-linux-${{ github.sha }}
+          restore-keys: |
+            ccache-linux-
+
+      - name: Display versions
+        run: |
+          g++-14 --version
+          cmake --version
+          ninja --version
+          ccache --version
+
+      - name: Configure CMake
+        env:
+          CXX: "ccache g++-14"
+          CC: "ccache gcc-14"
+        run: |
+          cmake -S . -B build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_COMPILER=g++-14 \
+            -DCMAKE_C_COMPILER=gcc-14 \
+            -DBUILD_TESTS=ON
+
+      - name: Build
+        env:
+          NINJA_STATUS: "[%f/%t %e] "
+        run: |
+          cmake --build build --config Release -j$(nproc) --verbose
+
+      - name: Run tests
+        run: |
+          ctest --test-dir build -C Release --output-on-failure --parallel $(nproc) --timeout 60
+
+      - name: Print ccache stats
+        run: ccache -s
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-linux
+          path: build/artifacts/
+          retention-days: 7
+
+  build-macos:
+    runs-on: macos-latest
+    name: Build on macOS (AppleClang)
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Homebrew cache
+        uses: actions/cache@v3
+        with:
+          path: ~/Library/Caches/Homebrew/downloads
+          key: homebrew-macos-${{ hashFiles('.github/workflows/build.yml') }}
+          restore-keys: |
+            homebrew-macos-
+
+      - name: Setup CMake cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            build/.cmake/api
+            build/CMakeFiles
+          key: cmake-macos-${{ hashFiles('CMakeLists.txt', 'docraft/CMakeLists.txt') }}
+          restore-keys: |
+            cmake-macos-
+
+      - name: Setup ccache
+        uses: actions/cache@v3
+        with:
+          path: /Users/runner/Library/Caches/ccache
+          key: ccache-macos-${{ github.sha }}
+          restore-keys: |
+            ccache-macos-
+
+      - name: Install dependencies
+        run: |
+          brew install cmake ninja libharu pugixml nlohmann-json googletest ccache
+
+      - name: Display versions
+        run: |
+          clang --version
+          cmake --version
+          ninja --version
+          ccache --version
+
+      - name: Configure CMake
+        env:
+          CXX: "ccache clang++"
+          CC: "ccache clang"
+        run: |
+          cmake -S . -B build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTS=ON
+
+      - name: Build
+        env:
+          NINJA_STATUS: "[%f/%t %e] "
+        run: |
+          cmake --build build --config Release -j$(sysctl -n hw.logicalcpu) --verbose
+
+      - name: Run tests
+        run: |
+          ctest --test-dir build -C Release --output-on-failure --parallel $(sysctl -n hw.logicalcpu) --timeout 60
+
+      - name: Print ccache stats
+        run: ccache -s
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-macos
+          path: build/artifacts/
+          retention-days: 7
+
+  build-windows:
+    runs-on: windows-latest
+    name: Build on Windows (MSVC)
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup vcpkg cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            vcpkg
+            ${{ env.VCPKG_BINARY_CACHE }}
+          key: vcpkg-windows-x64-${{ hashFiles('vcpkg.json', '.github/workflows/build.yml') }}
+          restore-keys: |
+            vcpkg-windows-x64-
+
+      - name: Setup CMake cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            build/.cmake/api
+            build/CMakeFiles
+          key: cmake-windows-${{ hashFiles('CMakeLists.txt', 'docraft/CMakeLists.txt') }}
+          restore-keys: |
+            cmake-windows-
+
+      - name: Install/Setup vcpkg
+        run: |
+          if (!(Test-Path "vcpkg")) {
+            Write-Host "Cloning vcpkg..."
+            git clone --depth 1 https://github.com/microsoft/vcpkg.git
+          } else {
+            Write-Host "Using cached vcpkg"
+          }
+          cd vcpkg
+          .\bootstrap-vcpkg.bat -disableMetrics
+          .\vcpkg integrate install
+
+      - name: Set vcpkg binary cache
+        run: |
+          mkdir -p "${{ github.workspace }}/vcpkg-cache"
+          echo "VCPKG_BINARY_CACHE=${{ github.workspace }}/vcpkg-cache" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Display versions
+        run: |
+          cmake --version
+          vcpkg/vcpkg --version
+
+      - name: Install dependencies via vcpkg (cached)
+        run: |
+          cd vcpkg
+          .\vcpkg install libharu:x64-windows pugixml:x64-windows nlohmann-json:x64-windows gtest:x64-windows `
+            --binary-cache="${{ env.VCPKG_BINARY_CACHE }}" `
+            --downloads-root="${{ github.workspace }}/vcpkg-downloads" `
+            -j:${{ runner.cpu-count }}
+        timeout-minutes: 60
+
+      - name: Configure CMake
+        run: |
+          $WarningPreference = "SilentlyContinue"
+          cmake -S . -B build `
+            -G "Visual Studio 17 2022" `
+            -A x64 `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" `
+            -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL `
+            -DVCPKG_TARGET_TRIPLET=x64-windows `
+            -DVCPKG_BINARY_CACHE="${{ env.VCPKG_BINARY_CACHE }}" `
+            -DBUILD_TESTS=ON
+
+      - name: Build
+        run: |
+          cmake --build build --config Release --parallel ${{ runner.cpu-count }}
+
+      - name: Run tests
+        run: |
+          ctest --test-dir build -C Release --output-on-failure --parallel ${{ runner.cpu-count }}
+        timeout-minutes: 30
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-windows
+          path: build/artifacts/
+          retention-days: 7
+
+      - name: Cache cleanup
+        if: always()
+        run: |
+          Write-Host "vcpkg cache size:"
+          $cacheSize = (Get-ChildItem -Path "${{ env.VCPKG_BINARY_CACHE }}" -Recurse | Measure-Object -Property Length -Sum).Sum / 1GB
+          Write-Host "Total: $($cacheSize.ToString('F2')) GB"
+
+  build-success:
+    runs-on: ubuntu-latest
+    needs: [build-linux, build-macos, build-windows]
+    if: always()
+
+    steps:
+      - name: Check build status
+        run: |
+          if [ "${{ needs.build-linux.result }}" == "failure" ] || \
+             [ "${{ needs.build-macos.result }}" == "failure" ] || \
+             [ "${{ needs.build-windows.result }}" == "failure" ]; then
+            echo "One or more builds failed!"
+            exit 1
+          fi
+          echo "All builds succeeded!"
+
