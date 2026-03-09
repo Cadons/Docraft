@@ -32,11 +32,6 @@ namespace docraft::templating {
                  */
                 void add_template_variable(const std::string &name, const std::string &value);
                 /**
-                 * @brief Retrieves the value of a template variable by name.
-                 * @param name Name of the template variable.
-                 * @return Value of the template variable or empty string if not found.
-                 */
-                /**
                  * @brief Retrieves a template variable value.
                  * @param name Variable name (case-insensitive).
                  * @return Stored value.
@@ -44,16 +39,9 @@ namespace docraft::templating {
                  */
                 std::string get_template_variable(const std::string &name);
                 /**
-                 * @brief Clears all template variables from the engine.
-                 */
-                /**
                  * @brief Clears all template variables.
                  */
                 void clear_template_variables();
-                /**
-                 * @brief Removes a specific template variable by name.
-                 * @param name Name of the template variable to remove.
-                 */
                 /**
                  * @brief Removes a template variable by name.
                  * @param name Variable name (case-insensitive).
@@ -64,11 +52,6 @@ namespace docraft::templating {
                  * @brief Returns the number of stored template variables.
                  */
                 int items() const;
-                /**
-                 * @brief Checks if a template variable exists by name.
-                 * @param name Name of the template variable.
-                 * @return True if the variable exists, false otherwise.
-                 */
                 /**
                  * @brief Checks if a template variable exists.
                  * @param name Variable name (case-insensitive).
@@ -86,7 +69,7 @@ namespace docraft::templating {
 
                 /**
                  * @brief Adds raw RGB image data.
-                 * @param image_id Image id used by <Image data="..."> in templates (case-insensitive).
+                 * @param image_id Image id used by \<Image data="..."\> in templates (case-insensitive).
                  * @param data Raw RGB bytes (3 bytes per pixel, row-major).
                  * @param width Pixel width.
                  * @param height Pixel height.
@@ -97,7 +80,7 @@ namespace docraft::templating {
                                     int height);
                 /**
                  * @brief Adds raw RGB image data from a base64 string.
-                 * @param image_id Image id used by <Image data="..."> in templates (case-insensitive).
+                 * @param image_id Image id used by \<Image data="..."\> in templates (case-insensitive).
                  * @param base64 Base64 string with raw RGB bytes (no data URI prefix).
                  * @param width Pixel width.
                  * @param height Pixel height.
@@ -123,6 +106,7 @@ namespace docraft::templating {
                  * @brief Renders a template string by replacing template variables with their values.
                  * @note input data = ${data("field_name")), json cannot have multiple levels of nested,
                  * @param text Template string to render.
+                 * @param item JSON object supplying per-iteration data for foreach loops.
                  * @return Rendered string with template variables replaced.
                  */
                 std::string render_template_string_foreach_item(const std::string &text,
