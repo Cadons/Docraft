@@ -26,6 +26,9 @@ extensions = [
     'sphinx_design',
 ]
 
+# ── autosectionlabel configuration ───────────────────────────────────────
+autosectionlabel_prefix_document = True
+
 # ── Breathe configuration ────────────────────────────────────────────────
 breathe_projects         = {"docraft": os.path.join(_doc_root, "doxy_files", "xml")}
 breathe_default_project  = "docraft"

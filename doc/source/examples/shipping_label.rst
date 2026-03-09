@@ -92,6 +92,7 @@ Template — ``shipping_label.craft``
            </Layout>
        </Body>
    </Document>
+
 Data — ``shipping_label.json``
 -------------------------------
 

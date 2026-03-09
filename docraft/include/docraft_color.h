@@ -28,8 +28,8 @@ namespace docraft {
         float b=0.0F;
         float a=1.0F;
         /**
-         * @brief Converts the RGBA color to a hex string #RRGGBBAA.
-         * @return Hex string in #RRGGBBAA format.
+         * @brief Converts the RGBA color to a hex string \#RRGGBBAA.
+         * @return Hex string in \#RRGGBBAA format.
          */
         std::string to_hex() const {
             auto clamp_byte = [](int v) -> int { return v < 0 ? 0 : (v > 255 ? 255 : v); };
@@ -66,7 +66,7 @@ namespace docraft {
         explicit DocraftColor(float r, float g, float b, float a = 1.0F);
 
         /**
-         * @brief Creates a color from a hex code (#RRGGBB or #RRGGBBAA).
+         * @brief Creates a color from a hex code (\#RRGGBB or \#RRGGBBAA).
          * @param hex_code Hex string.
          */
         explicit DocraftColor(const std::string &hex_code);

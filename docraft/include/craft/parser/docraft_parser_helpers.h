@@ -10,17 +10,17 @@
 
 namespace docraft::craft::parser::detail {
     /**
-     * @brief Parses a color attribute value into a DocraftColor.
-     * Supports hex colors (#RRGGBB or #RRGGBBAA) and named colors.
-     * @param color_attr XML attribute containing the color value.
-     * @return Parsed DocraftColor.
+     * @brief Checks whether a string is a valid hex color.
+     * Supports hex colors (\#RRGGBB or \#RRGGBBAA).
+     * @param color String to check.
+     * @return True if the string is a valid hex color, false otherwise.
      */
     bool is_hex_color(const std::string &color);
 
     /**
-     * @brief Parses a color string into a DocraftColor object.
-     * Supports hex colors (e.g., #RRGGBB or #RRGGBBAA) and named colors (e.g., "red", "blue").
-     * @param color_str The color string to parse.
+     * @brief Parses a color attribute value into a DocraftColor object.
+     * Supports hex colors (e.g., \#RRGGBB or \#RRGGBBAA) and named colors (e.g., "red", "blue").
+     * @param color_attr XML attribute containing the color value.
      * @return A DocraftColor object representing the parsed color.
      * @throws std::invalid_argument if the color string is not in a valid format or is an unsupported named color.
      */

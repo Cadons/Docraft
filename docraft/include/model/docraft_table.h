@@ -142,18 +142,21 @@ namespace docraft::model {
         /**
          * @brief Adds a title node.
          * @param node Title node.
+         * @param background Optional background color.
          */
         void add_title_node(const std::shared_ptr<DocraftText> &node,
                             std::optional<DocraftColor> background = std::nullopt);
         /**
          * @brief Adds a header title node (vertical tables only).
          * @param node Header title node.
+         * @param background Optional background color.
          */
         void add_htitle_node(const std::shared_ptr<DocraftText> &node,
                              std::optional<DocraftColor> background = std::nullopt);
         /**
          * @brief Adds a content node.
          * @param node Content node.
+         * @param background Optional background color.
          */
         void add_content_node(const std::shared_ptr<DocraftNode> &node,
                               std::optional<DocraftColor> background = std::nullopt);
