@@ -157,10 +157,6 @@ sudo apt-get install -y cmake ninja-build g++-14 libhpdf-dev libpugixml-dev nloh
 ```
 ## Windows
 
-You have a few good options. Pick one:
-
-### Option A: Visual Studio 2022 + vcpkg (recommended)
-
 1) Install:
 - **Visual Studio 2022** with workload: **Desktop development with C++**
 - **CMake** (either via Visual Studio Installer or from cmake.org)
@@ -198,9 +194,9 @@ Notes:
 
 ---
 
----
+## Docker image for `docraft_tool`
 
-## Docker
+Docraft offers a Docker image that includes the `docraft_tool` CLI executable, allowing you to render `.craft` files to PDF without installing dependencies on your host system.
 
 Build image:
 ```bash
@@ -221,3 +217,13 @@ docker run --rm -v "$PWD:/work" -w /work docraft_tool:latest test.craft out.pdf 
 - `build/` — build output (generated)
 - `build/artifacts/` — final binaries (e.g. `docraft_tool`)
 - `doc` — documentation (Sphinx and Doxygen)
+
+## Contributing
+- Fork the repository and create a new branch for your feature or bug fix.
+- Follow the coding style and commit message guidelines outlined in [`CONTRIBUTING.md`](CONTRIBUTING.md).
+- Submit a pull request with a clear description of your changes and the problem they solve.
+- Ensure all tests pass and add new tests for your changes if applicable.
+
+## License
+
+Docraft is licensed under the **Apache License 2.0**. See the full text in [`LICENSE`](LICENSE).
