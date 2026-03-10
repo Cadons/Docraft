@@ -157,6 +157,7 @@ endif()
 add_library(docraft ${DOCRAFT_LIBRARY_TYPE}
         ${DOCRAFT_SOURCES}
 )
+add_library(docraft::docraft ALIAS docraft)
 configure_artifact_version(docraft ${PROJECT_VERSION})
 configure_artifact_soversion(docraft ${PROJECT_VERSION_MAJOR})
 
@@ -186,21 +187,31 @@ endif()
 
 target_link_libraries(docraft PUBLIC ${PUGIXML_TARGET} nlohmann_json::nlohmann_json ${LIBHARU_TARGET})
 target_link_libraries(docraft_tool PRIVATE docraft)
-target_include_directories(docraft PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
-target_include_directories(docraft PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
+target_include_directories(docraft
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
 
 #install rules
 install(TARGETS docraft
         EXPORT docraftTargets
-        ARCHIVE DESTINATION lib
-        LIBRARY DESTINATION lib
-        RUNTIME DESTINATION bin
-        INCLUDES DESTINATION include
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 install(TARGETS docraft_tool
-        ARCHIVE DESTINATION lib
-        LIBRARY DESTINATION lib
-        RUNTIME DESTINATION bin
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
-install(DIRECTORY include/ DESTINATION include)
+install(
+        EXPORT docraftTargets
+        FILE docraftTargets.cmake
+        NAMESPACE docraft::
+        DESTINATION "${DOCRAFT_INSTALL_CMAKEDIR}"
+)
+install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

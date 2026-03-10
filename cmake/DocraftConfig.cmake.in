@@ -1,0 +1,40 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+find_dependency(nlohmann_json CONFIG REQUIRED)
+find_dependency(pugixml CONFIG REQUIRED)
+
+if(TARGET pugixml::pugixml AND NOT TARGET pugixml::static)
+    add_library(pugixml::static INTERFACE IMPORTED)
+    set_property(TARGET pugixml::static PROPERTY INTERFACE_LINK_LIBRARIES pugixml::pugixml)
+elseif(TARGET pugixml::static AND NOT TARGET pugixml::pugixml)
+    add_library(pugixml::pugixml INTERFACE IMPORTED)
+    set_property(TARGET pugixml::pugixml PROPERTY INTERFACE_LINK_LIBRARIES pugixml::static)
+endif()
+
+find_package(unofficial-libharu QUIET CONFIG)
+
+if(TARGET unofficial::libharu::hpdf AND NOT TARGET libharu)
+    add_library(libharu INTERFACE IMPORTED)
+    set_property(TARGET libharu PROPERTY INTERFACE_LINK_LIBRARIES unofficial::libharu::hpdf)
+elseif(NOT TARGET unofficial::libharu::hpdf)
+    find_library(DOCRAFT_LIBHARU_LIBRARY NAMES hpdf libhpdf)
+    find_path(DOCRAFT_LIBHARU_INCLUDE_DIR NAMES hpdf.h)
+
+    if(DOCRAFT_LIBHARU_LIBRARY AND DOCRAFT_LIBHARU_INCLUDE_DIR)
+        add_library(libharu UNKNOWN IMPORTED)
+        set_target_properties(libharu PROPERTIES
+                IMPORTED_LOCATION "${DOCRAFT_LIBHARU_LIBRARY}"
+                INTERFACE_INCLUDE_DIRECTORIES "${DOCRAFT_LIBHARU_INCLUDE_DIR}"
+        )
+
+        add_library(unofficial::libharu::hpdf INTERFACE IMPORTED)
+        set_property(TARGET unofficial::libharu::hpdf PROPERTY INTERFACE_LINK_LIBRARIES libharu)
+    else()
+        message(FATAL_ERROR "docraft requires libharu (target unofficial::libharu::hpdf or library hpdf).")
+    endif()
+endif()
+
+include("${CMAKE_CURRENT_LIST_DIR}/docraftTargets.cmake")
+check_required_components(docraft)
