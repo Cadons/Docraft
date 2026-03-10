@@ -44,7 +44,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.ccache
-          key: ccache-linux-${{ github.sha }}
+          key: ccache-linux-${{ github.head_ref || github.ref_name }}
           restore-keys: |
             ccache-linux-
 
@@ -119,7 +119,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: /Users/runner/Library/Caches/ccache
-          key: ccache-macos-${{ github.sha }}
+          key: ccache-macos-${{ github.head_ref || github.ref_name }}
           restore-keys: |
             ccache-macos-
 
@@ -270,4 +270,3 @@ jobs:
             exit 1
           fi
           echo "All builds succeeded!"
-
