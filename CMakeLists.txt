@@ -57,7 +57,7 @@ else()
     endif()
 endif()
 
-set(DOCRAFT_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/docraft")
+set(DOCRAFT_INSTALL_CMAKEDIR "${CMAKE_INSTALL_DATADIR}/docraft")
 
 #artifacts
 add_subdirectory(docraft) #configure docraft artifact
