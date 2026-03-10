@@ -63,7 +63,7 @@ set(DOCRAFT_INSTALL_CMAKEDIR "${CMAKE_INSTALL_DATADIR}/docraft")
 add_subdirectory(docraft) #configure docraft artifact
 
 configure_package_config_file(
-        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/docraftConfig.cmake.in"
+        "${CMAKE_CURRENT_LIST_DIR}/cmake/DocraftConfig.cmake.in"
         "${CMAKE_CURRENT_BINARY_DIR}/docraftConfig.cmake"
         INSTALL_DESTINATION "${DOCRAFT_INSTALL_CMAKEDIR}"
 )
