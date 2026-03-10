@@ -184,6 +184,7 @@ jobs:
         with:
           path: |
             vcpkg
+            build/vcpkg_installed
             ${{ github.workspace }}/vcpkg-cache
           key: vcpkg-windows-x64-${{ hashFiles('vcpkg.json', '.github/workflows/build.yml') }}
           restore-keys: |
@@ -217,14 +218,6 @@ jobs:
           cmake --version
           vcpkg/vcpkg --version
 
-      - name: Install dependencies via vcpkg (cached)
-        run: |
-          .\vcpkg\vcpkg install `
-            --triplet=x64-windows `
-            --binarysource="clear;files,${{ env.VCPKG_BINARY_CACHE }},readwrite" `
-            --downloads-root="${{ github.workspace }}/vcpkg-downloads"
-        timeout-minutes: 60
-
       - name: Configure CMake
         run: |
           $WarningPreference = "SilentlyContinue"
@@ -236,6 +229,7 @@ jobs:
             -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL `
             -DVCPKG_MANIFEST_MODE=OFF `
             -DVCPKG_TARGET_TRIPLET=x64-windows `
+            -DVCPKG_INSTALLED_DIR="${{ github.workspace }}/build/vcpkg_installed" `
             -DBUILD_TESTS=ON
 
       - name: Build
