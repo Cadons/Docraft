@@ -41,7 +41,7 @@ For libraries/projects outside the Docraft repo, the supported high-level path i
 Example:
 
 ```cpp
-#include "craft/docraft_craft_language_parser.h"
+#include "docraft/craft/docraft_craft_language_parser.h"
 #include "my_backend/my_rendering_backend.h"
 
 void render_with_external_backend(const std::string &craft_path) {

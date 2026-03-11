@@ -134,8 +134,7 @@ function(generate_docraft_fonts artifact json_config_path)
     target_include_directories(
         "${artifact}"
         PUBLIC
-        "${CMAKE_CURRENT_BINARY_DIR}"
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
     )
 
 endfunction()
-

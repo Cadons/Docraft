@@ -20,7 +20,10 @@ if(DOCRAFT_LIBRARY_SOVERSION STREQUAL "")
 endif()
 
 # Project name and compiler
-project(Docraft VERSION ${DOCRAFT_LIBRARY_VERSION} LANGUAGES CXX)
+project(docraft VERSION ${DOCRAFT_LIBRARY_VERSION} LANGUAGES CXX)
+
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
 
 # Set C++ standard (change if you need another version)
 set(CMAKE_CXX_STANDARD 23)
@@ -54,8 +57,29 @@ else()
     endif()
 endif()
 
+set(DOCRAFT_INSTALL_CMAKEDIR "${CMAKE_INSTALL_DATADIR}/docraft")
+
 #artifacts
 add_subdirectory(docraft) #configure docraft artifact
+
+configure_package_config_file(
+        "${CMAKE_CURRENT_LIST_DIR}/cmake/DocraftConfig.cmake.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/docraftConfig.cmake"
+        INSTALL_DESTINATION "${DOCRAFT_INSTALL_CMAKEDIR}"
+)
+
+write_basic_package_version_file(
+        "${CMAKE_CURRENT_BINARY_DIR}/docraftConfigVersion.cmake"
+        VERSION "${PROJECT_VERSION}"
+        COMPATIBILITY SameMajorVersion
+)
+
+install(
+        FILES
+        "${CMAKE_CURRENT_BINARY_DIR}/docraftConfig.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/docraftConfigVersion.cmake"
+        DESTINATION "${DOCRAFT_INSTALL_CMAKEDIR}"
+)
 
 #test
 include(CTest)

@@ -38,8 +38,8 @@ Build a document entirely from C++ without any ``.craft`` file:
 .. code-block:: cpp
 
    #include "docraft_document.h"
-   #include "model/docraft_text.h"
-   #include "model/docraft_body.h"
+   #include "docraft/model/docraft_text.h"
+   #include "docraft/model/docraft_body.h"
 
    int main() {
        // 1. Create a document
@@ -92,7 +92,7 @@ Parse and render it from C++:
 
 .. code-block:: cpp
 
-   #include "craft/docraft_craft_language_parser.h"
+   #include "docraft/craft/docraft_craft_language_parser.h"
 
    int main() {
        docraft::craft::DocraftCraftLanguageParser parser;
@@ -118,8 +118,8 @@ Inject runtime data into a ``.craft`` template:
 
 .. code-block:: cpp
 
-   #include "craft/docraft_craft_language_parser.h"
-   #include "templating/docraft_template_engine.h"
+   #include "docraft/craft/docraft_craft_language_parser.h"
+   #include "docraft/templating/docraft_template_engine.h"
 
    int main() {
        docraft::craft::DocraftCraftLanguageParser parser;
@@ -187,7 +187,7 @@ Register external TTF fonts at runtime:
 
 .. code-block:: cpp
 
-   #include "utils/docraft_font_registry.h"
+   #include "docraft/utils/docraft_font_registry.h"
 
    auto& registry = docraft::utils::DocraftFontRegistry::instance();
    registry.register_font("MyFont",       "fonts/MyFont-Regular.ttf");

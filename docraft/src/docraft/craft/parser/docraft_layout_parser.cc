@@ -1,0 +1,38 @@
+/*
+ * Copyright 2026 Matteo Cadoni (https://github.com/cadons)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "docraft/craft/parser/docraft_parser.h"
+
+#include "docraft/craft/parser/docraft_parser_helpers.h"
+#include "docraft/model/docraft_layout.h"
+
+namespace docraft::craft::parser {
+    std::shared_ptr<model::DocraftNode> DocraftLayoutParser::parse(const pugi::xml_node &craft_language_source) {
+        auto layout_node = std::make_shared<model::DocraftLayout>();
+        if (auto orientation_attr = craft_language_source.attribute(elements::layout::attribute::kOrientation.data())) {
+            std::string orientation_str = orientation_attr.as_string();
+            if (orientation_str == std::string{orientation::kHorizontal}) {
+                layout_node->set_orientation(model::LayoutOrientation::kHorizontal);
+            } else if (orientation_str == std::string{orientation::kVertical}) {
+                layout_node->set_orientation(model::LayoutOrientation::kVertical);
+            } else {
+                throw std::invalid_argument("Invalid layout orientation: " + orientation_str);
+            }
+        }
+        detail::configure_docraft_node_attributes(layout_node, craft_language_source);
+        return layout_node;
+    }
+}

@@ -211,7 +211,7 @@ Example:
 
 ```cpp
 #include "docraft_document.h"
-#include "model/docraft_text.h"
+#include "docraft/model/docraft_text.h"
 
 docraft::DocraftDocument doc("Q1 Report");
 doc.add_node(std::make_shared<docraft::model::DocraftText>(
