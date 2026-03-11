@@ -36,7 +36,6 @@ Minimal Example — Programmatic API
 Build a document entirely from C++ without any ``.craft`` file:
 
 .. code-block:: cpp
-
    #include "docraft/docraft_document.h"
    #include "docraft/model/docraft_text.h"
    #include "docraft/model/docraft_body.h"
