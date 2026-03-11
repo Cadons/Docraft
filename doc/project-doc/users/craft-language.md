@@ -23,7 +23,7 @@ To render a `.craft` file, your application must use:
 Minimal usage:
 
 ```cpp
-#include "craft/docraft_craft_language_parser.h"
+#include "docraft/craft/docraft_craft_language_parser.h"
 
 int main() {
     docraft::craft::DocraftCraftLanguageParser parser;
@@ -149,7 +149,7 @@ Example `.craft` snippet:
 C++ data binding example:
 
 ```cpp
-#include "templating/docraft_template_engine.h"
+#include "docraft/templating/docraft_template_engine.h"
 
 auto engine = std::make_shared<docraft::templating::DocraftTemplateEngine>();
 engine->add_template_variable("invoice_number", "INV-2026-0008");
@@ -202,7 +202,7 @@ document->set_document_metadata(metadata);
 ### 5.3 Auto-keyword extraction from C++
 
 ```cpp
-#include "utils/docraft_keyword_extractor.h"
+#include "docraft/utils/docraft_keyword_extractor.h"
 
 docraft::utils::DocraftKeywordExtractor::Config config;
 config.max_keywords = 10;
