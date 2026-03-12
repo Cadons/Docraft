@@ -151,7 +151,7 @@ set(DOCRAFT_SOURCES
         src/docraft/craft/parser/docraft_foreach_parser.cc
 )
 set(DOCRAFT_LIBRARY_TYPE STATIC)
-if(BUILD_SHARED_LIB)
+if(BUILD_SHARED_LIBS)
     set(DOCRAFT_LIBRARY_TYPE SHARED)
 endif()
 add_library(docraft ${DOCRAFT_LIBRARY_TYPE}
@@ -167,8 +167,8 @@ target_compile_definitions(docraft PUBLIC
         $<$<CONFIG:Debug>:docraft_debugf>
 )
 
-if(BUILD_SHARED_LIB)
-    target_compile_definitions(docraft PRIVATE DOCRAFT_BUILD_SHARED_LIB)#define the macro to build the shared lib
+if(BUILD_SHARED_LIBS)
+    target_compile_definitions(docraft PRIVATE DOCRAFT_BUILD_SHARED_LIBS)#define the macro to build the shared lib
     target_compile_definitions(docraft INTERFACE DOCRAFT_USE_SHARED_LIB)#define the macro to use the shared lib
 endif()
 

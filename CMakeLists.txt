@@ -30,7 +30,7 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-option(BUILD_SHARED_LIB "Build docraft as a shared library" OFF)
+option(BUILD_SHARED_LIBS "Build docraft as a shared library" OFF)
 
 include(.cmake/utils.cmake)
 configure_build_folder(artifacts)
