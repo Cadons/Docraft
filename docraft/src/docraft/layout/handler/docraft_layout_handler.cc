@@ -15,7 +15,6 @@
  */
 
 #include "docraft/layout/handler/docraft_layout_handler.h"
-#include <print>
 
 #include "docraft/layout/docraft_layout_engine.h"
 #define PADDING 20.0F

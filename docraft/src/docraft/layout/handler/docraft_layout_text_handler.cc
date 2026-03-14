@@ -18,7 +18,6 @@
 
 #include <algorithm>
 #include <sstream>
-#include <print>
 
 #include "docraft/generic/docraft_font_applier.h"
 #include "docraft/model/docraft_layout.h"

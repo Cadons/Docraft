@@ -18,7 +18,6 @@
 
 #include <algorithm>
 #include <numeric>
-#include <print>
 #include <vector>
 
 #include "docraft/layout/docraft_layout_engine.h"

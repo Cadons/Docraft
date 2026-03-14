@@ -15,7 +15,6 @@
  */
 
 #include "docraft/renderer/painter/docraft_table_painter.h"
-#include <print>
 #include "docraft/backend/docraft_line_rendering_backend.h"
 
 #include "docraft/renderer/painter/docraft_image_painter.h"
