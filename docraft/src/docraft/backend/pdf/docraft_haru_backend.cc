@@ -150,7 +150,7 @@ namespace {
         }
     };
 
-    void error_handler(HPDF_STATUS error_no, HPDF_STATUS, void *) {
+    void HPDF_STDCALL error_handler(HPDF_STATUS error_no, HPDF_STATUS, void *) {
         std::ostringstream ss;
         ss << std::hex << error_no;
         std::string error_no_hex = ss.str();
