@@ -252,7 +252,7 @@ namespace docraft::renderer::painter {
 
              // draw horizontal line at bottom of this row
              float line_y_here =  bottom_y;
-             LOG_DEBUG(std::format("Drawing horizontal line at y={}", line_y_here));
+             LOG_DEBUG("Drawing horizontal line at y=" + std::to_string(line_y_here));
              line_backend->draw_line(
                  start_x,
                  line_y_here,

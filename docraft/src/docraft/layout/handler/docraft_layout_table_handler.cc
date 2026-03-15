@@ -543,7 +543,7 @@ namespace docraft::layout::handler {
         for (const auto &row: node->content_nodes()) {
             for (const auto &cell: row) {
                 if (cell) {
-                   LOG_DEBUG(std::format("Cell at ({}, {}) with size ({}, {})", cell->position().x, cell->position().y, cell->width(), cell->height()));
+                   LOG_DEBUG("Cell at (" + std::to_string(cell->position().x) + ", " + std::to_string(cell->position().y) + ") with size (" + std::to_string(cell->width()) + ", " + std::to_string(cell->height()) + ")");
                 }
             }
         }

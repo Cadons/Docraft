@@ -16,7 +16,6 @@
 
 #include "docraft/model/docraft_position.h"
 
-#include <format>
 #include <sstream>
 
 #include "docraft/utils/docraft_logger.h"
@@ -24,7 +23,7 @@
 namespace docraft::model {
 #pragma region DocraftPoint
     std::string DocraftPoint::to_string() const {
-        return std::format("{{{};{}}}", x, y);
+        return "{" + std::to_string(x) + ";" + std::to_string(y) + "}";
     }
 #pragma endregion
 #pragma region DocraftTransform
