@@ -2,3 +2,5 @@ sphinx
 breathe
 sphinx_rtd_theme
 sphinx-design
+sphinx-sitemap
+sphinxext-opengraph
