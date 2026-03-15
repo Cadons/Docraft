@@ -19,7 +19,7 @@ Docraft solves this problem.
 What is Docraft?
 ----------------
 
-Docraft is a **C++23 library** that lets you define documents using an
+Docraft is a **C++ library** that lets you define documents using an
 XML-based markup language called the **Craft Language**. You describe *what*
 your document looks like — text, tables, images, shapes, headers, footers —
 and Docraft takes care of *how* to lay it out and render it to PDF.
@@ -84,7 +84,7 @@ For contribution workflow, coding style, and PR rules, see [`CONTRIBUTING.md`](C
 
 ### Build tools
 - **CMake** ≥ 3.16
-- A C++ compiler with **C++23** support  
+- A C++ compiler with **C++** support  
   - macOS: AppleClang (Xcode) or LLVM/Clang
   - Linux: GCC 14+ or Clang 16+ (recommended)
   - Windows: MSVC (Visual Studio 2022) or LLVM/Clang

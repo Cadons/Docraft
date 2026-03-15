@@ -8,7 +8,7 @@ Requirements
 ------------
 
 - **CMake** ≥ 3.16
-- A C++ compiler with **C++23** support (GCC 14+, Clang 16+, MSVC 2022)
+- A C++ compiler with **C++** support (GCC 14+, Clang 16+, MSVC 2022)
 - **vcpkg** (recommended) or manually installed dependencies:
   ``libharu``, ``pugixml``, ``nlohmann-json``
 

@@ -14,12 +14,12 @@ This guide explains the expected workflow, coding style, and quality checks for 
 
 ## Development Setup
 
-Docraft uses CMake and C++23.
+Docraft uses CMake and C++.
 
 ### Prerequisites
 
 - CMake >= 3.16
-- A C++23 compiler (GCC/Clang/MSVC with C++23 support)
+- A C++ compiler (GCC/Clang/MSVC with C++ support)
 - Dependencies:
   - `libharu`
   - `pugixml`
@@ -71,7 +71,7 @@ Docraft enforces static analysis with `.clang-tidy` (warnings are treated as err
 
 ### Language and general rules
 
-- Use C++23 features where they improve clarity and safety.
+- Use C++ features where they improve clarity and safety.
 - Keep code explicit and readable over clever/compact patterns.
 - Prefer small functions and focused classes.
 - Avoid unrelated refactors in the same PR.

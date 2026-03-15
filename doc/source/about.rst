@@ -18,7 +18,7 @@ Docraft solves this problem.
 What is Docraft?
 ----------------
 
-Docraft is a **C++23 library** that lets you define documents using an
+Docraft is a **C++ library** that lets you define documents using an
 XML-based markup language called the **Craft Language**. You describe *what*
 your document looks like — text, tables, images, shapes, headers, footers —
 and Docraft takes care of *how* to lay it out and render it to PDF.
