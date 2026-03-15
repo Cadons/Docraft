@@ -6,6 +6,7 @@
     "libharu",
     "nlohmann-json",
     "pugixml",
-    "gtest"
+    "gtest",
+    "fmt"
   ]
 }

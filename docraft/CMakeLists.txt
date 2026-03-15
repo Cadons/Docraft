@@ -185,7 +185,7 @@ else()
     message(FATAL_ERROR "No pugixml CMake target found")
 endif()
 
-target_link_libraries(docraft PUBLIC ${PUGIXML_TARGET} nlohmann_json::nlohmann_json ${LIBHARU_TARGET})
+target_link_libraries(docraft PUBLIC ${PUGIXML_TARGET} nlohmann_json::nlohmann_json ${LIBHARU_TARGET} fmt::fmt)
 target_link_libraries(docraft_tool PRIVATE docraft)
 
 target_include_directories(docraft
