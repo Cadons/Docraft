@@ -15,8 +15,9 @@
  */
 
 #include "docraft/renderer/painter/docraft_table_painter.h"
-#include <print>
 #include "docraft/backend/docraft_line_rendering_backend.h"
+
+#include <fmt/format.h>
 
 #include "docraft/renderer/painter/docraft_image_painter.h"
 #include "docraft/utils/docraft_logger.h"
@@ -253,7 +254,7 @@ namespace docraft::renderer::painter {
 
              // draw horizontal line at bottom of this row
              float line_y_here =  bottom_y;
-             LOG_DEBUG(std::format("Drawing horizontal line at y={}", line_y_here));
+             LOG_DEBUG(fmt::format("Drawing horizontal line at y={}", line_y_here));
              line_backend->draw_line(
                  start_x,
                  line_y_here,

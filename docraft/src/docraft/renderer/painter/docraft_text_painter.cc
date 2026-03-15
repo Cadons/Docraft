@@ -17,7 +17,6 @@
 #include "docraft/renderer/painter/docraft_text_painter.h"
 
 #include <algorithm>
-#include <print>
 #include <sstream>
 
 #include "docraft/generic/docraft_font_applier.h"

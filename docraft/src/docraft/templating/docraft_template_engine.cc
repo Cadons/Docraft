@@ -21,7 +21,7 @@
 #include "docraft/templating/docraft_template_engine.h"
 
 #include <algorithm>
-#include <format>
+#include <fmt/format.h>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
 
@@ -48,7 +48,7 @@ namespace docraft::templating {
     void DocraftTemplateEngine::add_template_variable(const std::string &name, const std::string &value) {
         auto normalized_name = normalize_name(name);
         if (has_template_variable(normalized_name)) {
-            throw std::runtime_error(std::format("Template variable '{}' already exists.", name));
+            throw std::runtime_error(fmt::format("Template variable '{}' already exists.", name));
         }
         template_variables_.insert({normalized_name, value});
     }
@@ -57,7 +57,7 @@ namespace docraft::templating {
         auto normalized_name = normalize_name(name);
         auto it = template_variables_.find(normalized_name);
         if (it == template_variables_.end()) {
-            throw std::runtime_error(std::format("Template variable '{}' not found.", name));
+            throw std::runtime_error(fmt::format("Template variable '{}' not found.", name));
         }
         return it->second;
     }
@@ -70,7 +70,7 @@ namespace docraft::templating {
         auto normalized_name = normalize_name(name);
         auto it = template_variables_.find(normalized_name);
         if (it == template_variables_.end()) {
-            throw std::runtime_error(std::format("Template variable '{}' not found.", name));
+            throw std::runtime_error(fmt::format("Template variable '{}' not found.", name));
         }
         template_variables_.erase(it);
     }
@@ -291,10 +291,10 @@ namespace docraft::templating {
                                                int height) {
         auto name = normalize_name(image_id);
         if (image_data_.contains(name)) {
-            throw std::runtime_error(std::format("Image data for '{}' already exists.", image_id));
+            throw std::runtime_error(fmt::format("Image data for '{}' already exists.", image_id));
         }
         if (width <= 0 || height <= 0) {
-            throw std::runtime_error(std::format("Image data for '{}' has invalid dimensions.", image_id));
+            throw std::runtime_error(fmt::format("Image data for '{}' has invalid dimensions.", image_id));
         }
         //emplace the key also in the standard unordered_map with the same normalized name to ensure consistency
         template_variables_.insert({name, name});
@@ -306,7 +306,7 @@ namespace docraft::templating {
         auto name = normalize_name(image_id);
         auto it = image_data_.find(name);
         if (it == image_data_.end()) {
-            throw std::runtime_error(std::format("Image data for '{}' not found.", image_id));
+            throw std::runtime_error(fmt::format("Image data for '{}' not found.", image_id));
         }
         return it->second;
     }
@@ -319,8 +319,7 @@ namespace docraft::templating {
         const auto expected_size =
                 static_cast<size_t>(width) * static_cast<size_t>(height) * 3U; //3 bytes per pixel for RGB
         if (decoded.size() != expected_size) {
-            throw std::runtime_error(std::format(
-                "Base64 image '{}' size does not match dimensions (RGB expected).", image_id));
+            throw std::runtime_error(fmt::format("Base64 image '{}' size does not match dimensions (RGB expected).", image_id));
         }
         add_image_data(image_id, decoded, width, height);
     }

@@ -17,8 +17,8 @@
 #include "docraft/layout/handler/docraft_layout_table_handler.h"
 
 #include <algorithm>
+#include <fmt/format.h>
 #include <numeric>
-#include <print>
 #include <vector>
 
 #include "docraft/layout/docraft_layout_engine.h"
@@ -544,7 +544,7 @@ namespace docraft::layout::handler {
         for (const auto &row: node->content_nodes()) {
             for (const auto &cell: row) {
                 if (cell) {
-                   LOG_DEBUG(std::format("Cell at ({}, {}) with size ({}, {})", cell->position().x, cell->position().y, cell->width(), cell->height()));
+                   LOG_DEBUG(fmt::format("Cell at ({}, {}) with size ({}, {})", cell->position().x, cell->position().y, cell->width(), cell->height()));
                 }
             }
         }

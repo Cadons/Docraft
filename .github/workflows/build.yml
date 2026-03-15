@@ -38,7 +38,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y cmake ninja-build g++-14 \
-            libhpdf-dev libpugixml-dev nlohmann-json3-dev libgtest-dev ccache
+            libhpdf-dev libpugixml-dev nlohmann-json3-dev libgtest-dev libfmt-dev ccache
 
       - name: Setup ccache
         uses: actions/cache@v3
@@ -125,7 +125,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          brew install cmake ninja libharu pugixml nlohmann-json googletest ccache
+          brew install cmake ninja libharu pugixml nlohmann-json googletest fmt ccache
 
       - name: Display versions
         run: |
