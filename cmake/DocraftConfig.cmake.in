@@ -1,7 +1,7 @@
 @PACKAGE_INIT@
 
 include(CMakeFindDependencyMacro)
-
+find_dependency(fmt CONFIG REQUIRED)
 find_dependency(nlohmann_json CONFIG REQUIRED)
 find_dependency(pugixml CONFIG REQUIRED)
 
