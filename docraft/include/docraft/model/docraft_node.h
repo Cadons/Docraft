@@ -46,7 +46,7 @@ namespace docraft::model {
          */
         explicit DocraftNode(const DocraftNode *node);
 
-        virtual ~DocraftNode() = default;
+        ~DocraftNode() override = default;
 
         /**
          * @brief Draws the node using the provided context.

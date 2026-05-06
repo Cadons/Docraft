@@ -65,6 +65,7 @@ namespace docraft::model {
          * @brief Creates a zero-sized transform at origin.
          */
         DocraftTransform();
+        virtual ~DocraftTransform() = default;
 
         /**
          * @brief Creates a transform with position, width, and height.
