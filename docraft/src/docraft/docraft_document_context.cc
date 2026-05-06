@@ -65,16 +65,11 @@ namespace docraft {
         page_height_ = backend_->page_height();
         page_width_ = backend_->page_width();
         current_rect_width_ = page_width_;
-        line_backend_.reset();
-        shape_backend_.reset();
-        text_backend_.reset();
-        image_backend_.reset();
-        page_backend_.reset();
     }
 
     void DocraftDocumentContext::set_page_format(model::DocraftPageSize size,
                                                  model::DocraftPageOrientation orientation) {
-        const auto &backend = page_backend();
+        const auto backend = page_backend();
         if (backend) {
             backend->set_page_format(size, orientation);
             page_height_ = backend->page_height();
@@ -84,7 +79,7 @@ namespace docraft {
     }
 #pragma endregion
 #pragma region getter
-    const std::shared_ptr<backend::IDocraftRenderingBackend> &DocraftDocumentContext::rendering_backend() const {
+    std::shared_ptr<backend::IDocraftRenderingBackend> DocraftDocumentContext::rendering_backend() const {
         return backend_;
     }
 
@@ -129,57 +124,42 @@ namespace docraft {
         return font_applier_;
     }
 
-    const std::shared_ptr<backend::IDocraftLineRenderingBackend> &DocraftDocumentContext::line_backend() const {
-        if (!line_backend_) {
-            line_backend_ = std::dynamic_pointer_cast<backend::IDocraftLineRenderingBackend>(backend_);
-        }
-        return line_backend_;
+    std::shared_ptr<backend::IDocraftLineRenderingBackend> DocraftDocumentContext::line_backend() const {
+        return std::dynamic_pointer_cast<backend::IDocraftLineRenderingBackend>(backend_);
     }
 
-    const std::shared_ptr<backend::IDocraftShapeRenderingBackend> &DocraftDocumentContext::shape_backend() const {
-        if (!shape_backend_) {
-            shape_backend_ = std::dynamic_pointer_cast<backend::IDocraftShapeRenderingBackend>(backend_);
-        }
-        return shape_backend_;
+    std::shared_ptr<backend::IDocraftShapeRenderingBackend> DocraftDocumentContext::shape_backend() const {
+        return std::dynamic_pointer_cast<backend::IDocraftShapeRenderingBackend>(backend_);
     }
 
-    const std::shared_ptr<backend::IDocraftTextRenderingBackend> &DocraftDocumentContext::text_backend() const {
-        if (!text_backend_) {
-            text_backend_ = std::dynamic_pointer_cast<backend::IDocraftTextRenderingBackend>(backend_);
-        }
-        return text_backend_;
+    std::shared_ptr<backend::IDocraftTextRenderingBackend> DocraftDocumentContext::text_backend() const {
+        return std::dynamic_pointer_cast<backend::IDocraftTextRenderingBackend>(backend_);
     }
 
-    const std::shared_ptr<backend::IDocraftImageRenderingBackend> &DocraftDocumentContext::image_backend() const {
-        if (!image_backend_) {
-            image_backend_ = std::dynamic_pointer_cast<backend::IDocraftImageRenderingBackend>(backend_);
-        }
-        return image_backend_;
+    std::shared_ptr<backend::IDocraftImageRenderingBackend> DocraftDocumentContext::image_backend() const {
+        return std::dynamic_pointer_cast<backend::IDocraftImageRenderingBackend>(backend_);
     }
 
-    const std::shared_ptr<backend::IDocraftPageRenderingBackend> &DocraftDocumentContext::page_backend() const {
-        if (!page_backend_) {
-            page_backend_ = std::dynamic_pointer_cast<backend::IDocraftPageRenderingBackend>(backend_);
-        }
-        return page_backend_;
+    std::shared_ptr<backend::IDocraftPageRenderingBackend> DocraftDocumentContext::page_backend() const {
+        return std::dynamic_pointer_cast<backend::IDocraftPageRenderingBackend>(backend_);
     }
 
     void DocraftDocumentContext::go_to_first_page() const {
-        const auto &backend = page_backend();
+        const auto backend = page_backend();
         if (backend) {
             backend->go_to_first_page();
         }
     }
 
     void DocraftDocumentContext::go_to_previous_page() const {
-        const auto &backend = page_backend();
+        const auto backend = page_backend();
         if (backend) {
             backend->go_to_previous_page();
         }
     }
 
     void DocraftDocumentContext::go_to_last_page() const {
-        const auto &backend = page_backend();
+        const auto backend = page_backend();
         if (backend) {
             backend->go_to_last_page();
         }
