@@ -357,7 +357,7 @@ namespace docraft {
         return result;
     }
 
-    std::vector<std::shared_ptr<model::DocraftNode>> DocraftDocument::edit_find_by_name(const std::string &name) {
+    std::vector<std::shared_ptr<model::DocraftNode>> DocraftDocument::take_by_name(const std::string &name) {
         return find_by_name_impl(name);
     }
 
@@ -379,8 +379,8 @@ namespace docraft {
         return matches.empty() ? nullptr : matches.front();
     }
 
-    std::shared_ptr<model::DocraftNode> DocraftDocument::edit_find_first_by_name(const std::string &name) {
-        const auto matches = edit_find_by_name(name);
+    std::shared_ptr<model::DocraftNode> DocraftDocument::take_first_by_name(const std::string &name) {
+        const auto matches = take_by_name(name);
         return matches.empty() ? nullptr : matches.front();
     }
 
@@ -389,8 +389,8 @@ namespace docraft {
         return matches.empty() ? nullptr : matches.back();
     }
 
-    std::shared_ptr<model::DocraftNode> DocraftDocument::edit_find_last_by_name(const std::string &name) {
-        const auto matches = edit_find_by_name(name);
+    std::shared_ptr<model::DocraftNode> DocraftDocument::take_last_by_name(const std::string &name) {
+        const auto matches = take_by_name(name);
         return matches.empty() ? nullptr : matches.back();
     }
 

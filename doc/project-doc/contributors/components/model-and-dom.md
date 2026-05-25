@@ -37,7 +37,7 @@ All nodes can carry:
 `DocraftDocument` offers utility APIs to query and mutate the graph:
 
 - readonly: `find_by_name`, `find_first_by_name`, `find_last_by_name`, `find_by_type<T>()`,
-- mutable: `edit_find_by_name`, `edit_find_first_by_name`, `edit_find_last_by_name`, `edit_find_by_type<T>()`,
+- mutable: `take_by_name`, `take_first_by_name`, `take_last_by_name`, `take_by_type<T>()`,
 - `traverse_dom(callback)`.
 
 Readonly methods return pointers to const nodes; use `edit_*` methods when runtime customization is required.

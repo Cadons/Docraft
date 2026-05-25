@@ -141,32 +141,47 @@ namespace docraft {
          * @brief Returns the line backend (cached).
          * @return Line rendering backend.
          */
-        [[nodiscard]] std::shared_ptr<const backend::IDocraftLineRenderingBackend> line_backend() const;
-        [[nodiscard]] std::shared_ptr<backend::IDocraftLineRenderingBackend> edit_line_backend();
+        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER_LAZY_INIT(
+            backend::IDocraftLineRenderingBackend,
+            line_backend,
+            line_backend_,
+            line_backend_ = std::dynamic_pointer_cast<backend::IDocraftLineRenderingBackend>(backend_))
         /**
          * @brief Returns the shape backend (cached).
          * @return Shape rendering backend.
          */
-        [[nodiscard]] std::shared_ptr<const backend::IDocraftShapeRenderingBackend> shape_backend() const;
-        [[nodiscard]] std::shared_ptr<backend::IDocraftShapeRenderingBackend> edit_shape_backend();
+        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER_LAZY_INIT(
+            backend::IDocraftShapeRenderingBackend,
+            shape_backend,
+            shape_backend_,
+            shape_backend_ = std::dynamic_pointer_cast<backend::IDocraftShapeRenderingBackend>(backend_))
         /**
          * @brief Returns the text backend (cached).
          * @return Text rendering backend.
          */
-        [[nodiscard]] std::shared_ptr<const backend::IDocraftTextRenderingBackend> text_backend() const;
-        [[nodiscard]] std::shared_ptr<backend::IDocraftTextRenderingBackend> edit_text_backend();
+        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER_LAZY_INIT(
+            backend::IDocraftTextRenderingBackend,
+            text_backend,
+            text_backend_,
+            text_backend_ = std::dynamic_pointer_cast<backend::IDocraftTextRenderingBackend>(backend_))
         /**
          * @brief Returns the image backend (cached).
          * @return Image rendering backend.
          */
-        [[nodiscard]] std::shared_ptr<const backend::IDocraftImageRenderingBackend> image_backend() const;
-        [[nodiscard]] std::shared_ptr<backend::IDocraftImageRenderingBackend> edit_image_backend();
+        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER_LAZY_INIT(
+            backend::IDocraftImageRenderingBackend,
+            image_backend,
+            image_backend_,
+            image_backend_ = std::dynamic_pointer_cast<backend::IDocraftImageRenderingBackend>(backend_))
         /**
          * @brief Returns the page backend (cached).
          * @return Page rendering backend.
          */
-        [[nodiscard]] std::shared_ptr<const backend::IDocraftPageRenderingBackend> page_backend() const;
-        [[nodiscard]] std::shared_ptr<backend::IDocraftPageRenderingBackend> edit_page_backend();
+        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER_LAZY_INIT(
+            backend::IDocraftPageRenderingBackend,
+            page_backend,
+            page_backend_,
+            page_backend_ = std::dynamic_pointer_cast<backend::IDocraftPageRenderingBackend>(backend_))
         /**
          * @brief Replaces the underlying rendering backend.
          * @param backend New rendering backend. Pass nullptr to restore the default backend.

@@ -173,21 +173,21 @@ namespace docraft {
          * @return Vector of nodes matching the name, or empty vector if none found.
          */
         std::vector<std::shared_ptr<const model::DocraftNode>> find_by_name(const std::string &name) const;
-        std::vector<std::shared_ptr<model::DocraftNode>> edit_find_by_name(const std::string &name);
+        std::vector<std::shared_ptr<model::DocraftNode>> take_by_name(const std::string &name);
         /**
          * @brief Finds the first node by name in the document DOM.
          * @param name Node name to search for.
          * @return Shared pointer to the first matching node, or nullptr if not found.
          */
         std::shared_ptr<const model::DocraftNode> find_first_by_name(const std::string &name) const;
-        std::shared_ptr<model::DocraftNode> edit_find_first_by_name(const std::string &name);
+        std::shared_ptr<model::DocraftNode> take_first_by_name(const std::string &name);
         /**
          * @brief Finds the last node by name in the document DOM.
          * @param name Node name to search for.
          * @return Shared pointer to the last matching node, or nullptr if not found.
          */
         std::shared_ptr<const model::DocraftNode> find_last_by_name(const std::string &name) const;
-        std::shared_ptr<model::DocraftNode> edit_find_last_by_name(const std::string &name);
+        std::shared_ptr<model::DocraftNode> take_last_by_name(const std::string &name);
         /**
          * @brief Finds nodes by type in the document DOM.
          * @tparam T Node type to search for.
@@ -196,7 +196,7 @@ namespace docraft {
         template <typename T>
         std::vector<std::shared_ptr<const T>> find_by_type() const;
         template <typename T>
-        std::vector<std::shared_ptr<T>> edit_find_by_type();
+        std::vector<std::shared_ptr<T>> take_by_type();
         /**
          * @brief Traverses the document DOM and executes a callback on each node.
          * @param callback Function called for each node and operation (enter/exit).

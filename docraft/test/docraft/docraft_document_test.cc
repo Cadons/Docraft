@@ -141,7 +141,7 @@ namespace docraft::test {
         document.add_node(text);
 
         auto editable = std::dynamic_pointer_cast<model::DocraftText>(
-            document.edit_find_first_by_name("target"));
+            document.take_first_by_name("target"));
         ASSERT_TRUE(editable);
         editable->set_text("After");
 
