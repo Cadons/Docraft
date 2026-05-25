@@ -40,16 +40,16 @@
 #endif
 
 #define DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD(TYPE, NAME, MEMBER) \
-    [[nodiscard]] const TYPE &NAME() const { return MEMBER; } \
-    [[nodiscard]] TYPE &edit_##NAME() { return MEMBER; }
+    [[nodiscard]] const TYPE &NAME() const { return MEMBER; }; \
+    [[nodiscard]] TYPE &edit_##NAME() { return MEMBER; };
 
 #define DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER(TYPE, NAME, MEMBER) \
-    [[nodiscard]] std::shared_ptr<const TYPE> NAME() const { return MEMBER; } \
-    [[nodiscard]] std::shared_ptr<TYPE> edit_##NAME() { return MEMBER; }
+    [[nodiscard]] std::shared_ptr<const TYPE> NAME() const { return MEMBER; }; \
+    [[nodiscard]] std::shared_ptr<TYPE> edit_##NAME() { return MEMBER; };
 
 #define DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER_CUSTOM(TYPE, GETTER_NAME, EDIT_NAME, MEMBER) \
-    [[nodiscard]] std::shared_ptr<const TYPE> GETTER_NAME() const { return MEMBER; } \
-    [[nodiscard]] std::shared_ptr<TYPE> EDIT_NAME() { return MEMBER; }
+    [[nodiscard]] std::shared_ptr<const TYPE> GETTER_NAME() const { return MEMBER; }; \
+    [[nodiscard]] std::shared_ptr<TYPE> EDIT_NAME() { return MEMBER; };
 
 #define DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER_LAZY_INIT(TYPE, NAME, MEMBER, INIT_EXPR) \
     [[nodiscard]] std::shared_ptr<const TYPE> NAME() const { \
@@ -57,14 +57,14 @@
             INIT_EXPR; \
         } \
         return MEMBER; \
-    } \
+    }; \
     [[nodiscard]] std::shared_ptr<TYPE> edit_##NAME() { \
         if (!(MEMBER)) { \
             INIT_EXPR; \
         } \
         return MEMBER; \
-    }
+    };
 
 #define DOCRAFT_CREATE_GETTER_CONST_VECTOR_AND_EDIT_METHOD_SHARED_SMART_POINTER(TYPE, NAME, MEMBER) \
-    [[nodiscard]] std::vector<std::shared_ptr<const TYPE>> NAME() const { return {MEMBER.begin(), MEMBER.end()}; } \
-    [[nodiscard]] std::vector<std::shared_ptr<TYPE>> &edit_##NAME() { return MEMBER; }
+    [[nodiscard]] std::vector<std::shared_ptr<const TYPE>> NAME() const { return {MEMBER.begin(), MEMBER.end()}; }; \
+    [[nodiscard]] std::vector<std::shared_ptr<TYPE>> &edit_##NAME() { return MEMBER; };

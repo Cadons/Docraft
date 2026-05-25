@@ -60,7 +60,7 @@ namespace docraft {
          * @brief Returns the active rendering backend.
          * @return Shared pointer to the rendering backend.
          */
-        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER(backend::IDocraftRenderingBackend, rendering_backend, backend_)
+        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER(backend::IDocraftRenderingBackend, rendering_backend, backend_);
         /**
          * @brief Returns the mutable layout cursor.
          * @return Reference to the cursor.
@@ -106,7 +106,7 @@ namespace docraft {
          * @brief Returns the header node.
          * @return Header node (may be nullptr).
          */
-        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER(model::DocraftHeader, header, header_)
+        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER(model::DocraftHeader, header, header_);
         /**
          * @brief Sets the document body node.
          * @param body Body node.
@@ -116,7 +116,7 @@ namespace docraft {
          * @brief Returns the body node.
          * @return Body node (may be nullptr).
          */
-        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER(model::DocraftBody, body, body_)
+        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER(model::DocraftBody, body, body_);
         /**
          * @brief Sets the document footer node.
          * @param footer Footer node.
@@ -126,7 +126,7 @@ namespace docraft {
          * @brief Returns the footer node.
          * @return Footer node (may be nullptr).
          */
-        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER(model::DocraftFooter, footer, footer_)
+        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER(model::DocraftFooter, footer, footer_);
         /**
          * @brief Sets the font applier used for text nodes.
          * @param font_applier Font applier instance.
@@ -136,7 +136,7 @@ namespace docraft {
          * @brief Returns the font applier instance.
          * @return Font applier (may be nullptr).
          */
-        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER(docraft::generic::DocraftFontApplier, font_applier, font_applier_)
+        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER(docraft::generic::DocraftFontApplier, font_applier, font_applier_);
         /**
          * @brief Returns the line backend (cached).
          * @return Line rendering backend.
@@ -145,7 +145,7 @@ namespace docraft {
             backend::IDocraftLineRenderingBackend,
             line_backend,
             line_backend_,
-            line_backend_ = std::dynamic_pointer_cast<backend::IDocraftLineRenderingBackend>(backend_))
+            line_backend_ = std::dynamic_pointer_cast<backend::IDocraftLineRenderingBackend>(backend_));
         /**
          * @brief Returns the shape backend (cached).
          * @return Shape rendering backend.
@@ -154,7 +154,7 @@ namespace docraft {
             backend::IDocraftShapeRenderingBackend,
             shape_backend,
             shape_backend_,
-            shape_backend_ = std::dynamic_pointer_cast<backend::IDocraftShapeRenderingBackend>(backend_))
+            shape_backend_ = std::dynamic_pointer_cast<backend::IDocraftShapeRenderingBackend>(backend_));
         /**
          * @brief Returns the text backend (cached).
          * @return Text rendering backend.
@@ -163,7 +163,7 @@ namespace docraft {
             backend::IDocraftTextRenderingBackend,
             text_backend,
             text_backend_,
-            text_backend_ = std::dynamic_pointer_cast<backend::IDocraftTextRenderingBackend>(backend_))
+            text_backend_ = std::dynamic_pointer_cast<backend::IDocraftTextRenderingBackend>(backend_));
         /**
          * @brief Returns the image backend (cached).
          * @return Image rendering backend.
@@ -172,7 +172,7 @@ namespace docraft {
             backend::IDocraftImageRenderingBackend,
             image_backend,
             image_backend_,
-            image_backend_ = std::dynamic_pointer_cast<backend::IDocraftImageRenderingBackend>(backend_))
+            image_backend_ = std::dynamic_pointer_cast<backend::IDocraftImageRenderingBackend>(backend_));
         /**
          * @brief Returns the page backend (cached).
          * @return Page rendering backend.
@@ -181,7 +181,7 @@ namespace docraft {
             backend::IDocraftPageRenderingBackend,
             page_backend,
             page_backend_,
-            page_backend_ = std::dynamic_pointer_cast<backend::IDocraftPageRenderingBackend>(backend_))
+            page_backend_ = std::dynamic_pointer_cast<backend::IDocraftPageRenderingBackend>(backend_));
         /**
          * @brief Replaces the underlying rendering backend.
          * @param backend New rendering backend. Pass nullptr to restore the default backend.

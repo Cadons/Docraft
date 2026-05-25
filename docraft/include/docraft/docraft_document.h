@@ -91,7 +91,7 @@ namespace docraft {
          * @brief Returns the current document title.
          * @return Document title string.
          */
-        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD(std::string, document_title, document_title_)
+        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD(std::string, document_title, document_title_);
 
         /**
          * @brief Sets the output directory where the rendered file will be saved.
@@ -103,7 +103,7 @@ namespace docraft {
          * @brief Returns the current output directory path.
          * @return Output directory path.
          */
-        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD(std::string, document_path, document_path_)
+        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD(std::string, document_path, document_path_);
 
         /**
          * @brief Sets document settings (fonts, etc.).
@@ -115,7 +115,7 @@ namespace docraft {
          * @brief Returns the current settings object.
          * @return Shared pointer to settings or nullptr if not set.
          */
-        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER(model::DocraftSettings, settings, settings_)
+        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER(model::DocraftSettings, settings, settings_);
 
         /**
          * @brief Sets document metadata values.
@@ -160,12 +160,12 @@ namespace docraft {
 
         void set_document_template_engine(const std::shared_ptr<templating::DocraftTemplateEngine> &template_engine);
 
-        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER(templating::DocraftTemplateEngine, document_template_engine, template_engine_)
+        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER(templating::DocraftTemplateEngine, document_template_engine, template_engine_);
         /**
          * @brief Returns the document DOM nodes.
          * @return Vector of root nodes.
          */
-        DOCRAFT_CREATE_GETTER_CONST_VECTOR_AND_EDIT_METHOD_SHARED_SMART_POINTER(model::DocraftNode, nodes, dom_)
+        DOCRAFT_CREATE_GETTER_CONST_VECTOR_AND_EDIT_METHOD_SHARED_SMART_POINTER(model::DocraftNode, nodes, dom_);
         /**
          * @brief Finds nodes by name in the document DOM.
          * @param name Node name to search for.
