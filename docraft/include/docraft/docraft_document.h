@@ -208,6 +208,7 @@ namespace docraft {
         void traverse_node(
             const std::shared_ptr<model::DocraftNode> &node,
             const std::function<void(const std::shared_ptr<model::DocraftNode> &, DocraftDomTraverseOp)> &callback) const;
+        std::vector<std::shared_ptr<model::DocraftNode>> get_by_name_impl(const std::string &name) const;
         std::shared_ptr<DocraftDocumentContext> context_;
         std::shared_ptr<model::DocraftSettings> settings_;
         std::string document_title_;

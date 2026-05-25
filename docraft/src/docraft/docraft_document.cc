@@ -358,18 +358,17 @@ namespace docraft {
 
     std::vector<std::shared_ptr<const model::DocraftNode>> DocraftDocument::get_by_name(const std::string &name) const {
         std::vector<std::shared_ptr<const model::DocraftNode>> result;
-        traverse_dom([&](const std::shared_ptr<model::DocraftNode> &node, DocraftDomTraverseOp op) {
-            if (op != DocraftDomTraverseOp::kEnter) {
-                return;
-            }
-            if (node && node->node_name() == name) {
-                result.push_back(node);
-            }
-        });
+        for (const auto &node: get_by_name_impl(name)) {
+            result.push_back(node);
+        }
         return result;
     }
 
     std::vector<std::shared_ptr<model::DocraftNode>> DocraftDocument::edit_get_by_name(const std::string &name) {
+        return get_by_name_impl(name);
+    }
+
+    std::vector<std::shared_ptr<model::DocraftNode>> DocraftDocument::get_by_name_impl(const std::string &name) const {
         std::vector<std::shared_ptr<model::DocraftNode>> result;
         traverse_dom([&](const std::shared_ptr<model::DocraftNode> &node, DocraftDomTraverseOp op) {
             if (op != DocraftDomTraverseOp::kEnter) {
