@@ -349,12 +349,7 @@ namespace docraft {
                                         template_engine_)
 
     std::vector<std::shared_ptr<const model::DocraftNode>> DocraftDocument::nodes() const {
-        std::vector<std::shared_ptr<const model::DocraftNode>> result;
-        result.reserve(dom_.size());
-        for (const auto &node: dom_) {
-            result.push_back(node);
-        }
-        return result;
+        return {dom_.begin(), dom_.end()};
     }
 
     std::vector<std::shared_ptr<model::DocraftNode>> &DocraftDocument::edit_nodes() {
