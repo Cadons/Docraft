@@ -165,7 +165,7 @@ namespace docraft {
          * @brief Returns the document DOM nodes.
          * @return Vector of root nodes.
          */
-        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD(std::vector<std::shared_ptr<model::DocraftNode>>, nodes, dom_)
+        DOCRAFT_CREATE_GETTER_CONST_VECTOR_AND_EDIT_METHOD_SHARED_SMART_POINTER(model::DocraftNode, nodes, dom_)
         /**
          * @brief Finds nodes by name in the document DOM.
          * @param name Node name to search for.

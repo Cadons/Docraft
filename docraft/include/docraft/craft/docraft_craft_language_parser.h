@@ -57,7 +57,8 @@ namespace docraft::craft {
          * @brief Returns the parsed document.
          * @return Parsed document or nullptr if not parsed.
          */
-        DOCRAFT_CREATE_GET_AND_EDIT_METHOD_SHARED_SMART_POINTER(DocraftDocument, document, document_)
+        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER_CUSTOM(
+            DocraftDocument, get_document, edit_document, document_)
 
         /**
          * @brief Parses a single XML node into a Docraft node.
