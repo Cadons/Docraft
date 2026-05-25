@@ -665,7 +665,11 @@ void DocraftCraftLanguageParser::load_document() {
     LOG_INFO("Document loaded successfully with title: " + document_->document_title());
 }
 
-std::shared_ptr<DocraftDocument> DocraftCraftLanguageParser::get_document() const {
+std::shared_ptr<const DocraftDocument> DocraftCraftLanguageParser::get_document() const {
+    return document_;
+}
+
+std::shared_ptr<DocraftDocument> DocraftCraftLanguageParser::edit_document() {
     return document_;
 }
 

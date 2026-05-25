@@ -133,6 +133,24 @@ namespace docraft::test {
         EXPECT_EQ(document.get_last_by_name("target"), last);
     }
 
+    TEST(DocraftDocumentTest, EditGettersAllowNodeMutation) {
+        DocraftDocument document("Test Document");
+
+        auto text = std::make_shared<model::DocraftText>("Before");
+        text->set_name("target");
+        document.add_node(text);
+
+        auto editable = std::dynamic_pointer_cast<model::DocraftText>(
+            document.edit_get_first_by_name("target"));
+        ASSERT_TRUE(editable);
+        editable->set_text("After");
+
+        const auto readonly = document.get_first_by_name("target");
+        auto readonly_text = std::dynamic_pointer_cast<const model::DocraftText>(readonly);
+        ASSERT_TRUE(readonly_text);
+        EXPECT_EQ(readonly_text->text(), "After");
+    }
+
     TEST(DocraftDocumentTest, GetByTypeFindsMatchingNodes) {
         DocraftDocument document("Test Document");
 

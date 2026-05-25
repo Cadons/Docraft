@@ -53,7 +53,7 @@ namespace docraft::templating {
         template_variables_.insert({normalized_name, value});
     }
 
-    std::string DocraftTemplateEngine::get_template_variable(const std::string &name) {
+    std::string DocraftTemplateEngine::get_template_variable(const std::string &name) const {
         auto normalized_name = normalize_name(name);
         auto it = template_variables_.find(normalized_name);
         if (it == template_variables_.end()) {

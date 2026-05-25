@@ -36,11 +36,11 @@ All nodes can carry:
 
 `DocraftDocument` offers utility APIs to query and mutate the graph:
 
-- `get_by_name`, `get_first_by_name`, `get_last_by_name`,
-- `get_by_type<T>()`,
+- readonly: `get_by_name`, `get_first_by_name`, `get_last_by_name`, `get_by_type<T>()`,
+- mutable: `edit_get_by_name`, `edit_get_first_by_name`, `edit_get_last_by_name`, `edit_get_by_type<T>()`,
 - `traverse_dom(callback)`.
 
-Because nodes are mutable shared pointers, these APIs are used both by internal stages and by application code for runtime customization.
+Readonly methods return pointers to const nodes; use `edit_*` methods when runtime customization is required.
 
 ## 5. Clone behavior
 

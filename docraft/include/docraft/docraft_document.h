@@ -91,7 +91,7 @@ namespace docraft {
          * @brief Returns the current document title.
          * @return Document title string.
          */
-        std::string document_title();
+        std::string document_title() const;
 
         /**
          * @brief Sets the output directory where the rendered file will be saved.
@@ -103,7 +103,7 @@ namespace docraft {
          * @brief Returns the current output directory path.
          * @return Output directory path.
          */
-        std::string document_path();
+        std::string document_path() const;
 
         /**
          * @brief Sets document settings (fonts, etc.).
@@ -115,7 +115,7 @@ namespace docraft {
          * @brief Returns the current settings object.
          * @return Shared pointer to settings or nullptr if not set.
          */
-        std::shared_ptr<model::DocraftSettings> settings() const;
+        DOCRAFT_DECLARE_SHARED_PTR_ACCESSORS(model::DocraftSettings, settings)
 
         /**
          * @brief Sets document metadata values.
@@ -160,37 +160,43 @@ namespace docraft {
 
         void set_document_template_engine(const std::shared_ptr<templating::DocraftTemplateEngine> &template_engine);
 
-        std::shared_ptr<templating::DocraftTemplateEngine> document_template_engine() const;
+        DOCRAFT_DECLARE_SHARED_PTR_ACCESSORS(templating::DocraftTemplateEngine, document_template_engine)
         /**
          * @brief Returns the document DOM nodes.
          * @return Vector of root nodes.
          */
-        const std::vector<std::shared_ptr<model::DocraftNode>> &nodes() const;
+        std::vector<std::shared_ptr<const model::DocraftNode>> nodes() const;
+        std::vector<std::shared_ptr<model::DocraftNode>> &edit_nodes();
         /**
          * @brief Finds nodes by name in the document DOM.
          * @param name Node name to search for.
          * @return Vector of nodes matching the name, or empty vector if none found.
          */
-        std::vector<std::shared_ptr<model::DocraftNode>> get_by_name(const std::string &name) const;
+        std::vector<std::shared_ptr<const model::DocraftNode>> get_by_name(const std::string &name) const;
+        std::vector<std::shared_ptr<model::DocraftNode>> edit_get_by_name(const std::string &name);
         /**
          * @brief Finds the first node by name in the document DOM.
          * @param name Node name to search for.
          * @return Shared pointer to the first matching node, or nullptr if not found.
          */
-        std::shared_ptr<model::DocraftNode> get_first_by_name(const std::string &name) const;
+        std::shared_ptr<const model::DocraftNode> get_first_by_name(const std::string &name) const;
+        std::shared_ptr<model::DocraftNode> edit_get_first_by_name(const std::string &name);
         /**
          * @brief Finds the last node by name in the document DOM.
          * @param name Node name to search for.
          * @return Shared pointer to the last matching node, or nullptr if not found.
          */
-        std::shared_ptr<model::DocraftNode> get_last_by_name(const std::string &name) const;
+        std::shared_ptr<const model::DocraftNode> get_last_by_name(const std::string &name) const;
+        std::shared_ptr<model::DocraftNode> edit_get_last_by_name(const std::string &name);
         /**
          * @brief Finds nodes by type in the document DOM.
          * @tparam T Node type to search for.
          * @return Vector of nodes matching the type, or empty vector if none found.
          */
         template <typename T>
-        std::vector<std::shared_ptr<T>> get_by_type() const;
+        std::vector<std::shared_ptr<const T>> get_by_type() const;
+        template <typename T>
+        std::vector<std::shared_ptr<T>> edit_get_by_type();
         /**
          * @brief Traverses the document DOM and executes a callback on each node.
          * @param callback Function called for each node and operation (enter/exit).

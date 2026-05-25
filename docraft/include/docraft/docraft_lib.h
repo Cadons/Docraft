@@ -24,12 +24,21 @@
 #else
 #define DOCRAFT_LIB
 #endif
+
 #elif defined(__GNUC__) && __GNUC__ >= 4
 #if defined(DOCRAFT_BUILD_SHARED_LIBS)
 #define DOCRAFT_LIB __attribute__((visibility("default")))
 #else
 #define DOCRAFT_LIB
 #endif
+
+#define DOCRAFT_DECLARE_SHARED_PTR_ACCESSORS(TYPE, NAME) \
+    [[nodiscard]] std::shared_ptr<const TYPE> NAME() const; \
+    [[nodiscard]] std::shared_ptr<TYPE> edit_##NAME();
+
+#define DOCRAFT_DEFINE_SHARED_PTR_ACCESSORS(SCOPE, TYPE, NAME, MEMBER) \
+    std::shared_ptr<const TYPE> SCOPE::NAME() const { return MEMBER; } \
+    std::shared_ptr<TYPE> SCOPE::edit_##NAME() { return MEMBER; }
 #else
 #define DOCRAFT_LIB
 #endif

@@ -382,7 +382,7 @@ namespace docraft::layout {
         if (!sections.body) {
             throw std::runtime_error("Document must have a body section");
         }
-        if (const auto &page_backend = context()->page_backend()) {
+        if (const auto page_backend = context()->edit_page_backend()) {
             page_backend->go_to_first_page();
         }
         const SectionPlan plan = build_section_plan(sections);
@@ -469,7 +469,7 @@ namespace docraft::layout {
         body_cursor.move_to(body->position().x, body_start_y);
 
         int current_page = 1;
-        const auto &page_backend = context()->page_backend();
+        const auto page_backend = context()->edit_page_backend();
         if (page_backend) {
             current_page = static_cast<int>(page_backend->current_page_number());
         }

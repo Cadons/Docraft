@@ -53,7 +53,7 @@ namespace docraft::templating {
                  * @return Stored value.
                  * @throws std::runtime_error if not found.
                  */
-                std::string get_template_variable(const std::string &name);
+                std::string get_template_variable(const std::string &name) const;
                 /**
                  * @brief Clears all template variables.
                  */
