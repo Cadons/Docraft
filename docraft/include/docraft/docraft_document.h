@@ -115,7 +115,7 @@ namespace docraft {
          * @brief Returns the current settings object.
          * @return Shared pointer to settings or nullptr if not set.
          */
-        DOCRAFT_DECLARE_SHARED_PTR_ACCESSORS(model::DocraftSettings, settings)
+        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER(model::DocraftSettings, settings, settings_)
 
         /**
          * @brief Sets document metadata values.
@@ -160,7 +160,7 @@ namespace docraft {
 
         void set_document_template_engine(const std::shared_ptr<templating::DocraftTemplateEngine> &template_engine);
 
-        DOCRAFT_DECLARE_SHARED_PTR_ACCESSORS(templating::DocraftTemplateEngine, document_template_engine)
+        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER(templating::DocraftTemplateEngine, document_template_engine, template_engine_)
         /**
          * @brief Returns the document DOM nodes.
          * @return Vector of root nodes.
@@ -172,31 +172,31 @@ namespace docraft {
          * @param name Node name to search for.
          * @return Vector of nodes matching the name, or empty vector if none found.
          */
-        std::vector<std::shared_ptr<const model::DocraftNode>> get_by_name(const std::string &name) const;
-        std::vector<std::shared_ptr<model::DocraftNode>> edit_get_by_name(const std::string &name);
+        std::vector<std::shared_ptr<const model::DocraftNode>> find_by_name(const std::string &name) const;
+        std::vector<std::shared_ptr<model::DocraftNode>> edit_find_by_name(const std::string &name);
         /**
          * @brief Finds the first node by name in the document DOM.
          * @param name Node name to search for.
          * @return Shared pointer to the first matching node, or nullptr if not found.
          */
-        std::shared_ptr<const model::DocraftNode> get_first_by_name(const std::string &name) const;
-        std::shared_ptr<model::DocraftNode> edit_get_first_by_name(const std::string &name);
+        std::shared_ptr<const model::DocraftNode> find_first_by_name(const std::string &name) const;
+        std::shared_ptr<model::DocraftNode> edit_find_first_by_name(const std::string &name);
         /**
          * @brief Finds the last node by name in the document DOM.
          * @param name Node name to search for.
          * @return Shared pointer to the last matching node, or nullptr if not found.
          */
-        std::shared_ptr<const model::DocraftNode> get_last_by_name(const std::string &name) const;
-        std::shared_ptr<model::DocraftNode> edit_get_last_by_name(const std::string &name);
+        std::shared_ptr<const model::DocraftNode> find_last_by_name(const std::string &name) const;
+        std::shared_ptr<model::DocraftNode> edit_find_last_by_name(const std::string &name);
         /**
          * @brief Finds nodes by type in the document DOM.
          * @tparam T Node type to search for.
          * @return Vector of nodes matching the type, or empty vector if none found.
          */
         template <typename T>
-        std::vector<std::shared_ptr<const T>> get_by_type() const;
+        std::vector<std::shared_ptr<const T>> find_by_type() const;
         template <typename T>
-        std::vector<std::shared_ptr<T>> edit_get_by_type();
+        std::vector<std::shared_ptr<T>> edit_find_by_type();
         /**
          * @brief Traverses the document DOM and executes a callback on each node.
          * @param callback Function called for each node and operation (enter/exit).
@@ -208,7 +208,7 @@ namespace docraft {
         void traverse_node(
             const std::shared_ptr<model::DocraftNode> &node,
             const std::function<void(const std::shared_ptr<model::DocraftNode> &, DocraftDomTraverseOp)> &callback) const;
-        std::vector<std::shared_ptr<model::DocraftNode>> get_by_name_impl(const std::string &name) const;
+        std::vector<std::shared_ptr<model::DocraftNode>> find_by_name_impl(const std::string &name) const;
         std::shared_ptr<DocraftDocumentContext> context_;
         std::shared_ptr<model::DocraftSettings> settings_;
         std::string document_title_;

@@ -84,11 +84,6 @@ namespace docraft {
     }
 #pragma endregion
 #pragma region getter
-    DOCRAFT_DEFINE_SHARED_PTR_ACCESSORS(DocraftDocumentContext,
-                                        backend::IDocraftRenderingBackend,
-                                        rendering_backend,
-                                        backend_)
-
     DocraftCursor &DocraftDocumentContext::cursor() {
         return cursor_;
     }
@@ -111,15 +106,6 @@ namespace docraft {
     float DocraftDocumentContext::page_width() const {
         return page_width_;
     }
-
-
-    DOCRAFT_DEFINE_SHARED_PTR_ACCESSORS(DocraftDocumentContext, model::DocraftHeader, header, header_)
-    DOCRAFT_DEFINE_SHARED_PTR_ACCESSORS(DocraftDocumentContext, model::DocraftBody, body, body_)
-    DOCRAFT_DEFINE_SHARED_PTR_ACCESSORS(DocraftDocumentContext, model::DocraftFooter, footer, footer_)
-    DOCRAFT_DEFINE_SHARED_PTR_ACCESSORS(DocraftDocumentContext,
-                                        generic::DocraftFontApplier,
-                                        font_applier,
-                                        font_applier_)
 
     std::shared_ptr<const backend::IDocraftLineRenderingBackend> DocraftDocumentContext::line_backend() const {
         if (!line_backend_) {

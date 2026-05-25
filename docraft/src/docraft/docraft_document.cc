@@ -292,8 +292,6 @@ namespace docraft {
         settings_ = settings;
     }
 
-    DOCRAFT_DEFINE_SHARED_PTR_ACCESSORS(DocraftDocument, model::DocraftSettings, settings, settings_)
-
     void DocraftDocument::set_document_metadata(const DocraftDocumentMetadata &metadata) {
         metadata_ = metadata;
         if (metadata_.title().has_value()) {
@@ -343,11 +341,6 @@ namespace docraft {
         template_engine_ = template_engine;
     }
 
-    DOCRAFT_DEFINE_SHARED_PTR_ACCESSORS(DocraftDocument,
-                                        templating::DocraftTemplateEngine,
-                                        document_template_engine,
-                                        template_engine_)
-
     std::vector<std::shared_ptr<const model::DocraftNode>> DocraftDocument::nodes() const {
         return {dom_.begin(), dom_.end()};
     }
@@ -356,19 +349,19 @@ namespace docraft {
         return dom_;
     }
 
-    std::vector<std::shared_ptr<const model::DocraftNode>> DocraftDocument::get_by_name(const std::string &name) const {
+    std::vector<std::shared_ptr<const model::DocraftNode>> DocraftDocument::find_by_name(const std::string &name) const {
         std::vector<std::shared_ptr<const model::DocraftNode>> result;
-        for (const auto &node: get_by_name_impl(name)) {
+        for (const auto &node: find_by_name_impl(name)) {
             result.push_back(node);
         }
         return result;
     }
 
-    std::vector<std::shared_ptr<model::DocraftNode>> DocraftDocument::edit_get_by_name(const std::string &name) {
-        return get_by_name_impl(name);
+    std::vector<std::shared_ptr<model::DocraftNode>> DocraftDocument::edit_find_by_name(const std::string &name) {
+        return find_by_name_impl(name);
     }
 
-    std::vector<std::shared_ptr<model::DocraftNode>> DocraftDocument::get_by_name_impl(const std::string &name) const {
+    std::vector<std::shared_ptr<model::DocraftNode>> DocraftDocument::find_by_name_impl(const std::string &name) const {
         std::vector<std::shared_ptr<model::DocraftNode>> result;
         traverse_dom([&](const std::shared_ptr<model::DocraftNode> &node, DocraftDomTraverseOp op) {
             if (op != DocraftDomTraverseOp::kEnter) {
@@ -381,23 +374,23 @@ namespace docraft {
         return result;
     }
 
-    std::shared_ptr<const model::DocraftNode> DocraftDocument::get_first_by_name(const std::string &name) const {
-        const auto matches = get_by_name(name);
+    std::shared_ptr<const model::DocraftNode> DocraftDocument::find_first_by_name(const std::string &name) const {
+        const auto matches = find_by_name(name);
         return matches.empty() ? nullptr : matches.front();
     }
 
-    std::shared_ptr<model::DocraftNode> DocraftDocument::edit_get_first_by_name(const std::string &name) {
-        const auto matches = edit_get_by_name(name);
+    std::shared_ptr<model::DocraftNode> DocraftDocument::edit_find_first_by_name(const std::string &name) {
+        const auto matches = edit_find_by_name(name);
         return matches.empty() ? nullptr : matches.front();
     }
 
-    std::shared_ptr<const model::DocraftNode> DocraftDocument::get_last_by_name(const std::string &name) const {
-        const auto matches = get_by_name(name);
+    std::shared_ptr<const model::DocraftNode> DocraftDocument::find_last_by_name(const std::string &name) const {
+        const auto matches = find_by_name(name);
         return matches.empty() ? nullptr : matches.back();
     }
 
-    std::shared_ptr<model::DocraftNode> DocraftDocument::edit_get_last_by_name(const std::string &name) {
-        const auto matches = edit_get_by_name(name);
+    std::shared_ptr<model::DocraftNode> DocraftDocument::edit_find_last_by_name(const std::string &name) {
+        const auto matches = edit_find_by_name(name);
         return matches.empty() ? nullptr : matches.back();
     }
 

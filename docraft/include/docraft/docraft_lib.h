@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <memory>
+
 #if defined(_WIN32) || defined(__CYGWIN__)
 #if defined(DOCRAFT_BUILD_SHARED_LIBS)
 #define DOCRAFT_LIB __declspec(dllexport)
@@ -36,10 +38,10 @@
 #define DOCRAFT_LIB
 #endif
 
-#define DOCRAFT_DECLARE_SHARED_PTR_ACCESSORS(TYPE, NAME) \
-    [[nodiscard]] std::shared_ptr<const TYPE> NAME() const; \
-    [[nodiscard]] std::shared_ptr<TYPE> edit_##NAME();
+#define DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD(TYPE, NAME, MEMBER) \
+    [[nodiscard]] const TYPE &NAME() const { return MEMBER; } \
+    [[nodiscard]] TYPE &edit_##NAME() { return MEMBER; }
 
-#define DOCRAFT_DEFINE_SHARED_PTR_ACCESSORS(SCOPE, TYPE, NAME, MEMBER) \
-    std::shared_ptr<const TYPE> SCOPE::NAME() const { return MEMBER; } \
-    std::shared_ptr<TYPE> SCOPE::edit_##NAME() { return MEMBER; }
+#define DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER(TYPE, NAME, MEMBER) \
+    [[nodiscard]] std::shared_ptr<const TYPE> NAME() const { return MEMBER; } \
+    [[nodiscard]] std::shared_ptr<TYPE> edit_##NAME() { return MEMBER; }

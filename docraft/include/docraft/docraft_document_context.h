@@ -60,7 +60,7 @@ namespace docraft {
          * @brief Returns the active rendering backend.
          * @return Shared pointer to the rendering backend.
          */
-        DOCRAFT_DECLARE_SHARED_PTR_ACCESSORS(backend::IDocraftRenderingBackend, rendering_backend)
+        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER(backend::IDocraftRenderingBackend, rendering_backend, backend_)
         /**
          * @brief Returns the mutable layout cursor.
          * @return Reference to the cursor.
@@ -106,7 +106,7 @@ namespace docraft {
          * @brief Returns the header node.
          * @return Header node (may be nullptr).
          */
-        DOCRAFT_DECLARE_SHARED_PTR_ACCESSORS(model::DocraftHeader, header)
+        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER(model::DocraftHeader, header, header_)
         /**
          * @brief Sets the document body node.
          * @param body Body node.
@@ -116,7 +116,7 @@ namespace docraft {
          * @brief Returns the body node.
          * @return Body node (may be nullptr).
          */
-        DOCRAFT_DECLARE_SHARED_PTR_ACCESSORS(model::DocraftBody, body)
+        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER(model::DocraftBody, body, body_)
         /**
          * @brief Sets the document footer node.
          * @param footer Footer node.
@@ -126,7 +126,7 @@ namespace docraft {
          * @brief Returns the footer node.
          * @return Footer node (may be nullptr).
          */
-        DOCRAFT_DECLARE_SHARED_PTR_ACCESSORS(model::DocraftFooter, footer)
+        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER(model::DocraftFooter, footer, footer_)
         /**
          * @brief Sets the font applier used for text nodes.
          * @param font_applier Font applier instance.
@@ -136,7 +136,7 @@ namespace docraft {
          * @brief Returns the font applier instance.
          * @return Font applier (may be nullptr).
          */
-        DOCRAFT_DECLARE_SHARED_PTR_ACCESSORS(docraft::generic::DocraftFontApplier, font_applier)
+        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER(docraft::generic::DocraftFontApplier, font_applier, font_applier_)
         /**
          * @brief Returns the line backend (cached).
          * @return Line rendering backend.

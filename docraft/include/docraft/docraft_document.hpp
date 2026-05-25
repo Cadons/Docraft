@@ -5,7 +5,7 @@
 
 namespace docraft {
     template <typename T>
-    std::vector<std::shared_ptr<const T>> DocraftDocument::get_by_type() const {
+    std::vector<std::shared_ptr<const T>> DocraftDocument::find_by_type() const {
         std::vector<std::shared_ptr<const T>> result;
         traverse_dom([&](const std::shared_ptr<model::DocraftNode> &node, DocraftDomTraverseOp op) {
             if (op != DocraftDomTraverseOp::kEnter) {
@@ -19,7 +19,7 @@ namespace docraft {
     }
 
     template <typename T>
-    std::vector<std::shared_ptr<T>> DocraftDocument::edit_get_by_type() {
+    std::vector<std::shared_ptr<T>> DocraftDocument::edit_find_by_type() {
         std::vector<std::shared_ptr<T>> result;
         traverse_dom([&](const std::shared_ptr<model::DocraftNode> &node, DocraftDomTraverseOp op) {
             if (op != DocraftDomTraverseOp::kEnter) {

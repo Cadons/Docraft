@@ -19,7 +19,7 @@ TEST(DocraftCraftLanguageParserTest, ParsesTitleSubtitleAndTextWithPredefinedDef
     auto document = parser.get_document();
     ASSERT_TRUE(document);
 
-    const auto texts = document->get_by_type<docraft::model::DocraftText>();
+    const auto texts = document->find_by_type<docraft::model::DocraftText>();
     ASSERT_EQ(texts.size(), 3U);
 
     EXPECT_EQ(texts[0]->text(), "Main Heading");
@@ -50,7 +50,7 @@ TEST(DocraftCraftLanguageParserTest, HeadingAttributesOverridePredefinedDefaults
     auto document = parser.get_document();
     ASSERT_TRUE(document);
 
-    const auto texts = document->get_by_type<docraft::model::DocraftText>();
+    const auto texts = document->find_by_type<docraft::model::DocraftText>();
     ASSERT_EQ(texts.size(), 2U);
 
     EXPECT_FLOAT_EQ(texts[0]->font_size(), 30.0F);
@@ -288,7 +288,7 @@ TEST(DocraftCraftLanguageParserTest, AllowsLayoutInBodyWithMultipleText) {
     auto document = parser.get_document();
     ASSERT_TRUE(document);
 
-    const auto texts = document->get_by_type<docraft::model::DocraftText>();
+    const auto texts = document->find_by_type<docraft::model::DocraftText>();
     ASSERT_EQ(texts.size(), 2U);
     EXPECT_EQ(texts[0]->text(), "First line");
     EXPECT_EQ(texts[1]->text(), "Second line");
