@@ -31,6 +31,12 @@ namespace docraft::backend::pdf {
 	 */
 	class DOCRAFT_LIB DocraftHaruBackend : public docraft::backend::IDocraftRenderingBackend {
 	public:
+		class LineEditMethods;
+		class ShapeEditMethods;
+		class TextEditMethods;
+		class ImageEditMethods;
+		class PageEditMethods;
+
 		/**
 		 * @brief Creates a Haru PDF backend with a new document and page.
 		 */
@@ -43,19 +49,19 @@ namespace docraft::backend::pdf {
 		/**
 		 * @brief Begins a text object.
 		 */
-		void begin_text() const override;
+		void begin_text() const;
 		/**
 		 * @brief Ends a text object.
 		 */
-		void end_text() const override;
+		void end_text() const;
 		/**
 		 * @brief Draws text at the given coordinates.
 		 */
-		void draw_text(const std::string& text, float x, float y) const override;
+		void draw_text(const std::string& text, float x, float y) const;
 		/**
 		 * @brief Sets text fill color.
 		 */
-		void set_text_color(float r, float g, float b) const override;
+		void set_text_color(float r, float g, float b) const;
 		/**
 		 * @brief Draws text with a custom transformation matrix.
 		 */
@@ -66,71 +72,71 @@ namespace docraft::backend::pdf {
 			float skew_y,
 			float scale_y,
 			float translate_x,
-			float translate_y) const override;
+			float translate_y) const;
 		/**
 		 * @brief Measures text width using current font settings.
 		 */
-		float measure_text_width(const std::string& text) const override;
+		float measure_text_width(const std::string& text) const;
 #pragma endregion
 #pragma region line rendering
 		/**
 		 * @brief Sets stroke color for lines and shapes.
 		 */
-		void set_stroke_color(float r, float g, float b) const override;
+		void set_stroke_color(float r, float g, float b) const;
 		/**
 		 * @brief Sets line width in points.
 		 */
-		void set_line_width(float thickness) const override;
+		void set_line_width(float thickness) const;
 		/**
 		 * @brief Draws a line between two points.
 		 */
-		void draw_line(float x1, float y1, float x2, float y2) const override;
+		void draw_line(float x1, float y1, float x2, float y2) const;
 #pragma endregion
 #pragma region shape rendering
 		/**
 		 * @brief Saves the current graphics state.
 		 */
-		void save_state() const override;
+		void save_state() const;
 		/**
 		 * @brief Restores the previous graphics state.
 		 */
-		void restore_state() const override;
+		void restore_state() const;
 		/**
 		 * @brief Sets fill color for shapes.
 		 */
-		void set_fill_color(float r, float g, float b) const override;
+		void set_fill_color(float r, float g, float b) const;
 		/**
 		 * @brief Sets fill alpha for shapes.
 		 */
-		void set_fill_alpha(float alpha) const override;
+		void set_fill_alpha(float alpha) const;
 		/**
 		 * @brief Sets stroke alpha for shapes.
 		 */
-		void set_stroke_alpha(float alpha) const override;
+		void set_stroke_alpha(float alpha) const;
 		/**
 		 * @brief Adds a rectangle path.
 		 */
-		void draw_rectangle(float x, float y, float width, float height) const override;
+		void draw_rectangle(float x, float y, float width, float height) const;
 		/**
 		 * @brief Adds a circle path.
 		 */
-		void draw_circle(float center_x, float center_y, float radius) const override;
+		void draw_circle(float center_x, float center_y, float radius) const;
 		/**
 		 * @brief Adds a polygon path.
 		 */
-		void draw_polygon(const std::vector<model::DocraftPoint> &points) const override;
+		void draw_polygon(const std::vector<model::DocraftPoint> &points) const;
 		/**
 		 * @brief Fills the current path.
 		 */
-		void fill() const override;
+		void fill() const;
 		/**
 		 * @brief Strokes the current path.
 		 */
-		void stroke() const override;
+		void stroke() const;
 		/**
 		 * @brief Fills and strokes the current path.
 		 */
-		void fill_stroke() const override;
+		void fill_stroke() const;
 #pragma endregion
 #pragma region image rendering
 		/**
@@ -141,7 +147,7 @@ namespace docraft::backend::pdf {
 			float x,
 			float y,
 			float width,
-			float height) const override;
+			float height) const;
 		/**
 		 * @brief Draws a PNG image from memory.
 		 */
@@ -151,7 +157,7 @@ namespace docraft::backend::pdf {
 			float x,
 			float y,
 			float width,
-			float height) const override;
+			float height) const;
 		/**
 		 * @brief Draws a JPEG image from file.
 		 */
@@ -160,7 +166,7 @@ namespace docraft::backend::pdf {
 			float x,
 			float y,
 			float width,
-			float height) const override;
+			float height) const;
 		/**
 		 * @brief Draws a JPEG image from memory.
 		 */
@@ -170,7 +176,7 @@ namespace docraft::backend::pdf {
 			float x,
 			float y,
 			float width,
-			float height) const override;
+			float height) const;
 		/**
 		 * @brief Draws a raw RGB image from file.
 		 */
@@ -181,7 +187,7 @@ namespace docraft::backend::pdf {
 			float x,
 			float y,
 			float width,
-			float height) const override;
+			float height) const;
 		/**
 		 * @brief Draws a raw RGB image from memory.
 		 */
@@ -192,9 +198,15 @@ namespace docraft::backend::pdf {
 			float x,
 			float y,
 			float width,
-			float height) const override;
+			float height) const;
 #pragma endregion
 #pragma region backend lifecycle
+
+		[[nodiscard]] const std::shared_ptr<docraft::backend::IDocraftLineRenderingBackend>& line_edit_methods() const override;
+		[[nodiscard]] const std::shared_ptr<docraft::backend::IDocraftShapeRenderingBackend>& shape_edit_methods() const override;
+		[[nodiscard]] const std::shared_ptr<docraft::backend::IDocraftTextRenderingBackend>& text_edit_methods() const override;
+		[[nodiscard]] const std::shared_ptr<docraft::backend::IDocraftImageRenderingBackend>& image_edit_methods() const override;
+		[[nodiscard]] const std::shared_ptr<docraft::backend::IDocraftPageRenderingBackend>& page_edit_methods() const override;
 
 		void save_to_file(const std::string& path) const override;
 		[[nodiscard]] std::string file_extension() const override;
@@ -219,52 +231,52 @@ namespace docraft::backend::pdf {
 /**
 		 * @brief Returns the current page width in points.
 		 */
-		float page_width() const override;
+		float page_width() const;
 		/**
 		 * @brief Returns the current page height in points.
 		 */
-		float page_height() const override;
+		float page_height() const;
 		/**
 		 * @brief Adds a new page to the document and makes it the current page.
 		 */
-		void add_new_page() override;
+		void add_new_page();
 		/**
 		 * @brief Moves the cursor to the next page if it exists.
 		 * @throws std::runtime_error if already at the last page.
 		 */
-		void move_to_next_page() override;
+		void move_to_next_page();
 		/**
 		 * @brief Navigates to a specific page (0-based index).
 		 * @param page_number Destination page index.
 		 * @throws std::runtime_error if the page number is out of range.
 		 */
-		void go_to_page(std::size_t page_number) override;
+		void go_to_page(std::size_t page_number);
 		/**
 		 * @brief Navigates to the first page.
 		 */
-		void go_to_first_page() override;
+		void go_to_first_page();
 		/**
 		 * @brief Navigates to the previous page.
 		 * @throws std::runtime_error if already at the first page.
 		 */
-		void go_to_previous_page() override;
+		void go_to_previous_page();
 		/**
 		 * @brief Navigates to the last page.
 		 */
-		void go_to_last_page() override;
+		void go_to_last_page();
 		/**
 		 * @brief Sets the page size and orientation.
 		 */
 		void set_page_format(model::DocraftPageSize size,
-		                     model::DocraftPageOrientation orientation) override;
+		                     model::DocraftPageOrientation orientation);
 		/**
 		 * @brief Returns the current page number (1-based index).
 		 */
-		std::size_t current_page_number() const override;
+		std::size_t current_page_number() const;
 		/**
 		 * @brief Returns the total number of pages in the document.
 		 */
-		std::size_t total_page_count() const override;
+		std::size_t total_page_count() const;
 #pragma endregion
 	private:
 		/**
@@ -290,5 +302,10 @@ namespace docraft::backend::pdf {
 		size_t current_page_number_ = 0;
 		mutable float fill_alpha_ = 1.0F;
 		mutable float stroke_alpha_ = 1.0F;
+		std::shared_ptr<docraft::backend::IDocraftLineRenderingBackend> line_edit_methods_;
+		std::shared_ptr<docraft::backend::IDocraftShapeRenderingBackend> shape_edit_methods_;
+		std::shared_ptr<docraft::backend::IDocraftTextRenderingBackend> text_edit_methods_;
+		std::shared_ptr<docraft::backend::IDocraftImageRenderingBackend> image_edit_methods_;
+		std::shared_ptr<docraft::backend::IDocraftPageRenderingBackend> page_edit_methods_;
 	};
 } // docraft

@@ -4,7 +4,7 @@ The backend layer is the portability boundary for output targets.
 
 ## 1. Contract hierarchy
 
-`IDocraftRenderingBackend` aggregates these contracts:
+`IDocraftRenderingBackend` composes these contracts through getter methods:
 
 - `IDocraftTextRenderingBackend`
 - `IDocraftShapeRenderingBackend`
@@ -18,7 +18,7 @@ Plus lifecycle methods:
 - font registration/selection helpers
 - metadata application
 
-This design lets renderers/painters consume only the primitives they need.
+This design lets renderers/painters consume only the primitives they need while avoiding deep interface-inheritance chains.
 
 ## 2. Concrete implementation: Haru backend
 

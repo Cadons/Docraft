@@ -20,8 +20,8 @@
 namespace docraft {
     DocraftDocumentContext::DocraftDocumentContext() {
         backend_ = std::make_shared<backend::pdf::DocraftHaruBackend>();
-        page_height_ = backend_->page_height();
-        page_width_ = backend_->page_width();
+        page_height_ = backend_->page_edit_methods()->page_height();
+        page_width_ = backend_->page_edit_methods()->page_width();
 
         current_rect_width_ = page_width_;
     }
@@ -29,8 +29,8 @@ namespace docraft {
     DocraftDocumentContext::DocraftDocumentContext(
         const std::shared_ptr<backend::IDocraftRenderingBackend> &backend) : backend_(
         backend) {
-        page_height_ = backend_->page_height();
-        page_width_ = backend_->page_width();
+        page_height_ = backend_->page_edit_methods()->page_height();
+        page_width_ = backend_->page_edit_methods()->page_width();
         current_rect_width_ = page_width_;
     }
 
@@ -62,8 +62,8 @@ namespace docraft {
 
     void DocraftDocumentContext::set_backend(const std::shared_ptr<backend::IDocraftRenderingBackend> &backend) {
         backend_ = backend ? backend : std::make_shared<backend::pdf::DocraftHaruBackend>();
-        page_height_ = backend_->page_height();
-        page_width_ = backend_->page_width();
+        page_height_ = backend_->page_edit_methods()->page_height();
+        page_width_ = backend_->page_edit_methods()->page_width();
         current_rect_width_ = page_width_;
         line_backend_.reset();
         shape_backend_.reset();
@@ -131,35 +131,35 @@ namespace docraft {
 
     const std::shared_ptr<backend::IDocraftLineRenderingBackend> &DocraftDocumentContext::line_backend() const {
         if (!line_backend_) {
-            line_backend_ = std::dynamic_pointer_cast<backend::IDocraftLineRenderingBackend>(backend_);
+            line_backend_ = backend_->line_edit_methods();
         }
         return line_backend_;
     }
 
     const std::shared_ptr<backend::IDocraftShapeRenderingBackend> &DocraftDocumentContext::shape_backend() const {
         if (!shape_backend_) {
-            shape_backend_ = std::dynamic_pointer_cast<backend::IDocraftShapeRenderingBackend>(backend_);
+            shape_backend_ = backend_->shape_edit_methods();
         }
         return shape_backend_;
     }
 
     const std::shared_ptr<backend::IDocraftTextRenderingBackend> &DocraftDocumentContext::text_backend() const {
         if (!text_backend_) {
-            text_backend_ = std::dynamic_pointer_cast<backend::IDocraftTextRenderingBackend>(backend_);
+            text_backend_ = backend_->text_edit_methods();
         }
         return text_backend_;
     }
 
     const std::shared_ptr<backend::IDocraftImageRenderingBackend> &DocraftDocumentContext::image_backend() const {
         if (!image_backend_) {
-            image_backend_ = std::dynamic_pointer_cast<backend::IDocraftImageRenderingBackend>(backend_);
+            image_backend_ = backend_->image_edit_methods();
         }
         return image_backend_;
     }
 
     const std::shared_ptr<backend::IDocraftPageRenderingBackend> &DocraftDocumentContext::page_backend() const {
         if (!page_backend_) {
-            page_backend_ = std::dynamic_pointer_cast<backend::IDocraftPageRenderingBackend>(backend_);
+            page_backend_ = backend_->page_edit_methods();
         }
         return page_backend_;
     }

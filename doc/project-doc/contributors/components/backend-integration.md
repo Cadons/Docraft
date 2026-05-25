@@ -17,7 +17,7 @@ Important implication:
 
 ## 2. Interface contract you must implement
 
-A backend must implement `IDocraftRenderingBackend`, which aggregates:
+A backend must implement `IDocraftRenderingBackend`, which exposes composed edit-method objects for:
 
 - text primitives,
 - line/shape primitives,
@@ -27,7 +27,7 @@ A backend must implement `IDocraftRenderingBackend`, which aggregates:
 - metadata application,
 - font registration and font selection hooks.
 
-In practice you implement one concrete class inheriting `IDocraftRenderingBackend`.
+In practice you implement one concrete class inheriting `IDocraftRenderingBackend` and return small composed objects from the `*_edit_methods()` getters.
 
 ## 3. External integration (recommended path)
 

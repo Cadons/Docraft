@@ -146,7 +146,7 @@ Metadata lifecycle:
 - Node model remains backend-agnostic.
 - Rendering is split into renderer + painters for separation of concerns.
 - Layout uses chain-of-responsibility handlers to keep node-specific rules isolated.
-- Context caches sub-backend interfaces (`text_backend()`, `shape_backend()`, etc.) to reduce repeated casts.
+- Context caches sub-backend interfaces (`text_backend()`, `shape_backend()`, etc.) using backend composition getters (`*_edit_methods()`).
 - `DocraftDocument::render()` is the main orchestration point and intentionally centralizes pipeline sequencing.
 
 ## 5. Extension points
@@ -158,7 +158,7 @@ Primary extension points for contributors:
 - Add a new backend primitive:
   - extend interfaces + implement in backend + consume in painters.
 - Add a new backend implementation:
-  - implement `IDocraftRenderingBackend` (and required inherited contracts).
+  - implement `IDocraftRenderingBackend` and expose composed interface objects through `*_edit_methods()` getters.
 - Add new templating capability:
   - extend `DocraftTemplateEngine::template_node` + helper methods.
 

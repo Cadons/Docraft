@@ -17,6 +17,7 @@
 #pragma once
 
 #include "docraft/docraft_lib.h"
+#include <memory>
 #include <string>
 
 #include "docraft/backend/docraft_image_rendering_backend.h"
@@ -32,15 +33,32 @@ namespace docraft::backend {
     /**
      * @brief Aggregated rendering backend interface.
      */
-    class DOCRAFT_LIB IDocraftRenderingBackend : public IDocraftTextRenderingBackend,
-                                     public IDocraftShapeRenderingBackend,
-                                     public IDocraftImageRenderingBackend,
-                                     public IDocraftPageRenderingBackend {
+    class DOCRAFT_LIB IDocraftRenderingBackend {
     public:
         /**
          * @brief Virtual destructor.
          */
-        ~IDocraftRenderingBackend() override = default;
+        virtual ~IDocraftRenderingBackend() = default;
+        /**
+         * @brief Returns line editing methods supported by this backend.
+         */
+        [[nodiscard]] virtual const std::shared_ptr<IDocraftLineRenderingBackend>& line_edit_methods() const = 0;
+        /**
+         * @brief Returns shape editing methods supported by this backend.
+         */
+        [[nodiscard]] virtual const std::shared_ptr<IDocraftShapeRenderingBackend>& shape_edit_methods() const = 0;
+        /**
+         * @brief Returns text editing methods supported by this backend.
+         */
+        [[nodiscard]] virtual const std::shared_ptr<IDocraftTextRenderingBackend>& text_edit_methods() const = 0;
+        /**
+         * @brief Returns image editing methods supported by this backend.
+         */
+        [[nodiscard]] virtual const std::shared_ptr<IDocraftImageRenderingBackend>& image_edit_methods() const = 0;
+        /**
+         * @brief Returns page editing/getter methods supported by this backend.
+         */
+        [[nodiscard]] virtual const std::shared_ptr<IDocraftPageRenderingBackend>& page_edit_methods() const = 0;
         /**
          * @brief Saves the document to a file path.
          * @param path Output file path.

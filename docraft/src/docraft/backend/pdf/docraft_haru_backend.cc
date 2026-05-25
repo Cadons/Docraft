@@ -240,6 +240,159 @@ namespace docraft::backend::pdf {
         }
     } // namespace
 
+    class DocraftHaruBackend::LineEditMethods final : public IDocraftLineRenderingBackend {
+    public:
+        explicit LineEditMethods(DocraftHaruBackend& backend) : backend_(backend) {}
+
+        void set_stroke_color(float r, float g, float b) const override { backend_.set_stroke_color(r, g, b); }
+        void set_line_width(float thickness) const override { backend_.set_line_width(thickness); }
+        void draw_line(float x1, float y1, float x2, float y2) const override { backend_.draw_line(x1, y1, x2, y2); }
+
+    private:
+        DocraftHaruBackend& backend_;
+    };
+
+    class DocraftHaruBackend::ShapeEditMethods final : public IDocraftShapeRenderingBackend {
+    public:
+        explicit ShapeEditMethods(DocraftHaruBackend& backend) : backend_(backend) {}
+
+        void save_state() const override { backend_.save_state(); }
+        void restore_state() const override { backend_.restore_state(); }
+        void set_fill_color(float r, float g, float b) const override { backend_.set_fill_color(r, g, b); }
+        void set_fill_alpha(float alpha) const override { backend_.set_fill_alpha(alpha); }
+        void set_stroke_alpha(float alpha) const override { backend_.set_stroke_alpha(alpha); }
+        void draw_rectangle(float x, float y, float width, float height) const override {
+            backend_.draw_rectangle(x, y, width, height);
+        }
+        void draw_circle(float center_x, float center_y, float radius) const override {
+            backend_.draw_circle(center_x, center_y, radius);
+        }
+        void draw_polygon(const std::vector<model::DocraftPoint> &points) const override {
+            backend_.draw_polygon(points);
+        }
+        void fill() const override { backend_.fill(); }
+        void stroke() const override { backend_.stroke(); }
+        void fill_stroke() const override { backend_.fill_stroke(); }
+        void set_stroke_color(float r, float g, float b) const override { backend_.set_stroke_color(r, g, b); }
+        void set_line_width(float thickness) const override { backend_.set_line_width(thickness); }
+        void draw_line(float x1, float y1, float x2, float y2) const override { backend_.draw_line(x1, y1, x2, y2); }
+
+    private:
+        DocraftHaruBackend& backend_;
+    };
+
+    class DocraftHaruBackend::TextEditMethods final : public IDocraftTextRenderingBackend {
+    public:
+        explicit TextEditMethods(DocraftHaruBackend& backend) : backend_(backend) {}
+
+        void begin_text() const override { backend_.begin_text(); }
+        void end_text() const override { backend_.end_text(); }
+        void draw_text(const std::string& text, float x, float y) const override { backend_.draw_text(text, x, y); }
+        void set_text_color(float r, float g, float b) const override { backend_.set_text_color(r, g, b); }
+        void draw_text_matrix(
+            const std::string& text,
+            float scale_x,
+            float skew_x,
+            float skew_y,
+            float scale_y,
+            float translate_x,
+            float translate_y) const override {
+            backend_.draw_text_matrix(text, scale_x, skew_x, skew_y, scale_y, translate_x, translate_y);
+        }
+        float measure_text_width(const std::string& text) const override { return backend_.measure_text_width(text); }
+        void set_stroke_color(float r, float g, float b) const override { backend_.set_stroke_color(r, g, b); }
+        void set_line_width(float thickness) const override { backend_.set_line_width(thickness); }
+        void draw_line(float x1, float y1, float x2, float y2) const override { backend_.draw_line(x1, y1, x2, y2); }
+
+    private:
+        DocraftHaruBackend& backend_;
+    };
+
+    class DocraftHaruBackend::ImageEditMethods final : public IDocraftImageRenderingBackend {
+    public:
+        explicit ImageEditMethods(DocraftHaruBackend& backend) : backend_(backend) {}
+
+        void draw_png_image(
+            const std::string& path,
+            float x,
+            float y,
+            float width,
+            float height) const override {
+            backend_.draw_png_image(path, x, y, width, height);
+        }
+        void draw_png_image_from_memory(
+            const unsigned char* data,
+            std::size_t size,
+            float x,
+            float y,
+            float width,
+            float height) const override {
+            backend_.draw_png_image_from_memory(data, size, x, y, width, height);
+        }
+        void draw_jpeg_image(
+            const std::string& path,
+            float x,
+            float y,
+            float width,
+            float height) const override {
+            backend_.draw_jpeg_image(path, x, y, width, height);
+        }
+        void draw_jpeg_image_from_memory(
+            const unsigned char* data,
+            std::size_t size,
+            float x,
+            float y,
+            float width,
+            float height) const override {
+            backend_.draw_jpeg_image_from_memory(data, size, x, y, width, height);
+        }
+        void draw_raw_rgb_image(
+            const std::string& path,
+            int pixel_width,
+            int pixel_height,
+            float x,
+            float y,
+            float width,
+            float height) const override {
+            backend_.draw_raw_rgb_image(path, pixel_width, pixel_height, x, y, width, height);
+        }
+        void draw_raw_rgb_image_from_memory(
+            const unsigned char* data,
+            int pixel_width,
+            int pixel_height,
+            float x,
+            float y,
+            float width,
+            float height) const override {
+            backend_.draw_raw_rgb_image_from_memory(data, pixel_width, pixel_height, x, y, width, height);
+        }
+
+    private:
+        DocraftHaruBackend& backend_;
+    };
+
+    class DocraftHaruBackend::PageEditMethods final : public IDocraftPageRenderingBackend {
+    public:
+        explicit PageEditMethods(DocraftHaruBackend& backend) : backend_(backend) {}
+
+        float page_width() const override { return backend_.page_width(); }
+        float page_height() const override { return backend_.page_height(); }
+        void add_new_page() override { backend_.add_new_page(); }
+        void move_to_next_page() override { backend_.move_to_next_page(); }
+        void go_to_page(std::size_t page_number) override { backend_.go_to_page(page_number); }
+        void go_to_first_page() override { backend_.go_to_first_page(); }
+        void go_to_previous_page() override { backend_.go_to_previous_page(); }
+        void go_to_last_page() override { backend_.go_to_last_page(); }
+        void set_page_format(model::DocraftPageSize size, model::DocraftPageOrientation orientation) override {
+            backend_.set_page_format(size, orientation);
+        }
+        std::size_t current_page_number() const override { return backend_.current_page_number(); }
+        std::size_t total_page_count() const override { return backend_.total_page_count(); }
+
+    private:
+        DocraftHaruBackend& backend_;
+    };
+
     void DocraftHaruBackend::create_new_page() {
         HPDF_Page new_page = HPDF_AddPage(pdf_);
         if (!new_page) {
@@ -249,7 +402,12 @@ namespace docraft::backend::pdf {
         pages_.push_back(new_page);
         current_page_number_ = pages_.size() - 1; // Move to the newly created page
     }
-    DocraftHaruBackend::DocraftHaruBackend() {
+    DocraftHaruBackend::DocraftHaruBackend()
+        : line_edit_methods_(std::make_shared<LineEditMethods>(*this)),
+          shape_edit_methods_(std::make_shared<ShapeEditMethods>(*this)),
+          text_edit_methods_(std::make_shared<TextEditMethods>(*this)),
+          image_edit_methods_(std::make_shared<ImageEditMethods>(*this)),
+          page_edit_methods_(std::make_shared<PageEditMethods>(*this)) {
         pdf_ = HPDF_New(error_handler, NULL);
         if (!pdf_) {
             throw std::runtime_error("Failed to initialize Haru PDF document");
@@ -482,6 +640,26 @@ namespace docraft::backend::pdf {
 
     void DocraftHaruBackend::save_to_file(const std::string& path) const {
         HPDF_SaveToFile(pdf_, path.c_str());
+    }
+
+    const std::shared_ptr<IDocraftLineRenderingBackend>& DocraftHaruBackend::line_edit_methods() const {
+        return line_edit_methods_;
+    }
+
+    const std::shared_ptr<IDocraftShapeRenderingBackend>& DocraftHaruBackend::shape_edit_methods() const {
+        return shape_edit_methods_;
+    }
+
+    const std::shared_ptr<IDocraftTextRenderingBackend>& DocraftHaruBackend::text_edit_methods() const {
+        return text_edit_methods_;
+    }
+
+    const std::shared_ptr<IDocraftImageRenderingBackend>& DocraftHaruBackend::image_edit_methods() const {
+        return image_edit_methods_;
+    }
+
+    const std::shared_ptr<IDocraftPageRenderingBackend>& DocraftHaruBackend::page_edit_methods() const {
+        return page_edit_methods_;
     }
 
     std::string DocraftHaruBackend::file_extension() const {
