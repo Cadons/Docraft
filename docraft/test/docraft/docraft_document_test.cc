@@ -133,7 +133,7 @@ namespace docraft::test {
         EXPECT_EQ(document.find_last_by_name("target"), last);
     }
 
-    TEST(DocraftDocumentTest, EditGettersAllowNodeMutation) {
+    TEST(DocraftDocumentTest, EditFindMethodsAllowNodeMutation) {
         DocraftDocument document("Test Document");
 
         auto text = std::make_shared<model::DocraftText>("Before");
