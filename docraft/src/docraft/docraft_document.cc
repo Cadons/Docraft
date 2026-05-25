@@ -276,16 +276,8 @@ namespace docraft {
         metadata_.set_title(document_title);
     }
 
-    std::string DocraftDocument::document_title() const {
-        return document_title_;
-    }
-
     void DocraftDocument::set_document_path(const std::string &document_path) {
         document_path_ = document_path;
-    }
-
-    std::string DocraftDocument::document_path() const {
-        return document_path_;
     }
 
     void DocraftDocument::set_settings(const std::shared_ptr<model::DocraftSettings> &settings) {
@@ -339,14 +331,6 @@ namespace docraft {
     void DocraftDocument::set_document_template_engine(
         const std::shared_ptr<templating::DocraftTemplateEngine> &template_engine) {
         template_engine_ = template_engine;
-    }
-
-    std::vector<std::shared_ptr<const model::DocraftNode>> DocraftDocument::nodes() const {
-        return {dom_.begin(), dom_.end()};
-    }
-
-    std::vector<std::shared_ptr<model::DocraftNode>> &DocraftDocument::edit_nodes() {
-        return dom_;
     }
 
     std::vector<std::shared_ptr<const model::DocraftNode>> DocraftDocument::find_by_name(const std::string &name) const {

@@ -46,6 +46,10 @@
     [[nodiscard]] std::shared_ptr<const TYPE> NAME() const { return MEMBER; } \
     [[nodiscard]] std::shared_ptr<TYPE> edit_##NAME() { return MEMBER; }
 
+#define DOCRAFT_CREATE_GET_AND_EDIT_METHOD_SHARED_SMART_POINTER(TYPE, NAME, MEMBER) \
+    [[nodiscard]] std::shared_ptr<const TYPE> get_##NAME() const { return MEMBER; } \
+    [[nodiscard]] std::shared_ptr<TYPE> edit_##NAME() { return MEMBER; }
+
 #define DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER_LAZY_INIT(TYPE, NAME, MEMBER, INIT_EXPR) \
     [[nodiscard]] std::shared_ptr<const TYPE> NAME() const { \
         if (!(MEMBER)) { \

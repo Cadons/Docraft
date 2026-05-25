@@ -91,7 +91,7 @@ namespace docraft {
          * @brief Returns the current document title.
          * @return Document title string.
          */
-        std::string document_title() const;
+        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD(std::string, document_title, document_title_)
 
         /**
          * @brief Sets the output directory where the rendered file will be saved.
@@ -103,7 +103,7 @@ namespace docraft {
          * @brief Returns the current output directory path.
          * @return Output directory path.
          */
-        std::string document_path() const;
+        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD(std::string, document_path, document_path_)
 
         /**
          * @brief Sets document settings (fonts, etc.).
@@ -165,8 +165,7 @@ namespace docraft {
          * @brief Returns the document DOM nodes.
          * @return Vector of root nodes.
          */
-        std::vector<std::shared_ptr<const model::DocraftNode>> nodes() const;
-        std::vector<std::shared_ptr<model::DocraftNode>> &edit_nodes();
+        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD(std::vector<std::shared_ptr<model::DocraftNode>>, nodes, dom_)
         /**
          * @brief Finds nodes by name in the document DOM.
          * @param name Node name to search for.
