@@ -91,7 +91,14 @@ namespace docraft {
          * @brief Returns the current document title.
          * @return Document title string.
          */
-        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD(std::string, document_title, document_title_);
+        DOCRAFT_CREATE_ACCESSOR_METHOD(
+            const std::string&,
+            std::string&,
+            document_title,
+            edit_document_title,
+            document_title_,
+            document_title_,
+            DOCRAFT_ACCESSOR_INIT_NONE);
 
         /**
          * @brief Sets the output directory where the rendered file will be saved.
@@ -103,7 +110,14 @@ namespace docraft {
          * @brief Returns the current output directory path.
          * @return Output directory path.
          */
-        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD(std::string, document_path, document_path_);
+        DOCRAFT_CREATE_ACCESSOR_METHOD(
+            const std::string&,
+            std::string&,
+            document_path,
+            edit_document_path,
+            document_path_,
+            document_path_,
+            DOCRAFT_ACCESSOR_INIT_NONE);
 
         /**
          * @brief Sets document settings (fonts, etc.).
@@ -115,7 +129,14 @@ namespace docraft {
          * @brief Returns the current settings object.
          * @return Shared pointer to settings or nullptr if not set.
          */
-        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER(model::DocraftSettings, settings, settings_);
+        DOCRAFT_CREATE_ACCESSOR_METHOD(
+            std::shared_ptr<const model::DocraftSettings>,
+            std::shared_ptr<model::DocraftSettings>,
+            settings,
+            edit_settings,
+            settings_,
+            settings_,
+            DOCRAFT_ACCESSOR_INIT_NONE);
 
         /**
          * @brief Sets document metadata values.
@@ -160,12 +181,26 @@ namespace docraft {
 
         void set_document_template_engine(const std::shared_ptr<templating::DocraftTemplateEngine> &template_engine);
 
-        DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER(templating::DocraftTemplateEngine, document_template_engine, template_engine_);
+        DOCRAFT_CREATE_ACCESSOR_METHOD(
+            std::shared_ptr<const templating::DocraftTemplateEngine>,
+            std::shared_ptr<templating::DocraftTemplateEngine>,
+            document_template_engine,
+            edit_document_template_engine,
+            template_engine_,
+            template_engine_,
+            DOCRAFT_ACCESSOR_INIT_NONE);
         /**
          * @brief Returns the document DOM nodes.
          * @return Vector of root nodes.
          */
-        DOCRAFT_CREATE_GETTER_CONST_VECTOR_AND_EDIT_METHOD_SHARED_SMART_POINTER(model::DocraftNode, nodes, dom_);
+        DOCRAFT_CREATE_ACCESSOR_METHOD(
+            std::vector<std::shared_ptr<const model::DocraftNode>>,
+            std::vector<std::shared_ptr<model::DocraftNode>>&,
+            nodes,
+            edit_nodes,
+            docraft::to_const_shared_vector(dom_),
+            dom_,
+            DOCRAFT_ACCESSOR_INIT_NONE);
         /**
          * @brief Finds nodes by name in the document DOM.
          * @param name Node name to search for.

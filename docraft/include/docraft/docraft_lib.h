@@ -39,32 +39,29 @@
 #define DOCRAFT_LIB
 #endif
 
-#define DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD(TYPE, NAME, MEMBER) \
-    [[nodiscard]] const TYPE &NAME() const { return MEMBER; }; \
-    [[nodiscard]] TYPE &edit_##NAME() { return MEMBER; };
+namespace docraft {
+    template <typename MutableType>
+    std::vector<std::shared_ptr<const MutableType>> to_const_shared_vector(
+        const std::vector<std::shared_ptr<MutableType>> &values) {
+        return {values.begin(), values.end()};
+    }
 
-#define DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER(TYPE, NAME, MEMBER) \
-    [[nodiscard]] std::shared_ptr<const TYPE> NAME() const { return MEMBER; }; \
-    [[nodiscard]] std::shared_ptr<TYPE> edit_##NAME() { return MEMBER; };
+    template <typename InterfaceType, typename BackendType>
+    void ensure_lazy_backend(std::shared_ptr<InterfaceType> &cache, const std::shared_ptr<BackendType> &backend) {
+        if (!cache) {
+            cache = std::dynamic_pointer_cast<InterfaceType>(backend);
+        }
+    }
+} // namespace docraft
 
-#define DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER_CUSTOM(TYPE, GETTER_NAME, EDIT_NAME, MEMBER) \
-    [[nodiscard]] std::shared_ptr<const TYPE> GETTER_NAME() const { return MEMBER; }; \
-    [[nodiscard]] std::shared_ptr<TYPE> EDIT_NAME() { return MEMBER; };
+#define DOCRAFT_ACCESSOR_INIT_NONE ((void)0)
 
-#define DOCRAFT_CREATE_GETTER_AND_EDIT_METHOD_SHARED_SMART_POINTER_LAZY_INIT(TYPE, NAME, MEMBER, INIT_EXPR) \
-    [[nodiscard]] std::shared_ptr<const TYPE> NAME() const { \
-        if (!(MEMBER)) { \
-            INIT_EXPR; \
-        } \
-        return MEMBER; \
+#define DOCRAFT_CREATE_ACCESSOR_METHOD(GETTER_RETURN_TYPE, EDIT_RETURN_TYPE, GETTER_NAME, EDIT_NAME, GETTER_EXPR, EDIT_EXPR, INIT_EXPR) \
+    [[nodiscard]] GETTER_RETURN_TYPE GETTER_NAME() const { \
+        INIT_EXPR; \
+        return GETTER_EXPR; \
     }; \
-    [[nodiscard]] std::shared_ptr<TYPE> edit_##NAME() { \
-        if (!(MEMBER)) { \
-            INIT_EXPR; \
-        } \
-        return MEMBER; \
+    [[nodiscard]] EDIT_RETURN_TYPE EDIT_NAME() { \
+        INIT_EXPR; \
+        return EDIT_EXPR; \
     };
-
-#define DOCRAFT_CREATE_GETTER_CONST_VECTOR_AND_EDIT_METHOD_SHARED_SMART_POINTER(TYPE, NAME, MEMBER) \
-    [[nodiscard]] std::vector<std::shared_ptr<const TYPE>> NAME() const { return {MEMBER.begin(), MEMBER.end()}; }; \
-    [[nodiscard]] std::vector<std::shared_ptr<TYPE>> &edit_##NAME() { return MEMBER; };
