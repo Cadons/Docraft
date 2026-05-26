@@ -18,6 +18,7 @@
 
 #include "docraft/docraft_lib.h"
 #include <string>
+#include <cmath>
 
 namespace docraft {
     /**
@@ -49,11 +50,11 @@ namespace docraft {
          */
         std::string to_hex() const {
             auto clamp_byte = [](int v) -> int { return v < 0 ? 0 : (v > 255 ? 255 : v); };
-            int r_int = clamp_byte(static_cast<int>(r * 255.0F + 0.5F));//convert float to int between 0-255
-            int g_int = clamp_byte(static_cast<int>(g * 255.0F + 0.5F));
-            int b_int = clamp_byte(static_cast<int>(b * 255.0F + 0.5F));
-            int a_int = clamp_byte(static_cast<int>(a * 255.0F + 0.5F));
 
+            int r_int = clamp_byte(static_cast<int>(std::lround(static_cast<double>(r) * 255.0)));
+            int g_int = clamp_byte(static_cast<int>(std::lround(static_cast<double>(g) * 255.0)));
+            int b_int = clamp_byte(static_cast<int>(std::lround(static_cast<double>(b) * 255.0)));
+            int a_int = clamp_byte(static_cast<int>(std::lround(static_cast<double>(a) * 255.0)));
             char buf[10]; // "#RRGGBBAA" + null
             std::snprintf(buf, sizeof(buf), "#%02X%02X%02X%02X", r_int, g_int, b_int, a_int);//print the string in the buffer
             return std::string(buf);

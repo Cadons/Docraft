@@ -122,7 +122,7 @@ namespace docraft::generic {
         auto &registry = utils::DocraftFontRegistry::instance();
         const auto &fonts = builtin_fonts();
         const bool is_builtin = std::find(fonts.begin(), fonts.end(), name) != fonts.end();
-        if (!is_builtin && registry.get_font(name) == nullptr) {
+        if (!is_builtin && registry.find_font(name) == nullptr) {
             std::cerr << "Font " << name << " not found in the resources" << std::endl;
             return false;
         }
@@ -152,7 +152,7 @@ namespace docraft::generic {
         }
 
         // Try to get resource by the requested name
-        const auto *font_resource = registry.get_font(name);
+        const auto *font_resource = registry.find_font(name);
         std::string resolved_registered_name = name;
         if (!font_resource || !font_resource->data || font_resource->size == 0) {
             // tolerant lookup: try to find a registered font with a similar name
@@ -162,7 +162,7 @@ namespace docraft::generic {
                 std::string cand_norm = normalize_font_name(candidate);
                 if (cand_norm == target_norm) {
                     LOG_DEBUG("Using registered font variant '" + candidate + "' for requested font '" + name + "'");
-                    font_resource = registry.get_font(candidate);
+                    font_resource = registry.find_font(candidate);
                     resolved_registered_name = candidate;
                     break;
                 }
@@ -173,7 +173,7 @@ namespace docraft::generic {
                 for (auto &ch : target_hyphen) if (ch == ' ') ch = '-';
                 if (cand_hyphen == target_hyphen) {
                     LOG_DEBUG("Using registered font variant '" + candidate + "' for requested font '" + name + "' (hyphen/space normalized)");
-                    font_resource = registry.get_font(candidate);
+                    font_resource = registry.find_font(candidate);
                     resolved_registered_name = candidate;
                     break;
                 }

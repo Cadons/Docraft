@@ -211,6 +211,12 @@ namespace docraft {
         [[nodiscard]] float footer_ratio() const;
 
     private:
+        /**
+         * @brief Refreshes cached backend interfaces from the main backend.
+         * Called after backend initialization or replacement.
+         */
+        void refresh_backend_caches_();
+
         DocraftCursor cursor_;
         float current_rect_width_=0;
         std::shared_ptr<renderer::DocraftAbstractRenderer> renderer_;
@@ -221,11 +227,11 @@ namespace docraft {
         std::shared_ptr<model::DocraftFooter> footer_;
         std::shared_ptr<docraft::generic::DocraftFontApplier> font_applier_;
         std::shared_ptr<backend::IDocraftRenderingBackend> backend_;
-        mutable std::shared_ptr<backend::IDocraftLineRenderingBackend> line_backend_;
-        mutable std::shared_ptr<backend::IDocraftShapeRenderingBackend> shape_backend_;
-        mutable std::shared_ptr<backend::IDocraftTextRenderingBackend> text_backend_;
-        mutable std::shared_ptr<backend::IDocraftImageRenderingBackend> image_backend_;
-        mutable std::shared_ptr<backend::IDocraftPageRenderingBackend> page_backend_;
+        std::shared_ptr<backend::IDocraftLineRenderingBackend> line_backend_;
+        std::shared_ptr<backend::IDocraftShapeRenderingBackend> shape_backend_;
+        std::shared_ptr<backend::IDocraftTextRenderingBackend> text_backend_;
+        std::shared_ptr<backend::IDocraftImageRenderingBackend> image_backend_;
+        std::shared_ptr<backend::IDocraftPageRenderingBackend> page_backend_;
         float header_ratio_ = 0.06F;
         float body_ratio_ = 0.88F;
         float footer_ratio_ = 0.06F;

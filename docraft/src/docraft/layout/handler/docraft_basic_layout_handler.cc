@@ -44,11 +44,11 @@ namespace docraft::layout::handler {
             if (node->width() > 0.0F) {
                 box->set_width(node->width());
             } else if (node->auto_fill_width()) {
-                box->set_width(std::max(context()->available_space(), child_width));
+                box->set_width(std::max(edit_context()->available_space(), child_width));
             } else if (is_rectangle) {
                 box->set_width(child_width);
-            } else if (context()->available_space() < node->width() || node->width() == 0.0F) {
-                box->set_width(context()->available_space());
+            } else if (edit_context()->available_space() < node->width() || node->width() == 0.0F) {
+                box->set_width(edit_context()->available_space());
             } else {
                 box->set_width(node->width());
             }

@@ -532,10 +532,10 @@ namespace docraft::layout::handler {
 
         switch (node->orientation()) {
             case model::LayoutOrientation::kHorizontal:
-                layout_horizontal_table(node, box, context(), cursor);
+                layout_horizontal_table(node, box, edit_context(), cursor);
                 break;
             case model::LayoutOrientation::kVertical:
-                layout_vertical_table(node, box, context(), cursor);
+                layout_vertical_table(node, box, edit_context(), cursor);
                 break;
             default:
                 throw std::runtime_error("unsupported table orientation");

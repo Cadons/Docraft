@@ -22,8 +22,8 @@ namespace docraft {
         backend_ = std::make_shared<backend::pdf::DocraftHaruBackend>();
         page_height_ = backend_->page_height();
         page_width_ = backend_->page_width();
-
         current_rect_width_ = page_width_;
+        refresh_backend_caches_();
     }
 
     DocraftDocumentContext::DocraftDocumentContext(
@@ -32,6 +32,7 @@ namespace docraft {
         page_height_ = backend_->page_height();
         page_width_ = backend_->page_width();
         current_rect_width_ = page_width_;
+        refresh_backend_caches_();
     }
 
     DocraftDocumentContext::~DocraftDocumentContext() = default;
@@ -60,16 +61,20 @@ namespace docraft {
         font_applier_ = font_applier;
     }
 
+    void DocraftDocumentContext::refresh_backend_caches_() {
+        docraft::ensure_lazy_backend<backend::IDocraftLineRenderingBackend>(line_backend_, backend_);
+        docraft::ensure_lazy_backend<backend::IDocraftShapeRenderingBackend>(shape_backend_, backend_);
+        docraft::ensure_lazy_backend<backend::IDocraftTextRenderingBackend>(text_backend_, backend_);
+        docraft::ensure_lazy_backend<backend::IDocraftImageRenderingBackend>(image_backend_, backend_);
+        docraft::ensure_lazy_backend<backend::IDocraftPageRenderingBackend>(page_backend_, backend_);
+    }
+
     void DocraftDocumentContext::set_backend(const std::shared_ptr<backend::IDocraftRenderingBackend> &backend) {
         backend_ = backend ? backend : std::make_shared<backend::pdf::DocraftHaruBackend>();
         page_height_ = backend_->page_height();
         page_width_ = backend_->page_width();
         current_rect_width_ = page_width_;
-        line_backend_.reset();
-        shape_backend_.reset();
-        text_backend_.reset();
-        image_backend_.reset();
-        page_backend_.reset();
+        refresh_backend_caches_();
     }
 
     void DocraftDocumentContext::set_page_format(model::DocraftPageSize size,
@@ -148,52 +153,42 @@ namespace docraft {
     }
 
     std::shared_ptr<const backend::IDocraftLineRenderingBackend> DocraftDocumentContext::line_backend() const {
-        docraft::ensure_lazy_backend<backend::IDocraftLineRenderingBackend>(line_backend_, backend_);
         return line_backend_;
     }
 
     std::shared_ptr<backend::IDocraftLineRenderingBackend> DocraftDocumentContext::edit_line_backend() {
-        docraft::ensure_lazy_backend<backend::IDocraftLineRenderingBackend>(line_backend_, backend_);
         return line_backend_;
     }
 
     std::shared_ptr<const backend::IDocraftShapeRenderingBackend> DocraftDocumentContext::shape_backend() const {
-        docraft::ensure_lazy_backend<backend::IDocraftShapeRenderingBackend>(shape_backend_, backend_);
         return shape_backend_;
     }
 
     std::shared_ptr<backend::IDocraftShapeRenderingBackend> DocraftDocumentContext::edit_shape_backend() {
-        docraft::ensure_lazy_backend<backend::IDocraftShapeRenderingBackend>(shape_backend_, backend_);
         return shape_backend_;
     }
 
     std::shared_ptr<const backend::IDocraftTextRenderingBackend> DocraftDocumentContext::text_backend() const {
-        docraft::ensure_lazy_backend<backend::IDocraftTextRenderingBackend>(text_backend_, backend_);
         return text_backend_;
     }
 
     std::shared_ptr<backend::IDocraftTextRenderingBackend> DocraftDocumentContext::edit_text_backend() {
-        docraft::ensure_lazy_backend<backend::IDocraftTextRenderingBackend>(text_backend_, backend_);
         return text_backend_;
     }
 
     std::shared_ptr<const backend::IDocraftImageRenderingBackend> DocraftDocumentContext::image_backend() const {
-        docraft::ensure_lazy_backend<backend::IDocraftImageRenderingBackend>(image_backend_, backend_);
         return image_backend_;
     }
 
     std::shared_ptr<backend::IDocraftImageRenderingBackend> DocraftDocumentContext::edit_image_backend() {
-        docraft::ensure_lazy_backend<backend::IDocraftImageRenderingBackend>(image_backend_, backend_);
         return image_backend_;
     }
 
     std::shared_ptr<const backend::IDocraftPageRenderingBackend> DocraftDocumentContext::page_backend() const {
-        docraft::ensure_lazy_backend<backend::IDocraftPageRenderingBackend>(page_backend_, backend_);
         return page_backend_;
     }
 
     std::shared_ptr<backend::IDocraftPageRenderingBackend> DocraftDocumentContext::edit_page_backend() {
-        docraft::ensure_lazy_backend<backend::IDocraftPageRenderingBackend>(page_backend_, backend_);
         return page_backend_;
     }
 
