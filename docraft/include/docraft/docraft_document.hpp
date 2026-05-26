@@ -1,12 +1,11 @@
 #pragma once
 
-#include <vector>
-#include <memory>
+#include "docraft/model/docraft_node.h"
 
 namespace docraft {
-    template <typename T>
-    std::vector<std::shared_ptr<const T>> DocraftDocument::find_by_type() const {
-        std::vector<std::shared_ptr<const T>> result;
+    template<typename T>
+    std::vector<std::shared_ptr<const T> > DocraftDocument::find_by_type() const {
+        std::vector<std::shared_ptr<const T> > result;
         traverse_dom([&](const std::shared_ptr<model::DocraftNode> &node, DocraftDomTraverseOp op) {
             if (op != DocraftDomTraverseOp::kEnter) {
                 return;
@@ -18,9 +17,9 @@ namespace docraft {
         return result;
     }
 
-    template <typename T>
-    std::vector<std::shared_ptr<T>> DocraftDocument::take_by_type() {
-        std::vector<std::shared_ptr<T>> result;
+    template<typename T>
+    std::vector<std::shared_ptr<T> > DocraftDocument::take_by_type() {
+        std::vector<std::shared_ptr<T> > result;
         traverse_dom([&](const std::shared_ptr<model::DocraftNode> &node, DocraftDomTraverseOp op) {
             if (op != DocraftDomTraverseOp::kEnter) {
                 return;
@@ -32,3 +31,5 @@ namespace docraft {
         return result;
     }
 }
+
+

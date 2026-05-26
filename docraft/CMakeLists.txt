@@ -151,11 +151,20 @@ set(DOCRAFT_SOURCES
         src/docraft/model/docraft_foreach.cc
         include/docraft/model/docraft_foreach.h
         src/docraft/craft/parser/docraft_foreach_parser.cc
+        src/docraft/management/docraft_document_section_manager.cc
+        include/docraft/management/docraft_document_section_manager.h
+        src/docraft/management/docraft_backend_cache.cc
+        include/docraft/management/docraft_backend_cache.h
+        src/docraft/management/docraft_document_query.cc
+        include/docraft/management/docraft_document_query.h
+        include/docraft/management/docraft_document_query.hpp
+        src/docraft/management/docraft_document_config.cc
+        include/docraft/management/docraft_document_config.h
 )
 set(DOCRAFT_LIBRARY_TYPE STATIC)
-if(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
     set(DOCRAFT_LIBRARY_TYPE SHARED)
-endif()
+endif ()
 add_library(docraft ${DOCRAFT_LIBRARY_TYPE}
         ${DOCRAFT_SOURCES}
 )
@@ -169,23 +178,23 @@ target_compile_definitions(docraft PUBLIC
         $<$<CONFIG:Debug>:docraft_debugf>
 )
 
-if(BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
     target_compile_definitions(docraft PRIVATE DOCRAFT_BUILD_SHARED_LIBS)#define the macro to build the shared lib
     target_compile_definitions(docraft INTERFACE DOCRAFT_USE_SHARED_LIB)#define the macro to use the shared lib
-endif()
+endif ()
 
 generate_docraft_fonts(docraft "${CMAKE_CURRENT_SOURCE_DIR}/fonts.json")
 add_executable(docraft_tool src/docraft/main.cpp)
 #declare define in the c++ code to export version
 target_compile_definitions(docraft_tool PRIVATE DOCRAFT_VERSION="${DOCRAFT_LIBRARY_VERSION}")
 configure_artifact_version(docraft_tool ${PROJECT_VERSION})
-if(TARGET pugixml::static)
+if (TARGET pugixml::static)
     set(PUGIXML_TARGET pugixml::static)
-elseif(TARGET pugixml::pugixml)
+elseif (TARGET pugixml::pugixml)
     set(PUGIXML_TARGET pugixml::pugixml)
-else()
+else ()
     message(FATAL_ERROR "No pugixml CMake target found")
-endif()
+endif ()
 
 target_link_libraries(docraft PUBLIC ${PUGIXML_TARGET} nlohmann_json::nlohmann_json ${LIBHARU_TARGET} fmt::fmt)
 target_link_libraries(docraft_tool PRIVATE docraft)

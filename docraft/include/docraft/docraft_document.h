@@ -20,25 +20,30 @@
 #include <vector>
 #include <memory>
 #include <functional>
+#include <string>
 
 #include "docraft/docraft_document_context.h"
 #include "docraft/docraft_document_metadata.h"
+#include "docraft/management/docraft_document_config.h"
+#include "docraft/management/docraft_document_query.h"
 #include "docraft/model/docraft_node.h"
 #include "docraft/model/docraft_settings.h"
 #include "docraft/templating/docraft_template_engine.h"
 #include "docraft/utils/docraft_keyword_extractor.h"
 
 namespace docraft {
+    // Keep enum in docraft namespace for backward compatibility
     enum class DocraftDomTraverseOp {
         kEnter,
         kExit
     };
 
     /**
-     * @brief High-level document container that owns settings, title, and the DOM node list.
+     * @brief High-level document container that owns document configuration and the DOM node list.
      *
      * DocraftDocument is the primary API surface for building a document tree,
-     * configuring settings, and invoking rendering.
+     * and invoking rendering. Configuration (metadata, settings, keywords) is delegated
+     * to DocraftDocumentConfig for single responsibility.
      */
     class DOCRAFT_LIB DocraftDocument {
     public:
@@ -83,139 +88,12 @@ namespace docraft {
         void set_backend(const std::shared_ptr<backend::IDocraftRenderingBackend> &backend);
 
         /**
-         * @brief Sets the document title.
-         * @param document_title New title value.
-         */
-        void set_document_title(const std::string &document_title);
-
-        /**
-         * @brief Returns the current document title.
-         * @return Document title string.
-         */
-        [[nodiscard]] const std::string &document_title() const;
-
-        [[nodiscard]] std::string &edit_document_title();
-
-        /**
-         * @brief Sets the output directory where the rendered file will be saved.
-         * @param document_path Output directory path.
-         */
-        void set_document_path(const std::string &document_path);
-
-        /**
-         * @brief Returns the current output directory path.
-         * @return Output directory path.
-         */
-        [[nodiscard]] const std::string &document_path() const;
-
-        [[nodiscard]] std::string &edit_document_path();
-
-        /**
-         * @brief Sets document settings (fonts, etc.).
-         * @param settings Settings node to apply.
-         */
-        void set_settings(const std::shared_ptr<model::DocraftSettings> &settings);
-
-        /**
-         * @brief Returns the current settings object.
-         * @return Shared pointer to settings or nullptr if not set.
-         */
-        [[nodiscard]] std::shared_ptr<const model::DocraftSettings> settings() const;
-
-        [[nodiscard]] std::shared_ptr<model::DocraftSettings> edit_settings();
-
-        /**
-         * @brief Sets document metadata values.
-         * @param metadata Metadata values supported by library.
-         */
-        void set_document_metadata(const DocraftDocumentMetadata &metadata);
-
-        /**
-         * @brief Returns current document metadata values.
-         * @return Metadata object.
-         */
-        [[nodiscard]] const DocraftDocumentMetadata &document_metadata() const;
-
-        /**
-         * @brief Enables or disables automatic keyword extraction for metadata.
-         * @param enabled true to enable, false to disable.
-         */
-        void enable_auto_keywords(bool enabled = true);
-
-        /**
-         * @brief Returns whether automatic keyword extraction is enabled.
-         */
-        [[nodiscard]] bool auto_keywords_enabled() const;
-
-        /**
-         * @brief Sets configuration for automatic keyword extraction.
-         * @param config Extractor configuration.
-         */
-        void set_auto_keywords_config(const utils::DocraftKeywordExtractor::Config &config);
-
-        /**
-         * @brief Returns the current automatic keyword extraction configuration.
-         */
-        [[nodiscard]] const utils::DocraftKeywordExtractor::Config &auto_keywords_config() const;
-
-        /**
-         * @brief Extracts keywords from the current document and merges them into metadata.
-         *
-         * No-op when auto-keyword extraction is disabled.
-         */
-        void refresh_auto_keywords();
-
-        void set_document_template_engine(const std::shared_ptr<templating::DocraftTemplateEngine> &template_engine);
-
-        [[nodiscard]] std::shared_ptr<const templating::DocraftTemplateEngine> document_template_engine() const;
-
-        [[nodiscard]] std::shared_ptr<templating::DocraftTemplateEngine> edit_document_template_engine();
-
-        /**
          * @brief Returns the document DOM nodes.
          * @return Vector of root nodes.
          */
         [[nodiscard]] std::vector<std::shared_ptr<const model::DocraftNode> > nodes() const;
 
         [[nodiscard]] std::vector<std::shared_ptr<model::DocraftNode> > &edit_nodes();
-
-        /**
-         * @brief Finds nodes by name in the document DOM.
-         * @param name Node name to search for.
-         * @return Vector of nodes matching the name, or empty vector if none found.
-         */
-        std::vector<std::shared_ptr<const model::DocraftNode> > find_by_name(const std::string &name) const;
-
-        std::vector<std::shared_ptr<model::DocraftNode> > take_by_name(const std::string &name);
-
-        /**
-         * @brief Finds the first node by name in the document DOM.
-         * @param name Node name to search for.
-         * @return Shared pointer to the first matching node, or nullptr if not found.
-         */
-        std::shared_ptr<const model::DocraftNode> find_first_by_name(const std::string &name) const;
-
-        std::shared_ptr<model::DocraftNode> take_first_by_name(const std::string &name);
-
-        /**
-         * @brief Finds the last node by name in the document DOM.
-         * @param name Node name to search for.
-         * @return Shared pointer to the last matching node, or nullptr if not found.
-         */
-        std::shared_ptr<const model::DocraftNode> find_last_by_name(const std::string &name) const;
-
-        std::shared_ptr<model::DocraftNode> take_last_by_name(const std::string &name);
-
-        /**
-         * @brief Finds nodes by type in the document DOM.
-         * @tparam T Node type to search for.
-         * @return Vector of nodes matching the type, or empty vector if none found.
-         */
-        template<typename T>
-        std::vector<std::shared_ptr<const T> > find_by_type() const;
-
-        template<typename T>
-        std::vector<std::shared_ptr<T> > take_by_type();
 
         /**
          * @brief Traverses the document DOM and executes a callback on each node.
@@ -225,24 +103,85 @@ namespace docraft {
             const std::function<void(const std::shared_ptr<model::DocraftNode> &, DocraftDomTraverseOp)> &callback)
         const;
 
+        /**
+         * @brief Returns the document configuration manager.
+         * @return Reference to the configuration container.
+         */
+        management::DocraftDocumentConfig &edit_config();
+
+        [[nodiscard]] const management::DocraftDocumentConfig &config() const;
+
+        /**
+         * @brief Returns the document context used for rendering.
+         * @return Shared pointer to the rendering context.
+         */
+        [[nodiscard]] std::shared_ptr<DocraftDocumentContext> edit_context();
+
+        [[nodiscard]] std::shared_ptr<const DocraftDocumentContext> context() const;
+
+        // Backward compatibility delegates to config_
+        void set_document_title(const std::string &document_title);
+
+        [[nodiscard]] const std::string &document_title() const;
+
+        void set_document_path(const std::string &document_path);
+
+        [[nodiscard]] const std::string &document_path() const;
+
+        void set_settings(const std::shared_ptr<model::DocraftSettings> &settings);
+
+        [[nodiscard]] std::shared_ptr<const model::DocraftSettings> settings() const;
+
+        void set_document_metadata(const DocraftDocumentMetadata &metadata);
+
+        [[nodiscard]] const DocraftDocumentMetadata &document_metadata() const;
+
+        // Backward compatibility: DOM query delegates
+        [[nodiscard]] std::vector<std::shared_ptr<const model::DocraftNode> > find_by_name(
+            const std::string &name) const;
+
+        [[nodiscard]] std::vector<std::shared_ptr<model::DocraftNode> > take_by_name(const std::string &name);
+
+        [[nodiscard]] std::shared_ptr<const model::DocraftNode> find_first_by_name(const std::string &name) const;
+
+        [[nodiscard]] std::shared_ptr<model::DocraftNode> take_first_by_name(const std::string &name);
+
+        [[nodiscard]] std::shared_ptr<const model::DocraftNode> find_last_by_name(const std::string &name) const;
+
+        [[nodiscard]] std::shared_ptr<model::DocraftNode> take_last_by_name(const std::string &name);
+
+        template<typename T>
+        [[nodiscard]] std::vector<std::shared_ptr<const T> > find_by_type() const;
+
+        template<typename T>
+        [[nodiscard]] std::vector<std::shared_ptr<T> > take_by_type();
+
+        // Backward compatibility: config shortcuts
+        void enable_auto_keywords(bool enabled = true);
+
+        [[nodiscard]] bool auto_keywords_enabled() const;
+
+        void set_auto_keywords_config(const utils::DocraftKeywordExtractor::Config &config);
+
+        [[nodiscard]] const utils::DocraftKeywordExtractor::Config &auto_keywords_config() const;
+
+        void set_document_template_engine(const std::shared_ptr<templating::DocraftTemplateEngine> &template_engine);
+
+        [[nodiscard]] std::shared_ptr<const templating::DocraftTemplateEngine> document_template_engine() const;
+
+        [[nodiscard]] std::shared_ptr<templating::DocraftTemplateEngine> edit_document_template_engine();
+
+        void refresh_auto_keywords();
+
     private:
         void traverse_node(
             const std::shared_ptr<model::DocraftNode> &node,
             const std::function<void(const std::shared_ptr<model::DocraftNode> &, DocraftDomTraverseOp)> &callback)
         const;
 
-        std::vector<std::shared_ptr<model::DocraftNode> > find_by_name_impl(const std::string &name) const;
-
         std::shared_ptr<DocraftDocumentContext> context_;
-        std::shared_ptr<model::DocraftSettings> settings_;
-        std::string document_title_;
-        std::string document_path_;
-        DocraftDocumentMetadata metadata_;
-        bool auto_keywords_enabled_ = false;
-        utils::DocraftKeywordExtractor::Config auto_keywords_config_{};
-        std::shared_ptr<backend::IDocraftRenderingBackend> backend_override_ = nullptr;
         std::vector<std::shared_ptr<model::DocraftNode> > dom_;
-        std::shared_ptr<templating::DocraftTemplateEngine> template_engine_;
+        management::DocraftDocumentConfig config_;
     };
 }
 

@@ -23,6 +23,8 @@
 #include "docraft/backend/docraft_rendering_backend.h"
 #include "docraft/generic/docraft_font_applier.h"
 #include "docraft/model/docraft_page_format.h"
+#include "docraft/management/docraft_backend_cache.h"
+#include "docraft/management/docraft_document_section_manager.h"
 
 namespace docraft {
     namespace renderer {
@@ -37,8 +39,8 @@ namespace docraft {
     /**
      * @brief Shared rendering and layout state for a document.
      *
-     * The context holds the active rendering backend, cached backend interfaces,
-     * page metrics, section nodes, and the layout cursor used by the engine.
+     * The context holds the active rendering backend, page metrics, cursors, and delegates
+     * section management and backend caching to specialized helper classes.
      */
     class DOCRAFT_LIB DocraftDocumentContext {
         public:
@@ -62,21 +64,25 @@ namespace docraft {
          */
         [[nodiscard]] std::shared_ptr<const backend::IDocraftRenderingBackend> rendering_backend() const;
         [[nodiscard]] std::shared_ptr<backend::IDocraftRenderingBackend> edit_rendering_backend();
+
         /**
-         * @brief Returns the mutable layout cursor.
+         * @brief Returns the layout cursor.
          * @return Reference to the cursor.
          */
         DocraftCursor& cursor();
+
         /**
          * @brief Returns remaining vertical space on the current page section.
          * @return Available vertical space in points.
          */
         float available_space() const;
+
         /**
          * @brief Sets the renderer responsible for translating nodes to backend calls.
          * @param renderer Renderer instance.
          */
         void set_renderer(const std::shared_ptr<renderer::DocraftAbstractRenderer> &renderer);
+
         /**
          * @brief Returns the current renderer.
          * @return Shared pointer to the renderer (may be nullptr).
@@ -88,152 +94,111 @@ namespace docraft {
          * @param x Width in points.
          */
         void set_current_rect_width(float x);
+
         /**
          * @brief Returns the page width in points.
          * @return Page width in points.
          */
         [[nodiscard]] float page_width() const;
+
         /**
          * @brief Returns the page height in points.
          * @return Page height in points.
          */
         [[nodiscard]] float page_height() const;
-        /**
-         * @brief Sets the document header node.
-         * @param header Header node.
-         */
-        void set_header(const std::shared_ptr<model::DocraftHeader> &header);
-        /**
-         * @brief Returns the header node.
-         * @return Header node (may be nullptr).
-         */
-        [[nodiscard]] std::shared_ptr<const model::DocraftHeader> header() const;
-        [[nodiscard]] std::shared_ptr<model::DocraftHeader> edit_header();
-        /**
-         * @brief Sets the document body node.
-         * @param body Body node.
-         */
-        void set_body(const std::shared_ptr<model::DocraftBody> &body);
-        /**
-         * @brief Returns the body node.
-         * @return Body node (may be nullptr).
-         */
-        [[nodiscard]] std::shared_ptr<const model::DocraftBody> body() const;
-        [[nodiscard]] std::shared_ptr<model::DocraftBody> edit_body();
-        /**
-         * @brief Sets the document footer node.
-         * @param footer Footer node.
-         */
-        void set_footer(const std::shared_ptr<model::DocraftFooter> &footer);
-        /**
-         * @brief Returns the footer node.
-         * @return Footer node (may be nullptr).
-         */
-        [[nodiscard]] std::shared_ptr<const model::DocraftFooter> footer() const;
-        [[nodiscard]] std::shared_ptr<model::DocraftFooter> edit_footer();
-        /**
-         * @brief Sets the font applier used for text nodes.
-         * @param font_applier Font applier instance.
-         */
-        void set_font_applier(const std::shared_ptr<docraft::generic::DocraftFontApplier>& font_applier);
+
         /**
          * @brief Returns the font applier instance.
          * @return Font applier (may be nullptr).
          */
         [[nodiscard]] std::shared_ptr<const docraft::generic::DocraftFontApplier> font_applier() const;
         [[nodiscard]] std::shared_ptr<docraft::generic::DocraftFontApplier> edit_font_applier();
+
         /**
-         * @brief Returns the line backend (cached).
-         * @return Line rendering backend.
+         * @brief Sets the font applier used for text nodes.
+         * @param font_applier Font applier instance.
          */
-        [[nodiscard]] std::shared_ptr<const backend::IDocraftLineRenderingBackend> line_backend() const;
-        [[nodiscard]] std::shared_ptr<backend::IDocraftLineRenderingBackend> edit_line_backend();
-        /**
-         * @brief Returns the shape backend (cached).
-         * @return Shape rendering backend.
-         */
-        [[nodiscard]] std::shared_ptr<const backend::IDocraftShapeRenderingBackend> shape_backend() const;
-        [[nodiscard]] std::shared_ptr<backend::IDocraftShapeRenderingBackend> edit_shape_backend();
-        /**
-         * @brief Returns the text backend (cached).
-         * @return Text rendering backend.
-         */
-        [[nodiscard]] std::shared_ptr<const backend::IDocraftTextRenderingBackend> text_backend() const;
-        [[nodiscard]] std::shared_ptr<backend::IDocraftTextRenderingBackend> edit_text_backend();
-        /**
-         * @brief Returns the image backend (cached).
-         * @return Image rendering backend.
-         */
-        [[nodiscard]] std::shared_ptr<const backend::IDocraftImageRenderingBackend> image_backend() const;
-        [[nodiscard]] std::shared_ptr<backend::IDocraftImageRenderingBackend> edit_image_backend();
-        /**
-         * @brief Returns the page backend (cached).
-         * @return Page rendering backend.
-         */
-        [[nodiscard]] std::shared_ptr<const backend::IDocraftPageRenderingBackend> page_backend() const;
-        [[nodiscard]] std::shared_ptr<backend::IDocraftPageRenderingBackend> edit_page_backend();
+        void set_font_applier(const std::shared_ptr<docraft::generic::DocraftFontApplier>& font_applier);
+
         /**
          * @brief Replaces the underlying rendering backend.
          * @param backend New rendering backend. Pass nullptr to restore the default backend.
          */
         void set_backend(const std::shared_ptr<backend::IDocraftRenderingBackend>& backend);
+
         /**
          * @brief Sets the page format for the backend and updates cached size.
          */
         void set_page_format(model::DocraftPageSize size, model::DocraftPageOrientation orientation);
+
         /**
          * @brief Moves to the first page (index 0).
          */
         void go_to_first_page();
+
         /**
          * @brief Moves to the previous page.
          */
         void go_to_previous_page();
+
         /**
          * @brief Moves to the last page.
          */
         void go_to_last_page();
+
         /**
-         * @brief Sets header/body/footer ratios.
+         * @brief Returns the section manager for header/body/footer.
          */
+        management::DocraftDocumentSectionManager &section_manager();
+        [[nodiscard]] const management::DocraftDocumentSectionManager &section_manager() const;
+
+        /**
+         * @brief Returns the backend cache manager.
+         */
+        management::DocraftBackendCache &backend_cache();
+        [[nodiscard]] const management::DocraftBackendCache &backend_cache() const;
+
+        // Backward compatibility: delegate to backend_cache()
+        [[nodiscard]] std::shared_ptr<const backend::IDocraftLineRenderingBackend> line_backend() const;
+        [[nodiscard]] std::shared_ptr<backend::IDocraftLineRenderingBackend> edit_line_backend();
+        [[nodiscard]] std::shared_ptr<const backend::IDocraftShapeRenderingBackend> shape_backend() const;
+        [[nodiscard]] std::shared_ptr<backend::IDocraftShapeRenderingBackend> edit_shape_backend();
+        [[nodiscard]] std::shared_ptr<const backend::IDocraftTextRenderingBackend> text_backend() const;
+        [[nodiscard]] std::shared_ptr<backend::IDocraftTextRenderingBackend> edit_text_backend();
+        [[nodiscard]] std::shared_ptr<const backend::IDocraftImageRenderingBackend> image_backend() const;
+        [[nodiscard]] std::shared_ptr<backend::IDocraftImageRenderingBackend> edit_image_backend();
+        [[nodiscard]] std::shared_ptr<const backend::IDocraftPageRenderingBackend> page_backend() const;
+        [[nodiscard]] std::shared_ptr<backend::IDocraftPageRenderingBackend> edit_page_backend();
+
+        // Backward compatibility: delegate to section_manager()
+        void set_header(const std::shared_ptr<model::DocraftHeader> &header);
+        [[nodiscard]] std::shared_ptr<const model::DocraftHeader> header() const;
+        [[nodiscard]] std::shared_ptr<model::DocraftHeader> edit_header();
+        void set_body(const std::shared_ptr<model::DocraftBody> &body);
+        [[nodiscard]] std::shared_ptr<const model::DocraftBody> body() const;
+        [[nodiscard]] std::shared_ptr<model::DocraftBody> edit_body();
+        void set_footer(const std::shared_ptr<model::DocraftFooter> &footer);
+        [[nodiscard]] std::shared_ptr<const model::DocraftFooter> footer() const;
+        [[nodiscard]] std::shared_ptr<model::DocraftFooter> edit_footer();
         void set_section_ratios(float header_ratio, float body_ratio, float footer_ratio);
-        /**
-         * @brief Returns the header ratio.
-         */
         [[nodiscard]] float header_ratio() const;
-        /**
-         * @brief Returns the body ratio.
-         */
         [[nodiscard]] float body_ratio() const;
-        /**
-         * @brief Returns the footer ratio.
-         */
         [[nodiscard]] float footer_ratio() const;
 
     private:
         /**
-         * @brief Refreshes cached backend interfaces from the main backend.
-         * Called after backend initialization or replacement.
+         * @brief Refreshes all backend caches (called after backend changes).
          */
-        void refresh_backend_caches_();
+        void refresh_backend_caches();
 
         DocraftCursor cursor_;
         float current_rect_width_=0;
         std::shared_ptr<renderer::DocraftAbstractRenderer> renderer_;
         float page_width_;
         float page_height_;
-        std::shared_ptr<model::DocraftHeader> header_;
-        std::shared_ptr<model::DocraftBody> body_;
-        std::shared_ptr<model::DocraftFooter> footer_;
         std::shared_ptr<docraft::generic::DocraftFontApplier> font_applier_;
         std::shared_ptr<backend::IDocraftRenderingBackend> backend_;
-        std::shared_ptr<backend::IDocraftLineRenderingBackend> line_backend_;
-        std::shared_ptr<backend::IDocraftShapeRenderingBackend> shape_backend_;
-        std::shared_ptr<backend::IDocraftTextRenderingBackend> text_backend_;
-        std::shared_ptr<backend::IDocraftImageRenderingBackend> image_backend_;
-        std::shared_ptr<backend::IDocraftPageRenderingBackend> page_backend_;
-        float header_ratio_ = 0.06F;
-        float body_ratio_ = 0.88F;
-        float footer_ratio_ = 0.06F;
+        management::DocraftDocumentSectionManager section_manager_;
+        management::DocraftBackendCache backend_cache_;
     };
 } // docraft
