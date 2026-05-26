@@ -31,11 +31,11 @@ namespace docraft::backend::pdf {
 	 */
 	class DOCRAFT_LIB DocraftHaruBackend : public docraft::backend::IDocraftRenderingBackend {
 	public:
-		class LineEditMethods;
-		class ShapeEditMethods;
-		class TextEditMethods;
-		class ImageEditMethods;
-		class PageEditMethods;
+		class LineHaruBackend;
+		class ShapeHaruBackend;
+		class TextHaruBackend;
+		class ImageHaruBackend;
+		class PageHaruBackend;
 
 		/**
 		 * @brief Creates a Haru PDF backend with a new document and page.
@@ -202,11 +202,11 @@ namespace docraft::backend::pdf {
 #pragma endregion
 #pragma region backend lifecycle
 
-		[[nodiscard]] const std::shared_ptr<docraft::backend::IDocraftLineRenderingBackend>& line_edit_methods() const override;
-		[[nodiscard]] const std::shared_ptr<docraft::backend::IDocraftShapeRenderingBackend>& shape_edit_methods() const override;
-		[[nodiscard]] const std::shared_ptr<docraft::backend::IDocraftTextRenderingBackend>& text_edit_methods() const override;
-		[[nodiscard]] const std::shared_ptr<docraft::backend::IDocraftImageRenderingBackend>& image_edit_methods() const override;
-		[[nodiscard]] const std::shared_ptr<docraft::backend::IDocraftPageRenderingBackend>& page_edit_methods() const override;
+		[[nodiscard]] const std::shared_ptr<docraft::backend::IDocraftLineRenderingBackend>& edit_line() const override;
+		[[nodiscard]] const std::shared_ptr<docraft::backend::IDocraftShapeRenderingBackend>& edit_shape() const override;
+		[[nodiscard]] const std::shared_ptr<docraft::backend::IDocraftTextRenderingBackend>& edit_text() const override;
+		[[nodiscard]] const std::shared_ptr<docraft::backend::IDocraftImageRenderingBackend>& edit_image() const override;
+		[[nodiscard]] const std::shared_ptr<docraft::backend::IDocraftPageRenderingBackend>& edit_page() const override;
 
 		void save_to_file(const std::string& path) const override;
 		[[nodiscard]] std::string file_extension() const override;
@@ -302,10 +302,10 @@ namespace docraft::backend::pdf {
 		size_t current_page_number_ = 0;
 		mutable float fill_alpha_ = 1.0F;
 		mutable float stroke_alpha_ = 1.0F;
-		std::shared_ptr<docraft::backend::IDocraftLineRenderingBackend> line_edit_methods_;
-		std::shared_ptr<docraft::backend::IDocraftShapeRenderingBackend> shape_edit_methods_;
-		std::shared_ptr<docraft::backend::IDocraftTextRenderingBackend> text_edit_methods_;
-		std::shared_ptr<docraft::backend::IDocraftImageRenderingBackend> image_edit_methods_;
-		std::shared_ptr<docraft::backend::IDocraftPageRenderingBackend> page_edit_methods_;
+		std::shared_ptr<docraft::backend::IDocraftLineRenderingBackend> edit_line_;
+		std::shared_ptr<docraft::backend::IDocraftShapeRenderingBackend> edit_shape_;
+		std::shared_ptr<docraft::backend::IDocraftTextRenderingBackend> edit_text_;
+		std::shared_ptr<docraft::backend::IDocraftImageRenderingBackend> edit_image_;
+		std::shared_ptr<docraft::backend::IDocraftPageRenderingBackend> edit_page_;
 	};
 } // docraft

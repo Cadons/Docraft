@@ -240,9 +240,9 @@ namespace docraft::backend::pdf {
         }
     } // namespace
 
-    class DocraftHaruBackend::LineEditMethods final : public IDocraftLineRenderingBackend {
+    class DocraftHaruBackend::LineHaruBackend final : public IDocraftLineRenderingBackend {
     public:
-        explicit LineEditMethods(DocraftHaruBackend& backend) : backend_(backend) {}
+        explicit LineHaruBackend(DocraftHaruBackend& backend) : backend_(backend) {}
 
         void set_stroke_color(float r, float g, float b) const override { backend_.set_stroke_color(r, g, b); }
         void set_line_width(float thickness) const override { backend_.set_line_width(thickness); }
@@ -252,9 +252,9 @@ namespace docraft::backend::pdf {
         DocraftHaruBackend& backend_;
     };
 
-    class DocraftHaruBackend::ShapeEditMethods final : public IDocraftShapeRenderingBackend {
+    class DocraftHaruBackend::ShapeHaruBackend final : public IDocraftShapeRenderingBackend {
     public:
-        explicit ShapeEditMethods(DocraftHaruBackend& backend) : backend_(backend) {}
+        explicit ShapeHaruBackend(DocraftHaruBackend& backend) : backend_(backend) {}
 
         void save_state() const override { backend_.save_state(); }
         void restore_state() const override { backend_.restore_state(); }
@@ -281,9 +281,9 @@ namespace docraft::backend::pdf {
         DocraftHaruBackend& backend_;
     };
 
-    class DocraftHaruBackend::TextEditMethods final : public IDocraftTextRenderingBackend {
+    class DocraftHaruBackend::TextHaruBackend final : public IDocraftTextRenderingBackend {
     public:
-        explicit TextEditMethods(DocraftHaruBackend& backend) : backend_(backend) {}
+        explicit TextHaruBackend(DocraftHaruBackend& backend) : backend_(backend) {}
 
         void begin_text() const override { backend_.begin_text(); }
         void end_text() const override { backend_.end_text(); }
@@ -308,9 +308,9 @@ namespace docraft::backend::pdf {
         DocraftHaruBackend& backend_;
     };
 
-    class DocraftHaruBackend::ImageEditMethods final : public IDocraftImageRenderingBackend {
+    class DocraftHaruBackend::ImageHaruBackend final : public IDocraftImageRenderingBackend {
     public:
-        explicit ImageEditMethods(DocraftHaruBackend& backend) : backend_(backend) {}
+        explicit ImageHaruBackend(DocraftHaruBackend& backend) : backend_(backend) {}
 
         void draw_png_image(
             const std::string& path,
@@ -371,9 +371,9 @@ namespace docraft::backend::pdf {
         DocraftHaruBackend& backend_;
     };
 
-    class DocraftHaruBackend::PageEditMethods final : public IDocraftPageRenderingBackend {
+    class DocraftHaruBackend::PageHaruBackend final : public IDocraftPageRenderingBackend {
     public:
-        explicit PageEditMethods(DocraftHaruBackend& backend) : backend_(backend) {}
+        explicit PageHaruBackend(DocraftHaruBackend& backend) : backend_(backend) {}
 
         float page_width() const override { return backend_.page_width(); }
         float page_height() const override { return backend_.page_height(); }
@@ -403,11 +403,11 @@ namespace docraft::backend::pdf {
         current_page_number_ = pages_.size() - 1; // Move to the newly created page
     }
     DocraftHaruBackend::DocraftHaruBackend()
-        : line_edit_methods_(std::make_shared<LineEditMethods>(*this)),
-          shape_edit_methods_(std::make_shared<ShapeEditMethods>(*this)),
-          text_edit_methods_(std::make_shared<TextEditMethods>(*this)),
-          image_edit_methods_(std::make_shared<ImageEditMethods>(*this)),
-          page_edit_methods_(std::make_shared<PageEditMethods>(*this)) {
+        : edit_line_(std::make_shared<LineHaruBackend>(*this)),
+          edit_shape_(std::make_shared<ShapeHaruBackend>(*this)),
+          edit_text_(std::make_shared<TextHaruBackend>(*this)),
+          edit_image_(std::make_shared<ImageHaruBackend>(*this)),
+          edit_page_(std::make_shared<PageHaruBackend>(*this)) {
         pdf_ = HPDF_New(error_handler, NULL);
         if (!pdf_) {
             throw std::runtime_error("Failed to initialize Haru PDF document");
@@ -642,24 +642,24 @@ namespace docraft::backend::pdf {
         HPDF_SaveToFile(pdf_, path.c_str());
     }
 
-    const std::shared_ptr<IDocraftLineRenderingBackend>& DocraftHaruBackend::line_edit_methods() const {
-        return line_edit_methods_;
+    const std::shared_ptr<IDocraftLineRenderingBackend>& DocraftHaruBackend::edit_line() const {
+        return edit_line_;
     }
 
-    const std::shared_ptr<IDocraftShapeRenderingBackend>& DocraftHaruBackend::shape_edit_methods() const {
-        return shape_edit_methods_;
+    const std::shared_ptr<IDocraftShapeRenderingBackend>& DocraftHaruBackend::edit_shape() const {
+        return edit_shape_;
     }
 
-    const std::shared_ptr<IDocraftTextRenderingBackend>& DocraftHaruBackend::text_edit_methods() const {
-        return text_edit_methods_;
+    const std::shared_ptr<IDocraftTextRenderingBackend>& DocraftHaruBackend::edit_text() const {
+        return edit_text_;
     }
 
-    const std::shared_ptr<IDocraftImageRenderingBackend>& DocraftHaruBackend::image_edit_methods() const {
-        return image_edit_methods_;
+    const std::shared_ptr<IDocraftImageRenderingBackend>& DocraftHaruBackend::edit_image() const {
+        return edit_image_;
     }
 
-    const std::shared_ptr<IDocraftPageRenderingBackend>& DocraftHaruBackend::page_edit_methods() const {
-        return page_edit_methods_;
+    const std::shared_ptr<IDocraftPageRenderingBackend>& DocraftHaruBackend::edit_page() const {
+        return edit_page_;
     }
 
     std::string DocraftHaruBackend::file_extension() const {

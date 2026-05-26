@@ -34,16 +34,16 @@ TEST_F(DocraftHaruBackendTest, StartsWithSinglePageAndValidDimensions) {
 TEST_F(DocraftHaruBackendTest, ExposesComposedEditMethods) {
     auto& rendering_backend = static_cast<docraft::backend::IDocraftRenderingBackend&>(backend());
 
-    ASSERT_TRUE(rendering_backend.page_edit_methods());
-    ASSERT_TRUE(rendering_backend.text_edit_methods());
-    ASSERT_TRUE(rendering_backend.shape_edit_methods());
-    ASSERT_TRUE(rendering_backend.image_edit_methods());
-    ASSERT_TRUE(rendering_backend.line_edit_methods());
+    ASSERT_TRUE(rendering_backend.edit_page());
+    ASSERT_TRUE(rendering_backend.edit_text());
+    ASSERT_TRUE(rendering_backend.edit_shape());
+    ASSERT_TRUE(rendering_backend.edit_image());
+    ASSERT_TRUE(rendering_backend.edit_line());
 
     ASSERT_TRUE(rendering_backend.can_use_font("Helvetica", nullptr));
     rendering_backend.set_font("Helvetica", 12.0F, nullptr);
-    EXPECT_EQ(rendering_backend.page_edit_methods()->total_page_count(), 1U);
-    EXPECT_GT(rendering_backend.text_edit_methods()->measure_text_width("hello"), 0.0F);
+    EXPECT_EQ(rendering_backend.edit_page()->total_page_count(), 1U);
+    EXPECT_GT(rendering_backend.edit_text()->measure_text_width("hello"), 0.0F);
 }
 
 TEST_F(DocraftHaruBackendTest, MoveToNextPage) {

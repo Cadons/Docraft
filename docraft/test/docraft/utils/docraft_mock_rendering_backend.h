@@ -9,9 +9,9 @@
 namespace docraft::test::utils {
     class MockRenderingBackend : public backend::IDocraftRenderingBackend {
     public:
-        class LineEditMethods final : public backend::IDocraftLineRenderingBackend {
+        class LineHaruBackend final : public backend::IDocraftLineRenderingBackend {
         public:
-            explicit LineEditMethods(MockRenderingBackend& backend) : backend_(backend) {}
+            explicit LineHaruBackend(MockRenderingBackend& backend) : backend_(backend) {}
 
             void set_stroke_color(float r, float g, float b) const override { backend_.set_stroke_color(r, g, b); }
             void set_line_width(float thickness) const override { backend_.set_line_width(thickness); }
@@ -23,9 +23,9 @@ namespace docraft::test::utils {
             MockRenderingBackend& backend_;
         };
 
-        class ShapeEditMethods final : public backend::IDocraftShapeRenderingBackend {
+        class ShapeHaruBackend final : public backend::IDocraftShapeRenderingBackend {
         public:
-            explicit ShapeEditMethods(MockRenderingBackend& backend) : backend_(backend) {}
+            explicit ShapeHaruBackend(MockRenderingBackend& backend) : backend_(backend) {}
 
             void save_state() const override { backend_.save_state(); }
             void restore_state() const override { backend_.restore_state(); }
@@ -54,9 +54,9 @@ namespace docraft::test::utils {
             MockRenderingBackend& backend_;
         };
 
-        class TextEditMethods final : public backend::IDocraftTextRenderingBackend {
+        class TextHaruBackend final : public backend::IDocraftTextRenderingBackend {
         public:
-            explicit TextEditMethods(MockRenderingBackend& backend) : backend_(backend) {}
+            explicit TextHaruBackend(MockRenderingBackend& backend) : backend_(backend) {}
 
             void begin_text() const override { backend_.begin_text(); }
             void end_text() const override { backend_.end_text(); }
@@ -85,9 +85,9 @@ namespace docraft::test::utils {
             MockRenderingBackend& backend_;
         };
 
-        class ImageEditMethods final : public backend::IDocraftImageRenderingBackend {
+        class ImageHaruBackend final : public backend::IDocraftImageRenderingBackend {
         public:
-            explicit ImageEditMethods(MockRenderingBackend& backend) : backend_(backend) {}
+            explicit ImageHaruBackend(MockRenderingBackend& backend) : backend_(backend) {}
 
             void draw_png_image(const std::string &path, float x, float y, float width, float height) const override {
                 backend_.draw_png_image(path, x, y, width, height);
@@ -138,9 +138,9 @@ namespace docraft::test::utils {
             MockRenderingBackend& backend_;
         };
 
-        class PageEditMethods final : public backend::IDocraftPageRenderingBackend {
+        class PageHaruBackend final : public backend::IDocraftPageRenderingBackend {
         public:
-            explicit PageEditMethods(MockRenderingBackend& backend) : backend_(backend) {}
+            explicit PageHaruBackend(MockRenderingBackend& backend) : backend_(backend) {}
 
             float page_width() const override { return backend_.page_width(); }
             float page_height() const override { return backend_.page_height(); }
@@ -173,11 +173,11 @@ namespace docraft::test::utils {
 
         explicit MockRenderingBackend(Config config)
             : config_(std::move(config)),
-              line_edit_methods_(std::make_shared<LineEditMethods>(*this)),
-              shape_edit_methods_(std::make_shared<ShapeEditMethods>(*this)),
-              text_edit_methods_(std::make_shared<TextEditMethods>(*this)),
-              image_edit_methods_(std::make_shared<ImageEditMethods>(*this)),
-              page_edit_methods_(std::make_shared<PageEditMethods>(*this)) {
+              edit_line_(std::make_shared<LineHaruBackend>(*this)),
+              edit_shape_(std::make_shared<ShapeHaruBackend>(*this)),
+              edit_text_(std::make_shared<TextHaruBackend>(*this)),
+              edit_image_(std::make_shared<ImageHaruBackend>(*this)),
+              edit_page_(std::make_shared<PageHaruBackend>(*this)) {
             pages_ = config_.initial_pages > 0 ? config_.initial_pages : 1;
             current_page_ = 0;
         }
@@ -214,24 +214,24 @@ namespace docraft::test::utils {
         void draw_raw_rgb_image(const std::string &, int, int, float, float, float, float) const {}
         void draw_raw_rgb_image_from_memory(const unsigned char *, int, int, float, float, float, float) const {}
 
-        [[nodiscard]] const std::shared_ptr<backend::IDocraftLineRenderingBackend>& line_edit_methods() const override {
-            return line_edit_methods_;
+        [[nodiscard]] const std::shared_ptr<backend::IDocraftLineRenderingBackend>& edit_line() const override {
+            return edit_line_;
         }
 
-        [[nodiscard]] const std::shared_ptr<backend::IDocraftShapeRenderingBackend>& shape_edit_methods() const override {
-            return shape_edit_methods_;
+        [[nodiscard]] const std::shared_ptr<backend::IDocraftShapeRenderingBackend>& edit_shape() const override {
+            return edit_shape_;
         }
 
-        [[nodiscard]] const std::shared_ptr<backend::IDocraftTextRenderingBackend>& text_edit_methods() const override {
-            return text_edit_methods_;
+        [[nodiscard]] const std::shared_ptr<backend::IDocraftTextRenderingBackend>& edit_text() const override {
+            return edit_text_;
         }
 
-        [[nodiscard]] const std::shared_ptr<backend::IDocraftImageRenderingBackend>& image_edit_methods() const override {
-            return image_edit_methods_;
+        [[nodiscard]] const std::shared_ptr<backend::IDocraftImageRenderingBackend>& edit_image() const override {
+            return edit_image_;
         }
 
-        [[nodiscard]] const std::shared_ptr<backend::IDocraftPageRenderingBackend>& page_edit_methods() const override {
-            return page_edit_methods_;
+        [[nodiscard]] const std::shared_ptr<backend::IDocraftPageRenderingBackend>& edit_page() const override {
+            return edit_page_;
         }
 
         void save_to_file(const std::string &path) const override { last_saved_path_ = path; }
@@ -304,10 +304,10 @@ namespace docraft::test::utils {
         std::size_t pages_ = 1;
         std::size_t current_page_ = 0;
         mutable std::string last_saved_path_;
-        std::shared_ptr<backend::IDocraftLineRenderingBackend> line_edit_methods_;
-        std::shared_ptr<backend::IDocraftShapeRenderingBackend> shape_edit_methods_;
-        std::shared_ptr<backend::IDocraftTextRenderingBackend> text_edit_methods_;
-        std::shared_ptr<backend::IDocraftImageRenderingBackend> image_edit_methods_;
-        std::shared_ptr<backend::IDocraftPageRenderingBackend> page_edit_methods_;
+        std::shared_ptr<backend::IDocraftLineRenderingBackend> edit_line_;
+        std::shared_ptr<backend::IDocraftShapeRenderingBackend> edit_shape_;
+        std::shared_ptr<backend::IDocraftTextRenderingBackend> edit_text_;
+        std::shared_ptr<backend::IDocraftImageRenderingBackend> edit_image_;
+        std::shared_ptr<backend::IDocraftPageRenderingBackend> edit_page_;
     };
 } // namespace docraft::test::utils

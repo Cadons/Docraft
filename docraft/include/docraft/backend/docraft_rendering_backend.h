@@ -42,23 +42,23 @@ namespace docraft::backend {
         /**
          * @brief Returns line editing methods supported by this backend.
          */
-        [[nodiscard]] virtual const std::shared_ptr<IDocraftLineRenderingBackend>& line_edit_methods() const = 0;
+        [[nodiscard]] virtual const std::shared_ptr<IDocraftLineRenderingBackend>& edit_line() const = 0;
         /**
          * @brief Returns shape editing methods supported by this backend.
          */
-        [[nodiscard]] virtual const std::shared_ptr<IDocraftShapeRenderingBackend>& shape_edit_methods() const = 0;
+        [[nodiscard]] virtual const std::shared_ptr<IDocraftShapeRenderingBackend>& edit_shape() const = 0;
         /**
          * @brief Returns text editing methods supported by this backend.
          */
-        [[nodiscard]] virtual const std::shared_ptr<IDocraftTextRenderingBackend>& text_edit_methods() const = 0;
+        [[nodiscard]] virtual const std::shared_ptr<IDocraftTextRenderingBackend>& edit_text() const = 0;
         /**
          * @brief Returns image editing methods supported by this backend.
          */
-        [[nodiscard]] virtual const std::shared_ptr<IDocraftImageRenderingBackend>& image_edit_methods() const = 0;
+        [[nodiscard]] virtual const std::shared_ptr<IDocraftImageRenderingBackend>& edit_image() const = 0;
         /**
          * @brief Returns page editing/getter methods supported by this backend.
          */
-        [[nodiscard]] virtual const std::shared_ptr<IDocraftPageRenderingBackend>& page_edit_methods() const = 0;
+        [[nodiscard]] virtual const std::shared_ptr<IDocraftPageRenderingBackend>& edit_page() const = 0;
         /**
          * @brief Saves the document to a file path.
          * @param path Output file path.
