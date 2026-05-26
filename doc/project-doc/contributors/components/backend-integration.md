@@ -27,7 +27,7 @@ A backend must implement `IDocraftRenderingBackend`, which exposes composed edit
 - metadata application,
 - font registration and font selection hooks.
 
-In practice you implement one concrete class inheriting `IDocraftRenderingBackend` and return small composed objects from the `*_edit_methods()` getters.
+In practice you implement one concrete class inheriting `IDocraftRenderingBackend` and return small composed objects from the `edit_*()` getters.
 
 ## 3. External integration (recommended path)
 
