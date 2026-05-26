@@ -18,6 +18,8 @@ set(DOCRAFT_SOURCES
         include/docraft/model/docraft_new_page.h
         src/docraft/docraft_document.cc
         include/docraft/docraft_document.h
+        src/docraft/docraft_document_metadata.cc
+        include/docraft/docraft_document_metadata.h
         src/docraft/docraft_document_context.cc
         include/docraft/docraft_document_context.h
         src/docraft/docraft_cursor.cc
