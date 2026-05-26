@@ -53,15 +53,3 @@ namespace docraft {
         }
     }
 } // namespace docraft
-
-#define DOCRAFT_ACCESSOR_INIT_NONE ((void)0)
-
-#define DOCRAFT_CREATE_ACCESSOR_METHOD(GETTER_RETURN_TYPE, EDIT_RETURN_TYPE, GETTER_NAME, EDIT_NAME, GETTER_EXPR, EDIT_EXPR, INIT_EXPR) \
-    [[nodiscard]] GETTER_RETURN_TYPE GETTER_NAME() const { \
-        INIT_EXPR; \
-        return GETTER_EXPR; \
-    }; \
-    [[nodiscard]] EDIT_RETURN_TYPE EDIT_NAME() { \
-        INIT_EXPR; \
-        return EDIT_EXPR; \
-    };

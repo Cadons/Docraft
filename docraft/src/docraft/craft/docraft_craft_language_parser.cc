@@ -491,6 +491,14 @@ void DocraftCraftLanguageParser::load_from_file(const std::string &file_path) {
     load_document();
 }
 
+std::shared_ptr<const DocraftDocument> DocraftCraftLanguageParser::get_document() const {
+    return document_;
+}
+
+std::shared_ptr<DocraftDocument> DocraftCraftLanguageParser::edit_document() {
+    return document_;
+}
+
 void DocraftCraftLanguageParser::print_xml_tree(const pugi::xml_node &node, int /*indent*/) {
     node.print(std::cout);
 }

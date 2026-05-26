@@ -280,6 +280,30 @@ namespace docraft {
         document_path_ = document_path;
     }
 
+    const std::string &DocraftDocument::document_title() const {
+        return document_title_;
+    }
+
+    std::string &DocraftDocument::edit_document_title() {
+        return document_title_;
+    }
+
+    const std::string &DocraftDocument::document_path() const {
+        return document_path_;
+    }
+
+    std::string &DocraftDocument::edit_document_path() {
+        return document_path_;
+    }
+
+    std::shared_ptr<const model::DocraftSettings> DocraftDocument::settings() const {
+        return settings_;
+    }
+
+    std::shared_ptr<model::DocraftSettings> DocraftDocument::edit_settings() {
+        return settings_;
+    }
+
     void DocraftDocument::set_settings(const std::shared_ptr<model::DocraftSettings> &settings) {
         settings_ = settings;
     }
@@ -331,6 +355,22 @@ namespace docraft {
     void DocraftDocument::set_document_template_engine(
         const std::shared_ptr<templating::DocraftTemplateEngine> &template_engine) {
         template_engine_ = template_engine;
+    }
+
+    std::shared_ptr<const templating::DocraftTemplateEngine> DocraftDocument::document_template_engine() const {
+        return template_engine_;
+    }
+
+    std::shared_ptr<templating::DocraftTemplateEngine> DocraftDocument::edit_document_template_engine() {
+        return template_engine_;
+    }
+
+    std::vector<std::shared_ptr<const model::DocraftNode>> DocraftDocument::nodes() const {
+        return docraft::to_const_shared_vector(dom_);
+    }
+
+    std::vector<std::shared_ptr<model::DocraftNode>> &DocraftDocument::edit_nodes() {
+        return dom_;
     }
 
     std::vector<std::shared_ptr<const model::DocraftNode>> DocraftDocument::find_by_name(const std::string &name) const {

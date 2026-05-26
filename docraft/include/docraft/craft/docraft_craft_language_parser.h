@@ -57,14 +57,8 @@ namespace docraft::craft {
          * @brief Returns the parsed document.
          * @return Parsed document or nullptr if not parsed.
          */
-        DOCRAFT_CREATE_ACCESSOR_METHOD(
-            std::shared_ptr<const DocraftDocument>,
-            std::shared_ptr<DocraftDocument>,
-            get_document,
-            edit_document,
-            document_,
-            document_,
-            DOCRAFT_ACCESSOR_INIT_NONE);
+        [[nodiscard]] std::shared_ptr<const DocraftDocument> get_document() const;
+        [[nodiscard]] std::shared_ptr<DocraftDocument> edit_document();
 
         /**
          * @brief Parses a single XML node into a Docraft node.
