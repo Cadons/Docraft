@@ -17,17 +17,21 @@ Important implication:
 
 ## 2. Interface contract you must implement
 
-A backend must implement `IDocraftRenderingBackend`, which aggregates:
+A backend must implement `IDocraftRenderingBackend`, which exposes capability
+accessors for:
 
 - text primitives,
-- line/shape primitives,
+- line primitives,
+- shape primitives,
 - image primitives,
 - page management,
 - save/output extension,
 - metadata application,
 - font registration and font selection hooks.
 
-In practice you implement one concrete class inheriting `IDocraftRenderingBackend`.
+In practice you implement one concrete class inheriting
+`IDocraftRenderingBackend` and return the capability objects from the root via
+`<capability>() const` and `edit_<capability>()`.
 
 ## 3. External integration (recommended path)
 
@@ -64,7 +68,8 @@ void render_with_external_backend(const std::string &craft_path) {
 Typical steps for a backend added directly in this repository:
 
 1. Add backend class, for example `docraft::backend::svg::DocraftSvgBackend`.
-2. Implement all methods of `IDocraftRenderingBackend`.
+2. Implement all root methods of `IDocraftRenderingBackend` and wire each
+   capability accessor to the appropriate capability object.
 3. Add new source/header files to `docraft/CMakeLists.txt`.
 4. Add tests in `docraft/test/backend/` and/or rendering smoke tests.
 5. Choose selection strategy:

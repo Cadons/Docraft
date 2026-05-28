@@ -22,8 +22,8 @@
 namespace docraft {
     DocraftDocumentContext::DocraftDocumentContext() {
         backend_ = std::make_shared<backend::pdf::DocraftHaruBackend>();
-        page_height_ = backend_->page_height();
-        page_width_ = backend_->page_width();
+        page_height_ = backend_->page_rendering()->page_height();
+        page_width_ = backend_->page_rendering()->page_width();
         current_rect_width_ = page_width_;
         refresh_backend_caches();
     }
@@ -31,8 +31,8 @@ namespace docraft {
     DocraftDocumentContext::DocraftDocumentContext(
         const std::shared_ptr<backend::IDocraftRenderingBackend> &backend) : backend_(
         backend) {
-        page_height_ = backend_->page_height();
-        page_width_ = backend_->page_width();
+        page_height_ = backend_->page_rendering()->page_height();
+        page_width_ = backend_->page_rendering()->page_width();
         current_rect_width_ = page_width_;
         refresh_backend_caches();
     }
@@ -77,8 +77,8 @@ namespace docraft {
 
     void DocraftDocumentContext::set_backend(const std::shared_ptr<backend::IDocraftRenderingBackend> &backend) {
         backend_ = backend ? backend : std::make_shared<backend::pdf::DocraftHaruBackend>();
-        page_height_ = backend_->page_height();
-        page_width_ = backend_->page_width();
+        page_height_ = backend_->page_rendering()->page_height();
+        page_width_ = backend_->page_rendering()->page_width();
         current_rect_width_ = page_width_;
         refresh_backend_caches();
     }

@@ -19,6 +19,7 @@
 #include "docraft/docraft_lib.h"
 #include <string>
 
+#include "docraft/backend/docraft_line_rendering_backend.h"
 #include "docraft/backend/docraft_image_rendering_backend.h"
 #include "docraft/backend/docraft_page_rendering_backend.h"
 #include "docraft/backend/docraft_shape_rendering_backend.h"
@@ -32,15 +33,52 @@ namespace docraft::backend {
     /**
      * @brief Aggregated rendering backend interface.
      */
-    class DOCRAFT_LIB IDocraftRenderingBackend : public IDocraftTextRenderingBackend,
-                                     public IDocraftShapeRenderingBackend,
-                                     public IDocraftImageRenderingBackend,
-                                     public IDocraftPageRenderingBackend {
+    class DOCRAFT_LIB IDocraftRenderingBackend {
     public:
         /**
          * @brief Virtual destructor.
          */
-        ~IDocraftRenderingBackend() override = default;
+        virtual ~IDocraftRenderingBackend() = default;
+        /**
+         * @brief Returns the line rendering capability, if available.
+         */
+        [[nodiscard]] virtual const IDocraftLineRenderingBackend *line_rendering() const = 0;
+        /**
+         * @brief Returns the editable line rendering capability, if available.
+         */
+        [[nodiscard]] virtual IDocraftLineRenderingBackend *edit_line_rendering() = 0;
+        /**
+         * @brief Returns the text rendering capability, if available.
+         */
+        [[nodiscard]] virtual const IDocraftTextRenderingBackend *text_rendering() const = 0;
+        /**
+         * @brief Returns the editable text rendering capability, if available.
+         */
+        [[nodiscard]] virtual IDocraftTextRenderingBackend *edit_text_rendering() = 0;
+        /**
+         * @brief Returns the shape rendering capability, if available.
+         */
+        [[nodiscard]] virtual const IDocraftShapeRenderingBackend *shape_rendering() const = 0;
+        /**
+         * @brief Returns the editable shape rendering capability, if available.
+         */
+        [[nodiscard]] virtual IDocraftShapeRenderingBackend *edit_shape_rendering() = 0;
+        /**
+         * @brief Returns the image rendering capability, if available.
+         */
+        [[nodiscard]] virtual const IDocraftImageRenderingBackend *image_rendering() const = 0;
+        /**
+         * @brief Returns the editable image rendering capability, if available.
+         */
+        [[nodiscard]] virtual IDocraftImageRenderingBackend *edit_image_rendering() = 0;
+        /**
+         * @brief Returns the page rendering capability, if available.
+         */
+        [[nodiscard]] virtual const IDocraftPageRenderingBackend *page_rendering() const = 0;
+        /**
+         * @brief Returns the editable page rendering capability, if available.
+         */
+        [[nodiscard]] virtual IDocraftPageRenderingBackend *edit_page_rendering() = 0;
         /**
          * @brief Saves the document to a file path.
          * @param path Output file path.

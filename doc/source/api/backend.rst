@@ -8,7 +8,9 @@ output.
 IDocraftRenderingBackend
 ------------------------
 
-Aggregated interface inheriting all sub-backend interfaces.
+Root backend interface exposing lifecycle/font operations plus explicit
+capability accessors such as ``line_rendering()`` / ``edit_line_rendering()``
+and the corresponding text, shape, image, and page accessors.
 
 .. doxygenclass:: docraft::backend::IDocraftRenderingBackend
    :project: docraft
@@ -16,6 +18,8 @@ Aggregated interface inheriting all sub-backend interfaces.
 
 Sub-backend Interfaces
 ----------------------
+
+Capability interfaces are standalone and chain-free.
 
 IDocraftTextRenderingBackend
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -58,9 +62,9 @@ Concrete Backends
 DocraftHaruBackend
 ^^^^^^^^^^^^^^^^^^
 
-PDF backend implementation using libharu.
+PDF backend implementation using libharu, composed from capability-focused
+internal objects behind the root backend.
 
 .. doxygenclass:: docraft::backend::pdf::DocraftHaruBackend
    :project: docraft
    :members:
-

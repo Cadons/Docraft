@@ -19,6 +19,7 @@
 #include "docraft/docraft_lib.h"
 #include <hpdf.h>
 #include <cstddef>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -39,160 +40,17 @@ namespace docraft::backend::pdf {
 		 * @brief Releases Haru resources.
 		 */
 		~DocraftHaruBackend() override;
-#pragma region text rendering
-		/**
-		 * @brief Begins a text object.
-		 */
-		void begin_text() const override;
-		/**
-		 * @brief Ends a text object.
-		 */
-		void end_text() const override;
-		/**
-		 * @brief Draws text at the given coordinates.
-		 */
-		void draw_text(const std::string& text, float x, float y) const override;
-		/**
-		 * @brief Sets text fill color.
-		 */
-		void set_text_color(float r, float g, float b) const override;
-		/**
-		 * @brief Draws text with a custom transformation matrix.
-		 */
-		void draw_text_matrix(
-			const std::string& text,
-			float scale_x,
-			float skew_x,
-			float skew_y,
-			float scale_y,
-			float translate_x,
-			float translate_y) const override;
-		/**
-		 * @brief Measures text width using current font settings.
-		 */
-		float measure_text_width(const std::string& text) const override;
-#pragma endregion
-#pragma region line rendering
-		/**
-		 * @brief Sets stroke color for lines and shapes.
-		 */
-		void set_stroke_color(float r, float g, float b) const override;
-		/**
-		 * @brief Sets line width in points.
-		 */
-		void set_line_width(float thickness) const override;
-		/**
-		 * @brief Draws a line between two points.
-		 */
-		void draw_line(float x1, float y1, float x2, float y2) const override;
-#pragma endregion
-#pragma region shape rendering
-		/**
-		 * @brief Saves the current graphics state.
-		 */
-		void save_state() const override;
-		/**
-		 * @brief Restores the previous graphics state.
-		 */
-		void restore_state() const override;
-		/**
-		 * @brief Sets fill color for shapes.
-		 */
-		void set_fill_color(float r, float g, float b) const override;
-		/**
-		 * @brief Sets fill alpha for shapes.
-		 */
-		void set_fill_alpha(float alpha) const override;
-		/**
-		 * @brief Sets stroke alpha for shapes.
-		 */
-		void set_stroke_alpha(float alpha) const override;
-		/**
-		 * @brief Adds a rectangle path.
-		 */
-		void draw_rectangle(float x, float y, float width, float height) const override;
-		/**
-		 * @brief Adds a circle path.
-		 */
-		void draw_circle(float center_x, float center_y, float radius) const override;
-		/**
-		 * @brief Adds a polygon path.
-		 */
-		void draw_polygon(const std::vector<model::DocraftPoint> &points) const override;
-		/**
-		 * @brief Fills the current path.
-		 */
-		void fill() const override;
-		/**
-		 * @brief Strokes the current path.
-		 */
-		void stroke() const override;
-		/**
-		 * @brief Fills and strokes the current path.
-		 */
-		void fill_stroke() const override;
-#pragma endregion
-#pragma region image rendering
-		/**
-		 * @brief Draws a PNG image from file.
-		 */
-		void draw_png_image(
-			const std::string& path,
-			float x,
-			float y,
-			float width,
-			float height) const override;
-		/**
-		 * @brief Draws a PNG image from memory.
-		 */
-		void draw_png_image_from_memory(
-			const unsigned char* data,
-			std::size_t size,
-			float x,
-			float y,
-			float width,
-			float height) const override;
-		/**
-		 * @brief Draws a JPEG image from file.
-		 */
-		void draw_jpeg_image(
-			const std::string& path,
-			float x,
-			float y,
-			float width,
-			float height) const override;
-		/**
-		 * @brief Draws a JPEG image from memory.
-		 */
-		void draw_jpeg_image_from_memory(
-			const unsigned char* data,
-			std::size_t size,
-			float x,
-			float y,
-			float width,
-			float height) const override;
-		/**
-		 * @brief Draws a raw RGB image from file.
-		 */
-		void draw_raw_rgb_image(
-			const std::string& path,
-			int pixel_width,
-			int pixel_height,
-			float x,
-			float y,
-			float width,
-			float height) const override;
-		/**
-		 * @brief Draws a raw RGB image from memory.
-		 */
-		void draw_raw_rgb_image_from_memory(
-			const unsigned char* data,
-			int pixel_width,
-			int pixel_height,
-			float x,
-			float y,
-			float width,
-			float height) const override;
+#pragma region capabilities
+		[[nodiscard]] const docraft::backend::IDocraftLineRenderingBackend *line_rendering() const override;
+		[[nodiscard]] docraft::backend::IDocraftLineRenderingBackend *edit_line_rendering() override;
+		[[nodiscard]] const docraft::backend::IDocraftTextRenderingBackend *text_rendering() const override;
+		[[nodiscard]] docraft::backend::IDocraftTextRenderingBackend *edit_text_rendering() override;
+		[[nodiscard]] const docraft::backend::IDocraftShapeRenderingBackend *shape_rendering() const override;
+		[[nodiscard]] docraft::backend::IDocraftShapeRenderingBackend *edit_shape_rendering() override;
+		[[nodiscard]] const docraft::backend::IDocraftImageRenderingBackend *image_rendering() const override;
+		[[nodiscard]] docraft::backend::IDocraftImageRenderingBackend *edit_image_rendering() override;
+		[[nodiscard]] const docraft::backend::IDocraftPageRenderingBackend *page_rendering() const override;
+		[[nodiscard]] docraft::backend::IDocraftPageRenderingBackend *edit_page_rendering() override;
 #pragma endregion
 #pragma region backend lifecycle
 
@@ -215,58 +73,12 @@ namespace docraft::backend::pdf {
 		 */
 		void set_document_metadata(const DocraftDocumentMetadata &metadata) override;
 #pragma endregion
-#pragma region page management
-/**
-		 * @brief Returns the current page width in points.
-		 */
-		float page_width() const override;
-		/**
-		 * @brief Returns the current page height in points.
-		 */
-		float page_height() const override;
-		/**
-		 * @brief Adds a new page to the document and makes it the current page.
-		 */
-		void add_new_page() override;
-		/**
-		 * @brief Moves the cursor to the next page if it exists.
-		 * @throws std::runtime_error if already at the last page.
-		 */
-		void move_to_next_page() override;
-		/**
-		 * @brief Navigates to a specific page (0-based index).
-		 * @param page_number Destination page index.
-		 * @throws std::runtime_error if the page number is out of range.
-		 */
-		void go_to_page(std::size_t page_number) override;
-		/**
-		 * @brief Navigates to the first page.
-		 */
-		void go_to_first_page() override;
-		/**
-		 * @brief Navigates to the previous page.
-		 * @throws std::runtime_error if already at the first page.
-		 */
-		void go_to_previous_page() override;
-		/**
-		 * @brief Navigates to the last page.
-		 */
-		void go_to_last_page() override;
-		/**
-		 * @brief Sets the page size and orientation.
-		 */
-		void set_page_format(model::DocraftPageSize size,
-		                     model::DocraftPageOrientation orientation) override;
-		/**
-		 * @brief Returns the current page number (1-based index).
-		 */
-		std::size_t current_page_number() const override;
-		/**
-		 * @brief Returns the total number of pages in the document.
-		 */
-		std::size_t total_page_count() const override;
-#pragma endregion
 	private:
+		class TextHaruBackend;
+		class LineHaruBackend;
+		class ShapeHaruBackend;
+		class ImageHaruBackend;
+		class PageHaruBackend;
 		/**
 		 * @brief Creates a new page and adds it to the document.
 		 */
@@ -285,6 +97,11 @@ namespace docraft::backend::pdf {
 		 * @brief Applies the current alpha state to the Haru graphics state.
 		 */
 		void apply_alpha_state() const;
+		std::unique_ptr<TextHaruBackend> text_backend_;
+		std::unique_ptr<LineHaruBackend> line_backend_;
+		std::unique_ptr<ShapeHaruBackend> shape_backend_;
+		std::unique_ptr<ImageHaruBackend> image_backend_;
+		std::unique_ptr<PageHaruBackend> page_backend_;
 		HPDF_Doc pdf_;
 		std::vector<HPDF_Page> pages_;
 		size_t current_page_number_ = 0;

@@ -26,8 +26,9 @@ namespace docraft::renderer::painter {
 
     void DocraftCirclePainter::draw(const std::shared_ptr<DocraftDocumentContext> &context) {
         if (!context) return;
-        auto backend = context->shape_backend();
-        if (!backend) return;
+        auto shape_backend = context->shape_backend();
+        auto line_backend = context->line_backend();
+        if (!shape_backend || !line_backend) return;
 
         const auto &bg_color = circle_node_.background_color().toRGB();
         const auto &border_color = circle_node_.border_color().toRGB();
@@ -42,33 +43,33 @@ namespace docraft::renderer::painter {
             return;
         }
 
-        backend->save_state();
+        shape_backend->save_state();
 
         if (bg_color.a < 1.0F || border_color.a < 1.0F) {
-            backend->set_fill_alpha(bg_color.a);
-            backend->set_stroke_alpha(border_color.a);
+            shape_backend->set_fill_alpha(bg_color.a);
+            shape_backend->set_stroke_alpha(border_color.a);
         }
 
         if (border_width > 0.0F) {
-            backend->set_line_width(border_width);
+            line_backend->set_line_width(border_width);
         }
 
-        backend->set_fill_color(bg_color.r, bg_color.g, bg_color.b);
-        backend->set_stroke_color(border_color.r, border_color.g, border_color.b);
+        shape_backend->set_fill_color(bg_color.r, bg_color.g, bg_color.b);
+        line_backend->set_stroke_color(border_color.r, border_color.g, border_color.b);
 
-        backend->draw_circle(circle_node_.center().x, circle_node_.center().y, radius);
+        shape_backend->draw_circle(circle_node_.center().x, circle_node_.center().y, radius);
 
         const bool has_fill = bg_color.a > 0.0F;
         const bool has_stroke = border_width > 0.0F && border_color.a > 0.0F;
 
         if (has_fill && has_stroke) {
-            backend->fill_stroke();
+            shape_backend->fill_stroke();
         } else if (has_fill) {
-            backend->fill();
+            shape_backend->fill();
         } else if (has_stroke) {
-            backend->stroke();
+            shape_backend->stroke();
         }
 
-        backend->restore_state();
+        shape_backend->restore_state();
     }
 } // docraft::renderer::painter

@@ -19,18 +19,16 @@
 #include "docraft/docraft_lib.h"
 #include <string>
 
-#include "docraft/backend/docraft_line_rendering_backend.h"
-
 namespace docraft::backend {
     /**
      * @brief Interface for text rendering backends used by Docraft.
      */
-    class DOCRAFT_LIB IDocraftTextRenderingBackend : public virtual IDocraftLineRenderingBackend {
+    class DOCRAFT_LIB IDocraftTextRenderingBackend {
     public:
         /**
          * @brief Virtual destructor.
          */
-        ~IDocraftTextRenderingBackend() override = default;
+        virtual ~IDocraftTextRenderingBackend() = default;
         /**
          * @brief Initializes the text rendering context. Must be called before any text drawing operations.
          */

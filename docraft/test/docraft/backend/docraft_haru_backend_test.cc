@@ -20,89 +20,121 @@ protected:
         return *backend_;
     }
 
+    const docraft::backend::IDocraftPageRenderingBackend& page_backend() const {
+        return *backend_->page_rendering();
+    }
+
+    docraft::backend::IDocraftPageRenderingBackend& edit_page_backend() {
+        return *backend_->edit_page_rendering();
+    }
+
+    const docraft::backend::IDocraftTextRenderingBackend& text_backend() const {
+        return *backend_->text_rendering();
+    }
+
+    docraft::backend::IDocraftTextRenderingBackend& edit_text_backend() {
+        return *backend_->edit_text_rendering();
+    }
+
 private:
     std::unique_ptr<docraft::backend::pdf::DocraftHaruBackend> backend_;
 };
 
+TEST_F(DocraftHaruBackendTest, ExposesStableCapabilityAccessors) {
+    const auto& const_backend = backend();
+
+    ASSERT_NE(const_backend.line_rendering(), nullptr);
+    ASSERT_NE(const_backend.text_rendering(), nullptr);
+    ASSERT_NE(const_backend.shape_rendering(), nullptr);
+    ASSERT_NE(const_backend.image_rendering(), nullptr);
+    ASSERT_NE(const_backend.page_rendering(), nullptr);
+
+    EXPECT_EQ(const_backend.line_rendering(), backend().edit_line_rendering());
+    EXPECT_EQ(const_backend.text_rendering(), backend().edit_text_rendering());
+    EXPECT_EQ(const_backend.shape_rendering(), backend().edit_shape_rendering());
+    EXPECT_EQ(const_backend.image_rendering(), backend().edit_image_rendering());
+    EXPECT_EQ(const_backend.page_rendering(), backend().edit_page_rendering());
+}
+
 TEST_F(DocraftHaruBackendTest, StartsWithSinglePageAndValidDimensions) {
-    EXPECT_EQ(backend().total_page_count(), 1U);
-    EXPECT_EQ(backend().current_page_number(), 1U);
-    EXPECT_GT(backend().page_width(), 0.0F);
-    EXPECT_GT(backend().page_height(), 0.0F);
+    EXPECT_EQ(page_backend().total_page_count(), 1U);
+    EXPECT_EQ(page_backend().current_page_number(), 1U);
+    EXPECT_GT(page_backend().page_width(), 0.0F);
+    EXPECT_GT(page_backend().page_height(), 0.0F);
 }
 TEST_F(DocraftHaruBackendTest, MoveToNextPage) {
-    backend().add_new_page();
-    EXPECT_EQ(backend().total_page_count(), 2U);
-    EXPECT_EQ(backend().current_page_number(), 2U);
-    backend().go_to_page(0);// Go back to first page
-    backend().move_to_next_page();
-    EXPECT_EQ(backend().current_page_number(), 2U);
+    edit_page_backend().add_new_page();
+    EXPECT_EQ(page_backend().total_page_count(), 2U);
+    EXPECT_EQ(page_backend().current_page_number(), 2U);
+    edit_page_backend().go_to_page(0);// Go back to first page
+    edit_page_backend().move_to_next_page();
+    EXPECT_EQ(page_backend().current_page_number(), 2U);
 }
 
 TEST_F(DocraftHaruBackendTest, AddsAndNavigatesPages) {
-    backend().add_new_page();
-    backend().add_new_page();
+    edit_page_backend().add_new_page();
+    edit_page_backend().add_new_page();
 
-    EXPECT_EQ(backend().total_page_count(), 3U);
-    EXPECT_EQ(backend().current_page_number(), 3U);
+    EXPECT_EQ(page_backend().total_page_count(), 3U);
+    EXPECT_EQ(page_backend().current_page_number(), 3U);
 
-    backend().go_to_page(0);
-    EXPECT_EQ(backend().current_page_number(), 1U);
+    edit_page_backend().go_to_page(0);
+    EXPECT_EQ(page_backend().current_page_number(), 1U);
 
-    backend().move_to_next_page();
-    EXPECT_EQ(backend().current_page_number(), 2U);
+    edit_page_backend().move_to_next_page();
+    EXPECT_EQ(page_backend().current_page_number(), 2U);
 
-    backend().go_to_page(2);
-    EXPECT_EQ(backend().current_page_number(), 3U);
+    edit_page_backend().go_to_page(2);
+    EXPECT_EQ(page_backend().current_page_number(), 3U);
 }
 
 TEST_F(DocraftHaruBackendTest, NavigatesFirstPreviousLastPages) {
-    backend().add_new_page();
-    backend().add_new_page();
+    edit_page_backend().add_new_page();
+    edit_page_backend().add_new_page();
 
-    backend().go_to_first_page();
-    EXPECT_EQ(backend().current_page_number(), 1U);
+    edit_page_backend().go_to_first_page();
+    EXPECT_EQ(page_backend().current_page_number(), 1U);
 
-    backend().move_to_next_page();
-    EXPECT_EQ(backend().current_page_number(), 2U);
+    edit_page_backend().move_to_next_page();
+    EXPECT_EQ(page_backend().current_page_number(), 2U);
 
-    backend().go_to_last_page();
-    EXPECT_EQ(backend().current_page_number(), 3U);
+    edit_page_backend().go_to_last_page();
+    EXPECT_EQ(page_backend().current_page_number(), 3U);
 
-    backend().go_to_previous_page();
-    EXPECT_EQ(backend().current_page_number(), 2U);
+    edit_page_backend().go_to_previous_page();
+    EXPECT_EQ(page_backend().current_page_number(), 2U);
 }
 
 TEST_F(DocraftHaruBackendTest, ThrowsOnPreviousAtFirstPage) {
-    backend().go_to_first_page();
-    EXPECT_THROW(backend().go_to_previous_page(), std::runtime_error);
+    edit_page_backend().go_to_first_page();
+    EXPECT_THROW(edit_page_backend().go_to_previous_page(), std::runtime_error);
 }
 
 TEST_F(DocraftHaruBackendTest, SetsPageFormat) {
-    EXPECT_NO_THROW(backend().set_page_format(model::DocraftPageSize::kA3,
-                                              model::DocraftPageOrientation::kLandscape));
-    EXPECT_GT(backend().page_width(), 0.0F);
-    EXPECT_GT(backend().page_height(), 0.0F);
+    EXPECT_NO_THROW(edit_page_backend().set_page_format(model::DocraftPageSize::kA3,
+                                                        model::DocraftPageOrientation::kLandscape));
+    EXPECT_GT(page_backend().page_width(), 0.0F);
+    EXPECT_GT(page_backend().page_height(), 0.0F);
 }
 
 TEST_F(DocraftHaruBackendTest, ThrowsWhenMovingPastLastPage) {
-    EXPECT_THROW(backend().move_to_next_page(), std::runtime_error);
+    EXPECT_THROW(edit_page_backend().move_to_next_page(), std::runtime_error);
 }
 
 TEST_F(DocraftHaruBackendTest, ThrowsOnInvalidPageNavigation) {
-    EXPECT_THROW(backend().go_to_page(1U), std::runtime_error);
-    EXPECT_THROW(backend().go_to_page(2U), std::runtime_error);
+    EXPECT_THROW(edit_page_backend().go_to_page(1U), std::runtime_error);
+    EXPECT_THROW(edit_page_backend().go_to_page(2U), std::runtime_error);
 }
 
 TEST_F(DocraftHaruBackendTest, SupportsBuiltInFontAndTextMeasure) {
     EXPECT_TRUE(backend().can_use_font("Helvetica", nullptr));
     EXPECT_NO_THROW(backend().set_font("Helvetica", 12.0F, nullptr));
 
-    backend().begin_text();
-    backend().draw_text("Hello backend", 20.0F, 20.0F);
-    backend().end_text();
+    edit_text_backend().begin_text();
+    edit_text_backend().draw_text("Hello backend", 20.0F, 20.0F);
+    edit_text_backend().end_text();
 
-    EXPECT_GT(backend().measure_text_width("Hello backend"), 0.0F);
+    EXPECT_GT(text_backend().measure_text_width("Hello backend"), 0.0F);
 }
 
 TEST_F(DocraftHaruBackendTest, ReportsPdfFileExtension) {

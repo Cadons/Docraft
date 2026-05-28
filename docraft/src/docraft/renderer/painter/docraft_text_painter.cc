@@ -95,7 +95,13 @@ namespace docraft::renderer::painter {
 
     void DocraftTextPainter::
     draw_underline(const std::shared_ptr<DocraftDocumentContext> &context, const std::string &text) {
-        auto backend = context->text_backend();
+        if (!context->text_backend()) {
+            return;
+        }
+        auto line_backend = context->line_backend();
+        if (!line_backend) {
+            return;
+        }
 
         // 1. Draw the text normally first
         auto result = draw_text(context, text);
@@ -106,9 +112,9 @@ namespace docraft::renderer::painter {
 
         // 3. Draw the line
         auto rgb = current_line_->color().toRGB();
-        backend->set_stroke_color(rgb.r, rgb.g, rgb.b);
-        backend->set_line_width(thickness);
-        backend->draw_line(result.first.first, underline_top, result.second.first, underline_top);
+        line_backend->set_stroke_color(rgb.r, rgb.g, rgb.b);
+        line_backend->set_line_width(thickness);
+        line_backend->draw_line(result.first.first, underline_top, result.second.first, underline_top);
     }
 
     void DocraftTextPainter::draw(const std::shared_ptr<DocraftDocumentContext> &context) {

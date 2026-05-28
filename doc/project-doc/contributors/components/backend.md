@@ -4,9 +4,10 @@ The backend layer is the portability boundary for output targets.
 
 ## 1. Contract hierarchy
 
-`IDocraftRenderingBackend` aggregates these contracts:
+`IDocraftRenderingBackend` exposes these contracts via explicit accessors:
 
 - `IDocraftTextRenderingBackend`
+- `IDocraftLineRenderingBackend`
 - `IDocraftShapeRenderingBackend`
 - `IDocraftImageRenderingBackend`
 - `IDocraftPageRenderingBackend`
@@ -18,17 +19,22 @@ Plus lifecycle methods:
 - font registration/selection helpers
 - metadata application
 
-This design lets renderers/painters consume only the primitives they need.
+Capability interfaces are standalone (no inheritance chain between them), and
+the root backend provides `<capability>() const` plus `edit_<capability>()`
+accessors so renderers/painters can consume only the primitives they need.
 
 ## 2. Concrete implementation: Haru backend
 
-`DocraftHaruBackend` implements all contracts over libharu.
+`DocraftHaruBackend` remains the single concrete backend entry point, but it
+composes smaller libharu-backed capability objects internally.
 
 Responsibilities include:
 
 - managing document/page handles,
 - text drawing and measurement,
-- line/shape/image drawing,
+- line drawing,
+- shape drawing and graphics state,
+- image drawing,
 - page navigation and page format,
 - metadata mapping to PDF info fields,
 - save to `.pdf`.

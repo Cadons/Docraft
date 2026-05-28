@@ -34,15 +34,16 @@ namespace docraft::model {
             }
             const auto &marker = markers_[i];
             if (marker.kind == Marker::Kind::kBox) {
-                if (context && context->shape_backend()) {
+                if (context && context->shape_backend() && context->line_backend()) {
                     auto rgb = text_node->color().toRGB();
                     const float size = marker.size > 0.0F ? marker.size : (text_node->font_size() * 0.6F);
                     const float x = marker.position.x;
                     const float y = marker.position.y - (size * 0.2F);
                     auto shape = context->shape_backend();
+                    auto line = context->line_backend();
                     shape->save_state();
-                    shape->set_stroke_color(rgb.r, rgb.g, rgb.b);
-                    shape->set_line_width(1.0F);
+                    line->set_stroke_color(rgb.r, rgb.g, rgb.b);
+                    line->set_line_width(1.0F);
                     shape->draw_rectangle(x, y, size, size);
                     shape->stroke();
                     shape->restore_state();

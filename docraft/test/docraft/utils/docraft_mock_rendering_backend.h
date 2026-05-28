@@ -7,7 +7,12 @@
 #include "docraft/backend/docraft_rendering_backend.h"
 
 namespace docraft::test::utils {
-    class MockRenderingBackend : public backend::IDocraftRenderingBackend {
+    class MockRenderingBackend : public backend::IDocraftRenderingBackend,
+                                 public backend::IDocraftLineRenderingBackend,
+                                 public backend::IDocraftShapeRenderingBackend,
+                                 public backend::IDocraftTextRenderingBackend,
+                                 public backend::IDocraftImageRenderingBackend,
+                                 public backend::IDocraftPageRenderingBackend {
     public:
         struct Config {
             float page_width = 100.0F;
@@ -24,6 +29,17 @@ namespace docraft::test::utils {
             pages_ = config_.initial_pages > 0 ? config_.initial_pages : 1;
             current_page_ = 0;
         }
+
+        [[nodiscard]] const backend::IDocraftLineRenderingBackend *line_rendering() const override { return this; }
+        [[nodiscard]] backend::IDocraftLineRenderingBackend *edit_line_rendering() override { return this; }
+        [[nodiscard]] const backend::IDocraftTextRenderingBackend *text_rendering() const override { return this; }
+        [[nodiscard]] backend::IDocraftTextRenderingBackend *edit_text_rendering() override { return this; }
+        [[nodiscard]] const backend::IDocraftShapeRenderingBackend *shape_rendering() const override { return this; }
+        [[nodiscard]] backend::IDocraftShapeRenderingBackend *edit_shape_rendering() override { return this; }
+        [[nodiscard]] const backend::IDocraftImageRenderingBackend *image_rendering() const override { return this; }
+        [[nodiscard]] backend::IDocraftImageRenderingBackend *edit_image_rendering() override { return this; }
+        [[nodiscard]] const backend::IDocraftPageRenderingBackend *page_rendering() const override { return this; }
+        [[nodiscard]] backend::IDocraftPageRenderingBackend *edit_page_rendering() override { return this; }
 
         void begin_text() const override {}
         void end_text() const override {}
