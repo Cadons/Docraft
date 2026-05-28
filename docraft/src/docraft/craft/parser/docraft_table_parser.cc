@@ -83,7 +83,7 @@ namespace docraft::craft::parser {
             table_node->set_default_cell_background(detail::get_docraft_color(tile_attr));
         }
 
-        auto parse_title_node = [&](const pugi::xml_node &title) -> std::shared_ptr<model::DocraftText> {
+        auto parse_title_node = [](const pugi::xml_node &title) -> std::shared_ptr<model::DocraftText> {
             auto title_node = std::make_shared<model::DocraftText>(title.child_value());
             if (auto alignment_attr = title.attribute(elements::table_title::attribute::kAlignment.data())) {
                 std::string alignment_str = alignment_attr.as_string();
@@ -123,9 +123,9 @@ namespace docraft::craft::parser {
             return title_node;
         };
 
-        auto parse_background_color = [&](const pugi::xml_node &node,
-                                          const char *primary_attr,
-                                          const char *alt_attr = nullptr)
+        auto parse_background_color = [](const pugi::xml_node &node,
+                                         const char *primary_attr,
+                                         const char *alt_attr = nullptr)
             -> std::optional<DocraftColor> {
             if (auto attr = node.attribute(primary_attr)) {
                 return detail::get_docraft_color(attr);

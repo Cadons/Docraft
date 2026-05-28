@@ -68,7 +68,7 @@ namespace docraft::layout::handler {
 
         const float padding = std::max(0.0F, node->padding());
         const float available_width = std::max(0.0F, edit_context()->available_space() - (2.0F * padding));
-        auto add_wrapped_word = [&](const std::string& word) {
+        auto add_wrapped_word = [this,available_width,node](const std::string &word) {
             if (word.empty()) {
                 return;
             }
@@ -100,7 +100,7 @@ namespace docraft::layout::handler {
             }
         };
 
-        auto wrap_paragraph = [&](const std::string& paragraph) {
+        auto wrap_paragraph = [this, available_width, add_wrapped_word, node](const std::string &paragraph) {
             std::istringstream iss(paragraph);
             std::string word;
             std::string current_line;

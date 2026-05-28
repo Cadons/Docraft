@@ -114,7 +114,7 @@ namespace docraft::templating {
         }
 
         if (auto list = std::dynamic_pointer_cast<model::DocraftList>(node)) {
-            list->apply_text_transform([&](const std::string &text) {
+            list->apply_text_transform([this,&foreach_item](const std::string &text) {
                 return render_template_string(text, foreach_item);
             });
             return;

@@ -92,8 +92,8 @@ namespace docraft::test {
         document.add_node(list);
 
         std::vector<std::string> visits;
-        document.traverse_dom([&](const std::shared_ptr<model::DocraftNode> &node,
-                                  DocraftDomTraverseOp op) {
+        document.traverse_dom([&visits](const std::shared_ptr<model::DocraftNode> &node,
+                                        DocraftDomTraverseOp op) {
             const auto tag = op == DocraftDomTraverseOp::kEnter ? "enter:" : "exit:";
             visits.emplace_back(tag + node->node_name());
         });

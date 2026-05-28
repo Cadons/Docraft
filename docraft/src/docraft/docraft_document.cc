@@ -216,6 +216,24 @@ namespace docraft {
         }
     }
 
+    void DocraftDocument::handle_node_rendering(const std::shared_ptr<model::DocraftNode> &node) {
+        auto page_backend = context_->edit_page_backend();
+        const std::size_t page_count = page_backend ? page_backend->total_page_count() : 1;
+        if (node->page_owner() == -1 && page_backend) {
+            for (std::size_t i = 0; i < page_count; ++i) {
+                page_backend->go_to_page(i);
+                node->draw(context_);
+            }
+        } else {
+            if (page_backend && node->page_owner() > 0) {
+                page_backend->go_to_page(static_cast<std::size_t>(node->page_owner() - 1));
+            }
+            if (node->should_render(context_)) {
+                node->draw(context_);
+            }
+        }
+    }
+
     void DocraftDocument::render() {
         context_->set_renderer(std::make_shared<renderer::DocraftPDFRenderer>(context_));
         context_->set_font_applier(std::make_shared<generic::DocraftFontApplier>(context_));
@@ -241,26 +259,13 @@ namespace docraft {
         if (page_backend) {
             page_backend->go_to_first_page();
         }
-        const std::size_t page_count = page_backend ? page_backend->total_page_count() : 1;
 
         for (auto &node: dom_) {
             if (!node) {
                 continue;
             }
             if (node->visible()) {
-                if (node->page_owner() == -1 && page_backend) {
-                    for (std::size_t i = 0; i < page_count; ++i) {
-                        page_backend->go_to_page(i);
-                        node->draw(context_);
-                    }
-                } else {
-                    if (page_backend && node->page_owner() > 0) {
-                        page_backend->go_to_page(static_cast<std::size_t>(node->page_owner() - 1));
-                    }
-                    if (node->should_render(context_)) {
-                        node->draw(context_);
-                    }
-                }
+                handle_node_rendering(node);
             }
         }
 

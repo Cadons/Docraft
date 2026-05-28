@@ -36,7 +36,7 @@ namespace docraft::management {
     std::vector<std::shared_ptr<model::DocraftNode> > DocraftDocumentQuery::find_by_name_impl(
         const std::vector<std::shared_ptr<model::DocraftNode> > &root, const std::string &name) {
         std::vector<std::shared_ptr<model::DocraftNode> > result;
-        traverse_dom(root, [&](const std::shared_ptr<model::DocraftNode> &node, DocraftDomTraverseOp op) {
+        traverse_dom(root, [&name,&result](const std::shared_ptr<model::DocraftNode> &node, DocraftDomTraverseOp op) {
             if (op != DocraftDomTraverseOp::kEnter) {
                 return;
             }

@@ -73,7 +73,6 @@ namespace docraft {
          * @brief Applies template processing to the document DOM using the configured template engine.
          */
         void template_document();
-
         /**
          * @brief Renders the document using the configured context and renderer.
          */
@@ -178,6 +177,12 @@ namespace docraft {
             const std::shared_ptr<model::DocraftNode> &node,
             const std::function<void(const std::shared_ptr<model::DocraftNode> &, DocraftDomTraverseOp)> &callback)
         const;
+
+        /**
+         * @brief Handles rendering of a single node, applying settings and invoking the renderer.
+         * @param node
+         */
+        void handle_node_rendering(const std::shared_ptr<model::DocraftNode> &node);
 
         std::shared_ptr<DocraftDocumentContext> context_;
         std::vector<std::shared_ptr<model::DocraftNode> > dom_;

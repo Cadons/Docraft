@@ -38,8 +38,8 @@ namespace docraft::renderer::painter {
          float start_y = table_node_.position().y;
          float table_width = table_node_.width();
          float table_height = table_node_.height();
-         auto draw_background = [&](const std::optional<docraft::DocraftColor> &color,
-                                    float x, float y, float width, float height) {
+         auto draw_background = [shape_backend](const std::optional<docraft::DocraftColor> &color,
+                                                float x, float y, float width, float height) {
              if (!shape_backend || !color.has_value()) {
                  return;
              }

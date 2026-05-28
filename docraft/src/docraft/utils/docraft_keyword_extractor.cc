@@ -67,14 +67,15 @@ namespace docraft::utils {
         const DocraftDocument &document) const {
         std::unordered_map<std::string, std::size_t> frequency_map;
 
-        auto register_word = [&](const std::string &word) {
+        auto register_word = [this,&frequency_map](const std::string &word) {
             if (is_candidate(word)) {
                 ++frequency_map[word];
             }
         };
 
-        document.traverse_dom([&](const std::shared_ptr<model::DocraftNode> &node, DocraftDomTraverseOp operation) {
-            if (operation != DocraftDomTraverseOp::kEnter) {
+        document.traverse_dom(
+            [register_word](const std::shared_ptr<model::DocraftNode> &node, DocraftDomTraverseOp operation) {
+                if (operation != DocraftDomTraverseOp::kEnter) {
                 return;
             }
             const auto text_node = std::dynamic_pointer_cast<model::DocraftText>(node);
