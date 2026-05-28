@@ -238,6 +238,14 @@ namespace docraft::backend::pdf {
             const HPDF_STATUS status = HPDF_SetInfoDateAttr(pdf, type, to_hpdf_date(*value));
             throw_if_hpdf_error(status, "Failed to set PDF metadata '" + field_name + "'");
         }
+
+        HPDF_Doc create_hpdf_document() {
+            HPDF_Doc pdf = HPDF_New(error_handler, nullptr);
+            if (!pdf) {
+                throw std::runtime_error("Failed to initialize Haru PDF document");
+            }
+            return pdf;
+        }
     } // namespace
 
     class DocraftHaruBackend::TextHaruBackend : public docraft::backend::IDocraftTextRenderingBackend {
@@ -566,11 +574,7 @@ namespace docraft::backend::pdf {
           shape_backend_(std::make_unique<ShapeHaruBackend>(*this)),
           image_backend_(std::make_unique<ImageHaruBackend>(*this)),
           page_backend_(std::make_unique<PageHaruBackend>(*this)),
-          pdf_(nullptr) {
-        pdf_ = HPDF_New(error_handler, nullptr);
-        if (!pdf_) {
-            throw std::runtime_error("Failed to initialize Haru PDF document");
-        }
+          pdf_(create_hpdf_document()) {
         HPDF_UseUTFEncodings(pdf_);
         HPDF_SetCurrentEncoder(pdf_, "UTF-8");
         HPDF_SetCompressionMode(pdf_, HPDF_COMP_ALL);
