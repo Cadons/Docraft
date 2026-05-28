@@ -186,7 +186,7 @@ namespace docraft {
         }
     } // namespace
 
-    DocraftDocument::DocraftDocument(std::string document_title) {
+    DocraftDocument::DocraftDocument(const std::string &document_title) {
         config_.set_document_title(document_title);
         context_ = std::make_shared<DocraftDocumentContext>();
     }

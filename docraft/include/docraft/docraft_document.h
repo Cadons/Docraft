@@ -51,7 +51,7 @@ namespace docraft {
          * @brief Creates a document with an optional title.
          * @param document_title Human-readable title for the document metadata.
          */
-        explicit DocraftDocument(std::string document_title = "Untitled Document");
+        explicit DocraftDocument(const std::string &document_title = "Untitled Document");
 
         /**
          * @brief Virtual destructor.

@@ -126,7 +126,7 @@ namespace docraft::templating {
                  * @return Rendered string with template variables replaced.
                  */
                 std::string render_template_string_foreach_item(const std::string &text,
-                                                                const nlohmann::json &item);
+                                                                const nlohmann::json &item) const;
 
                 std::string render_template_string(const std::string &text,
                                                    const nlohmann::json *foreach_item = nullptr);

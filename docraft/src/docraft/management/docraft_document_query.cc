@@ -29,7 +29,7 @@ namespace docraft::management {
     }
 
     std::vector<std::shared_ptr<model::DocraftNode> > DocraftDocumentQuery::take_by_name(
-        std::vector<std::shared_ptr<model::DocraftNode> > &root, const std::string &name) {
+        const std::vector<std::shared_ptr<model::DocraftNode> > &root, const std::string &name) {
         return find_by_name_impl(root, name);
     }
 

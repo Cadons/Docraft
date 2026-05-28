@@ -220,7 +220,7 @@ namespace docraft::templating {
         }
     }
     std::string DocraftTemplateEngine::render_template_string_foreach_item(const std::string &text,
-                                                                            const nlohmann::json &item) {
+                                                                           const nlohmann::json &item) const {
         std::string result = text;
         size_t pos = 0;
         while ((pos = result.find("${", pos)) != std::string::npos) {

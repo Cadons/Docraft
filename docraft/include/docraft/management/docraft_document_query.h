@@ -49,7 +49,7 @@ namespace docraft::management {
             const std::vector<std::shared_ptr<model::DocraftNode> > &root, const std::string &name);
 
         static std::vector<std::shared_ptr<model::DocraftNode> > take_by_name(
-            std::vector<std::shared_ptr<model::DocraftNode> > &root, const std::string &name);
+            const std::vector<std::shared_ptr<model::DocraftNode> > &root, const std::string &name);
 
         /**
          * @brief Finds the first node by name in a DOM tree.
