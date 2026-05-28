@@ -16,13 +16,8 @@
 
 #include "docraft/docraft_document.h"
 
-#include <algorithm>
-#include <cctype>
 #include <optional>
 #include <iostream>
-#include <ostream>
-#include <list>
-#include <sstream>
 #include <filesystem>
 #include <string_view>
 #include <unordered_set>
@@ -279,11 +274,11 @@ namespace docraft {
         context_->set_backend(backend);
     }
 
-    std::vector<std::shared_ptr<const model::DocraftNode>> DocraftDocument::nodes() const {
+    std::vector<std::shared_ptr<const model::DocraftNode> > DocraftDocument::nodes() const {
         return docraft::to_const_shared_vector(dom_);
     }
 
-    std::vector<std::shared_ptr<model::DocraftNode>> &DocraftDocument::edit_nodes() {
+    std::vector<std::shared_ptr<model::DocraftNode> > &DocraftDocument::edit_nodes() {
         return dom_;
     }
 
@@ -362,7 +357,7 @@ namespace docraft {
     std::vector<std::shared_ptr<const model::DocraftNode> >
     DocraftDocument::find_by_name(const std::string &name) const {
         return management::DocraftDocumentQuery::find_by_name(
-            const_cast<std::vector<std::shared_ptr<model::DocraftNode> > &>(dom_), name);
+            dom_, name);
     }
 
     std::vector<std::shared_ptr<model::DocraftNode> > DocraftDocument::take_by_name(const std::string &name) {
@@ -371,7 +366,7 @@ namespace docraft {
 
     std::shared_ptr<const model::DocraftNode> DocraftDocument::find_first_by_name(const std::string &name) const {
         return management::DocraftDocumentQuery::find_first_by_name(
-            const_cast<std::vector<std::shared_ptr<model::DocraftNode> > &>(dom_), name);
+            dom_, name);
     }
 
     std::shared_ptr<model::DocraftNode> DocraftDocument::take_first_by_name(const std::string &name) {
@@ -380,7 +375,7 @@ namespace docraft {
 
     std::shared_ptr<const model::DocraftNode> DocraftDocument::find_last_by_name(const std::string &name) const {
         return management::DocraftDocumentQuery::find_last_by_name(
-            const_cast<std::vector<std::shared_ptr<model::DocraftNode> > &>(dom_), name);
+            dom_, name);
     }
 
     std::shared_ptr<model::DocraftNode> DocraftDocument::take_last_by_name(const std::string &name) {
