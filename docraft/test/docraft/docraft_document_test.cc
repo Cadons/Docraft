@@ -56,7 +56,7 @@ namespace docraft::test {
         document.add_node(rect);
         document.add_node(list);
 
-        const auto matches = document.get_by_name("target");
+        const auto matches = document.find_by_name("target");
 
         ASSERT_EQ(matches.size(), 2U);
         EXPECT_EQ(matches[0], rect);
@@ -70,7 +70,7 @@ namespace docraft::test {
         rect->set_name("root");
         document.add_node(rect);
 
-        const auto matches = document.get_by_name("missing");
+        const auto matches = document.find_by_name("missing");
 
         EXPECT_TRUE(matches.empty());
     }
@@ -92,8 +92,8 @@ namespace docraft::test {
         document.add_node(list);
 
         std::vector<std::string> visits;
-        document.traverse_dom([&](const std::shared_ptr<model::DocraftNode> &node,
-                                  DocraftDomTraverseOp op) {
+        document.traverse_dom([&visits](const std::shared_ptr<model::DocraftNode> &node,
+                                        DocraftDomTraverseOp op) {
             const auto tag = op == DocraftDomTraverseOp::kEnter ? "enter:" : "exit:";
             visits.emplace_back(tag + node->node_name());
         });
@@ -129,8 +129,26 @@ namespace docraft::test {
         document.add_node(list);
         document.add_node(last);
 
-        EXPECT_EQ(document.get_first_by_name("target"), first);
-        EXPECT_EQ(document.get_last_by_name("target"), last);
+        EXPECT_EQ(document.find_first_by_name("target"), first);
+        EXPECT_EQ(document.find_last_by_name("target"), last);
+    }
+
+    TEST(DocraftDocumentTest, EditFindMethodsAllowNodeMutation) {
+        DocraftDocument document("Test Document");
+
+        auto text = std::make_shared<model::DocraftText>("Before");
+        text->set_name("target");
+        document.add_node(text);
+
+        auto editable = std::dynamic_pointer_cast<model::DocraftText>(
+            document.take_first_by_name("target"));
+        ASSERT_TRUE(editable);
+        editable->set_text("After");
+
+        const auto readonly = document.find_first_by_name("target");
+        auto readonly_text = std::dynamic_pointer_cast<const model::DocraftText>(readonly);
+        ASSERT_TRUE(readonly_text);
+        EXPECT_EQ(readonly_text->text(), "After");
     }
 
     TEST(DocraftDocumentTest, GetByTypeFindsMatchingNodes) {
@@ -146,8 +164,8 @@ namespace docraft::test {
         document.add_node(list);
         document.add_node(rect2);
 
-        const auto rectangles = document.get_by_type<model::DocraftRectangle>();
-        const auto texts = document.get_by_type<model::DocraftText>();
+        const auto rectangles = document.find_by_type<model::DocraftRectangle>();
+        const auto texts = document.find_by_type<model::DocraftText>();
 
         ASSERT_EQ(rectangles.size(), 2U);
         EXPECT_EQ(rectangles[0], rect1);

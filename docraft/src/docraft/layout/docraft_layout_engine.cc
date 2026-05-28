@@ -382,7 +382,7 @@ namespace docraft::layout {
         if (!sections.body) {
             throw std::runtime_error("Document must have a body section");
         }
-        if (const auto &page_backend = context()->page_backend()) {
+        if (const auto page_backend = context()->edit_page_backend()) {
             page_backend->go_to_first_page();
         }
         const SectionPlan plan = build_section_plan(sections);
@@ -462,14 +462,15 @@ namespace docraft::layout {
         body->set_width(compute_width(body));
         body->set_height(body_height);
         const float footer_height = plan.footer_to_render ? context()->page_height() * plan.footer_ratio : 0.0F;
-        const float body_bottom_y = (body_start_y - body_height)+ body->margin_bottom()+footer_height; // The y-coordinate of the bottom of the body content area, accounting for footer if present
+        const float body_bottom_y = (body_start_y - body_height) + body->margin_bottom() + footer_height;
+        // The y-coordinate of the bottom of the body content area, accounting for footer if present
         context()->set_current_rect_width(body->width());
 
         DocraftCursor body_cursor; //Use a custom cursor to not affect the main one
         body_cursor.move_to(body->position().x, body_start_y);
 
         int current_page = 1;
-        const auto &page_backend = context()->page_backend();
+        const auto page_backend = context()->edit_page_backend();
         if (page_backend) {
             current_page = static_cast<int>(page_backend->current_page_number());
         }
@@ -486,92 +487,94 @@ namespace docraft::layout {
             */
             std::function<void(const std::shared_ptr<model::DocraftNode> &, std::size_t *)> process_child;
             // Use a lambda to allow recursion while maintaining access to local variables like body_cursor and current_page
-            process_child = [&](const std::shared_ptr<model::DocraftNode> &child,
-                                const std::size_t *index_ptr) {
-                if (!child) {
-                    return;
-                }
-                if (std::dynamic_pointer_cast<model::DocraftNewPage>(child)) {
-                    // Handle explicit new page directive
-                    if (page_backend) {
-                        page_backend->add_new_page();
-                        ++current_page;
-                    }
-                    // Move cursor to top of new page
-                    body_cursor.reset_direction();
-                    body_cursor.move_to(body->position().x, body_start_y);
-                    return;
-                }
-                // Handle foreach loops by processing their children in place, ensuring they inherit the correct page owner and layout context
-                if (auto foreach_node = std::dynamic_pointer_cast<model::DocraftForeach>(child)) {
-                    foreach_node->set_page_owner(-1);
-                    const auto &foreach_children = foreach_node->children();
-                    for (std::size_t i = 0; i < foreach_children.size(); ++i) {
-                        const auto &foreach_child = foreach_children[i];
-                        if (std::dynamic_pointer_cast<model::DocraftNewPage>(foreach_child) &&
-                            i + 1 == foreach_children.size()) {
-                            // Skip trailing NewPage to avoid an extra blank page.
-                            continue;
+            process_child = [this,page_backend,&current_page,&body_cursor,&body,body_start_y, process_child,
+                        body_bottom_y, body_container](const std::shared_ptr<model::DocraftNode> &child,
+                                                       const std::size_t *index_ptr) {
+                        if (!child) {
+                            return;
                         }
-                        process_child(foreach_child, nullptr);
-                        // Process foreach children with the same lambda, but pass nullptr for index since we're not modifying the container's child list here.
-                    }
-                    return;
-                }
-
-                assign_page_owner_recursive(child, current_page);
-                // Ensure layout sees the correct page owner, especially for new nodes created by foreach processing.
-                DocraftCursor child_start_cursor = body_cursor;
-                const auto child_box = compute_layout(child, body_cursor); // Updates body_cursor
-                const bool overflows_body =
-                        child->position_mode() != model::DocraftPositionType::kAbsolute &&
-                        child_box.anchors().bottom_left.y < body_bottom_y;
-                // Check if the child overflows the body section (only for non-absolute positioned nodes)
-                if (!overflows_body) {
-                    return;
-                }
-                //Handle table splitting across pages if the overflowing child is a table. If it can be split, we split it and insert the remainder
-                //back into the container to be processed on the next page. If it can't be split, we just move it to the next page.
-                if (auto table = std::dynamic_pointer_cast<model::DocraftTable>(child)) {
-                    const auto total_rows = static_cast<std::size_t>(table->rows());
-                    const auto fit_rows = table->orientation() == model::LayoutOrientation::kVertical
-                                                     ? count_rows_fit_vertical(*table, body_bottom_y)
-                                                     : count_rows_fit_horizontal(*table, body_bottom_y);
-                    if (fit_rows > 0 && fit_rows < total_rows) {
-                        // Split the table and insert the remainder back into the container for the next page.
-                        // We only do this if at least one row can fit on the current page to avoid creating empty tables.
-                        if (auto remainder = table->split_after_row(fit_rows, true)) {
-                            if (index_ptr) {
-                                // Only modify the container's child list if we're processing top-level children of the body, not foreach children.
-                                body_container->insert_child(*index_ptr + 1, remainder); // Insert after original
-                            }
-                            body_cursor = child_start_cursor;
-                            assign_page_owner_recursive(child, current_page);
-                            // Re-assign page owner to the original table before re-layout in case it has changed due to foreach processing.
-                            (void) compute_layout(child, body_cursor);
-                            //Re-layout the original table with just the fitting rows on the current page.
+                        if (std::dynamic_pointer_cast<model::DocraftNewPage>(child)) {
+                            // Handle explicit new page directive
                             if (page_backend) {
-                                // Move to next page and update current_page for the remainder
                                 page_backend->add_new_page();
                                 ++current_page;
                             }
+                            // Move cursor to top of new page
                             body_cursor.reset_direction();
                             body_cursor.move_to(body->position().x, body_start_y);
-                            assign_page_owner_recursive(remainder, current_page);
                             return;
                         }
-                    }
-                }
-                if (page_backend) {
-                    // Move to next page and update current_page
-                    page_backend->add_new_page();
-                    ++current_page;
-                }
-                body_cursor.reset_direction();
-                body_cursor.move_to(body->position().x, body_start_y); // Move cursor to top for new page
-                assign_page_owner_recursive(child, current_page); // Update page owner before re-layout
-                (void) compute_layout(child, body_cursor); // Re-layout the child on the new page
-            };
+                        // Handle foreach loops by processing their children in place, ensuring they inherit the correct page owner and layout context
+                        if (auto foreach_node = std::dynamic_pointer_cast<model::DocraftForeach>(child)) {
+                            foreach_node->set_page_owner(-1);
+                            const auto &foreach_children = foreach_node->children();
+                            for (std::size_t i = 0; i < foreach_children.size(); ++i) {
+                                const auto &foreach_child = foreach_children[i];
+                                if (std::dynamic_pointer_cast<model::DocraftNewPage>(foreach_child) &&
+                                    i + 1 == foreach_children.size()) {
+                                    // Skip trailing NewPage to avoid an extra blank page.
+                                    continue;
+                                }
+                                process_child(foreach_child, nullptr);
+                                // Process foreach children with the same lambda, but pass nullptr for index since we're not modifying the container's child list here.
+                            }
+                            return;
+                        }
+
+                        assign_page_owner_recursive(child, current_page);
+                        // Ensure layout sees the correct page owner, especially for new nodes created by foreach processing.
+                        DocraftCursor child_start_cursor = body_cursor;
+                        const auto child_box = compute_layout(child, body_cursor); // Updates body_cursor
+                        const bool overflows_body =
+                                child->position_mode() != model::DocraftPositionType::kAbsolute &&
+                                child_box.anchors().bottom_left.y < body_bottom_y;
+                        // Check if the child overflows the body section (only for non-absolute positioned nodes)
+                        if (!overflows_body) {
+                            return;
+                        }
+                        //Handle table splitting across pages if the overflowing child is a table. If it can be split, we split it and insert the remainder
+                        //back into the container to be processed on the next page. If it can't be split, we just move it to the next page.
+                        if (auto table = std::dynamic_pointer_cast<model::DocraftTable>(child)) {
+                            const auto total_rows = static_cast<std::size_t>(table->rows());
+                            const auto fit_rows = table->orientation() == model::LayoutOrientation::kVertical
+                                                      ? count_rows_fit_vertical(*table, body_bottom_y)
+                                                      : count_rows_fit_horizontal(*table, body_bottom_y);
+                            if (fit_rows > 0 && fit_rows < total_rows) {
+                                // Split the table and insert the remainder back into the container for the next page.
+                                // We only do this if at least one row can fit on the current page to avoid creating empty tables.
+                                if (auto remainder = table->split_after_row(fit_rows, true)) {
+                                    if (index_ptr) {
+                                        // Only modify the container's child list if we're processing top-level children of the body, not foreach children.
+                                        body_container->insert_child(*index_ptr + 1, remainder);
+                                        // Insert after original
+                                    }
+                                    body_cursor = child_start_cursor;
+                                    assign_page_owner_recursive(child, current_page);
+                                    // Re-assign page owner to the original table before re-layout in case it has changed due to foreach processing.
+                                    (void) compute_layout(child, body_cursor);
+                                    //Re-layout the original table with just the fitting rows on the current page.
+                                    if (page_backend) {
+                                        // Move to next page and update current_page for the remainder
+                                        page_backend->add_new_page();
+                                        ++current_page;
+                                    }
+                                    body_cursor.reset_direction();
+                                    body_cursor.move_to(body->position().x, body_start_y);
+                                    assign_page_owner_recursive(remainder, current_page);
+                                    return;
+                                }
+                            }
+                        }
+                        if (page_backend) {
+                            // Move to next page and update current_page
+                            page_backend->add_new_page();
+                            ++current_page;
+                        }
+                        body_cursor.reset_direction();
+                        body_cursor.move_to(body->position().x, body_start_y); // Move cursor to top for new page
+                        assign_page_owner_recursive(child, current_page); // Update page owner before re-layout
+                        (void) compute_layout(child, body_cursor); // Re-layout the child on the new page
+                    };
 
             // Start processing body children with the lambda, passing the index pointer for top-level children to allow table splitting logic to modify the container's child list if needed.
             std::size_t index = 0;

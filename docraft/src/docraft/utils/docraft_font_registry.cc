@@ -53,7 +53,7 @@ namespace docraft::utils {
         }
     }
 
-    const DocraftFontData* DocraftFontRegistry::get_font(const std::string& name) const {
+    const DocraftFontData *DocraftFontRegistry::find_font(const std::string &name) const {
         auto it = registry_.find(name);
         if (it != registry_.end()) {
             return &it->second;

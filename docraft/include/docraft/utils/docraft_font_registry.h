@@ -65,7 +65,8 @@ namespace docraft::utils {
          * @param name Font family or variant name.
          * @return Pointer to font data, or nullptr if not found.
          */
-        const DocraftFontData* get_font(const std::string& name) const;
+        const DocraftFontData *find_font(const std::string &name) const;
+
         /**
          * @brief Returns the list of registered font names.
          * @return Vector of font names.

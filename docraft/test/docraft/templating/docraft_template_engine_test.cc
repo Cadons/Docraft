@@ -29,18 +29,18 @@ namespace docraft::test::templating {
         engine_.add_template_variable("title", "Docraft");
         EXPECT_TRUE(engine_.has_template_variable("title"));
         EXPECT_EQ(engine_.items(), 1);
-        EXPECT_EQ(engine_.get_template_variable("title"), "Docraft");
+        EXPECT_EQ(engine_.find_template_variable("title"), "Docraft");
     }
 
     TEST_F(DocraftTemplateEngineTest, AddDuplicateVariableThrows) {
         engine_.add_template_variable("title", "Docraft");
         EXPECT_THROW(engine_.add_template_variable("title", "Other"), std::runtime_error);
         EXPECT_EQ(engine_.items(), 1);
-        EXPECT_EQ(engine_.get_template_variable("title"), "Docraft");
+        EXPECT_EQ(engine_.find_template_variable("title"), "Docraft");
     }
 
     TEST_F(DocraftTemplateEngineTest, GetMissingVariableThrows) {
-        EXPECT_THROW(engine_.get_template_variable("missing"), std::runtime_error);
+        EXPECT_THROW(engine_.find_template_variable("missing"), std::runtime_error);
     }
 
     TEST_F(DocraftTemplateEngineTest, RemoveVariable) {
@@ -112,7 +112,7 @@ namespace docraft::test::templating {
         auto template_engine = std::make_shared<docraft::templating::DocraftTemplateEngine>();
         template_engine->add_template_variable("title", "Docraft");
         document.set_document_template_engine(template_engine);
-        EXPECT_EQ(document.document_template_engine()->get_template_variable("title"), "Docraft");
+        EXPECT_EQ(document.document_template_engine()->find_template_variable("title"), "Docraft");
         //text
         std::shared_ptr<model::DocraftText> text_node1 = std::make_shared<model::DocraftText>("${title} is a great library!");
         document.add_node(text_node1);

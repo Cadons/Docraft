@@ -53,7 +53,7 @@ namespace docraft::templating {
                  * @return Stored value.
                  * @throws std::runtime_error if not found.
                  */
-                std::string get_template_variable(const std::string &name);
+                std::string find_template_variable(const std::string &name) const;
                 /**
                  * @brief Clears all template variables.
                  */
@@ -126,7 +126,7 @@ namespace docraft::templating {
                  * @return Rendered string with template variables replaced.
                  */
                 std::string render_template_string_foreach_item(const std::string &text,
-                                                                const nlohmann::json &item);
+                                                                const nlohmann::json &item) const;
 
                 std::string render_template_string(const std::string &text,
                                                    const nlohmann::json *foreach_item = nullptr);

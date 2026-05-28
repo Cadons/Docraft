@@ -59,7 +59,15 @@ namespace docraft::layout::handler {
          * @brief Returns the bound document context.
          * @return Document context.
          */
-        std::shared_ptr<DocraftDocumentContext> context() const {
+        std::shared_ptr<DocraftDocumentContext> edit_context() const {
+            return context_;
+        }
+
+        /**
+         * @brief Returns the bound document context as a const pointer.
+         * @return
+         */
+        std::shared_ptr<const DocraftDocumentContext> context() const {
             return context_;
         }
     protected:

@@ -23,7 +23,7 @@ namespace docraft::utils {
     void DocraftFontResolver::rebuild_index(const std::vector<std::string> &builtin_fonts,
                                             const std::vector<std::string> &registered_fonts) {
         index_.clear();
-        auto add_font = [&](const std::string &font) {
+        auto add_font = [this](const std::string &font) {
             const auto parsed = parse_font_name(font);
             auto &variants = index_[parsed.family];
             if (parsed.bold && parsed.italic) {

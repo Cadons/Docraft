@@ -19,7 +19,7 @@ TEST(DocraftCraftLanguageParserTest, ParsesTitleSubtitleAndTextWithPredefinedDef
     auto document = parser.get_document();
     ASSERT_TRUE(document);
 
-    const auto texts = document->get_by_type<docraft::model::DocraftText>();
+    const auto texts = document->find_by_type<docraft::model::DocraftText>();
     ASSERT_EQ(texts.size(), 3U);
 
     EXPECT_EQ(texts[0]->text(), "Main Heading");
@@ -50,7 +50,7 @@ TEST(DocraftCraftLanguageParserTest, HeadingAttributesOverridePredefinedDefaults
     auto document = parser.get_document();
     ASSERT_TRUE(document);
 
-    const auto texts = document->get_by_type<docraft::model::DocraftText>();
+    const auto texts = document->find_by_type<docraft::model::DocraftText>();
     ASSERT_EQ(texts.size(), 2U);
 
     EXPECT_FLOAT_EQ(texts[0]->font_size(), 30.0F);
@@ -288,9 +288,31 @@ TEST(DocraftCraftLanguageParserTest, AllowsLayoutInBodyWithMultipleText) {
     auto document = parser.get_document();
     ASSERT_TRUE(document);
 
-    const auto texts = document->get_by_type<docraft::model::DocraftText>();
+    const auto texts = document->find_by_type<docraft::model::DocraftText>();
     ASSERT_EQ(texts.size(), 2U);
     EXPECT_EQ(texts[0]->text(), "First line");
     EXPECT_EQ(texts[1]->text(), "Second line");
 }
 
+TEST(DocraftCraftLanguageParserTest, EditDocumentReturnsMutableDocument) {
+    const char *xml = R"XML(
+<Document>
+  <Body>
+    <Text>Body copy</Text>
+  </Body>
+</Document>
+)XML";
+
+    docraft::craft::DocraftCraftLanguageParser parser;
+    parser.parse(xml);
+
+    const auto readonly_document = parser.get_document();
+    ASSERT_TRUE(readonly_document);
+    EXPECT_EQ(readonly_document->document_title(), "Untitled Document");
+
+    auto editable_document = parser.edit_document();
+    ASSERT_TRUE(editable_document);
+    editable_document->set_document_title("Edited");
+
+    EXPECT_EQ(readonly_document->document_title(), "Edited");
+}

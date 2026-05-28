@@ -16,14 +16,16 @@
 
 #include "docraft/docraft_document_context.h"
 #include "docraft/backend/pdf/docraft_haru_backend.h"
+#include "docraft/management/docraft_backend_cache.h"
+#include "docraft/management/docraft_document_section_manager.h"
 
 namespace docraft {
     DocraftDocumentContext::DocraftDocumentContext() {
         backend_ = std::make_shared<backend::pdf::DocraftHaruBackend>();
         page_height_ = backend_->page_height();
         page_width_ = backend_->page_width();
-
         current_rect_width_ = page_width_;
+        refresh_backend_caches();
     }
 
     DocraftDocumentContext::DocraftDocumentContext(
@@ -32,6 +34,7 @@ namespace docraft {
         page_height_ = backend_->page_height();
         page_width_ = backend_->page_width();
         current_rect_width_ = page_width_;
+        refresh_backend_caches();
     }
 
     DocraftDocumentContext::~DocraftDocumentContext() = default;
@@ -44,20 +47,32 @@ namespace docraft {
         current_rect_width_ = current_rect_width;
     }
 
-    void DocraftDocumentContext::set_header(const std::shared_ptr<model::DocraftHeader> &header) {
-        header_ = header;
+    std::shared_ptr<const generic::DocraftFontApplier> DocraftDocumentContext::font_applier() const {
+        return font_applier_;
     }
 
-    void DocraftDocumentContext::set_body(const std::shared_ptr<model::DocraftBody> &body) {
-        body_ = body;
+    std::shared_ptr<generic::DocraftFontApplier> DocraftDocumentContext::edit_font_applier() {
+        return font_applier_;
     }
 
-    void DocraftDocumentContext::set_footer(const std::shared_ptr<model::DocraftFooter> &footer) {
-        footer_ = footer;
+    void DocraftDocumentContext::refresh_backend_caches() {
+        backend_cache_.initialize_from_backend(backend_);
     }
 
-    void DocraftDocumentContext::set_font_applier(const std::shared_ptr<generic::DocraftFontApplier> &font_applier) {
-        font_applier_ = font_applier;
+    management::DocraftDocumentSectionManager &DocraftDocumentContext::section_manager() {
+        return section_manager_;
+    }
+
+    const management::DocraftDocumentSectionManager &DocraftDocumentContext::section_manager() const {
+        return section_manager_;
+    }
+
+    management::DocraftBackendCache &DocraftDocumentContext::backend_cache() {
+        return backend_cache_;
+    }
+
+    const management::DocraftBackendCache &DocraftDocumentContext::backend_cache() const {
+        return backend_cache_;
     }
 
     void DocraftDocumentContext::set_backend(const std::shared_ptr<backend::IDocraftRenderingBackend> &backend) {
@@ -65,16 +80,12 @@ namespace docraft {
         page_height_ = backend_->page_height();
         page_width_ = backend_->page_width();
         current_rect_width_ = page_width_;
-        line_backend_.reset();
-        shape_backend_.reset();
-        text_backend_.reset();
-        image_backend_.reset();
-        page_backend_.reset();
+        refresh_backend_caches();
     }
 
     void DocraftDocumentContext::set_page_format(model::DocraftPageSize size,
                                                  model::DocraftPageOrientation orientation) {
-        const auto &backend = page_backend();
+        const auto backend = backend_cache_.edit_page_backend();
         if (backend) {
             backend->set_page_format(size, orientation);
             page_height_ = backend->page_height();
@@ -82,9 +93,17 @@ namespace docraft {
             current_rect_width_ = page_width_;
         }
     }
+
+    void DocraftDocumentContext::set_font_applier(const std::shared_ptr<generic::DocraftFontApplier> &font_applier) {
+        font_applier_ = font_applier;
+    }
 #pragma endregion
 #pragma region getter
-    const std::shared_ptr<backend::IDocraftRenderingBackend> &DocraftDocumentContext::rendering_backend() const {
+    std::shared_ptr<const backend::IDocraftRenderingBackend> DocraftDocumentContext::rendering_backend() const {
+        return backend_;
+    }
+
+    std::shared_ptr<backend::IDocraftRenderingBackend> DocraftDocumentContext::edit_rendering_backend() {
         return backend_;
     }
 
@@ -111,96 +130,119 @@ namespace docraft {
         return page_width_;
     }
 
-
-    const std::shared_ptr<model::DocraftHeader> &DocraftDocumentContext::header() const {
-        return header_;
-    }
-
-
-    const std::shared_ptr<model::DocraftBody> &DocraftDocumentContext::body() const {
-        return body_;
-    }
-
-    const std::shared_ptr<model::DocraftFooter> &DocraftDocumentContext::footer() const {
-        return footer_;
-    }
-
-    const std::shared_ptr<generic::DocraftFontApplier> &DocraftDocumentContext::font_applier() const {
-        return font_applier_;
-    }
-
-    const std::shared_ptr<backend::IDocraftLineRenderingBackend> &DocraftDocumentContext::line_backend() const {
-        if (!line_backend_) {
-            line_backend_ = std::dynamic_pointer_cast<backend::IDocraftLineRenderingBackend>(backend_);
-        }
-        return line_backend_;
-    }
-
-    const std::shared_ptr<backend::IDocraftShapeRenderingBackend> &DocraftDocumentContext::shape_backend() const {
-        if (!shape_backend_) {
-            shape_backend_ = std::dynamic_pointer_cast<backend::IDocraftShapeRenderingBackend>(backend_);
-        }
-        return shape_backend_;
-    }
-
-    const std::shared_ptr<backend::IDocraftTextRenderingBackend> &DocraftDocumentContext::text_backend() const {
-        if (!text_backend_) {
-            text_backend_ = std::dynamic_pointer_cast<backend::IDocraftTextRenderingBackend>(backend_);
-        }
-        return text_backend_;
-    }
-
-    const std::shared_ptr<backend::IDocraftImageRenderingBackend> &DocraftDocumentContext::image_backend() const {
-        if (!image_backend_) {
-            image_backend_ = std::dynamic_pointer_cast<backend::IDocraftImageRenderingBackend>(backend_);
-        }
-        return image_backend_;
-    }
-
-    const std::shared_ptr<backend::IDocraftPageRenderingBackend> &DocraftDocumentContext::page_backend() const {
-        if (!page_backend_) {
-            page_backend_ = std::dynamic_pointer_cast<backend::IDocraftPageRenderingBackend>(backend_);
-        }
-        return page_backend_;
-    }
-
-    void DocraftDocumentContext::go_to_first_page() const {
-        const auto &backend = page_backend();
+    void DocraftDocumentContext::go_to_first_page() {
+        const auto backend = backend_cache_.edit_page_backend();
         if (backend) {
             backend->go_to_first_page();
         }
     }
 
-    void DocraftDocumentContext::go_to_previous_page() const {
-        const auto &backend = page_backend();
+    void DocraftDocumentContext::go_to_previous_page() {
+        const auto backend = backend_cache_.edit_page_backend();
         if (backend) {
             backend->go_to_previous_page();
         }
     }
 
-    void DocraftDocumentContext::go_to_last_page() const {
-        const auto &backend = page_backend();
+    void DocraftDocumentContext::go_to_last_page() {
+        const auto backend = backend_cache_.edit_page_backend();
         if (backend) {
             backend->go_to_last_page();
         }
     }
 
+    // Backward compatibility delegates to backend_cache()
+    std::shared_ptr<const backend::IDocraftLineRenderingBackend> DocraftDocumentContext::line_backend() const {
+        return backend_cache_.line_backend();
+    }
+
+    std::shared_ptr<backend::IDocraftLineRenderingBackend> DocraftDocumentContext::edit_line_backend() {
+        return backend_cache_.edit_line_backend();
+    }
+
+    std::shared_ptr<const backend::IDocraftShapeRenderingBackend> DocraftDocumentContext::shape_backend() const {
+        return backend_cache_.shape_backend();
+    }
+
+    std::shared_ptr<backend::IDocraftShapeRenderingBackend> DocraftDocumentContext::edit_shape_backend() {
+        return backend_cache_.edit_shape_backend();
+    }
+
+    std::shared_ptr<const backend::IDocraftTextRenderingBackend> DocraftDocumentContext::text_backend() const {
+        return backend_cache_.text_backend();
+    }
+
+    std::shared_ptr<backend::IDocraftTextRenderingBackend> DocraftDocumentContext::edit_text_backend() {
+        return backend_cache_.edit_text_backend();
+    }
+
+    std::shared_ptr<const backend::IDocraftImageRenderingBackend> DocraftDocumentContext::image_backend() const {
+        return backend_cache_.image_backend();
+    }
+
+    std::shared_ptr<backend::IDocraftImageRenderingBackend> DocraftDocumentContext::edit_image_backend() {
+        return backend_cache_.edit_image_backend();
+    }
+
+    std::shared_ptr<const backend::IDocraftPageRenderingBackend> DocraftDocumentContext::page_backend() const {
+        return backend_cache_.page_backend();
+    }
+
+    std::shared_ptr<backend::IDocraftPageRenderingBackend> DocraftDocumentContext::edit_page_backend() {
+        return backend_cache_.edit_page_backend();
+    }
+
+    // Backward compatibility delegates to section_manager()
+    void DocraftDocumentContext::set_header(const std::shared_ptr<model::DocraftHeader> &header) {
+        section_manager_.set_header(header);
+    }
+
+    std::shared_ptr<const model::DocraftHeader> DocraftDocumentContext::header() const {
+        return section_manager_.header();
+    }
+
+    std::shared_ptr<model::DocraftHeader> DocraftDocumentContext::edit_header() {
+        return section_manager_.edit_header();
+    }
+
+    void DocraftDocumentContext::set_body(const std::shared_ptr<model::DocraftBody> &body) {
+        section_manager_.set_body(body);
+    }
+
+    std::shared_ptr<const model::DocraftBody> DocraftDocumentContext::body() const {
+        return section_manager_.body();
+    }
+
+    std::shared_ptr<model::DocraftBody> DocraftDocumentContext::edit_body() {
+        return section_manager_.edit_body();
+    }
+
+    void DocraftDocumentContext::set_footer(const std::shared_ptr<model::DocraftFooter> &footer) {
+        section_manager_.set_footer(footer);
+    }
+
+    std::shared_ptr<const model::DocraftFooter> DocraftDocumentContext::footer() const {
+        return section_manager_.footer();
+    }
+
+    std::shared_ptr<model::DocraftFooter> DocraftDocumentContext::edit_footer() {
+        return section_manager_.edit_footer();
+    }
+
     void DocraftDocumentContext::set_section_ratios(float header_ratio, float body_ratio, float footer_ratio) {
-        header_ratio_ = header_ratio;
-        body_ratio_ = body_ratio;
-        footer_ratio_ = footer_ratio;
+        section_manager_.set_section_ratios(header_ratio, body_ratio, footer_ratio);
     }
 
     float DocraftDocumentContext::header_ratio() const {
-        return header_ratio_;
+        return section_manager_.header_ratio();
     }
 
     float DocraftDocumentContext::body_ratio() const {
-        return body_ratio_;
+        return section_manager_.body_ratio();
     }
 
     float DocraftDocumentContext::footer_ratio() const {
-        return footer_ratio_;
+        return section_manager_.footer_ratio();
     }
 #pragma endregion
 } // docraft

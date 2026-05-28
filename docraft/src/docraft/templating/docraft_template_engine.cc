@@ -53,7 +53,7 @@ namespace docraft::templating {
         template_variables_.insert({normalized_name, value});
     }
 
-    std::string DocraftTemplateEngine::get_template_variable(const std::string &name) {
+    std::string DocraftTemplateEngine::find_template_variable(const std::string &name) const {
         auto normalized_name = normalize_name(name);
         auto it = template_variables_.find(normalized_name);
         if (it == template_variables_.end()) {
@@ -114,7 +114,7 @@ namespace docraft::templating {
         }
 
         if (auto list = std::dynamic_pointer_cast<model::DocraftList>(node)) {
-            list->apply_text_transform([&](const std::string &text) {
+            list->apply_text_transform([this,&foreach_item](const std::string &text) {
                 return render_template_string(text, foreach_item);
             });
             return;
@@ -220,7 +220,7 @@ namespace docraft::templating {
         }
     }
     std::string DocraftTemplateEngine::render_template_string_foreach_item(const std::string &text,
-                                                                            const nlohmann::json &item) {
+                                                                           const nlohmann::json &item) const {
         std::string result = text;
         size_t pos = 0;
         while ((pos = result.find("${", pos)) != std::string::npos) {
@@ -240,7 +240,7 @@ namespace docraft::templating {
                     }
                 } else if (has_template_variable(variable_name)) {
                     // Handle normal template variables if they are used in foreach item templates
-                    variable_value = get_template_variable(variable_name);
+                    variable_value = find_template_variable(variable_name);
                 } else {
                     LOG_WARNING("Template variable '" + variable_name + "' not found in template engine.");
                     variable_value = text;
@@ -270,7 +270,7 @@ namespace docraft::templating {
             std::string variable_value;
             try {
                 if (has_template_variable(variable_name)) {
-                    variable_value = get_template_variable(variable_name);
+                    variable_value = find_template_variable(variable_name);
                 } else {
                     LOG_WARNING("Template variable '" + variable_name + "' not found in template engine.");
                     variable_value = text;

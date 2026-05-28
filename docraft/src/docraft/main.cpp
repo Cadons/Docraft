@@ -325,7 +325,7 @@ int main(int argc, char *argv[]) {
         docraft::craft::DocraftCraftLanguageParser parser;
         parser.load_from_file(options.craft_file.string());
 
-        auto document = parser.get_document();
+        auto document = parser.edit_document();
         if (!document) {
             throw std::runtime_error("Unable to build document from .craft file");
         }

@@ -16,6 +16,9 @@
 
 #pragma once
 
+#include <memory>
+#include <vector>
+
 #if defined(_WIN32) || defined(__CYGWIN__)
 #if defined(DOCRAFT_BUILD_SHARED_LIBS)
 #define DOCRAFT_LIB __declspec(dllexport)
@@ -24,12 +27,29 @@
 #else
 #define DOCRAFT_LIB
 #endif
+
 #elif defined(__GNUC__) && __GNUC__ >= 4
 #if defined(DOCRAFT_BUILD_SHARED_LIBS)
 #define DOCRAFT_LIB __attribute__((visibility("default")))
 #else
 #define DOCRAFT_LIB
 #endif
+
 #else
 #define DOCRAFT_LIB
 #endif
+
+namespace docraft {
+    template <typename MutableType>
+    std::vector<std::shared_ptr<const MutableType>> to_const_shared_vector(
+        const std::vector<std::shared_ptr<MutableType>> &values) {
+        return {values.begin(), values.end()};
+    }
+
+    template <typename InterfaceType, typename BackendType>
+    void ensure_lazy_backend(std::shared_ptr<InterfaceType> &cache, const std::shared_ptr<BackendType> &backend) {
+        if (!cache) {
+            cache = std::dynamic_pointer_cast<InterfaceType>(backend);
+        }
+    }
+} // namespace docraft

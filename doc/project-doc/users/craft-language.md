@@ -48,7 +48,7 @@ int main() {
 - `DocraftDocument::set_document_path(...)`
   - to choose output folder while keeping `title` as file name.
 - DOM APIs on `DocraftDocument`
-  - to modify parsed content before render (`get_by_name`, `get_by_type`, `traverse_dom`, `add_node`).
+  - to modify parsed content before render (`find_by_name`, `find_by_type`, `traverse_dom`, `add_node`).
 
 Custom backend example:
 
@@ -230,7 +230,7 @@ A common pattern is: parse `.craft`, then modify nodes programmatically before r
 
 ```cpp
 auto title_node = std::dynamic_pointer_cast<docraft::model::DocraftText>(
-    document->get_first_by_name("report_title"));
+    document->take_first_by_name("report_title"));
 if (title_node) {
     title_node->set_text("Q1 2026 - Final Version");
 }
@@ -239,7 +239,7 @@ if (title_node) {
 ### 6.2 Find nodes by type
 
 ```cpp
-auto texts = document->get_by_type<docraft::model::DocraftText>();
+auto texts = document->take_by_type<docraft::model::DocraftText>();
 for (const auto &text : texts) {
     if (text->text().empty()) {
         text->set_visible(false);

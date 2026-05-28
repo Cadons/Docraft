@@ -491,6 +491,14 @@ void DocraftCraftLanguageParser::load_from_file(const std::string &file_path) {
     load_document();
 }
 
+std::shared_ptr<const DocraftDocument> DocraftCraftLanguageParser::get_document() const {
+    return document_;
+}
+
+std::shared_ptr<DocraftDocument> DocraftCraftLanguageParser::edit_document() {
+    return document_;
+}
+
 void DocraftCraftLanguageParser::print_xml_tree(const pugi::xml_node &node, int /*indent*/) {
     node.print(std::cout);
 }
@@ -663,10 +671,6 @@ void DocraftCraftLanguageParser::load_document() {
     }
 
     LOG_INFO("Document loaded successfully with title: " + document_->document_title());
-}
-
-std::shared_ptr<DocraftDocument> DocraftCraftLanguageParser::get_document() const {
-    return document_;
 }
 
 } // namespace docraft::craft
