@@ -16,15 +16,21 @@
 
 #pragma once
 
-#include "docraft/backend/pdf/docraft_haru_backend.h"
+#include "docraft/backend/docraft_font_backend.h"
+#include "docraft/backend/pdf/docraft_haru_shared_state.h"
+
+#include <memory>
 
 namespace docraft::backend::pdf {
+    class DocraftHaruPageBackend;
+
     /**
      * @brief Haru implementation of font operations.
      */
-    class DocraftHaruBackend::FontHaruBackend : public docraft::backend::IDocraftFontBackend {
+    class DocraftHaruFontBackend : public docraft::backend::IDocraftFontBackend {
     public:
-        explicit FontHaruBackend(DocraftHaruBackend &owner);
+        explicit DocraftHaruFontBackend(const std::shared_ptr<DocraftHaruSharedState> &state,
+                                        DocraftHaruPageBackend *page_backend);
 
         const char *register_ttf_font_from_file(const std::string &path, bool embed) const override;
 
@@ -33,7 +39,8 @@ namespace docraft::backend::pdf {
         void set_font(const std::string &internal_name, float size, const char *encoder) const override;
 
     private:
-        DocraftHaruBackend &owner_;
+        std::shared_ptr<DocraftHaruSharedState> state_;
+        DocraftHaruPageBackend *page_backend_ = nullptr;
     };
 } // namespace docraft::backend::pdf
 

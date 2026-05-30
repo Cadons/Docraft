@@ -23,35 +23,51 @@
 #include <hpdf.h>
 
 namespace docraft::backend::pdf {
-    DocraftHaruBackend::FontHaruBackend::FontHaruBackend(DocraftHaruBackend &owner) : owner_(owner) {
+    DocraftHaruFontBackend::DocraftHaruFontBackend(const std::shared_ptr<DocraftHaruSharedState> &state,
+                                                   DocraftHaruPageBackend *page_backend)
+        : state_(state), page_backend_(page_backend) {
     }
 
-    const char *DocraftHaruBackend::FontHaruBackend::register_ttf_font_from_file(const std::string &path,
-        bool embed) const {
-        const char *result = HPDF_LoadTTFontFromFile(owner_.pdf_, path.c_str(), embed ? HPDF_TRUE : HPDF_FALSE);
+    const char *DocraftHaruFontBackend::register_ttf_font_from_file(const std::string &path,
+                                                                    bool embed) const {
+        const auto pdf = state_ ? state_->pdf : nullptr;
+        if (!pdf) {
+            return nullptr;
+        }
+        const char *result = HPDF_LoadTTFontFromFile(pdf,
+                                                     path.c_str(),
+                                                     embed ? HPDF_TRUE : HPDF_FALSE);
         if (!result) {
-            HPDF_ResetError(owner_.pdf_);
+            HPDF_ResetError(pdf);
         }
         return result;
     }
 
-    bool DocraftHaruBackend::FontHaruBackend::can_use_font(const std::string &internal_name,
-                                                           const char *encoder) const {
-        HPDF_Font font = HPDF_GetFont(owner_.pdf_, internal_name.c_str(), encoder);
-        if (!font || HPDF_GetError(owner_.pdf_) != HPDF_OK) {
-            HPDF_ResetError(owner_.pdf_);
+    bool DocraftHaruFontBackend::can_use_font(const std::string &internal_name,
+                                              const char *encoder) const {
+        const auto pdf = state_ ? state_->pdf : nullptr;
+        if (!pdf) {
+            return false;
+        }
+        HPDF_Font font = HPDF_GetFont(pdf, internal_name.c_str(), encoder);
+        if (!font || HPDF_GetError(pdf) != HPDF_OK) {
+            HPDF_ResetError(pdf);
             return false;
         }
         return true;
     }
 
-    void DocraftHaruBackend::FontHaruBackend::set_font(const std::string &internal_name,
-                                                       float size,
-                                                       const char *encoder) const {
-        HPDF_Font font = HPDF_GetFont(owner_.pdf_, internal_name.c_str(), encoder);
+    void DocraftHaruFontBackend::set_font(const std::string &internal_name,
+                                          float size,
+                                          const char *encoder) const {
+        const auto pdf = state_ ? state_->pdf : nullptr;
+        if (!pdf) {
+            throw std::runtime_error("Haru document is not initialized");
+        }
+        HPDF_Font font = HPDF_GetFont(pdf, internal_name.c_str(), encoder);
         if (!font) {
             throw std::runtime_error("Failed to resolve font: " + internal_name);
         }
-        HPDF_Page_SetFontAndSize(owner_.page_backend_->current_page(), font, size);
+        HPDF_Page_SetFontAndSize(page_backend_->current_page(), font, size);
     }
 } // namespace docraft::backend::pdf

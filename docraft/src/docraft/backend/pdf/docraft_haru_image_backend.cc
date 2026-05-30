@@ -22,74 +22,76 @@
 #include <hpdf.h>
 
 namespace docraft::backend::pdf {
-    DocraftHaruBackend::ImageHaruBackend::ImageHaruBackend(DocraftHaruBackend &owner) : owner_(owner) {
+    DocraftHaruImageBackend::DocraftHaruImageBackend(const std::shared_ptr<DocraftHaruSharedState> &state,
+                                                     DocraftHaruPageBackend *page_backend)
+        : state_(state), page_backend_(page_backend) {
     }
 
-    void DocraftHaruBackend::ImageHaruBackend::draw_png_image(const std::string &path,
-                                                              float x,
-                                                              float y,
-                                                              float width,
-                                                              float height) const {
-        auto *image = HPDF_LoadPngImageFromFile(owner_.pdf_, path.c_str());
+    void DocraftHaruImageBackend::draw_png_image(const std::string &path,
+                                                 float x,
+                                                 float y,
+                                                 float width,
+                                                 float height) const {
+        auto *image = HPDF_LoadPngImageFromFile(state_ ? state_->pdf : nullptr, path.c_str());
         if (!image) {
             throw std::runtime_error("Failed to load PNG image: " + path);
         }
-        HPDF_Page_DrawImage(owner_.page_backend_->current_page(), image, x, y, width, height);
+        HPDF_Page_DrawImage(page_backend_->current_page(), image, x, y, width, height);
     }
 
-    void DocraftHaruBackend::ImageHaruBackend::draw_png_image_from_memory(const unsigned char *data,
-                                                                          std::size_t size,
-                                                                          float x,
-                                                                          float y,
-                                                                          float width,
-                                                                          float height) const {
+    void DocraftHaruImageBackend::draw_png_image_from_memory(const unsigned char *data,
+                                                             std::size_t size,
+                                                             float x,
+                                                             float y,
+                                                             float width,
+                                                             float height) const {
         auto *image = HPDF_LoadPngImageFromMem(
-            owner_.pdf_,
+            state_ ? state_->pdf : nullptr,
             reinterpret_cast<const HPDF_BYTE *>(data),
             static_cast<HPDF_UINT>(size));
         if (!image) {
             throw std::runtime_error("Failed to load PNG image from memory");
         }
-        HPDF_Page_DrawImage(owner_.page_backend_->current_page(), image, x, y, width, height);
+        HPDF_Page_DrawImage(page_backend_->current_page(), image, x, y, width, height);
     }
 
-    void DocraftHaruBackend::ImageHaruBackend::draw_jpeg_image(const std::string &path,
-                                                               float x,
-                                                               float y,
-                                                               float width,
-                                                               float height) const {
-        auto *image = HPDF_LoadJpegImageFromFile(owner_.pdf_, path.c_str());
+    void DocraftHaruImageBackend::draw_jpeg_image(const std::string &path,
+                                                  float x,
+                                                  float y,
+                                                  float width,
+                                                  float height) const {
+        auto *image = HPDF_LoadJpegImageFromFile(state_ ? state_->pdf : nullptr, path.c_str());
         if (!image) {
             throw std::runtime_error("Failed to load JPEG image: " + path);
         }
-        HPDF_Page_DrawImage(owner_.page_backend_->current_page(), image, x, y, width, height);
+        HPDF_Page_DrawImage(page_backend_->current_page(), image, x, y, width, height);
     }
 
-    void DocraftHaruBackend::ImageHaruBackend::draw_jpeg_image_from_memory(const unsigned char *data,
-                                                                           std::size_t size,
-                                                                           float x,
-                                                                           float y,
-                                                                           float width,
-                                                                           float height) const {
+    void DocraftHaruImageBackend::draw_jpeg_image_from_memory(const unsigned char *data,
+                                                              std::size_t size,
+                                                              float x,
+                                                              float y,
+                                                              float width,
+                                                              float height) const {
         auto *image = HPDF_LoadJpegImageFromMem(
-            owner_.pdf_,
+            state_ ? state_->pdf : nullptr,
             reinterpret_cast<const HPDF_BYTE *>(data),
             static_cast<HPDF_UINT>(size));
         if (!image) {
             throw std::runtime_error("Failed to load JPEG image from memory");
         }
-        HPDF_Page_DrawImage(owner_.page_backend_->current_page(), image, x, y, width, height);
+        HPDF_Page_DrawImage(page_backend_->current_page(), image, x, y, width, height);
     }
 
-    void DocraftHaruBackend::ImageHaruBackend::draw_raw_rgb_image(const std::string &path,
-                                                                  int pixel_width,
-                                                                  int pixel_height,
-                                                                  float x,
-                                                                  float y,
-                                                                  float width,
-                                                                  float height) const {
+    void DocraftHaruImageBackend::draw_raw_rgb_image(const std::string &path,
+                                                     int pixel_width,
+                                                     int pixel_height,
+                                                     float x,
+                                                     float y,
+                                                     float width,
+                                                     float height) const {
         auto *image = HPDF_LoadRawImageFromFile(
-            owner_.pdf_,
+            state_ ? state_->pdf : nullptr,
             path.c_str(),
             static_cast<HPDF_UINT>(pixel_width),
             static_cast<HPDF_UINT>(pixel_height),
@@ -97,19 +99,19 @@ namespace docraft::backend::pdf {
         if (!image) {
             throw std::runtime_error("Failed to load raw RGB image: " + path);
         }
-        HPDF_Page_DrawImage(owner_.page_backend_->current_page(), image, x, y, width, height);
+        HPDF_Page_DrawImage(page_backend_->current_page(), image, x, y, width, height);
     }
 
-    void DocraftHaruBackend::ImageHaruBackend::draw_raw_rgb_image_from_memory(const unsigned char *data,
-                                                                              int pixel_width,
-                                                                              int pixel_height,
-                                                                              float x,
-                                                                              float y,
-                                                                              float width,
-                                                                              float height) const {
+    void DocraftHaruImageBackend::draw_raw_rgb_image_from_memory(const unsigned char *data,
+                                                                 int pixel_width,
+                                                                 int pixel_height,
+                                                                 float x,
+                                                                 float y,
+                                                                 float width,
+                                                                 float height) const {
         constexpr HPDF_UINT kBitsPerComponent = 8;
         auto *image = HPDF_LoadRawImageFromMem(
-            owner_.pdf_,
+            state_ ? state_->pdf : nullptr,
             reinterpret_cast<const HPDF_BYTE *>(data),
             static_cast<HPDF_UINT>(pixel_width),
             static_cast<HPDF_UINT>(pixel_height),
@@ -118,7 +120,7 @@ namespace docraft::backend::pdf {
         if (!image) {
             throw std::runtime_error("Failed to load raw RGB image from memory");
         }
-        HPDF_Page_DrawImage(owner_.page_backend_->current_page(), image, x, y, width, height);
+        HPDF_Page_DrawImage(page_backend_->current_page(), image, x, y, width, height);
     }
 } // namespace docraft::backend::pdf
 

@@ -73,20 +73,25 @@ namespace docraft::backend::pdf {
         }
     } // namespace
 
-    DocraftHaruBackend::MetadataHaruBackend::MetadataHaruBackend(DocraftHaruBackend &owner) : owner_(owner) {
+    DocraftHaruMetadataBackend::DocraftHaruMetadataBackend(const std::shared_ptr<DocraftHaruSharedState> &state)
+        : state_(state) {
     }
 
-    void DocraftHaruBackend::MetadataHaruBackend::set_document_metadata(const DocraftDocumentMetadata &metadata) {
-        set_info_date_attr_if_present(owner_.pdf_, HPDF_INFO_CREATION_DATE, metadata.creation_date(), "creation_date");
-        set_info_date_attr_if_present(owner_.pdf_, HPDF_INFO_MOD_DATE, metadata.modification_date(),
+    void DocraftHaruMetadataBackend::set_document_metadata(const DocraftDocumentMetadata &metadata) {
+        const auto pdf = state_ ? state_->pdf : nullptr;
+        if (!pdf) {
+            throw std::runtime_error("Haru document is not initialized");
+        }
+        set_info_date_attr_if_present(pdf, HPDF_INFO_CREATION_DATE, metadata.creation_date(), "creation_date");
+        set_info_date_attr_if_present(pdf, HPDF_INFO_MOD_DATE, metadata.modification_date(),
                                       "modification_date");
-        set_info_attr_if_present(owner_.pdf_, HPDF_INFO_AUTHOR, metadata.author(), "author");
-        set_info_attr_if_present(owner_.pdf_, HPDF_INFO_CREATOR, metadata.creator(), "creator");
-        set_info_attr_if_present(owner_.pdf_, HPDF_INFO_PRODUCER, metadata.producer(), "producer");
-        set_info_attr_if_present(owner_.pdf_, HPDF_INFO_TITLE, metadata.title(), "title");
-        set_info_attr_if_present(owner_.pdf_, HPDF_INFO_SUBJECT, metadata.subject(), "subject");
-        set_info_attr_if_present(owner_.pdf_, HPDF_INFO_KEYWORDS, metadata.keywords(), "keywords");
-        set_info_attr_if_present(owner_.pdf_, HPDF_INFO_TRAPPED, metadata.trapped(), "trapped");
-        set_info_attr_if_present(owner_.pdf_, HPDF_INFO_GTS_PDFX, metadata.gts_pdfx(), "gts_pdfx");
+        set_info_attr_if_present(pdf, HPDF_INFO_AUTHOR, metadata.author(), "author");
+        set_info_attr_if_present(pdf, HPDF_INFO_CREATOR, metadata.creator(), "creator");
+        set_info_attr_if_present(pdf, HPDF_INFO_PRODUCER, metadata.producer(), "producer");
+        set_info_attr_if_present(pdf, HPDF_INFO_TITLE, metadata.title(), "title");
+        set_info_attr_if_present(pdf, HPDF_INFO_SUBJECT, metadata.subject(), "subject");
+        set_info_attr_if_present(pdf, HPDF_INFO_KEYWORDS, metadata.keywords(), "keywords");
+        set_info_attr_if_present(pdf, HPDF_INFO_TRAPPED, metadata.trapped(), "trapped");
+        set_info_attr_if_present(pdf, HPDF_INFO_GTS_PDFX, metadata.gts_pdfx(), "gts_pdfx");
     }
 } // namespace docraft::backend::pdf

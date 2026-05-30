@@ -16,22 +16,25 @@
 
 #pragma once
 
-#include "docraft/backend/pdf/docraft_haru_backend.h"
+#include "docraft/backend/docraft_output_backend.h"
+#include "docraft/backend/pdf/docraft_haru_shared_state.h"
+
+#include <memory>
 
 namespace docraft::backend::pdf {
     /**
      * @brief Haru implementation of output operations.
      */
-    class DocraftHaruBackend::OutputHaruBackend : public docraft::backend::IDocraftOutputBackend {
+    class DocraftHaruOutputBackend : public docraft::backend::IDocraftOutputBackend {
     public:
-        explicit OutputHaruBackend(DocraftHaruBackend &owner);
+        explicit DocraftHaruOutputBackend(const std::shared_ptr<DocraftHaruSharedState> &state);
 
         void save_to_file(const std::string &path) const override;
 
         [[nodiscard]] std::string file_extension() const override;
 
     private:
-        DocraftHaruBackend &owner_;
+        std::shared_ptr<DocraftHaruSharedState> state_;
     };
 } // namespace docraft::backend::pdf
 

@@ -14,26 +14,16 @@
  * limitations under the License.
  */
 
-#include "docraft/backend/pdf/docraft_haru_output_backend.h"
-
-#include <stdexcept>
+#pragma once
 
 #include <hpdf.h>
 
 namespace docraft::backend::pdf {
-    DocraftHaruOutputBackend::DocraftHaruOutputBackend(const std::shared_ptr<DocraftHaruSharedState> &state)
-        : state_(state) {
-    }
-
-    void DocraftHaruOutputBackend::save_to_file(const std::string &path) const {
-        const auto pdf = state_ ? state_->pdf : nullptr;
-        if (!pdf) {
-            throw std::runtime_error("Haru document is not initialized");
-        }
-        HPDF_SaveToFile(pdf, path.c_str());
-    }
-
-    std::string DocraftHaruOutputBackend::file_extension() const {
-        return ".pdf";
-    }
+    /**
+     * @brief Shared Haru document state used by capability backends.
+     */
+    struct DocraftHaruSharedState {
+        HPDF_Doc pdf = nullptr;
+    };
 } // namespace docraft::backend::pdf
+

@@ -29,93 +29,73 @@
 
 namespace docraft::backend {
     /**
-     * @brief Aggregated backend interface.
+     * @brief Rendering capability contract (geometry, text, images, pages).
      */
-    class DOCRAFT_LIB IDocraftBackend {
+    class DOCRAFT_LIB IDocraftRenderingCapabilityProvider {
+    public:
+        virtual ~IDocraftRenderingCapabilityProvider() = default;
+
+        [[nodiscard]] virtual const IDocraftLineRenderingBackend *line_rendering() const = 0;
+
+        [[nodiscard]] virtual IDocraftLineRenderingBackend *edit_line_rendering() = 0;
+
+        [[nodiscard]] virtual const IDocraftTextRenderingBackend *text_rendering() const = 0;
+
+        [[nodiscard]] virtual IDocraftTextRenderingBackend *edit_text_rendering() = 0;
+
+        [[nodiscard]] virtual const IDocraftShapeRenderingBackend *shape_rendering() const = 0;
+
+        [[nodiscard]] virtual IDocraftShapeRenderingBackend *edit_shape_rendering() = 0;
+
+        [[nodiscard]] virtual const IDocraftImageRenderingBackend *image_rendering() const = 0;
+
+        [[nodiscard]] virtual IDocraftImageRenderingBackend *edit_image_rendering() = 0;
+
+        [[nodiscard]] virtual const IDocraftPageRenderingBackend *page_rendering() const = 0;
+
+        [[nodiscard]] virtual IDocraftPageRenderingBackend *edit_page_rendering() = 0;
+    };
+
+    /**
+     * @brief Resource capability contract (fonts and related resources).
+     */
+    class DOCRAFT_LIB IDocraftResourceCapabilityProvider {
+    public:
+        virtual ~IDocraftResourceCapabilityProvider() = default;
+
+        [[nodiscard]] virtual const IDocraftFontBackend *font_backend() const = 0;
+
+        [[nodiscard]] virtual IDocraftFontBackend *edit_font_backend() = 0;
+    };
+
+    /**
+     * @brief Document lifecycle capability contract (metadata and persistence).
+     */
+    class DOCRAFT_LIB IDocraftLifecycleCapabilityProvider {
+    public:
+        virtual ~IDocraftLifecycleCapabilityProvider() = default;
+
+        [[nodiscard]] virtual const IDocraftOutputBackend *output_backend() const = 0;
+
+        [[nodiscard]] virtual IDocraftOutputBackend *edit_output_backend() = 0;
+
+        [[nodiscard]] virtual const IDocraftMetadataBackend *metadata_backend() const = 0;
+
+        [[nodiscard]] virtual IDocraftMetadataBackend *edit_metadata_backend() = 0;
+    };
+
+    /**
+     * @brief Aggregated backend interface.
+     *
+     * Backward-compatible facade that aggregates semantic capability providers.
+     */
+    class DOCRAFT_LIB IDocraftBackend : public IDocraftRenderingCapabilityProvider,
+                                        public IDocraftResourceCapabilityProvider,
+                                        public IDocraftLifecycleCapabilityProvider {
     public:
         /**
          * @brief Virtual destructor.
          */
         virtual ~IDocraftBackend() = default;
-
-        /**
-         * @brief Returns the line rendering capability, if available.
-         */
-        [[nodiscard]] virtual const IDocraftLineRenderingBackend *line_rendering() const = 0;
-
-        /**
-         * @brief Returns the editable line rendering capability, if available.
-         */
-        [[nodiscard]] virtual IDocraftLineRenderingBackend *edit_line_rendering() = 0;
-
-        /**
-         * @brief Returns the text rendering capability, if available.
-         */
-        [[nodiscard]] virtual const IDocraftTextRenderingBackend *text_rendering() const = 0;
-
-        /**
-         * @brief Returns the editable text rendering capability, if available.
-         */
-        [[nodiscard]] virtual IDocraftTextRenderingBackend *edit_text_rendering() = 0;
-
-        /**
-         * @brief Returns the shape rendering capability, if available.
-         */
-        [[nodiscard]] virtual const IDocraftShapeRenderingBackend *shape_rendering() const = 0;
-
-        /**
-         * @brief Returns the editable shape rendering capability, if available.
-         */
-        [[nodiscard]] virtual IDocraftShapeRenderingBackend *edit_shape_rendering() = 0;
-
-        /**
-         * @brief Returns the image rendering capability, if available.
-         */
-        [[nodiscard]] virtual const IDocraftImageRenderingBackend *image_rendering() const = 0;
-
-        /**
-         * @brief Returns the editable image rendering capability, if available.
-         */
-        [[nodiscard]] virtual IDocraftImageRenderingBackend *edit_image_rendering() = 0;
-
-        /**
-         * @brief Returns the page rendering capability, if available.
-         */
-        [[nodiscard]] virtual const IDocraftPageRenderingBackend *page_rendering() const = 0;
-
-        /**
-         * @brief Returns the editable page rendering capability, if available.
-         */
-        [[nodiscard]] virtual IDocraftPageRenderingBackend *edit_page_rendering() = 0;
-
-        /**
-         * @brief Returns the output capability, if available.
-         */
-        [[nodiscard]] virtual const IDocraftOutputBackend *output_backend() const = 0;
-
-        /**
-         * @brief Returns the editable output capability, if available.
-         */
-        [[nodiscard]] virtual IDocraftOutputBackend *edit_output_backend() = 0;
-
-        /**
-         * @brief Returns the font capability, if available.
-         */
-        [[nodiscard]] virtual const IDocraftFontBackend *font_backend() const = 0;
-
-        /**
-         * @brief Returns the editable font capability, if available.
-         */
-        [[nodiscard]] virtual IDocraftFontBackend *edit_font_backend() = 0;
-
-        /**
-         * @brief Returns the metadata capability, if available.
-         */
-        [[nodiscard]] virtual const IDocraftMetadataBackend *metadata_backend() const = 0;
-
-        /**
-         * @brief Returns the editable metadata capability, if available.
-         */
-        [[nodiscard]] virtual IDocraftMetadataBackend *edit_metadata_backend() = 0;
     };
 } // docraft::backend

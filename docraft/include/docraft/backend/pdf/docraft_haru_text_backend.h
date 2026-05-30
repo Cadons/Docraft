@@ -16,18 +16,24 @@
 
 #pragma once
 
-#include "docraft/backend/pdf/docraft_haru_backend.h"
+#include "docraft/backend/docraft_text_rendering_backend.h"
+#include "docraft/backend/pdf/docraft_haru_shared_state.h"
+
+#include <memory>
 
 namespace docraft::backend::pdf {
+    class DocraftHaruPageBackend;
+
     /**
      * @brief Haru implementation of text rendering operations.
      */
-    class DocraftHaruBackend::TextHaruBackend : public docraft::backend::IDocraftTextRenderingBackend {
+    class DocraftHaruTextBackend : public docraft::backend::IDocraftTextRenderingBackend {
     public:
         /**
          * @brief Creates a text backend bound to a Haru document owner.
          */
-        explicit TextHaruBackend(DocraftHaruBackend &owner);
+        explicit DocraftHaruTextBackend(const std::shared_ptr<DocraftHaruSharedState> &state,
+                                        DocraftHaruPageBackend *page_backend);
 
         /**
          * @brief Begins a text object on the current page.
@@ -66,7 +72,8 @@ namespace docraft::backend::pdf {
         float measure_text_width(const std::string &text) const override;
 
     private:
-        DocraftHaruBackend &owner_;
+        std::shared_ptr<DocraftHaruSharedState> state_;
+        DocraftHaruPageBackend *page_backend_ = nullptr;
     };
 } // namespace docraft::backend::pdf
 

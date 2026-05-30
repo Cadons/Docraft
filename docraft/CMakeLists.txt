@@ -162,6 +162,7 @@ set(DOCRAFT_SOURCES
         include/docraft/backend/pdf/docraft_haru_image_backend.h
         src/docraft/backend/pdf/docraft_haru_page_backend.cc
         include/docraft/backend/pdf/docraft_haru_page_backend.h
+        include/docraft/backend/pdf/docraft_haru_shared_state.h
         src/docraft/model/docraft_settings.cc
         include/docraft/model/docraft_settings.h
         include/docraft/model/docraft_page_format.h

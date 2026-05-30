@@ -16,20 +16,23 @@
 
 #pragma once
 
-#include "docraft/backend/pdf/docraft_haru_backend.h"
+#include "docraft/backend/docraft_metadata_backend.h"
+#include "docraft/backend/pdf/docraft_haru_shared_state.h"
+
+#include <memory>
 
 namespace docraft::backend::pdf {
     /**
      * @brief Haru implementation of metadata operations.
      */
-    class DocraftHaruBackend::MetadataHaruBackend : public docraft::backend::IDocraftMetadataBackend {
+    class DocraftHaruMetadataBackend : public docraft::backend::IDocraftMetadataBackend {
     public:
-        explicit MetadataHaruBackend(DocraftHaruBackend &owner);
+        explicit DocraftHaruMetadataBackend(const std::shared_ptr<DocraftHaruSharedState> &state);
 
         void set_document_metadata(const DocraftDocumentMetadata &metadata) override;
 
     private:
-        DocraftHaruBackend &owner_;
+        std::shared_ptr<DocraftHaruSharedState> state_;
     };
 } // namespace docraft::backend::pdf
 

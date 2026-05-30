@@ -20,45 +20,47 @@
 #include <hpdf.h>
 
 namespace docraft::backend::pdf {
-    DocraftHaruBackend::TextHaruBackend::TextHaruBackend(DocraftHaruBackend &owner) : owner_(owner) {
+    DocraftHaruTextBackend::DocraftHaruTextBackend(const std::shared_ptr<DocraftHaruSharedState> &state,
+                                                   DocraftHaruPageBackend *page_backend)
+        : state_(state), page_backend_(page_backend) {
     }
 
-    void DocraftHaruBackend::TextHaruBackend::begin_text() const {
-        HPDF_Page_BeginText(owner_.page_backend_->current_page());
+    void DocraftHaruTextBackend::begin_text() const {
+        HPDF_Page_BeginText(page_backend_->current_page());
     }
 
-    void DocraftHaruBackend::TextHaruBackend::end_text() const {
-        HPDF_Page_EndText(owner_.page_backend_->current_page());
+    void DocraftHaruTextBackend::end_text() const {
+        HPDF_Page_EndText(page_backend_->current_page());
     }
 
-    void DocraftHaruBackend::TextHaruBackend::draw_text(const std::string &text, float x, float y) const {
-        HPDF_Page_TextOut(owner_.page_backend_->current_page(), x, y, text.c_str());
+    void DocraftHaruTextBackend::draw_text(const std::string &text, float x, float y) const {
+        HPDF_Page_TextOut(page_backend_->current_page(), x, y, text.c_str());
     }
 
-    void DocraftHaruBackend::TextHaruBackend::set_text_color(float r, float g, float b) const {
-        HPDF_Page_SetRGBFill(owner_.page_backend_->current_page(), r, g, b);
+    void DocraftHaruTextBackend::set_text_color(float r, float g, float b) const {
+        HPDF_Page_SetRGBFill(page_backend_->current_page(), r, g, b);
     }
 
-    void DocraftHaruBackend::TextHaruBackend::draw_text_matrix(const std::string &text,
-                                                               float scale_x,
-                                                               float skew_x,
-                                                               float skew_y,
-                                                               float scale_y,
-                                                               float translate_x,
-                                                               float translate_y) const {
+    void DocraftHaruTextBackend::draw_text_matrix(const std::string &text,
+                                                  float scale_x,
+                                                  float skew_x,
+                                                  float skew_y,
+                                                  float scale_y,
+                                                  float translate_x,
+                                                  float translate_y) const {
         HPDF_Page_SetTextMatrix(
-            owner_.page_backend_->current_page(),
+            page_backend_->current_page(),
             scale_x,
             skew_x,
             skew_y,
             scale_y,
             translate_x,
             translate_y);
-        HPDF_Page_ShowText(owner_.page_backend_->current_page(), text.c_str());
+        HPDF_Page_ShowText(page_backend_->current_page(), text.c_str());
     }
 
-    float DocraftHaruBackend::TextHaruBackend::measure_text_width(const std::string &text) const {
-        return HPDF_Page_TextWidth(owner_.page_backend_->current_page(), text.c_str());
+    float DocraftHaruTextBackend::measure_text_width(const std::string &text) const {
+        return HPDF_Page_TextWidth(page_backend_->current_page(), text.c_str());
     }
 } // namespace docraft::backend::pdf
 

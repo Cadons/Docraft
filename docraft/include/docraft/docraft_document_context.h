@@ -45,6 +45,26 @@ namespace docraft {
      */
     class DOCRAFT_LIB DocraftDocumentContext {
     public:
+        struct RenderingServices {
+            std::shared_ptr<backend::IDocraftBackend> backend;
+            management::DocraftBackendCache *backend_cache = nullptr;
+        };
+
+        struct LayoutServices {
+            DocraftCursor *cursor = nullptr;
+            float page_width = 0.0F;
+            float page_height = 0.0F;
+            float available_space = 0.0F;
+        };
+
+        struct TypographyServices {
+            std::shared_ptr<docraft::generic::DocraftFontApplier> font_applier;
+        };
+
+        struct NavigationServices {
+            management::DocraftDocumentSectionManager *section_manager = nullptr;
+        };
+
         /**
          * @brief Constructs a context with a default backend.
          */
@@ -68,6 +88,22 @@ namespace docraft {
         [[nodiscard]] std::shared_ptr<const backend::IDocraftBackend> rendering_backend() const;
 
         [[nodiscard]] std::shared_ptr<backend::IDocraftBackend> edit_rendering_backend();
+
+        [[nodiscard]] RenderingServices rendering_services();
+
+        [[nodiscard]] LayoutServices layout_services();
+
+        [[nodiscard]] TypographyServices typography_services();
+
+        [[nodiscard]] NavigationServices navigation_services();
+
+        [[nodiscard]] RenderingServices rendering_services() const;
+
+        [[nodiscard]] LayoutServices layout_services() const;
+
+        [[nodiscard]] TypographyServices typography_services() const;
+
+        [[nodiscard]] NavigationServices navigation_services() const;
 
         /**
          * @brief Returns the layout cursor.

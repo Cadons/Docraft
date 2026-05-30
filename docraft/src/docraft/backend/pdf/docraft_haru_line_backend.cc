@@ -20,21 +20,23 @@
 #include <hpdf.h>
 
 namespace docraft::backend::pdf {
-    DocraftHaruBackend::LineHaruBackend::LineHaruBackend(DocraftHaruBackend &owner) : owner_(owner) {
+    DocraftHaruLineBackend::DocraftHaruLineBackend(const std::shared_ptr<DocraftHaruSharedState> &state,
+                                                   DocraftHaruPageBackend *page_backend)
+        : state_(state), page_backend_(page_backend) {
     }
 
-    void DocraftHaruBackend::LineHaruBackend::set_stroke_color(float r, float g, float b) const {
-        HPDF_Page_SetRGBStroke(owner_.page_backend_->current_page(), r, g, b);
+    void DocraftHaruLineBackend::set_stroke_color(float r, float g, float b) const {
+        HPDF_Page_SetRGBStroke(page_backend_->current_page(), r, g, b);
     }
 
-    void DocraftHaruBackend::LineHaruBackend::set_line_width(float thickness) const {
-        HPDF_Page_SetLineWidth(owner_.page_backend_->current_page(), thickness);
+    void DocraftHaruLineBackend::set_line_width(float thickness) const {
+        HPDF_Page_SetLineWidth(page_backend_->current_page(), thickness);
     }
 
-    void DocraftHaruBackend::LineHaruBackend::draw_line(float x1, float y1, float x2, float y2) const {
-        HPDF_Page_MoveTo(owner_.page_backend_->current_page(), x1, y1);
-        HPDF_Page_LineTo(owner_.page_backend_->current_page(), x2, y2);
-        HPDF_Page_Stroke(owner_.page_backend_->current_page());
+    void DocraftHaruLineBackend::draw_line(float x1, float y1, float x2, float y2) const {
+        HPDF_Page_MoveTo(page_backend_->current_page(), x1, y1);
+        HPDF_Page_LineTo(page_backend_->current_page(), x2, y2);
+        HPDF_Page_Stroke(page_backend_->current_page());
     }
 } // namespace docraft::backend::pdf
 

@@ -50,19 +50,20 @@ namespace docraft::backend::pdf {
         }
     } // namespace
 
-    DocraftHaruBackend::PageHaruBackend::PageHaruBackend(DocraftHaruBackend &owner) : owner_(owner) {
+    DocraftHaruPageBackend::DocraftHaruPageBackend(
+        const std::shared_ptr<DocraftHaruSharedState> &state) : state_(state) {
     }
 
-    float DocraftHaruBackend::PageHaruBackend::page_width() const {
+    float DocraftHaruPageBackend::page_width() const {
         return HPDF_Page_GetWidth(current_page());
     }
 
-    float DocraftHaruBackend::PageHaruBackend::page_height() const {
+    float DocraftHaruPageBackend::page_height() const {
         return HPDF_Page_GetHeight(current_page());
     }
 
-    void DocraftHaruBackend::PageHaruBackend::add_new_page() {
-        HPDF_Page new_page = HPDF_AddPage(owner_.pdf_);
+    void DocraftHaruPageBackend::add_new_page() {
+        HPDF_Page new_page = HPDF_AddPage(state_ ? state_->pdf : nullptr);
         if (!new_page) {
             throw std::runtime_error("Failed to create a new page");
         }
@@ -71,7 +72,7 @@ namespace docraft::backend::pdf {
         current_page_number_ = pages_.size() - 1;
     }
 
-    void DocraftHaruBackend::PageHaruBackend::move_to_next_page() {
+    void DocraftHaruPageBackend::move_to_next_page() {
         if (current_page_number_ + 1 < pages_.size()) {
             ++current_page_number_;
             return;
@@ -79,7 +80,7 @@ namespace docraft::backend::pdf {
         throw std::runtime_error("Already at the last page, cannot move to next page");
     }
 
-    void DocraftHaruBackend::PageHaruBackend::go_to_page(std::size_t page_number) {
+    void DocraftHaruPageBackend::go_to_page(std::size_t page_number) {
         if (page_number < pages_.size()) {
             current_page_number_ = page_number;
             return;
@@ -87,29 +88,29 @@ namespace docraft::backend::pdf {
         throw std::runtime_error("Invalid page number: " + std::to_string(page_number));
     }
 
-    void DocraftHaruBackend::PageHaruBackend::go_to_first_page() {
+    void DocraftHaruPageBackend::go_to_first_page() {
         if (pages_.empty()) {
             throw std::runtime_error("No pages in document");
         }
         current_page_number_ = 0;
     }
 
-    void DocraftHaruBackend::PageHaruBackend::go_to_previous_page() {
+    void DocraftHaruPageBackend::go_to_previous_page() {
         if (current_page_number_ == 0) {
             throw std::runtime_error("Already at the first page, cannot move to previous page");
         }
         --current_page_number_;
     }
 
-    void DocraftHaruBackend::PageHaruBackend::go_to_last_page() {
+    void DocraftHaruPageBackend::go_to_last_page() {
         if (pages_.empty()) {
             throw std::runtime_error("No pages in document");
         }
         current_page_number_ = pages_.size() - 1;
     }
 
-    void DocraftHaruBackend::PageHaruBackend::set_page_format(model::DocraftPageSize size,
-                                                              model::DocraftPageOrientation orientation) {
+    void DocraftHaruPageBackend::set_page_format(model::DocraftPageSize size,
+                                                 model::DocraftPageOrientation orientation) {
         page_size_ = to_hpdf_size(size);
         page_direction_ = to_hpdf_direction(orientation);
         for (auto &page: pages_) {
@@ -119,15 +120,15 @@ namespace docraft::backend::pdf {
         }
     }
 
-    std::size_t DocraftHaruBackend::PageHaruBackend::current_page_number() const {
+    std::size_t DocraftHaruPageBackend::current_page_number() const {
         return current_page_number_ + 1;
     }
 
-    std::size_t DocraftHaruBackend::PageHaruBackend::total_page_count() const {
+    std::size_t DocraftHaruPageBackend::total_page_count() const {
         return pages_.size();
     }
 
-    HPDF_Page DocraftHaruBackend::PageHaruBackend::current_page() const {
+    HPDF_Page DocraftHaruPageBackend::current_page() const {
         if (pages_.empty()) {
             throw std::runtime_error("No pages in document");
         }
@@ -137,14 +138,14 @@ namespace docraft::backend::pdf {
         return pages_[current_page_number_];
     }
 
-    std::size_t DocraftHaruBackend::PageHaruBackend::current_page_index() const {
+    std::size_t DocraftHaruPageBackend::current_page_index() const {
         if (pages_.empty()) {
             throw std::runtime_error("No pages in document");
         }
         return current_page_number_;
     }
 
-    void DocraftHaruBackend::PageHaruBackend::apply_page_format(HPDF_Page page) const {
+    void DocraftHaruPageBackend::apply_page_format(HPDF_Page page) const {
         HPDF_Page_SetSize(page, page_size_, page_direction_);
     }
 } // namespace docraft::backend::pdf

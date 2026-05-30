@@ -16,18 +16,24 @@
 
 #pragma once
 
-#include "docraft/backend/pdf/docraft_haru_backend.h"
+#include "docraft/backend/docraft_shape_rendering_backend.h"
+#include "docraft/backend/pdf/docraft_haru_shared_state.h"
+
+#include <memory>
 
 namespace docraft::backend::pdf {
+    class DocraftHaruPageBackend;
+
     /**
      * @brief Haru implementation of shape rendering operations.
      */
-    class DocraftHaruBackend::ShapeHaruBackend : public docraft::backend::IDocraftShapeRenderingBackend {
+    class DocraftHaruShapeBackend : public docraft::backend::IDocraftShapeRenderingBackend {
     public:
         /**
          * @brief Creates a shape backend bound to a Haru document owner.
          */
-        explicit ShapeHaruBackend(DocraftHaruBackend &owner);
+        explicit DocraftHaruShapeBackend(const std::shared_ptr<DocraftHaruSharedState> &state,
+                                         DocraftHaruPageBackend *page_backend);
 
         /**
          * @brief Saves the current graphics state.
@@ -87,7 +93,8 @@ namespace docraft::backend::pdf {
     private:
         void apply_alpha_state() const;
 
-        DocraftHaruBackend &owner_;
+        std::shared_ptr<DocraftHaruSharedState> state_;
+        DocraftHaruPageBackend *page_backend_ = nullptr;
         mutable float fill_alpha_ = 1.0F;
         mutable float stroke_alpha_ = 1.0F;
     };

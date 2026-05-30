@@ -16,18 +16,24 @@
 
 #pragma once
 
-#include "docraft/backend/pdf/docraft_haru_backend.h"
+#include "docraft/backend/docraft_line_rendering_backend.h"
+#include "docraft/backend/pdf/docraft_haru_shared_state.h"
+
+#include <memory>
 
 namespace docraft::backend::pdf {
+    class DocraftHaruPageBackend;
+
     /**
      * @brief Haru implementation of line rendering operations.
      */
-    class DocraftHaruBackend::LineHaruBackend : public docraft::backend::IDocraftLineRenderingBackend {
+    class DocraftHaruLineBackend : public docraft::backend::IDocraftLineRenderingBackend {
     public:
         /**
          * @brief Creates a line backend bound to a Haru document owner.
          */
-        explicit LineHaruBackend(DocraftHaruBackend &owner);
+        explicit DocraftHaruLineBackend(const std::shared_ptr<DocraftHaruSharedState> &state,
+                                        DocraftHaruPageBackend *page_backend);
 
         /**
          * @brief Sets the stroke color used for line drawing.
@@ -45,7 +51,8 @@ namespace docraft::backend::pdf {
         void draw_line(float x1, float y1, float x2, float y2) const override;
 
     private:
-        DocraftHaruBackend &owner_;
+        std::shared_ptr<DocraftHaruSharedState> state_;
+        DocraftHaruPageBackend *page_backend_ = nullptr;
     };
 } // namespace docraft::backend::pdf
 

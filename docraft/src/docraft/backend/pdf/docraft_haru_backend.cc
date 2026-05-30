@@ -182,25 +182,27 @@ namespace docraft::backend::pdf {
     } // namespace
 
     DocraftHaruBackend::DocraftHaruBackend()
-        : pdf_(create_hpdf_document()),
-          output_backend_impl_(std::make_unique<OutputHaruBackend>(*this)),
-          font_backend_impl_(std::make_unique<FontHaruBackend>(*this)),
-          metadata_backend_impl_(std::make_unique<MetadataHaruBackend>(*this)),
-          page_backend_(std::make_unique<PageHaruBackend>(*this)),
-          text_backend_(std::make_unique<TextHaruBackend>(*this)),
-          line_backend_(std::make_unique<LineHaruBackend>(*this)),
-          shape_backend_(std::make_unique<ShapeHaruBackend>(*this)),
-          image_backend_(std::make_unique<ImageHaruBackend>(*this)) {
-        HPDF_UseUTFEncodings(pdf_);
-        HPDF_SetCurrentEncoder(pdf_, "UTF-8");
-        HPDF_SetCompressionMode(pdf_, HPDF_COMP_ALL);
+        : state_(std::make_shared<DocraftHaruSharedState>()) {
+        state_->pdf = create_hpdf_document();
+        output_backend_impl_ = std::make_unique<DocraftHaruOutputBackend>(state_);
+        page_backend_ = std::make_unique<DocraftHaruPageBackend>(state_);
+        font_backend_impl_ = std::make_unique<DocraftHaruFontBackend>(state_, page_backend_.get());
+        metadata_backend_impl_ = std::make_unique<DocraftHaruMetadataBackend>(state_);
+        text_backend_ = std::make_unique<DocraftHaruTextBackend>(state_, page_backend_.get());
+        line_backend_ = std::make_unique<DocraftHaruLineBackend>(state_, page_backend_.get());
+        shape_backend_ = std::make_unique<DocraftHaruShapeBackend>(state_, page_backend_.get());
+        image_backend_ = std::make_unique<DocraftHaruImageBackend>(state_, page_backend_.get());
+
+        HPDF_UseUTFEncodings(state_->pdf);
+        HPDF_SetCurrentEncoder(state_->pdf, "UTF-8");
+        HPDF_SetCompressionMode(state_->pdf, HPDF_COMP_ALL);
         page_backend_->add_new_page();
     }
 
     DocraftHaruBackend::~DocraftHaruBackend() {
-        if (pdf_) {
-            HPDF_Free(pdf_);
-            pdf_ = nullptr;
+        if (state_ && state_->pdf) {
+            HPDF_Free(state_->pdf);
+            state_->pdf = nullptr;
         }
     }
 
@@ -266,5 +268,17 @@ namespace docraft::backend::pdf {
 
     docraft::backend::IDocraftMetadataBackend *DocraftHaruBackend::edit_metadata_backend() {
         return metadata_backend_impl_.get();
+    }
+
+    HPDF_Doc DocraftHaruBackend::pdf_document() const {
+        return state_ ? state_->pdf : nullptr;
+    }
+
+    const DocraftHaruPageBackend *DocraftHaruBackend::page_backend_impl() const {
+        return page_backend_.get();
+    }
+
+    DocraftHaruPageBackend *DocraftHaruBackend::edit_page_backend_impl() {
+        return page_backend_.get();
     }
 } // docraft::backend::pdf

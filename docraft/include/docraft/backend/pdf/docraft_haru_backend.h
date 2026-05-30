@@ -24,8 +24,18 @@
 #include "docraft/backend/docraft_metadata_backend.h"
 #include "docraft/backend/docraft_output_backend.h"
 #include "docraft/backend/docraft_rendering_backend.h"
+#include "docraft/backend/pdf/docraft_haru_shared_state.h"
 
 namespace docraft::backend::pdf {
+	class DocraftHaruTextBackend;
+	class DocraftHaruLineBackend;
+	class DocraftHaruShapeBackend;
+	class DocraftHaruImageBackend;
+	class DocraftHaruPageBackend;
+	class DocraftHaruOutputBackend;
+	class DocraftHaruFontBackend;
+	class DocraftHaruMetadataBackend;
+
 	/**
 	 * @brief This class is responsible for managing the Haru PDF document and providing an interface for rendering operations.
 	 */
@@ -74,24 +84,21 @@ namespace docraft::backend::pdf {
 		[[nodiscard]] docraft::backend::IDocraftMetadataBackend *edit_metadata_backend() override;
 #pragma endregion
 
-	private:
-		class TextHaruBackend;
-		class LineHaruBackend;
-		class ShapeHaruBackend;
-		class ImageHaruBackend;
-		class PageHaruBackend;
-		class OutputHaruBackend;
-		class FontHaruBackend;
-		class MetadataHaruBackend;
+		[[nodiscard]] HPDF_Doc pdf_document() const;
 
-		HPDF_Doc pdf_;
-		std::unique_ptr<OutputHaruBackend> output_backend_impl_;
-		std::unique_ptr<FontHaruBackend> font_backend_impl_;
-		std::unique_ptr<MetadataHaruBackend> metadata_backend_impl_;
-		std::unique_ptr<TextHaruBackend> text_backend_;
-		std::unique_ptr<LineHaruBackend> line_backend_;
-		std::unique_ptr<ShapeHaruBackend> shape_backend_;
-		std::unique_ptr<ImageHaruBackend> image_backend_;
-		std::unique_ptr<PageHaruBackend> page_backend_;
+		[[nodiscard]] const DocraftHaruPageBackend *page_backend_impl() const;
+
+		[[nodiscard]] DocraftHaruPageBackend *edit_page_backend_impl();
+
+	private:
+		std::shared_ptr<DocraftHaruSharedState> state_;
+		std::unique_ptr<DocraftHaruOutputBackend> output_backend_impl_;
+		std::unique_ptr<DocraftHaruFontBackend> font_backend_impl_;
+		std::unique_ptr<DocraftHaruMetadataBackend> metadata_backend_impl_;
+		std::unique_ptr<DocraftHaruTextBackend> text_backend_;
+		std::unique_ptr<DocraftHaruLineBackend> line_backend_;
+		std::unique_ptr<DocraftHaruShapeBackend> shape_backend_;
+		std::unique_ptr<DocraftHaruImageBackend> image_backend_;
+		std::unique_ptr<DocraftHaruPageBackend> page_backend_;
 	};
 } // docraft

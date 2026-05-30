@@ -16,20 +16,22 @@
 
 #pragma once
 
-#include "docraft/backend/pdf/docraft_haru_backend.h"
+#include "docraft/backend/docraft_page_rendering_backend.h"
+#include "docraft/backend/pdf/docraft_haru_shared_state.h"
 
+#include <memory>
 #include <vector>
 
 namespace docraft::backend::pdf {
     /**
      * @brief Haru implementation of page management operations.
      */
-    class DocraftHaruBackend::PageHaruBackend : public docraft::backend::IDocraftPageRenderingBackend {
+    class DocraftHaruPageBackend : public docraft::backend::IDocraftPageRenderingBackend {
     public:
         /**
          * @brief Creates a page backend bound to a Haru document owner.
          */
-        explicit PageHaruBackend(DocraftHaruBackend &owner);
+        explicit DocraftHaruPageBackend(const std::shared_ptr<DocraftHaruSharedState> &state);
 
         /**
          * @brief Returns the width of the current page.
@@ -100,7 +102,7 @@ namespace docraft::backend::pdf {
     private:
         void apply_page_format(HPDF_Page page) const;
 
-        DocraftHaruBackend &owner_;
+        std::shared_ptr<DocraftHaruSharedState> state_;
         std::vector<HPDF_Page> pages_;
         std::size_t current_page_number_ = 0;
         HPDF_PageSizes page_size_ = HPDF_PAGE_SIZE_A4;

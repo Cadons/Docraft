@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdexcept>
+#include <unordered_set>
 #include <string>
 #include <vector>
 
@@ -24,6 +25,10 @@ namespace docraft::test::utils {
             std::size_t initial_pages = 1;
             std::string extension = ".pdf";
             bool can_use_font = true;
+            bool supports_image_backend = true;
+            bool supports_output_backend = true;
+            bool supports_font_backend = true;
+            bool supports_metadata_backend = true;
         };
 
         MockRenderingBackend() : MockRenderingBackend(Config{}) {}
@@ -39,16 +44,41 @@ namespace docraft::test::utils {
         [[nodiscard]] backend::IDocraftTextRenderingBackend *edit_text_rendering() override { return this; }
         [[nodiscard]] const backend::IDocraftShapeRenderingBackend *shape_rendering() const override { return this; }
         [[nodiscard]] backend::IDocraftShapeRenderingBackend *edit_shape_rendering() override { return this; }
-        [[nodiscard]] const backend::IDocraftImageRenderingBackend *image_rendering() const override { return this; }
-        [[nodiscard]] backend::IDocraftImageRenderingBackend *edit_image_rendering() override { return this; }
+
+        [[nodiscard]] const backend::IDocraftImageRenderingBackend *image_rendering() const override {
+            return config_.supports_image_backend ? this : nullptr;
+        }
+
+        [[nodiscard]] backend::IDocraftImageRenderingBackend *edit_image_rendering() override {
+            return config_.supports_image_backend ? this : nullptr;
+        }
+
         [[nodiscard]] const backend::IDocraftPageRenderingBackend *page_rendering() const override { return this; }
         [[nodiscard]] backend::IDocraftPageRenderingBackend *edit_page_rendering() override { return this; }
-        [[nodiscard]] const backend::IDocraftOutputBackend *output_backend() const override { return this; }
-        [[nodiscard]] backend::IDocraftOutputBackend *edit_output_backend() override { return this; }
-        [[nodiscard]] const backend::IDocraftFontBackend *font_backend() const override { return this; }
-        [[nodiscard]] backend::IDocraftFontBackend *edit_font_backend() override { return this; }
-        [[nodiscard]] const backend::IDocraftMetadataBackend *metadata_backend() const override { return this; }
-        [[nodiscard]] backend::IDocraftMetadataBackend *edit_metadata_backend() override { return this; }
+
+        [[nodiscard]] const backend::IDocraftOutputBackend *output_backend() const override {
+            return config_.supports_output_backend ? this : nullptr;
+        }
+
+        [[nodiscard]] backend::IDocraftOutputBackend *edit_output_backend() override {
+            return config_.supports_output_backend ? this : nullptr;
+        }
+
+        [[nodiscard]] const backend::IDocraftFontBackend *font_backend() const override {
+            return config_.supports_font_backend ? this : nullptr;
+        }
+
+        [[nodiscard]] backend::IDocraftFontBackend *edit_font_backend() override {
+            return config_.supports_font_backend ? this : nullptr;
+        }
+
+        [[nodiscard]] const backend::IDocraftMetadataBackend *metadata_backend() const override {
+            return config_.supports_metadata_backend ? this : nullptr;
+        }
+
+        [[nodiscard]] backend::IDocraftMetadataBackend *edit_metadata_backend() override {
+            return config_.supports_metadata_backend ? this : nullptr;
+        }
 
         void begin_text() const override {}
         void end_text() const override {}
@@ -80,14 +110,49 @@ namespace docraft::test::utils {
         void draw_jpeg_image(const std::string &, float, float, float, float) const override {}
         void draw_jpeg_image_from_memory(const unsigned char *, std::size_t, float, float, float, float) const override {}
         void draw_raw_rgb_image(const std::string &, int, int, float, float, float, float) const override {}
-        void draw_raw_rgb_image_from_memory(const unsigned char *, int, int, float, float, float, float) const override {}
+        void draw_raw_rgb_image_from_memory(const unsigned char *, int, int, float, float, float, float) const override {
+        }
 
-        void save_to_file(const std::string &path) const override { last_saved_path_ = path; }
-        [[nodiscard]] std::string file_extension() const override { return config_.extension; }
-        const char *register_ttf_font_from_file(const std::string &, bool) const override { return "Helvetica"; }
-        bool can_use_font(const std::string &, const char *) const override { return config_.can_use_font; }
-        void set_font(const std::string &, float, const char *) const override {}
-        void set_document_metadata(const DocraftDocumentMetadata &) override {}
+        void save_to_file(const std::string &path) const override {
+            if (!config_.supports_output_backend) {
+                throw std::runtime_error("Output backend capability not supported");
+            }
+            last_saved_path_ = path;
+        }
+
+        [[nodiscard]] std::string file_extension() const override {
+            if (!config_.supports_output_backend) {
+                throw std::runtime_error("Output backend capability not supported");
+            }
+            return config_.extension;
+        }
+
+        const char *register_ttf_font_from_file(const std::string &path, bool) const override {
+            if (!config_.supports_font_backend || path.empty()) {
+                return nullptr;
+            }
+            const auto [it, inserted] = registered_fonts_.insert(path);
+            (void) inserted;
+            return it->c_str();
+        }
+
+        bool can_use_font(const std::string &internal_name, const char *) const override {
+            if (!config_.supports_font_backend || !config_.can_use_font) {
+                return false;
+            }
+            if (internal_name == "Helvetica") {
+                return true;
+            }
+            return registered_fonts_.find(internal_name) != registered_fonts_.end();
+        }
+        void set_font(const std::string &, float, const char *) const override {
+        }
+
+        void set_document_metadata(const DocraftDocumentMetadata &) override {
+            if (!config_.supports_metadata_backend) {
+                throw std::runtime_error("Metadata backend capability not supported");
+            }
+        }
 
         float page_width() const override { return config_.page_width; }
         float page_height() const override { return config_.page_height; }
@@ -148,6 +213,7 @@ namespace docraft::test::utils {
         [[nodiscard]] const std::string &last_saved_path() const { return last_saved_path_; }
 
     private:
+        inline static std::unordered_set<std::string> registered_fonts_{};
         Config config_;
         std::size_t pages_ = 1;
         std::size_t current_page_ = 0;

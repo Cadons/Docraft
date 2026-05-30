@@ -16,18 +16,24 @@
 
 #pragma once
 
-#include "docraft/backend/pdf/docraft_haru_backend.h"
+#include "docraft/backend/docraft_image_rendering_backend.h"
+#include "docraft/backend/pdf/docraft_haru_shared_state.h"
+
+#include <memory>
 
 namespace docraft::backend::pdf {
+    class DocraftHaruPageBackend;
+
     /**
      * @brief Haru implementation of image rendering operations.
      */
-    class DocraftHaruBackend::ImageHaruBackend : public docraft::backend::IDocraftImageRenderingBackend {
+    class DocraftHaruImageBackend : public docraft::backend::IDocraftImageRenderingBackend {
     public:
         /**
          * @brief Creates an image backend bound to a Haru document owner.
          */
-        explicit ImageHaruBackend(DocraftHaruBackend &owner);
+        explicit DocraftHaruImageBackend(const std::shared_ptr<DocraftHaruSharedState> &state,
+                                         DocraftHaruPageBackend *page_backend);
 
         /**
          * @brief Loads and draws a PNG image from a file path.
@@ -90,7 +96,8 @@ namespace docraft::backend::pdf {
                                             float height) const override;
 
     private:
-        DocraftHaruBackend &owner_;
+        std::shared_ptr<DocraftHaruSharedState> state_;
+        DocraftHaruPageBackend *page_backend_ = nullptr;
     };
 } // namespace docraft::backend::pdf
 
