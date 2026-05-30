@@ -17,103 +17,105 @@
 #pragma once
 
 #include "docraft/docraft_lib.h"
-#include <string>
 
-#include "docraft/backend/docraft_line_rendering_backend.h"
+#include "docraft/backend/docraft_font_backend.h"
 #include "docraft/backend/docraft_image_rendering_backend.h"
+#include "docraft/backend/docraft_line_rendering_backend.h"
+#include "docraft/backend/docraft_metadata_backend.h"
+#include "docraft/backend/docraft_output_backend.h"
 #include "docraft/backend/docraft_page_rendering_backend.h"
 #include "docraft/backend/docraft_shape_rendering_backend.h"
 #include "docraft/backend/docraft_text_rendering_backend.h"
 
-namespace docraft {
-    class DocraftDocumentMetadata;
-}
-
 namespace docraft::backend {
     /**
-     * @brief Aggregated rendering backend interface.
+     * @brief Aggregated backend interface.
      */
-    class DOCRAFT_LIB IDocraftRenderingBackend {
+    class DOCRAFT_LIB IDocraftBackend {
     public:
         /**
          * @brief Virtual destructor.
          */
-        virtual ~IDocraftRenderingBackend() = default;
+        virtual ~IDocraftBackend() = default;
+
         /**
          * @brief Returns the line rendering capability, if available.
          */
         [[nodiscard]] virtual const IDocraftLineRenderingBackend *line_rendering() const = 0;
+
         /**
          * @brief Returns the editable line rendering capability, if available.
          */
         [[nodiscard]] virtual IDocraftLineRenderingBackend *edit_line_rendering() = 0;
+
         /**
          * @brief Returns the text rendering capability, if available.
          */
         [[nodiscard]] virtual const IDocraftTextRenderingBackend *text_rendering() const = 0;
+
         /**
          * @brief Returns the editable text rendering capability, if available.
          */
         [[nodiscard]] virtual IDocraftTextRenderingBackend *edit_text_rendering() = 0;
+
         /**
          * @brief Returns the shape rendering capability, if available.
          */
         [[nodiscard]] virtual const IDocraftShapeRenderingBackend *shape_rendering() const = 0;
+
         /**
          * @brief Returns the editable shape rendering capability, if available.
          */
         [[nodiscard]] virtual IDocraftShapeRenderingBackend *edit_shape_rendering() = 0;
+
         /**
          * @brief Returns the image rendering capability, if available.
          */
         [[nodiscard]] virtual const IDocraftImageRenderingBackend *image_rendering() const = 0;
+
         /**
          * @brief Returns the editable image rendering capability, if available.
          */
         [[nodiscard]] virtual IDocraftImageRenderingBackend *edit_image_rendering() = 0;
+
         /**
          * @brief Returns the page rendering capability, if available.
          */
         [[nodiscard]] virtual const IDocraftPageRenderingBackend *page_rendering() const = 0;
+
         /**
          * @brief Returns the editable page rendering capability, if available.
          */
         [[nodiscard]] virtual IDocraftPageRenderingBackend *edit_page_rendering() = 0;
+
         /**
-         * @brief Saves the document to a file path.
-         * @param path Output file path.
+         * @brief Returns the output capability, if available.
          */
-        virtual void save_to_file(const std::string& path) const = 0;
+        [[nodiscard]] virtual const IDocraftOutputBackend *output_backend() const = 0;
+
         /**
-         * @brief Returns the preferred file extension for this backend.
-         * @return Extension with or without leading dot (e.g. ".pdf" or "pdf").
+         * @brief Returns the editable output capability, if available.
          */
-        [[nodiscard]] virtual std::string file_extension() const = 0;
+        [[nodiscard]] virtual IDocraftOutputBackend *edit_output_backend() = 0;
+
         /**
-         * @brief Registers a TTF font and returns the internal name.
-         * @param path Font file path.
-         * @param embed Whether to embed the font in the document.
-         * @return Backend internal font name.
+         * @brief Returns the font capability, if available.
          */
-        virtual const char* register_ttf_font_from_file(const std::string& path, bool embed) const = 0;
+        [[nodiscard]] virtual const IDocraftFontBackend *font_backend() const = 0;
+
         /**
-         * @brief Checks whether a font can be used with the given encoder.
-         * @param internal_name Backend internal font name.
-         * @param encoder Backend encoder name.
-         * @return true if the font can be used.
+         * @brief Returns the editable font capability, if available.
          */
-        virtual bool can_use_font(const std::string& internal_name, const char* encoder) const = 0;
+        [[nodiscard]] virtual IDocraftFontBackend *edit_font_backend() = 0;
+
         /**
-         * @brief Sets the current font and size.
-         * @param internal_name Backend internal font name.
-         * @param size Font size in points.
-         * @param encoder Backend encoder name.
+         * @brief Returns the metadata capability, if available.
          */
-        virtual void set_font(const std::string& internal_name, float size, const char* encoder) const = 0;
+        [[nodiscard]] virtual const IDocraftMetadataBackend *metadata_backend() const = 0;
+
         /**
-         * @brief Applies document metadata to the backend document.
-         * @param metadata Metadata values to apply.
+         * @brief Returns the editable metadata capability, if available.
          */
-        virtual void set_document_metadata(const DocraftDocumentMetadata &metadata) = 0;
+        [[nodiscard]] virtual IDocraftMetadataBackend *edit_metadata_backend() = 0;
     };
 } // docraft::backend

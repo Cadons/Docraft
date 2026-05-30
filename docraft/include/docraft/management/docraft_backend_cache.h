@@ -31,16 +31,17 @@ namespace docraft::management {
     class DOCRAFT_LIB DocraftBackendCache {
     public:
         /**
-         * @brief Initializes the backend cache from a main rendering backend.
-         * @param backend The main rendering backend.
+         * @brief Initializes the backend cache from a main backend.
+         * @param backend The main backend.
          */
-        void initialize_from_backend(const std::shared_ptr<backend::IDocraftRenderingBackend>& backend);
+        void initialize_from_backend(const std::shared_ptr<backend::IDocraftBackend> &backend);
 
         /**
          * @brief Returns the line backend (cached).
          * @return Line rendering backend.
          */
         [[nodiscard]] std::shared_ptr<const backend::IDocraftLineRenderingBackend> line_backend() const;
+
         [[nodiscard]] std::shared_ptr<backend::IDocraftLineRenderingBackend> edit_line_backend();
 
         /**
@@ -48,6 +49,7 @@ namespace docraft::management {
          * @return Shape rendering backend.
          */
         [[nodiscard]] std::shared_ptr<const backend::IDocraftShapeRenderingBackend> shape_backend() const;
+
         [[nodiscard]] std::shared_ptr<backend::IDocraftShapeRenderingBackend> edit_shape_backend();
 
         /**
@@ -55,6 +57,7 @@ namespace docraft::management {
          * @return Text rendering backend.
          */
         [[nodiscard]] std::shared_ptr<const backend::IDocraftTextRenderingBackend> text_backend() const;
+
         [[nodiscard]] std::shared_ptr<backend::IDocraftTextRenderingBackend> edit_text_backend();
 
         /**
@@ -62,6 +65,7 @@ namespace docraft::management {
          * @return Image rendering backend.
          */
         [[nodiscard]] std::shared_ptr<const backend::IDocraftImageRenderingBackend> image_backend() const;
+
         [[nodiscard]] std::shared_ptr<backend::IDocraftImageRenderingBackend> edit_image_backend();
 
         /**
@@ -69,6 +73,7 @@ namespace docraft::management {
          * @return Page rendering backend.
          */
         [[nodiscard]] std::shared_ptr<const backend::IDocraftPageRenderingBackend> page_backend() const;
+
         [[nodiscard]] std::shared_ptr<backend::IDocraftPageRenderingBackend> edit_page_backend();
 
     private:
@@ -76,9 +81,9 @@ namespace docraft::management {
 
         /**
          * @brief Refreshes all cached backend interfaces (called internally).
-         * @param backend The main rendering backend.
+         * @param backend The main backend.
          */
-        void refresh_caches(const std::shared_ptr<backend::IDocraftRenderingBackend>& backend);
+        void refresh_caches(const std::shared_ptr<backend::IDocraftBackend> &backend);
 
         std::shared_ptr<backend::IDocraftLineRenderingBackend> line_backend_;
         std::shared_ptr<backend::IDocraftShapeRenderingBackend> shape_backend_;

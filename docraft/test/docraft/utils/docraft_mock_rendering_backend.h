@@ -7,7 +7,10 @@
 #include "docraft/backend/docraft_rendering_backend.h"
 
 namespace docraft::test::utils {
-    class MockRenderingBackend : public backend::IDocraftRenderingBackend,
+    class MockRenderingBackend : public backend::IDocraftBackend,
+                                 public backend::IDocraftOutputBackend,
+                                 public backend::IDocraftFontBackend,
+                                 public backend::IDocraftMetadataBackend,
                                  public backend::IDocraftLineRenderingBackend,
                                  public backend::IDocraftShapeRenderingBackend,
                                  public backend::IDocraftTextRenderingBackend,
@@ -40,6 +43,12 @@ namespace docraft::test::utils {
         [[nodiscard]] backend::IDocraftImageRenderingBackend *edit_image_rendering() override { return this; }
         [[nodiscard]] const backend::IDocraftPageRenderingBackend *page_rendering() const override { return this; }
         [[nodiscard]] backend::IDocraftPageRenderingBackend *edit_page_rendering() override { return this; }
+        [[nodiscard]] const backend::IDocraftOutputBackend *output_backend() const override { return this; }
+        [[nodiscard]] backend::IDocraftOutputBackend *edit_output_backend() override { return this; }
+        [[nodiscard]] const backend::IDocraftFontBackend *font_backend() const override { return this; }
+        [[nodiscard]] backend::IDocraftFontBackend *edit_font_backend() override { return this; }
+        [[nodiscard]] const backend::IDocraftMetadataBackend *metadata_backend() const override { return this; }
+        [[nodiscard]] backend::IDocraftMetadataBackend *edit_metadata_backend() override { return this; }
 
         void begin_text() const override {}
         void end_text() const override {}

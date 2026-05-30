@@ -48,12 +48,18 @@ TEST_F(DocraftHaruBackendTest, ExposesStableCapabilityAccessors) {
     ASSERT_NE(const_backend.shape_rendering(), nullptr);
     ASSERT_NE(const_backend.image_rendering(), nullptr);
     ASSERT_NE(const_backend.page_rendering(), nullptr);
+    ASSERT_NE(const_backend.output_backend(), nullptr);
+    ASSERT_NE(const_backend.font_backend(), nullptr);
+    ASSERT_NE(const_backend.metadata_backend(), nullptr);
 
     EXPECT_EQ(const_backend.line_rendering(), backend().edit_line_rendering());
     EXPECT_EQ(const_backend.text_rendering(), backend().edit_text_rendering());
     EXPECT_EQ(const_backend.shape_rendering(), backend().edit_shape_rendering());
     EXPECT_EQ(const_backend.image_rendering(), backend().edit_image_rendering());
     EXPECT_EQ(const_backend.page_rendering(), backend().edit_page_rendering());
+    EXPECT_EQ(const_backend.output_backend(), backend().edit_output_backend());
+    EXPECT_EQ(const_backend.font_backend(), backend().edit_font_backend());
+    EXPECT_EQ(const_backend.metadata_backend(), backend().edit_metadata_backend());
 }
 
 TEST_F(DocraftHaruBackendTest, StartsWithSinglePageAndValidDimensions) {
@@ -127,8 +133,9 @@ TEST_F(DocraftHaruBackendTest, ThrowsOnInvalidPageNavigation) {
 }
 
 TEST_F(DocraftHaruBackendTest, SupportsBuiltInFontAndTextMeasure) {
-    EXPECT_TRUE(backend().can_use_font("Helvetica", nullptr));
-    EXPECT_NO_THROW(backend().set_font("Helvetica", 12.0F, nullptr));
+    ASSERT_NE(backend().font_backend(), nullptr);
+    EXPECT_TRUE(backend().font_backend()->can_use_font("Helvetica", nullptr));
+    EXPECT_NO_THROW(backend().font_backend()->set_font("Helvetica", 12.0F, nullptr));
 
     edit_text_backend().begin_text();
     edit_text_backend().draw_text("Hello backend", 20.0F, 20.0F);
@@ -138,18 +145,21 @@ TEST_F(DocraftHaruBackendTest, SupportsBuiltInFontAndTextMeasure) {
 }
 
 TEST_F(DocraftHaruBackendTest, ReportsPdfFileExtension) {
-    EXPECT_EQ(backend().file_extension(), ".pdf");
+    ASSERT_NE(backend().output_backend(), nullptr);
+    EXPECT_EQ(backend().output_backend()->file_extension(), ".pdf");
 }
 
 TEST_F(DocraftHaruBackendTest, ThrowsWhenSettingUnknownFont) {
-    EXPECT_THROW(backend().set_font("__missing_font__", 12.0F, nullptr), std::runtime_error);
-    EXPECT_FALSE(backend().can_use_font("__missing_font__", nullptr));
+    ASSERT_NE(backend().font_backend(), nullptr);
+    EXPECT_THROW(backend().font_backend()->set_font("__missing_font__", 12.0F, nullptr), std::runtime_error);
+    EXPECT_FALSE(backend().font_backend()->can_use_font("__missing_font__", nullptr));
 }
 
 TEST_F(DocraftHaruBackendTest, SavesPdfToFile) {
     const auto output_path = std::filesystem::temp_directory_path() / "docraft_haru_backend_test_output.pdf";
 
-    backend().save_to_file(output_path.string());
+    ASSERT_NE(backend().output_backend(), nullptr);
+    backend().output_backend()->save_to_file(output_path.string());
 
     ASSERT_TRUE(std::filesystem::exists(output_path));
     EXPECT_GT(std::filesystem::file_size(output_path), 0U);
@@ -170,10 +180,12 @@ TEST_F(DocraftHaruBackendTest, SavesPdfWithMetadataInfo) {
     metadata.set_creation_date({2026, 2, 20, 8, 30, 15, '+', 0, 0});
     metadata.set_modification_date({2026, 2, 20, 9, 45, 10, '+', 0, 0});
 
-    EXPECT_NO_THROW(backend().set_document_metadata(metadata));
+    ASSERT_NE(backend().edit_metadata_backend(), nullptr);
+    EXPECT_NO_THROW(backend().edit_metadata_backend()->set_document_metadata(metadata));
 
     const auto output_path = std::filesystem::temp_directory_path() / "docraft_haru_backend_test_metadata_output.pdf";
-    backend().save_to_file(output_path.string());
+    ASSERT_NE(backend().output_backend(), nullptr);
+    backend().output_backend()->save_to_file(output_path.string());
 
     ASSERT_TRUE(std::filesystem::exists(output_path));
     EXPECT_GT(std::filesystem::file_size(output_path), 0U);

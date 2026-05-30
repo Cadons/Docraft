@@ -73,18 +73,19 @@ namespace docraft {
          * @brief Applies template processing to the document DOM using the configured template engine.
          */
         void template_document();
+
         /**
          * @brief Renders the document using the configured context and renderer.
          */
         void render();
 
         /**
-         * @brief Overrides the rendering backend used during render.
+         * @brief Overrides the backend used during render.
          *
          * Passing nullptr resets to the default backend.
-         * @param backend Rendering backend implementation.
+         * @param backend Backend implementation.
          */
-        void set_backend(const std::shared_ptr<backend::IDocraftRenderingBackend> &backend);
+        void set_backend(const std::shared_ptr<backend::IDocraftBackend> &backend);
 
         /**
          * @brief Returns the document DOM nodes.

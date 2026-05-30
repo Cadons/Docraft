@@ -17,25 +17,28 @@
 #pragma once
 
 #include "docraft/docraft_lib.h"
+
 #include <string>
 
 namespace docraft::backend {
     /**
-         * This is the interface for the PDF backend of Docraft.
-         */
-    class DOCRAFT_LIB IDocraftPDFBackend {
+     * @brief Capability interface for document output operations.
+     */
+    class DOCRAFT_LIB IDocraftOutputBackend {
     public:
-        /**
-                * @brief Measures the width of text using the current font state.
-                * @param text Text string.
-                * @return Text width in points.
-                */
-        virtual float measure_text(const std::string &text) =0;
+        virtual ~IDocraftOutputBackend() = default;
 
         /**
-                 * @brief Draws text using the current font state.
-                 * @param text Text string.
-                 */
-        virtual void draw_text(const std::string &text) =0;
+         * @brief Saves the document to a file path.
+         * @param path Output file path.
+         */
+        virtual void save_to_file(const std::string &path) const = 0;
+
+        /**
+         * @brief Returns the preferred file extension for this backend.
+         * @return Extension with or without leading dot (e.g. ".pdf" or "pdf").
+         */
+        [[nodiscard]] virtual std::string file_extension() const = 0;
     };
-} // docraft
+} // namespace docraft::backend
+

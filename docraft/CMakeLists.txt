@@ -61,6 +61,9 @@ set(DOCRAFT_SOURCES
         include/docraft/backend/docraft_image_rendering_backend.h
         include/docraft/backend/docraft_page_rendering_backend.h
         include/docraft/backend/docraft_rendering_backend.h
+        include/docraft/backend/docraft_output_backend.h
+        include/docraft/backend/docraft_font_backend.h
+        include/docraft/backend/docraft_metadata_backend.h
         src/docraft/model/docraft_image.cc
         include/docraft/model/docraft_image.h
         src/docraft/renderer/painter/docraft_image_painter.cc
@@ -143,6 +146,22 @@ set(DOCRAFT_SOURCES
         src/docraft/model/docraft_position.cc
         src/docraft/backend/pdf/docraft_haru_backend.cc
         include/docraft/backend/pdf/docraft_haru_backend.h
+        src/docraft/backend/pdf/docraft_haru_output_backend.cc
+        include/docraft/backend/pdf/docraft_haru_output_backend.h
+        src/docraft/backend/pdf/docraft_haru_font_backend.cc
+        include/docraft/backend/pdf/docraft_haru_font_backend.h
+        src/docraft/backend/pdf/docraft_haru_metadata_backend.cc
+        include/docraft/backend/pdf/docraft_haru_metadata_backend.h
+        src/docraft/backend/pdf/docraft_haru_text_backend.cc
+        include/docraft/backend/pdf/docraft_haru_text_backend.h
+        src/docraft/backend/pdf/docraft_haru_line_backend.cc
+        include/docraft/backend/pdf/docraft_haru_line_backend.h
+        src/docraft/backend/pdf/docraft_haru_shape_backend.cc
+        include/docraft/backend/pdf/docraft_haru_shape_backend.h
+        src/docraft/backend/pdf/docraft_haru_image_backend.cc
+        include/docraft/backend/pdf/docraft_haru_image_backend.h
+        src/docraft/backend/pdf/docraft_haru_page_backend.cc
+        include/docraft/backend/pdf/docraft_haru_page_backend.h
         src/docraft/model/docraft_settings.cc
         include/docraft/model/docraft_settings.h
         include/docraft/model/docraft_page_format.h

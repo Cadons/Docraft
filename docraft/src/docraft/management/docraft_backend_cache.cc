@@ -21,7 +21,7 @@ namespace docraft::management {
     namespace {
         template <typename InterfaceType>
         std::shared_ptr<InterfaceType> alias_backend_interface(
-            const std::shared_ptr<backend::IDocraftRenderingBackend> &backend,
+            const std::shared_ptr<backend::IDocraftBackend> &backend,
             InterfaceType *interface_pointer) {
             if (!backend || !interface_pointer) {
                 return {};
@@ -31,7 +31,7 @@ namespace docraft::management {
     } // namespace
 
     void DocraftBackendCache::initialize_from_backend(
-        const std::shared_ptr<backend::IDocraftRenderingBackend> &backend) {
+        const std::shared_ptr<backend::IDocraftBackend> &backend) {
         refresh_caches(backend);
     }
 
@@ -75,7 +75,7 @@ namespace docraft::management {
         return page_backend_;
     }
 
-    void DocraftBackendCache::refresh_caches(const std::shared_ptr<backend::IDocraftRenderingBackend> &backend) {
+    void DocraftBackendCache::refresh_caches(const std::shared_ptr<backend::IDocraftBackend> &backend) {
         line_backend_ = alias_backend_interface(backend, backend ? backend->edit_line_rendering() : nullptr);
         shape_backend_ = alias_backend_interface(backend, backend ? backend->edit_shape_rendering() : nullptr);
         text_backend_ = alias_backend_interface(backend, backend ? backend->edit_text_rendering() : nullptr);

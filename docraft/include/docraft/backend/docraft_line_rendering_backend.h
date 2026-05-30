@@ -28,6 +28,7 @@ namespace docraft::backend {
          * @brief Virtual destructor.
          */
         virtual ~IDocraftLineRenderingBackend() = default;
+
         /**
          * @brief Sets the stroke color used for subsequent line drawing.
          * @param r Red component in [0,1].
@@ -35,11 +36,13 @@ namespace docraft::backend {
          * @param b Blue component in [0,1].
          */
         virtual void set_stroke_color(float r, float g, float b) const = 0;
+
         /**
          * @brief Sets the line width used for subsequent line drawing.
          * @param thickness Line width in points.
          */
         virtual void set_line_width(float thickness) const = 0;
+
         /**
          * @brief Draws a line between two points using the current stroke settings.
          * @param x1 The x-coordinate of the line start.

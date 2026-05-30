@@ -29,7 +29,7 @@ namespace docraft {
     }
 
     DocraftDocumentContext::DocraftDocumentContext(
-        const std::shared_ptr<backend::IDocraftRenderingBackend> &backend) : backend_(
+        const std::shared_ptr<backend::IDocraftBackend> &backend) : backend_(
         backend) {
         page_height_ = backend_->page_rendering()->page_height();
         page_width_ = backend_->page_rendering()->page_width();
@@ -75,7 +75,7 @@ namespace docraft {
         return backend_cache_;
     }
 
-    void DocraftDocumentContext::set_backend(const std::shared_ptr<backend::IDocraftRenderingBackend> &backend) {
+    void DocraftDocumentContext::set_backend(const std::shared_ptr<backend::IDocraftBackend> &backend) {
         backend_ = backend ? backend : std::make_shared<backend::pdf::DocraftHaruBackend>();
         page_height_ = backend_->page_rendering()->page_height();
         page_width_ = backend_->page_rendering()->page_width();
@@ -99,11 +99,11 @@ namespace docraft {
     }
 #pragma endregion
 #pragma region getter
-    std::shared_ptr<const backend::IDocraftRenderingBackend> DocraftDocumentContext::rendering_backend() const {
+    std::shared_ptr<const backend::IDocraftBackend> DocraftDocumentContext::rendering_backend() const {
         return backend_;
     }
 
-    std::shared_ptr<backend::IDocraftRenderingBackend> DocraftDocumentContext::edit_rendering_backend() {
+    std::shared_ptr<backend::IDocraftBackend> DocraftDocumentContext::edit_rendering_backend() {
         return backend_;
     }
 

@@ -264,13 +264,28 @@ namespace docraft {
             }
         }
 
-        context_->edit_rendering_backend()->set_document_metadata(config_.document_metadata());
-        const std::string output_file_name = with_extension(
-            config_.document_title(), context_->rendering_backend()->file_extension());
-        context_->rendering_backend()->save_to_file(with_directory(config_.document_path(), output_file_name));
+        const auto backend = context_->edit_rendering_backend();
+        if (!backend) {
+            throw std::runtime_error("Rendering backend is not available");
+        }
+
+        auto *metadata_backend = backend->edit_metadata_backend();
+        if (!metadata_backend) {
+            throw std::runtime_error("Metadata backend capability is not available");
+        }
+        metadata_backend->set_document_metadata(config_.document_metadata());
+
+        const auto *output_backend = backend->output_backend();
+        if (!output_backend) {
+            throw std::runtime_error("Output backend capability is not available");
+        }
+        const std::string extension = output_backend->file_extension();
+        const std::string output_file_name = with_extension(config_.document_title(), extension);
+        const std::string output_path = with_directory(config_.document_path(), output_file_name);
+        output_backend->save_to_file(output_path);
     }
 
-    void DocraftDocument::set_backend(const std::shared_ptr<backend::IDocraftRenderingBackend> &backend) {
+    void DocraftDocument::set_backend(const std::shared_ptr<backend::IDocraftBackend> &backend) {
         context_->set_backend(backend);
     }
 

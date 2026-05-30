@@ -17,25 +17,24 @@
 #pragma once
 
 #include "docraft/docraft_lib.h"
-#include <string>
+
+namespace docraft {
+    class DocraftDocumentMetadata;
+}
 
 namespace docraft::backend {
     /**
-         * This is the interface for the PDF backend of Docraft.
-         */
-    class DOCRAFT_LIB IDocraftPDFBackend {
+     * @brief Capability interface for document metadata support.
+     */
+    class DOCRAFT_LIB IDocraftMetadataBackend {
     public:
-        /**
-                * @brief Measures the width of text using the current font state.
-                * @param text Text string.
-                * @return Text width in points.
-                */
-        virtual float measure_text(const std::string &text) =0;
+        virtual ~IDocraftMetadataBackend() = default;
 
         /**
-                 * @brief Draws text using the current font state.
-                 * @param text Text string.
-                 */
-        virtual void draw_text(const std::string &text) =0;
+         * @brief Applies document metadata to the backend document.
+         * @param metadata Metadata values to apply.
+         */
+        virtual void set_document_metadata(const DocraftDocumentMetadata &metadata) = 0;
     };
-} // docraft
+} // namespace docraft::backend
+

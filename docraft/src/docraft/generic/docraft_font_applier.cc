@@ -116,7 +116,7 @@ namespace docraft::generic {
 
     bool DocraftFontApplier::is_font_supported(const std::string &name, const char *encoder) const {
         auto backend = context_->rendering_backend();
-        if (!backend) {
+        if (!backend || !backend->font_backend()) {
             return false;
         }
         auto &registry = utils::DocraftFontRegistry::instance();
@@ -130,7 +130,7 @@ namespace docraft::generic {
         if (it == fonts_.end() || it->second.empty()) {
             return false;
         }
-        return backend->can_use_font(it->second, encoder);
+        return backend->font_backend()->can_use_font(it->second, encoder);
     }
 
     const char *DocraftFontApplier::load_font_data(const std::string &name) const {
@@ -200,10 +200,10 @@ namespace docraft::generic {
 
         // IMPORTANT: Always load/register into THIS backend (even if file already existed)
         auto backend = context_->rendering_backend();
-        if (!backend) {
+        if (!backend || !backend->font_backend()) {
             return nullptr;
         }
-        const char *internal_name = backend->register_ttf_font_from_file(temp_path.string(), true);
+        const char *internal_name = backend->font_backend()->register_ttf_font_from_file(temp_path.string(), true);
         if (!internal_name) {
             LOG_ERROR("Cannot load internal font file: " + temp_path.string());
             return nullptr;
@@ -219,7 +219,7 @@ namespace docraft::generic {
     void DocraftFontApplier::apply_font(
         const std::shared_ptr<model::DocraftText> &node) const {
         auto backend = context_->rendering_backend();
-        if (!backend) {
+        if (!backend || !backend->font_backend()) {
             return;
         }
         const std::string base_name = node->font_name();
@@ -251,7 +251,7 @@ namespace docraft::generic {
         if (it == fonts_.end() || it->second.empty()) {
             return;
         }
-        backend->set_font(it->second, node->font_size(), encoder);
+        backend->font_backend()->set_font(it->second, node->font_size(), encoder);
     }
 
     void DocraftFontApplier::set_font_encoding(const std::string &font_name, bool utf8) {
