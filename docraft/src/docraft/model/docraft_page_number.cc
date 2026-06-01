@@ -31,7 +31,7 @@ namespace docraft::model {
     void DocraftPageNumber::update_text_from_context(const std::shared_ptr<DocraftDocumentContext>& context) {
         std::size_t page_number = 1;
         if (context) {
-            if (const auto& page_backend = context->page_backend()) {
+            if (const auto &page_backend = context->rendering().page_rendering()) {
                 page_number = page_backend->current_page_number();
             }
         }

@@ -133,7 +133,14 @@ namespace docraft {
                 return;
             }
             if (settings->has_page_format()) {
-                context->set_page_format(settings->page_size(), settings->page_orientation());
+                auto &rendering_service = context->edit_rendering();
+                auto &layout_service = context->edit_layout();
+                if (const auto page_backend = rendering_service.edit_page_rendering()) {
+                    page_backend->set_page_format(settings->page_size(), settings->page_orientation());
+                    layout_service.set_page_dimensions(page_backend->page_width(), page_backend->page_height());
+                } else {
+                    layout_service.set_page_format(settings->page_size(), settings->page_orientation());
+                }
             }
         }
 
@@ -143,9 +150,9 @@ namespace docraft {
                 return;
             }
             if (settings->has_section_ratios()) {
-                context->set_section_ratios(settings->header_ratio(),
-                                            settings->body_ratio(),
-                                            settings->footer_ratio());
+                context->edit_navigation().set_section_ratios(settings->header_ratio(),
+                                                              settings->body_ratio(),
+                                                              settings->footer_ratio());
             }
         }
 
@@ -212,7 +219,8 @@ namespace docraft {
     }
 
     void DocraftDocument::handle_node_rendering(const std::shared_ptr<model::DocraftNode> &node) {
-        auto page_backend = context_->edit_page_backend();
+        auto &rendering_service = context_->edit_rendering();
+        auto page_backend = rendering_service.edit_page_rendering();
         const std::size_t page_count = page_backend ? page_backend->total_page_count() : 1;
         if (node->page_owner() == -1 && page_backend) {
             for (std::size_t i = 0; i < page_count; ++i) {
@@ -231,7 +239,7 @@ namespace docraft {
 
     void DocraftDocument::render() {
         context_->set_renderer(std::make_shared<renderer::DocraftPDFRenderer>(context_));
-        context_->set_font_applier(std::make_shared<generic::DocraftFontApplier>(context_));
+        context_->edit_typography().set_font_applier(std::make_shared<generic::DocraftFontApplier>(context_));
         LOG_DEBUG("Rendering document: " + config_.document_title());
 
         configure_document_settings();
@@ -250,7 +258,7 @@ namespace docraft {
         layout::DocraftLayoutEngine layout_engine(context_);
         layout_engine.compute_document_layout(dom_);
 
-        const auto page_backend = context_->edit_page_backend();
+        const auto page_backend = context_->edit_rendering().edit_page_rendering();
         if (page_backend) {
             page_backend->go_to_first_page();
         }
@@ -264,7 +272,7 @@ namespace docraft {
             }
         }
 
-        const auto backend = context_->edit_rendering_backend();
+        const auto backend = context_->edit_rendering().edit_backend();
         if (!backend) {
             throw std::runtime_error("Rendering backend is not available");
         }
@@ -286,7 +294,12 @@ namespace docraft {
     }
 
     void DocraftDocument::set_backend(const std::shared_ptr<backend::IDocraftBackend> &backend) {
-        context_->set_backend(backend);
+        auto &rendering_service = context_->edit_rendering();
+        auto &layout_service = context_->edit_layout();
+        rendering_service.set_backend(backend);
+        if (const auto page_backend = rendering_service.page_rendering()) {
+            layout_service.set_page_dimensions(page_backend->page_width(), page_backend->page_height());
+        }
     }
 
     std::vector<std::shared_ptr<const model::DocraftNode> > DocraftDocument::nodes() const {

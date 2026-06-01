@@ -115,7 +115,7 @@ namespace docraft::generic {
     }
 
     bool DocraftFontApplier::is_font_supported(const std::string &name, const char *encoder) const {
-        auto backend = context_->rendering_backend();
+        auto backend = context_->rendering().backend();
         if (!backend || !backend->font_backend()) {
             return false;
         }
@@ -199,7 +199,7 @@ namespace docraft::generic {
         }
 
         // IMPORTANT: Always load/register into THIS backend (even if file already existed)
-        auto backend = context_->rendering_backend();
+        auto backend = context_->rendering().backend();
         if (!backend || !backend->font_backend()) {
             return nullptr;
         }
@@ -218,7 +218,7 @@ namespace docraft::generic {
 
     void DocraftFontApplier::apply_font(
         const std::shared_ptr<model::DocraftText> &node) const {
-        auto backend = context_->rendering_backend();
+        auto backend = context_->rendering().backend();
         if (!backend || !backend->font_backend()) {
             return;
         }

@@ -13,7 +13,7 @@ using namespace docraft;
 TEST(DocraftFontApplier, ResolvesBuiltInBold) {
     auto context = std::make_shared<DocraftDocumentContext>();
     auto applier = std::make_shared<generic::DocraftFontApplier>(context);
-    context->set_font_applier(applier);
+    context->edit_typography().set_font_applier(applier);
 
     auto text = std::make_shared<model::DocraftText>("Hello");
     text->set_font_name("Helvetica");
@@ -26,7 +26,7 @@ TEST(DocraftFontApplier, ResolvesBuiltInBold) {
 TEST(DocraftFontApplier, ResolvesBuiltInItalic) {
     auto context = std::make_shared<DocraftDocumentContext>();
     auto applier = std::make_shared<generic::DocraftFontApplier>(context);
-    context->set_font_applier(applier);
+    context->edit_typography().set_font_applier(applier);
 
     auto text = std::make_shared<model::DocraftText>("Hello");
     text->set_font_name("Helvetica");
@@ -39,7 +39,7 @@ TEST(DocraftFontApplier, ResolvesBuiltInItalic) {
 TEST(DocraftFontApplier, ResolvesBuiltInBoldItalic) {
     auto context = std::make_shared<DocraftDocumentContext>();
     auto applier = std::make_shared<generic::DocraftFontApplier>(context);
-    context->set_font_applier(applier);
+    context->edit_typography().set_font_applier(applier);
 
     auto text = std::make_shared<model::DocraftText>("Hello");
     text->set_font_name("Helvetica");
@@ -52,7 +52,7 @@ TEST(DocraftFontApplier, ResolvesBuiltInBoldItalic) {
 TEST(DocraftFontApplier, FallsBackToHelveticaWhenUnknown) {
     auto context = std::make_shared<DocraftDocumentContext>();
     auto applier = std::make_shared<generic::DocraftFontApplier>(context);
-    context->set_font_applier(applier);
+    context->edit_typography().set_font_applier(applier);
 
     auto text = std::make_shared<model::DocraftText>("Hello");
     text->set_font_name("UnknownFont");

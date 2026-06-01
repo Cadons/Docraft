@@ -90,7 +90,7 @@ namespace docraft::model {
         if (!context) {
             return true;
         }
-        const auto &page_backend = context->page_backend();
+        const auto &page_backend = context->rendering().page_rendering();
         if (!page_backend) {
             return true;
         }

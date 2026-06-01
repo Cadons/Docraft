@@ -28,7 +28,7 @@ namespace docraft::layout::handler {
         }
         // If the layout has a weight, the parent already scoped available_space to that share.
         if (node->weight()!=-1.0F) {
-            node->set_width(edit_context()->available_space());
+            node->set_width(edit_context()->layout().available_space());
             box->set_width(node->width());
         }
         cursor.pop_direction(); //remove layout direction

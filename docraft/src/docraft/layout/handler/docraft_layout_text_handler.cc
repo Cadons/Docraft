@@ -40,11 +40,11 @@ namespace docraft::layout::handler {
     float DocraftLayoutTextHandler::measure_text_width(const std::shared_ptr<model::DocraftText> &node) const {
         generic::DocraftFontApplier font_applier(edit_context());
         font_applier.apply_font(node);
-        return edit_context()->text_backend()->measure_text_width(node->text());
+        return edit_context()->rendering().text_rendering()->measure_text_width(node->text());
     }
 
     float DocraftLayoutTextHandler::measure_test_width(const std::string &text) const {
-        return edit_context()->text_backend()->measure_text_width(text);
+        return edit_context()->rendering().text_rendering()->measure_text_width(text);
     }
 
     void DocraftLayoutTextHandler::compute(const std::shared_ptr<model::DocraftText> &node,
@@ -67,7 +67,7 @@ namespace docraft::layout::handler {
         node->clear_lines(); // Recompute wrapping from scratch to avoid duplicate lines.
 
         const float padding = std::max(0.0F, node->padding());
-        const float available_width = std::max(0.0F, edit_context()->available_space() - (2.0F * padding));
+        const float available_width = std::max(0.0F, edit_context()->layout().available_space() - (2.0F * padding));
         auto add_wrapped_word = [this,available_width,node](const std::string &word) {
             if (word.empty()) {
                 return;
@@ -149,7 +149,7 @@ namespace docraft::layout::handler {
 
         // Always move to the first baseline below the current cursor Y,
         // but clamp so the first line doesn't get clipped above the page.
-        const float kTopSafe = edit_context()->page_height() - line_height;
+        const float kTopSafe = edit_context()->layout().page_height() - line_height;
         float first_baseline_y = text_cursor.y() - line_height;
         if (first_baseline_y > kTopSafe) {
             first_baseline_y = kTopSafe;

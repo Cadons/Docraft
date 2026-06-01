@@ -75,7 +75,7 @@ namespace docraft::layout::handler {
                                   const float fixed_x,
                                   const float fallback) {
             if (node->auto_fill_width()) {
-                return std::max(0.0F, context->available_space());
+                return std::max(0.0F, context->layout().available_space());
             }
             float w = node->width();
             if (w > 0.0F) {
@@ -108,13 +108,14 @@ namespace docraft::layout::handler {
                                      model::DocraftTransform *box,
                                      const std::shared_ptr<DocraftDocumentContext> &context,
                                      DocraftCursor& cursor) {
+            auto &layout_service = context->edit_layout();
             DocraftCursor table_cursor = cursor;//Use a custom cursor to not affect the main one
             configure_cursor_position(node,table_cursor);
             const float fixed_x = table_cursor.x();
             const float fixed_y = table_cursor.y()-node->padding();//Adjust for some top padding
 
             docraft::layout::DocraftLayoutEngine engine(context, false);
-            const float saved_available_space = context->available_space();
+            const float saved_available_space = layout_service.available_space();
             constexpr float kCellPaddingY = 2.5F;
             constexpr float kCellPaddingX = 2.5F;
             const float baseline_offset = node->baseline_offset();
@@ -146,7 +147,7 @@ namespace docraft::layout::handler {
                 // Save cursor position
                 const float saved_x = table_cursor.x();
                 const float saved_y = table_cursor.y();
-                table_cursor.move_to(0.0F, context->page_height());
+                table_cursor.move_to(0.0F, layout_service.page_height());
                 (void) engine.compute_layout(title_node, table_cursor);
                 table_cursor.move_to(saved_x, saved_y);
 
@@ -224,7 +225,7 @@ namespace docraft::layout::handler {
                 const float saved_x = table_cursor.x();
                 const float saved_y = table_cursor.y();
                 const float inner_width = std::max(0.0F, col_widths[i] - (2.0F * kCellPaddingX));
-                context->set_current_rect_width(inner_width);
+                layout_service.set_current_rect_width(inner_width);
                 table_cursor.move_to(col_lefts[i] + kCellPaddingX, fixed_y - kCellPaddingY);
                 (void) engine.compute_layout(title_node, table_cursor);
                 table_cursor.move_to(saved_x, saved_y);
@@ -259,7 +260,7 @@ namespace docraft::layout::handler {
                     const float saved_x = table_cursor.x();
                     const float saved_y = table_cursor.y();
                     const float inner_width = std::max(0.0F, col_widths[c] - (2.0F * kCellPaddingX));
-                    context->set_current_rect_width(inner_width);
+                    layout_service.set_current_rect_width(inner_width);
                     table_cursor.move_to(col_lefts[c] + kCellPaddingX, y - kCellPaddingY);
                     (void) engine.compute_layout(cell, table_cursor);
                     table_cursor.move_to(saved_x, saved_y);
@@ -294,20 +295,21 @@ namespace docraft::layout::handler {
                 box->set_width(node->width());
                 box->set_height(node->height());
             }
-            context->set_current_rect_width(saved_available_space);
+            layout_service.set_current_rect_width(saved_available_space);
         }
 
         void layout_vertical_table(const std::shared_ptr<model::DocraftTable> &node,
                                    model::DocraftTransform *box,
                                    const std::shared_ptr<DocraftDocumentContext> &context,
                                    DocraftCursor& cursor) {
+            auto &layout_service = context->edit_layout();
             DocraftCursor table_cursor = cursor;//Use a custom cursor to not affect the main one
             configure_cursor_position(node,table_cursor);
             const float fixed_x = table_cursor.x();
             const float fixed_y = table_cursor.y();
 
             docraft::layout::DocraftLayoutEngine engine(context, false);
-            const float saved_available_space = context->available_space();
+            const float saved_available_space = layout_service.available_space();
             const float kCellPaddingY = 2.0F;
             const float kCellPaddingX = 2.0F;
             const float baseline_offset = node->baseline_offset();
@@ -346,8 +348,8 @@ namespace docraft::layout::handler {
 
                 const float saved_x = table_cursor.x();
                 const float saved_y = table_cursor.y();
-                context->set_current_rect_width(context->available_space());
-                table_cursor.move_to(fixed_x, context->page_height());
+                layout_service.set_current_rect_width(layout_service.available_space());
+                table_cursor.move_to(fixed_x, layout_service.page_height());
                 (void) engine.compute_layout(title_node, table_cursor);
                 table_cursor.move_to(saved_x, saved_y);
 
@@ -399,7 +401,7 @@ namespace docraft::layout::handler {
                     const float saved_x = table_cursor.x();
                     const float saved_y = table_cursor.y();
                     const float inner_width = std::max(0.0F, value_col_width - padding_x);
-                    context->set_current_rect_width(inner_width);
+                    layout_service.set_current_rect_width(inner_width);
                     table_cursor.move_to(
                         fixed_x + title_col_width + (static_cast<float>(c) * value_col_width) + kCellPaddingX,
                         y - kCellPaddingY);
@@ -433,7 +435,7 @@ namespace docraft::layout::handler {
                     const float saved_x = table_cursor.x();
                     const float saved_y = table_cursor.y();
                     const float inner_width = std::max(0.0F, title_col_width -padding_x);
-                    context->set_current_rect_width(inner_width);
+                    layout_service.set_current_rect_width(inner_width);
                     table_cursor.move_to(fixed_x + kCellPaddingX, y - kCellPaddingY);
                     (void) engine.compute_layout(title_node, table_cursor);
                     table_cursor.move_to(saved_x, saved_y);
@@ -452,7 +454,7 @@ namespace docraft::layout::handler {
                     const float saved_x = table_cursor.x();
                     const float saved_y = table_cursor.y();
                     const float inner_width = std::max(0.0F, value_col_width - padding_x);
-                    context->set_current_rect_width(inner_width);
+                    layout_service.set_current_rect_width(inner_width);
                     table_cursor.move_to(
                         fixed_x + title_col_width + (static_cast<float>(vc) * value_col_width) + kCellPaddingX,
                         y - kCellPaddingY);
@@ -503,7 +505,7 @@ namespace docraft::layout::handler {
                 box->set_width(node->width());
                 box->set_height(node->height());
             }
-            context->set_current_rect_width(saved_available_space);
+            layout_service.set_current_rect_width(saved_available_space);
         }
     }
 

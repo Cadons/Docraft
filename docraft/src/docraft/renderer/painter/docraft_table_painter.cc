@@ -30,8 +30,9 @@ namespace docraft::renderer::painter {
 
     void DocraftTablePainter::draw(const std::shared_ptr<DocraftDocumentContext> &context) {
          if (!context) return;
-         auto line_backend = context->line_backend();
-         auto shape_backend = context->shape_backend();
+         auto &rendering_service = context->rendering();
+         auto line_backend = rendering_service.line_rendering();
+         auto shape_backend = rendering_service.shape_rendering();
          if (!line_backend) return;
          line_backend->set_stroke_color(0.0F, 0.0F, 0.0F);
          float start_x = table_node_.position().x;

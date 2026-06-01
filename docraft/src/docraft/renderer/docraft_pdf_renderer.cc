@@ -35,8 +35,9 @@ namespace docraft::renderer {
         painter.draw(context());
     }
     void DocraftPDFRenderer::render_section(const model::DocraftSection &section_node) {
-        auto shape_backend = context()->shape_backend();
-        auto line_backend = context()->line_backend();
+        auto &rendering_service = context()->rendering();
+        auto shape_backend = rendering_service.shape_rendering();
+        auto line_backend = rendering_service.line_rendering();
         if (!shape_backend || !line_backend) return;
 
         const float left = section_node.position().x;

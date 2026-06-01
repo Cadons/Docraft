@@ -22,6 +22,14 @@ set(DOCRAFT_SOURCES
         include/docraft/docraft_document_metadata.h
         src/docraft/docraft_document_context.cc
         include/docraft/docraft_document_context.h
+        src/docraft/services/docraft_rendering_service.cc
+        include/docraft/services/docraft_rendering_service.h
+        src/docraft/services/docraft_layout_service.cc
+        include/docraft/services/docraft_layout_service.h
+        src/docraft/services/docraft_typography_service.cc
+        include/docraft/services/docraft_typography_service.h
+        src/docraft/services/docraft_navigation_service.cc
+        include/docraft/services/docraft_navigation_service.h
         src/docraft/docraft_cursor.cc
         include/docraft/docraft_cursor.h
         src/docraft/docraft_color.cc

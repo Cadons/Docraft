@@ -26,8 +26,9 @@ namespace docraft::renderer::painter {
 
     void DocraftCirclePainter::draw(const std::shared_ptr<DocraftDocumentContext> &context) {
         if (!context) return;
-        auto shape_backend = context->shape_backend();
-        auto line_backend = context->line_backend();
+        const auto &rendering_service = context->rendering();
+        const auto shape_backend = rendering_service.shape_rendering();
+        const auto line_backend = rendering_service.line_rendering();
         if (!shape_backend || !line_backend) return;
 
         const auto &bg_color = circle_node_.background_color().toRGB();

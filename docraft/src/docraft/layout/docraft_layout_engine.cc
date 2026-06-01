@@ -98,7 +98,8 @@ namespace docraft::layout {
         : context_(context) {
         configure_handlers(context);
         if (reset_cursor && context) {
-            context->cursor().move_to(0, context->page_height());
+            auto &layout_service = context->edit_layout();
+            layout_service.cursor().move_to(0, layout_service.page_height());
         }
     }
 
@@ -158,7 +159,7 @@ namespace docraft::layout {
         if (!node->visible()) {
             return model::DocraftTransform{};
         }
-        auto &cursor = context()->cursor();
+        auto &cursor = context()->edit_layout().cursor();
         return compute_layout(node, cursor);
     }
 
@@ -168,7 +169,10 @@ namespace docraft::layout {
             return model::DocraftTransform{};
         }
         std::vector<model::DocraftTransform> child_boxes;
-        float max_width = context()->available_space();
+        auto &layout_service = context()->edit_layout();
+        auto &navigation_service = context()->navigation();
+        auto &rendering_service = context()->edit_rendering();
+        float max_width = layout_service.available_space();
         const float flow_origin_x = cursor.x();
         const float flow_origin_y = cursor.y();
         const bool is_absolute = (node->position_mode() == model::DocraftPositionType::kAbsolute);
@@ -208,7 +212,7 @@ namespace docraft::layout {
                 if (rect_container->width() > 0.0F) {
                     max_width = rect_container->width();
                 }
-                context()->set_current_rect_width(max_width);
+                layout_service.set_current_rect_width(max_width);
             }
         }
         std::shared_ptr<model::DocraftSection> section_node = nullptr;
@@ -230,7 +234,7 @@ namespace docraft::layout {
             } else {
                 max_width = max_width - left_margin - right_margin; // width from left margin to right margin
             }
-            context()->set_current_rect_width(max_width);
+            layout_service.set_current_rect_width(max_width);
             if (section_node->height() > 0.0F) {
                 section_content_bottom = section_node->position().y - section_node->height() + section_node->
                                          margin_bottom() + padding;
@@ -279,7 +283,7 @@ namespace docraft::layout {
                     }
                 }
             }
-            const float saved_available_space = context()->available_space();
+            const float saved_available_space = layout_service.available_space();
             const bool is_horizontal = (layout_cursor->direction() == DocraftCursorDirection::kHorizontal);
             const std::size_t child_count = container_node->children().size();
             float available_width_for_children = max_width;
@@ -291,9 +295,9 @@ namespace docraft::layout {
             for (const auto &child: container_node->children()) {
                 if (child->z_index() == node->z_index()) {
                     if (is_horizontal) {
-                        context()->set_current_rect_width(available_width_for_children * child->weight());
+                        layout_service.set_current_rect_width(available_width_for_children * child->weight());
                     } else {
-                        context()->set_current_rect_width(max_width);
+                        layout_service.set_current_rect_width(max_width);
                     }
                     const float start_x = layout_cursor->x();
                     const float start_y = layout_cursor->y();
@@ -313,7 +317,7 @@ namespace docraft::layout {
                     }
                 }
             }
-            context()->set_current_rect_width(saved_available_space);
+            layout_service.set_current_rect_width(saved_available_space);
         }
 
         auto max_rect = compute_max_rect(child_boxes);
@@ -346,7 +350,7 @@ namespace docraft::layout {
     float DocraftLayoutEngine::compute_width(const std::shared_ptr<model::DocraftSection> &node) const {
         float margin_left = node->margin_left();
         float margin_right = node->margin_right();
-        return context()->page_width() - (margin_left + margin_right);
+        return context()->layout().page_width() - (margin_left + margin_right);
     }
 
     void DocraftLayoutEngine::assign_page_owner_recursive(const std::shared_ptr<model::DocraftNode> &node,
@@ -382,7 +386,7 @@ namespace docraft::layout {
         if (!sections.body) {
             throw std::runtime_error("Document must have a body section");
         }
-        if (const auto page_backend = context()->edit_page_backend()) {
+        if (const auto page_backend = context()->edit_rendering().edit_page_rendering()) {
             page_backend->go_to_first_page();
         }
         const SectionPlan plan = build_section_plan(sections);
@@ -414,9 +418,10 @@ namespace docraft::layout {
 
     DocraftLayoutEngine::SectionPlan DocraftLayoutEngine::build_section_plan(const Sections &sections) const {
         SectionPlan plan;
-        const float base_header_ratio = context()->header_ratio();
-        const float base_body_ratio = context()->body_ratio();
-        const float base_footer_ratio = context()->footer_ratio();
+        const auto &navigation_service = context()->navigation();
+        const float base_header_ratio = navigation_service.header_ratio();
+        const float base_body_ratio = navigation_service.body_ratio();
+        const float base_footer_ratio = navigation_service.footer_ratio();
 
         plan.header_ratio = sections.header ? base_header_ratio : 0.0F;
         plan.footer_ratio = sections.footer ? base_footer_ratio : 0.0F;
@@ -437,14 +442,17 @@ namespace docraft::layout {
     void DocraftLayoutEngine::layout_header_section(
         const std::shared_ptr<model::DocraftHeader> &header,
         const float header_ratio) {
-        header->set_position({.x = header->margin_left(), .y = context()->page_height()});
+        auto &layout_service = context()->edit_layout();
+        auto &layout_cursor = layout_service.cursor();
+        const float page_height = layout_service.page_height();
+        header->set_position({.x = header->margin_left(), .y = page_height});
         header->set_width(compute_width(header));
-        header->set_height(context()->page_height() * header_ratio);
-        context()->cursor().move_to(header->position().x, header->position().y);
-        (void) compute_layout(header, context()->cursor());
-        header->set_position({.x = header->margin_left(), .y = context()->page_height()});
+        header->set_height(page_height * header_ratio);
+        layout_cursor.move_to(header->position().x, header->position().y);
+        (void) compute_layout(header, layout_cursor);
+        header->set_position({.x = header->margin_left(), .y = page_height});
         header->set_width(compute_width(header));
-        header->set_height(context()->page_height() * header_ratio);
+        header->set_height(page_height * header_ratio);
         assign_page_owner_recursive(header, -1); //always
     }
 
@@ -452,25 +460,28 @@ namespace docraft::layout {
         const std::shared_ptr<model::DocraftBody> &body,
         const std::shared_ptr<model::DocraftHeader> &header,
         const SectionPlan &plan) {
-        float body_start_y = context()->page_height();
+        auto &layout_service = context()->edit_layout();
+        auto &rendering_service = context()->edit_rendering();
+        const float page_height = layout_service.page_height();
+        float body_start_y = page_height;
         if (plan.header_to_render) {
             body_start_y = header->anchors().bottom_left.y;
         }
-        const float body_height = context()->page_height() * plan.body_ratio;
+        const float body_height = page_height * plan.body_ratio;
 
         body->set_position({.x = body->margin_left(), .y = body_start_y});
         body->set_width(compute_width(body));
         body->set_height(body_height);
-        const float footer_height = plan.footer_to_render ? context()->page_height() * plan.footer_ratio : 0.0F;
+        const float footer_height = plan.footer_to_render ? page_height * plan.footer_ratio : 0.0F;
         const float body_bottom_y = (body_start_y - body_height) + body->margin_bottom() + footer_height;
         // The y-coordinate of the bottom of the body content area, accounting for footer if present
-        context()->set_current_rect_width(body->width());
+        layout_service.set_current_rect_width(body->width());
 
         DocraftCursor body_cursor; //Use a custom cursor to not affect the main one
         body_cursor.move_to(body->position().x, body_start_y);
 
         int current_page = 1;
-        const auto page_backend = context()->edit_page_backend();
+        const auto page_backend = rendering_service.edit_page_rendering();
         if (page_backend) {
             current_page = static_cast<int>(page_backend->current_page_number());
         }
@@ -594,18 +605,20 @@ namespace docraft::layout {
         const std::shared_ptr<model::DocraftFooter> &footer,
         const std::shared_ptr<model::DocraftBody> &body,
         const SectionPlan &plan) {
+        auto &layout_service = context()->edit_layout();
+        auto &layout_cursor = layout_service.cursor();
         float footer_start_y = 0.0F;
         if (plan.body_to_render) {
             footer_start_y = body->anchors().bottom_left.y;
         }
         footer->set_position({.x = footer->margin_left(), .y = footer_start_y});
         footer->set_width(compute_width(footer));
-        footer->set_height(context()->page_height() * plan.footer_ratio);
-        context()->cursor().move_to(footer->position().x, footer_start_y);
-        compute_layout(footer, context()->cursor());
+        footer->set_height(layout_service.page_height() * plan.footer_ratio);
+        layout_cursor.move_to(footer->position().x, footer_start_y);
+        compute_layout(footer, layout_cursor);
         footer->set_position({.x = footer->margin_left(), .y = footer_start_y});
         footer->set_width(compute_width(footer));
-        footer->set_height(context()->page_height() * plan.footer_ratio);
+        footer->set_height(layout_service.page_height() * plan.footer_ratio);
         assign_page_owner_recursive(footer, -1); //always
     }
 } // docraft

@@ -34,13 +34,16 @@ namespace docraft::model {
             }
             const auto &marker = markers_[i];
             if (marker.kind == Marker::Kind::kBox) {
-                if (context && context->shape_backend() && context->line_backend()) {
+                if (context) {
+                    auto shape = context->rendering().shape_rendering();
+                    auto line = context->rendering().line_rendering();
+                    if (!shape || !line) {
+                        continue;
+                    }
                     auto rgb = text_node->color().toRGB();
                     const float size = marker.size > 0.0F ? marker.size : (text_node->font_size() * 0.6F);
                     const float x = marker.position.x;
                     const float y = marker.position.y - (size * 0.2F);
-                    auto shape = context->shape_backend();
-                    auto line = context->line_backend();
                     shape->save_state();
                     line->set_stroke_color(rgb.r, rgb.g, rgb.b);
                     line->set_line_width(1.0F);
@@ -59,8 +62,10 @@ namespace docraft::model {
             line->set_alignment(TextAlignment::kLeft);
             line->set_underline(false);
             line->set_position(marker.position);
-            if (context && context->text_backend()) {
-                line->set_width(context->text_backend()->measure_text_width(marker.text));
+            if (context) {
+                if (const auto text_backend = context->rendering().text_rendering()) {
+                    line->set_width(text_backend->measure_text_width(marker.text));
+                }
             }
             line->set_height(text_node->font_size() * 1.2F);
             marker_text.add_line(line);

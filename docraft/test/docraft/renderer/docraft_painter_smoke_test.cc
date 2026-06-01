@@ -95,7 +95,7 @@ TEST(DocraftPolygonPainter, DrawsBasicPolygon) {
 
 TEST(DocraftTextPainter, DrawsSingleLine) {
     auto context = std::make_shared<DocraftDocumentContext>();
-    context->set_font_applier(std::make_shared<generic::DocraftFontApplier>(context));
+    context->edit_typography().set_font_applier(std::make_shared<generic::DocraftFontApplier>(context));
 
     model::DocraftText text("Hello");
     text.set_font_name("Helvetica");

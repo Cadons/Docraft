@@ -48,9 +48,11 @@ namespace docraft::layout::handler {
         if (!node) {
             throw std::invalid_argument("list node is null");
         }
+        auto &layout_service = edit_context()->edit_layout();
+        auto text_backend = edit_context()->rendering().text_rendering();
         node->update_items();
         node->clear_markers();
-        const float saved_available_space = edit_context()->available_space();
+        const float saved_available_space = layout_service.available_space();
         const float list_available_width = max_width;
         for (std::size_t i = 0; i < node->children().size(); ++i) {
             auto text_child = std::dynamic_pointer_cast<model::DocraftText>(node->children()[i]);
@@ -74,12 +76,12 @@ namespace docraft::layout::handler {
             } else {
                 generic::DocraftFontApplier font_applier(edit_context());
                 font_applier.apply_font(marker_text);
-                marker_width = edit_context()->text_backend()->measure_text_width(marker_text->text());
+                marker_width = text_backend->measure_text_width(marker_text->text());
             }
             const float marker_gap = marker_width > 0.0F ? 6.0F : 0.0F;
 
             const float content_width = std::max(0.0F, list_available_width - marker_width - marker_gap);
-            edit_context()->set_current_rect_width(content_width);
+            layout_service.set_current_rect_width(content_width);
             cursor.move_to(item_x + marker_width + marker_gap, item_y);
 
             const float original_padding = text_child->padding();
@@ -113,7 +115,7 @@ namespace docraft::layout::handler {
 
             cursor.move_to(item_x, cursor.y());
         }
-        edit_context()->set_current_rect_width(saved_available_space);
+        layout_service.set_current_rect_width(saved_available_space);
     }
 
     bool DocraftLayoutListHandler::handle(const std::shared_ptr<model::DocraftNode> &request,

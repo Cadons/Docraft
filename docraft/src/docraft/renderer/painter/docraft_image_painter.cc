@@ -26,7 +26,7 @@ namespace docraft::renderer::painter {
 
     void DocraftImagePainter::draw(const std::shared_ptr<DocraftDocumentContext> &context) {
         if (!context) return;
-        auto backend = context->image_backend();
+        auto backend = context->rendering().image_rendering();
         if (!backend) return;
 
         if (!image_node_.visible()) {
