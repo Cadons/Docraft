@@ -229,7 +229,7 @@ namespace docraft::craft::parser {
         }
 
         // Parse body rows when using explicit TBody.
-        table_body = craft_language_source.child(elements::kTBody);
+        table_body = craft_language_source.child(std::string(elements::kTBody));
         if (table_body) {
             int row_count = 0;
             int max_value_cols = 0;
