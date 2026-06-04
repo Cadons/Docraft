@@ -18,7 +18,6 @@
 
 #include "docraft/docraft_lib.h"
 #include "docraft/backend/docraft_rendering_backend.h"
-#include "docraft/model/docraft_page_format.h"
 #include "docraft/services/docraft_rendering_service.h"
 #include "docraft/services/docraft_layout_service.h"
 #include "docraft/services/docraft_typography_service.h"
@@ -55,7 +54,7 @@ namespace docraft {
         /**
          * @brief Constructs a context with backend providers factory.
          */
-        DocraftDocumentContext(
+        explicit DocraftDocumentContext(
             const std::shared_ptr<backend::IDocraftCapabilityProvidersFactory> &capability_providers_factory);
 
         /**

@@ -18,9 +18,7 @@
 #include "docraft/generic/docraft_font_applier.h"
 
 namespace docraft::services {
-    TypographyService::TypographyService()
-        : font_applier_(nullptr) {
-    }
+    TypographyService::TypographyService() = default;
 
     TypographyService::~TypographyService() = default;
 

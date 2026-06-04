@@ -17,11 +17,8 @@
 #include "docraft/services/docraft_layout_service.h"
 
 namespace docraft::services {
-    LayoutService::LayoutService()
-        : cursor_(std::make_unique<DocraftCursor>()),
-          page_width_(595.0F),
-          page_height_(842.0F),
-          current_rect_width_(595.0F) {
+    LayoutService::LayoutService() {
+        cursor_ = std::make_unique<DocraftCursor>();
     }
 
     LayoutService::~LayoutService() = default;
@@ -55,7 +52,7 @@ namespace docraft::services {
         return current_rect_width_;
     }
 
-    void LayoutService::set_page_format(model::DocraftPageSize size, model::DocraftPageOrientation orientation) {
+    void LayoutService::set_page_format(model::DocraftPageOrientation orientation) {
         // Placeholder: actual conversion from size/orientation enums to points
         // For now, use A4 defaults
         if (orientation == model::DocraftPageOrientation::kPortrait) {
@@ -74,5 +71,3 @@ namespace docraft::services {
         current_rect_width_ = page_width_;
     }
 } // namespace docraft::services
-
-

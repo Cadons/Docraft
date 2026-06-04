@@ -18,20 +18,20 @@
 #include "docraft/renderer/docraft_renderer.h"
 
 namespace docraft {
-    DocraftDocumentContext::DocraftDocumentContext()
-        : rendering_(std::make_unique<services::RenderingService>()),
-          layout_(std::make_unique<services::LayoutService>()),
-          typography_(std::make_unique<services::TypographyService>()),
-          navigation_(std::make_unique<services::NavigationService>()) {
+    DocraftDocumentContext::DocraftDocumentContext() {
+        rendering_ = std::make_unique<services::RenderingService>();
+        layout_ = std::make_unique<services::LayoutService>();
+        typography_ = std::make_unique<services::TypographyService>();
+        navigation_ = std::make_unique<services::NavigationService>();
         sync_layout_page_dimensions_from_backend();
     }
 
     DocraftDocumentContext::DocraftDocumentContext(
-        const std::shared_ptr<backend::IDocraftCapabilityProvidersFactory> &capability_providers_factory)
-        : rendering_(std::make_unique<services::RenderingService>(capability_providers_factory)),
-          layout_(std::make_unique<services::LayoutService>()),
-          typography_(std::make_unique<services::TypographyService>()),
-          navigation_(std::make_unique<services::NavigationService>()) {
+        const std::shared_ptr<backend::IDocraftCapabilityProvidersFactory> &capability_providers_factory) {
+        rendering_ = std::make_unique<services::RenderingService>(capability_providers_factory);
+        layout_ = std::make_unique<services::LayoutService>();
+        typography_ = std::make_unique<services::TypographyService>();
+        navigation_ = std::make_unique<services::NavigationService>();
         sync_layout_page_dimensions_from_backend();
     }
 
@@ -91,5 +91,4 @@ namespace docraft {
             layout_service.set_page_dimensions(page_backend->page_width(), page_backend->page_height());
         }
     }
-
 } // namespace docraft

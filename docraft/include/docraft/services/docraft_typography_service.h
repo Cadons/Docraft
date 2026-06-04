@@ -47,7 +47,7 @@ namespace docraft::services {
         void set_font_applier(const std::shared_ptr<generic::DocraftFontApplier> &applier);
 
     private:
-        std::shared_ptr<generic::DocraftFontApplier> font_applier_;
+        std::shared_ptr<generic::DocraftFontApplier> font_applier_ = nullptr;
     };
 } // namespace docraft::services
 

@@ -147,7 +147,7 @@ namespace docraft {
         [[nodiscard]] std::vector<std::shared_ptr<const model::DocraftNode> > find_by_name(
             const std::string &name) const;
 
-        [[nodiscard]] std::vector<std::shared_ptr<model::DocraftNode> > take_by_name(const std::string &name);
+        [[nodiscard]] std::vector<std::shared_ptr<model::DocraftNode> > take_by_name(const std::string &name) const;
 
         [[nodiscard]] std::shared_ptr<const model::DocraftNode> find_first_by_name(const std::string &name) const;
 

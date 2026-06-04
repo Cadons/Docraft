@@ -74,7 +74,7 @@ namespace docraft::services {
         /**
          * @brief Sets page format and updates cached dimensions.
          */
-        void set_page_format(model::DocraftPageSize size, model::DocraftPageOrientation orientation);
+        void set_page_format(model::DocraftPageOrientation orientation);
 
     private:
         std::unique_ptr<DocraftCursor> cursor_;

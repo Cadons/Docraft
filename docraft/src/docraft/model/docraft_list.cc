@@ -17,13 +17,19 @@
 #include "docraft/model/docraft_list.h"
 
 #include <stdexcept>
+#include <utility>
 
 #include "docraft/model/docraft_clone_utils.h"
 #include "docraft/renderer/docraft_renderer.h"
+#include "docraft/utils/docraft_logger.h"
 
 namespace docraft::model {
     void DocraftList::draw(const std::shared_ptr<DocraftDocumentContext> &context) {
         const auto &items = children();
+        if (!context) {
+            LOG_WARNING("Cannot draw list: context is null");
+            return;
+        }
         for (size_t i = 0; i < items.size(); ++i) {
             auto text_node = std::dynamic_pointer_cast<DocraftText>(items[i]);
             if (!text_node) {
@@ -34,24 +40,21 @@ namespace docraft::model {
             }
             const auto &marker = markers_[i];
             if (marker.kind == Marker::Kind::kBox) {
-                if (context) {
-                    auto shape = context->rendering().shape_rendering();
-                    auto line = context->rendering().line_rendering();
-                    if (!shape || !line) {
-                        continue;
-                    }
-                    auto rgb = text_node->color().toRGB();
-                    const float size = marker.size > 0.0F ? marker.size : (text_node->font_size() * 0.6F);
-                    const float x = marker.position.x;
-                    const float y = marker.position.y - (size * 0.2F);
-                    shape->save_state();
-                    line->set_stroke_color(rgb.r, rgb.g, rgb.b);
-                    line->set_line_width(1.0F);
-                    shape->draw_rectangle(x, y, size, size);
-                    shape->stroke();
-                    shape->restore_state();
+                auto shape = context->rendering().shape_rendering();
+                auto line = context->rendering().line_rendering();
+                if (!shape || !line) {
+                    continue;
                 }
-                continue;
+                auto rgb = text_node->color().toRGB();
+                const float size = marker.size > 0.0F ? marker.size : (text_node->font_size() * 0.6F);
+                const float x = marker.position.x;
+                const float y = marker.position.y - (size * 0.2F);
+                shape->save_state();
+                line->set_stroke_color(rgb.r, rgb.g, rgb.b);
+                line->set_line_width(1.0F);
+                shape->draw_rectangle(x, y, size, size);
+                shape->stroke();
+                shape->restore_state();
             }
             DocraftText marker_text;
             auto line = std::make_shared<DocraftText>(marker.text);
@@ -62,10 +65,8 @@ namespace docraft::model {
             line->set_alignment(TextAlignment::kLeft);
             line->set_underline(false);
             line->set_position(marker.position);
-            if (context) {
-                if (const auto text_backend = context->rendering().text_rendering()) {
-                    line->set_width(text_backend->measure_text_width(marker.text));
-                }
+            if (const auto text_backend = context->rendering().text_rendering()) {
+                line->set_width(text_backend->measure_text_width(marker.text));
             }
             line->set_height(text_node->font_size() * 1.2F);
             marker_text.add_line(line);
@@ -77,7 +78,7 @@ namespace docraft::model {
     std::shared_ptr<DocraftNode> DocraftList::clone() const {
         auto copy = std::make_shared<DocraftList>(*this);
         copy->clear_children();
-        for (const auto &child : children()) {
+        for (const auto &child: children()) {
             copy->add_child(clone_node(child));
         }
         copy->update_items();
@@ -122,7 +123,7 @@ namespace docraft::model {
     }
 
     void DocraftList::on_child_removed(int index) {
-        if (index >= 0 && index < static_cast<int>(raw_texts_.size())) {
+        if (index >= 0 && std::cmp_less(index, raw_texts_.size())) {
             raw_texts_.erase(raw_texts_.begin() + index);
         }
         update_items();
@@ -139,7 +140,7 @@ namespace docraft::model {
         }
     }
 
-    void DocraftList::apply_text_transform(const std::function<std::string(const std::string&)> &transform) {
+    void DocraftList::apply_text_transform(const std::function<std::string(const std::string &)> &transform) {
         if (!transform) {
             return;
         }
@@ -169,7 +170,7 @@ namespace docraft::model {
         }
         raw_texts_.clear();
         raw_texts_.reserve(items.size());
-        for (const auto &child : items) {
+        for (const auto &child: items) {
             auto text_node = as_text_node(child);
             raw_texts_.emplace_back(text_node->text());
         }
@@ -235,24 +236,24 @@ namespace docraft::model {
             const char *numeral;
         };
         const Roman numerals[] = {
-            {1000, "M"},
-            {900, "CM"},
-            {500, "D"},
-            {400, "CD"},
-            {100, "C"},
-            {90, "XC"},
-            {50, "L"},
-            {40, "XL"},
-            {10, "X"},
-            {9, "IX"},
-            {5, "V"},
-            {4, "IV"},
-            {1, "I"},
+            {.value = 1000, .numeral = "M"},
+            {.value = 900, .numeral = "CM"},
+            {.value = 500, .numeral = "D"},
+            {.value = 400, .numeral = "CD"},
+            {.value = 100, .numeral = "C"},
+            {.value = 90, .numeral = "XC"},
+            {.value = 50, .numeral = "L"},
+            {.value = 40, .numeral = "XL"},
+            {.value = 10, .numeral = "X"},
+            {.value = 9, .numeral = "IX"},
+            {.value = 5, .numeral = "V"},
+            {.value = 4, .numeral = "IV"},
+            {.value = 1, .numeral = "I"},
         };
 
         std::string result;
         int remaining = value;
-        for (const auto &item : numerals) {
+        for (const auto &item: numerals) {
             while (remaining >= item.value) {
                 result += item.numeral;
                 remaining -= item.value;

@@ -154,7 +154,7 @@ namespace docraft {
                     page_backend->set_page_format(settings->page_size(), settings->page_orientation());
                     layout_service.set_page_dimensions(page_backend->page_width(), page_backend->page_height());
                 } else {
-                    layout_service.set_page_format(settings->page_size(), settings->page_orientation());
+                    layout_service.set_page_format(settings->page_orientation());
                 }
             }
         }
@@ -422,7 +422,7 @@ namespace docraft {
             dom_, name);
     }
 
-    std::vector<std::shared_ptr<model::DocraftNode> > DocraftDocument::take_by_name(const std::string &name) {
+    std::vector<std::shared_ptr<model::DocraftNode> > DocraftDocument::take_by_name(const std::string &name) const {
         return management::DocraftDocumentQuery::take_by_name(dom_, name);
     }
 

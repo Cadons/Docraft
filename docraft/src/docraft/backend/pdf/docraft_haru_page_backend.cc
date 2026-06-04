@@ -16,6 +16,7 @@
 
 #include "docraft/backend/pdf/docraft_haru_page_backend.h"
 
+#include <format>
 #include <stdexcept>
 #include <string>
 
@@ -96,7 +97,8 @@ namespace docraft::backend::pdf {
             state_->edit_current_page_index() = page_number;
             return;
         }
-        throw std::runtime_error("Invalid page number: " + std::to_string(page_number));
+        throw std::runtime_error(std::format("Invalid page number: {}. Total pages: {}", page_number + 1,
+                                             state_->page_count()));
     }
 
     void DocraftHaruPageBackend::go_to_first_page() {

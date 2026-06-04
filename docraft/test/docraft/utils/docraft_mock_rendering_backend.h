@@ -63,7 +63,17 @@ namespace docraft::test::utils {
         mutable bool text_scope_active = false;
         mutable int line_count = 0;
         mutable std::string last_saved_path;
-        std::unordered_set<std::string> registered_fonts;
+
+        // Simple hash set to track registered fonts by their internal names.
+        struct StringHash {
+            using is_transparent = void; // Enables heterogeneous operations.
+            std::size_t operator()(std::string_view sv) const {
+                std::hash<std::string_view> hasher;
+                return hasher(sv);
+            }
+        };
+
+        std::unordered_set<std::string, StringHash> registered_fonts;
     };
 
     class MockLineBackend final : public backend::IDocraftLineRenderingBackend {
@@ -72,8 +82,7 @@ namespace docraft::test::utils {
         }
 
         void set_stroke_color(float, float, float) const override {
-            state_->ensure_supported(state_->config.supports_line_backend, "Line backend capability not supported");
-            state_->ensure_page_available();
+            set_line_width(1.0F); // Reuse checks from set_line_width.
         }
 
         void set_line_width(float) const override {
@@ -125,9 +134,7 @@ namespace docraft::test::utils {
         }
 
         void draw_text_matrix(const std::string &, float, float, float, float, float, float) const override {
-            state_->ensure_supported(state_->config.supports_text_backend, "Text backend capability not supported");
-            state_->ensure_page_available();
-            state_->ensure_text_scope_if_required();
+            draw_text("", 0.0F, 0.0F); // Reuse checks from draw_text.
         }
 
         float measure_text_width(const std::string &text) const override {
