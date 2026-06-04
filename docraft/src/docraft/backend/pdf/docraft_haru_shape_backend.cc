@@ -39,12 +39,12 @@ namespace docraft::backend::pdf {
     }
 
     void DocraftHaruShapeBackend::set_fill_alpha(float alpha) const {
-        fill_alpha_ = alpha;
+        state_->edit_fill_alpha() = alpha;
         apply_alpha_state();
     }
 
     void DocraftHaruShapeBackend::set_stroke_alpha(float alpha) const {
-        stroke_alpha_ = alpha;
+        state_->edit_stroke_alpha() = alpha;
         apply_alpha_state();
     }
 
@@ -87,13 +87,13 @@ namespace docraft::backend::pdf {
         HPDF_Page_FillStroke(provider->current_page());
     }
 
-    void DocraftHaruShapeBackend::apply_alpha_state() const {
-        auto *ext = HPDF_CreateExtGState(state_ ? state_->pdf : nullptr);
-        if (ext) {
-            auto *provider = state_->ensure_page_provider();
-            HPDF_ExtGState_SetAlphaFill(ext, fill_alpha_);
-            HPDF_ExtGState_SetAlphaStroke(ext, stroke_alpha_);
-            HPDF_Page_SetExtGState(provider->current_page(), ext);
-        }
-    }
+     void DocraftHaruShapeBackend::apply_alpha_state() const {
+         auto *ext = HPDF_CreateExtGState(state_ ? state_->pdf : nullptr);
+         if (ext) {
+             auto *provider = state_->ensure_page_provider();
+             HPDF_ExtGState_SetAlphaFill(ext, state_->fill_alpha());
+             HPDF_ExtGState_SetAlphaStroke(ext, state_->stroke_alpha());
+             HPDF_Page_SetExtGState(provider->current_page(), ext);
+         }
+     }
 } // namespace docraft::backend::pdf

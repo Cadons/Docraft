@@ -27,6 +27,9 @@ namespace docraft::backend::pdf {
      *
      * Implements IDocraftShapeRenderingBackend for shape drawing capabilities.
      *
+     * Graphics state (fill_alpha, stroke_alpha) is centralized in DocraftHaruSharedState
+     * to avoid state distribution across backends.
+     *
      * LIFETIME: The shared state must have a registered page operations provider.
      * This is guaranteed if the device is used through DocraftHaruBackend.
      */
@@ -37,6 +40,7 @@ namespace docraft::backend::pdf {
          *
          * LIFETIME: The shared state must have a registered page operations provider.
          * This is guaranteed if the device is used through DocraftHaruBackend.
+         * Uses state's centralized graphics_state for alpha management.
          */
         explicit DocraftHaruShapeBackend(const std::shared_ptr<DocraftHaruSharedState> &state);
 
@@ -99,8 +103,6 @@ namespace docraft::backend::pdf {
         void apply_alpha_state() const;
 
         std::shared_ptr<DocraftHaruSharedState> state_;
-        mutable float fill_alpha_ = 1.0F;
-        mutable float stroke_alpha_ = 1.0F;
     };
 } // namespace docraft::backend::pdf
 
