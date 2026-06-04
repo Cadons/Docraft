@@ -513,7 +513,7 @@ namespace docraft::layout::handler {
                                             model::DocraftTransform *box,
                                             DocraftCursor& cursor) {
         if (!node) {
-            throw std::invalid_argument("table node is null");
+            throw docraft::exception::InvalidInputException("table node is null");
         }
 
         if (node->titles().empty()) {
@@ -540,7 +540,7 @@ namespace docraft::layout::handler {
                 layout_vertical_table(node, box, edit_context(), cursor);
                 break;
             default:
-                throw std::runtime_error("unsupported table orientation");
+                throw docraft::exception::LayoutConfigurationException("unsupported table orientation");
         }
         //print cels positions for debug
         for (const auto &row: node->content_nodes()) {

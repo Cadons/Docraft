@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "docraft/docraft_document_context.h"
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/model/docraft_image.h"
 #include "docraft/renderer/painter/docraft_image_painter.h"
 
@@ -32,5 +33,5 @@ TEST(DocraftImagePainter, ThrowsOnEmptyRawData) {
     image.set_raw_data({}, 1, 1);
 
     renderer::painter::DocraftImagePainter painter(image);
-    EXPECT_THROW(painter.draw(context), std::runtime_error);
+    EXPECT_THROW(painter.draw(context), docraft::exception::InvalidInputException);
 }

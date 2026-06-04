@@ -2,6 +2,7 @@
 #include <pugixml.hpp>
 
 #include "docraft/craft/parser/docraft_parser.h"
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/model/docraft_image.h"
 
 TEST(DocraftImageParserTest, ParsesBase64RawImageData) {
@@ -35,5 +36,5 @@ TEST(DocraftImageParserTest, RejectsBase64MissingDimensions) {
     ASSERT_TRUE(doc.load_string(xml));
 
     docraft::craft::parser::DocraftImageParser parser;
-    EXPECT_THROW(parser.parse(doc.child("Image")), std::invalid_argument);
+    EXPECT_THROW(parser.parse(doc.child("Image")), docraft::exception::InvalidInputException);
 }

@@ -17,6 +17,7 @@
 #include "docraft/craft/parser/docraft_parser.h"
 
 #include "docraft/craft/parser/docraft_parser_helpers.h"
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/model/docraft_text.h"
 
 namespace docraft::craft::parser {
@@ -62,7 +63,7 @@ namespace docraft::craft::parser {
             } else if (style_str == std::string{style::kNormal}) {
                 text_node->set_style(model::TextStyle::kNormal);
             } else {
-                throw std::invalid_argument("Invalid text style: " + style_str);
+                throw docraft::exception::InvalidInputException("Invalid text style: " + style_str);
             }
         }
         if (auto alignment_attr = craft_language_source.attribute(elements::text::attribute::kAlignment.data())) {
@@ -76,7 +77,7 @@ namespace docraft::craft::parser {
             } else if (alignment_str == std::string{alignment::kLeft}) {
                 text_node->set_alignment(model::TextAlignment::kLeft);
             } else {
-                throw std::invalid_argument("Invalid text alignment: " + alignment_str);
+                throw docraft::exception::InvalidInputException("Invalid text alignment: " + alignment_str);
             }
         }
         if (auto underline_attr = craft_language_source.attribute(elements::text::attribute::kUnderline.data())) {

@@ -20,7 +20,11 @@
 
 #include <stdexcept>
 
+#include "docraft/exception/docraft_backend_exceptions.h"
+
 namespace docraft::services {
+    using docraft::exception::CapabilityUnavailableException;
+
     namespace {
         std::shared_ptr<backend::IDocraftCapabilityProvidersFactory> default_capability_factory() {
             return std::make_shared<backend::pdf::DocraftHaruCapabilityProvidersFactory>();
@@ -30,7 +34,7 @@ namespace docraft::services {
             const std::string message = "Required capability not available: " + capability_name;
             switch (policy) {
                 case MissingCapabilityPolicy::kFail:
-                    throw std::runtime_error(message);
+                    throw CapabilityUnavailableException(message);
                 case MissingCapabilityPolicy::kWarn:
                     LOG_WARNING(message);
                     return;

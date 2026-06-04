@@ -19,6 +19,7 @@
 #include <stdexcept>
 #include <utility>
 
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/model/docraft_clone_utils.h"
 #include "docraft/renderer/docraft_renderer.h"
 #include "docraft/utils/docraft_logger.h"
@@ -158,7 +159,7 @@ namespace docraft::model {
     std::shared_ptr<DocraftText> DocraftList::as_text_node(const std::shared_ptr<DocraftNode> &node) {
         auto text_node = std::dynamic_pointer_cast<DocraftText>(node);
         if (!text_node) {
-            throw std::invalid_argument("List items must be Text nodes");
+            throw docraft::exception::InvalidInputException("List items must be Text nodes");
         }
         return text_node;
     }

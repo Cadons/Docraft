@@ -19,6 +19,7 @@
 #include <optional>
 
 #include "docraft/craft/parser/docraft_parser_helpers.h"
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/model/docraft_image.h"
 #include "docraft/model/docraft_table.h"
 #include "docraft/model/docraft_text.h"
@@ -96,7 +97,7 @@ namespace docraft::craft::parser {
                 } else if (alignment_str == std::string{alignment::kCenter}) {
                     title_node->set_alignment(model::TextAlignment::kCenter);
                 } else {
-                    throw std::invalid_argument("Invalid table title alignment: " + alignment_str);
+                    throw docraft::exception::InvalidInputException("Invalid table title alignment: " + alignment_str);
                 }
             } else {
                 title_node->set_alignment(model::TextAlignment::kCenter);
@@ -112,7 +113,7 @@ namespace docraft::craft::parser {
                 } else if (style_str == std::string{style::kNormal}) {
                     title_node->set_style(model::TextStyle::kNormal);
                 } else {
-                    throw std::invalid_argument("Invalid table title style: " + style_str);
+                    throw docraft::exception::InvalidInputException("Invalid table title style: " + style_str);
                 }
             } else {
                 title_node->set_style(model::TextStyle::kBold);
@@ -149,10 +150,10 @@ namespace docraft::craft::parser {
                 //Tbody is template for each item
             }
             if ((has_header_json || has_header_template) && table_header) {
-                throw std::invalid_argument("Table JSON header cannot be combined with THead");
+                throw docraft::exception::InvalidInputException("Table JSON header cannot be combined with THead");
             }
             if (table_node->orientation() == model::LayoutOrientation::kVertical) {
-                throw std::invalid_argument("Table JSON model does not support vertical model");
+                throw docraft::exception::InvalidInputException("Table JSON model does not support vertical model");
             }
         }
 
@@ -169,9 +170,11 @@ namespace docraft::craft::parser {
                             elements::table_htitle::attribute::kBackgroundColor.data());
                         table_node->add_htitle_node(title_node, bg);
                     } else if (title.name() == std::string{elements::kTitle}) {
-                        throw std::invalid_argument("Title is reserved for text headings; use HTitle in table headers");
+                        throw docraft::exception::InvalidInputException(
+                            "Title is reserved for text headings; use HTitle in table headers");
                     } else {
-                        throw std::invalid_argument(std::string(title.name()) + " cannot be placed in a table header");
+                        throw docraft::exception::InvalidInputException(
+                            std::string(title.name()) + " cannot be placed in a table header");
                     }
                 }
                 if (header_cols > 0) {
@@ -193,23 +196,24 @@ namespace docraft::craft::parser {
                         titles.emplace_back(title.child_value());
                     } else if (title.name() == std::string{elements::kTitle} ||
                                title.name() == std::string{elements::kVTitle}) {
-                        throw std::invalid_argument(
+                        throw docraft::exception::InvalidInputException(
                             "Use HTitle in table headers (VTitle is only for vertical row labels)");
                     } else {
-                        throw std::invalid_argument(std::string(title.name()) + " cannot be placed in a table header");
+                        throw docraft::exception::InvalidInputException(
+                            std::string(title.name()) + " cannot be placed in a table header");
                     }
                 }
                 // If JSON rows were already provided, header must match column count.
                 if ((has_model_json || has_model_template) && existing_cols > 0 && existing_cols != col_number) {
-                    throw std::invalid_argument("Table header columns do not match model columns");
+                    throw docraft::exception::InvalidInputException("Table header columns do not match model columns");
                 }
                 table_node->set_titles(titles);
                 table_node->set_cols(col_number);
                 table_node->set_content_cols(col_number);
             }
         } else if (!is_vertical && !has_model_json && !has_model_template && !has_header_json && !has_header_template) {
-            throw std::invalid_argument(std::string(elements::kTHead.data()) +
-                                        " tag not found, it is mandatory");
+            throw docraft::exception::InvalidInputException(std::string(elements::kTHead.data()) +
+                                                            " tag not found, it is mandatory");
         }
 
         // Parse body rows when using explicit TBody.
@@ -220,7 +224,7 @@ namespace docraft::craft::parser {
             std::vector<std::string> v_titles;
             for (auto row: table_body.children()) {
                 if (row.name() != std::string{elements::kRow}) {
-                    throw std::invalid_argument(std::string(row.name()) + " cannot be placed in a table body");
+                    throw docraft::exception::InvalidInputException(std::string(row.name()) + " cannot be placed in a table body");
                 }
 
                 const auto row_bg = parse_background_color(
@@ -235,7 +239,7 @@ namespace docraft::craft::parser {
                     const std::string col_name = col.name();
                     if (is_vertical && col_name == std::string{elements::kVTitle}) {
                         if (found_vtitle) {
-                            throw std::invalid_argument("Only one VTitle is allowed per Row");
+                            throw docraft::exception::InvalidInputException("Only one VTitle is allowed per Row");
                         }
                         found_vtitle = true;
                         auto title_node = parse_title_node(col);
@@ -256,7 +260,7 @@ namespace docraft::craft::parser {
                                 if (auto width_attr = col.attribute(basic::attribute::kWidth.data())) {
                                     const float explicit_width = width_attr.as_float();
                                     if (explicit_width <= 0.0F) {
-                                        throw std::invalid_argument("Cell width must be > 0");
+                                        throw docraft::exception::InvalidInputException("Cell width must be > 0");
                                     }
                                     text_node->set_width(explicit_width);
                                 }
@@ -272,7 +276,7 @@ namespace docraft::craft::parser {
                                 if (auto width_attr = col.attribute(basic::attribute::kWidth.data())) {
                                     const float explicit_width = width_attr.as_float();
                                     if (explicit_width <= 0.0F) {
-                                        throw std::invalid_argument("Cell width must be > 0");
+                                        throw docraft::exception::InvalidInputException("Cell width must be > 0");
                                     }
                                     image->set_width(explicit_width);
                                 }
@@ -283,20 +287,20 @@ namespace docraft::craft::parser {
                                 table_node->add_content_node(image, cell_bg);
                                 row_value_cols++;
                             } else {
-                                throw std::runtime_error(std::string(child.name()) +
-                                                         " is not supported in the table column");
+                                throw docraft::exception::InvalidInputException(std::string(child.name()) +
+                                    " is not supported in the table column");
                             }
                         }
                     } else if (!is_vertical && col_name == std::string{elements::kVTitle}) {
-                        throw std::invalid_argument("VTitle is only allowed for vertical tables");
+                        throw docraft::exception::InvalidInputException("VTitle is only allowed for vertical tables");
                     } else {
-                        throw std::runtime_error(std::string(col.name()) +
-                                                 " is not supported in the table body");
+                        throw docraft::exception::InvalidInputException(std::string(col.name()) +
+                                                                        " is not supported in the table body");
                     }
                 }
 
                 if (is_vertical && !found_vtitle) {
-                    throw std::invalid_argument("VTitle is mandatory for vertical table rows");
+                    throw docraft::exception::InvalidInputException("VTitle is mandatory for vertical table rows");
                 }
                 max_value_cols = std::max(max_value_cols, row_value_cols);
             }

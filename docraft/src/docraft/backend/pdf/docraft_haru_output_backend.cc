@@ -16,9 +16,9 @@
 
 #include "docraft/backend/pdf/docraft_haru_output_backend.h"
 
-#include <stdexcept>
-
 #include <hpdf.h>
+
+#include "docraft/exception/docraft_exceptions.h"
 
 namespace docraft::backend::pdf {
     DocraftHaruOutputBackend::DocraftHaruOutputBackend(const std::shared_ptr<DocraftHaruSharedState> &state)
@@ -28,7 +28,7 @@ namespace docraft::backend::pdf {
     void DocraftHaruOutputBackend::save_to_file(const std::string &path) const {
         const auto pdf = state_ ? state_->pdf : nullptr;
         if (!pdf) {
-            throw std::runtime_error("Haru document is not initialized");
+            throw docraft::exception::BackendStateException("Haru document is not initialized");
         }
         HPDF_SaveToFile(pdf, path.c_str());
     }

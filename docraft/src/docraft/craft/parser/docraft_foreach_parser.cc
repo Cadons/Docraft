@@ -20,6 +20,7 @@
 #include <string_view>
 
 #include "docraft/craft/parser/docraft_parser.h"
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/model/docraft_foreach.h"
 #include "docraft/craft/docraft_craft_language_tokens.h"
 
@@ -119,6 +120,6 @@ namespace docraft::craft::parser {
             foreach_node->set_template_nodes(template_nodes);
             return foreach_node;
         }
-        throw std::runtime_error("Missing 'model' attribute in foreach node.");
+        throw docraft::exception::InvalidInputException("Missing 'model' attribute in foreach node.");
     }
 } // namespace docraft::craft::parser

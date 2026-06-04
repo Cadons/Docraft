@@ -15,17 +15,18 @@
  */
 
 #include "docraft/model/docraft_clone_utils.h"
-
-#include <stdexcept>
+#include "docraft/exception/docraft_exceptions.h"
 
 namespace docraft::model {
+    using docraft::exception::ModelException;
+
     std::shared_ptr<DocraftNode> clone_node(const std::shared_ptr<DocraftNode> &node) {
         if (!node) {
             return nullptr;
         }
         auto clonable = std::dynamic_pointer_cast<IDocraftClonable>(node);
         if (!clonable) {
-            throw std::runtime_error("Node does not implement IDocraftClonable");
+            throw ModelException("Node does not implement IDocraftClonable");
         }
         return clonable->clone();
     }

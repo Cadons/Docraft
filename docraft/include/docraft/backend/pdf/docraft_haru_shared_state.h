@@ -19,7 +19,8 @@
 #include <hpdf.h>
 #include <vector>
 #include <cstddef>
-#include <stdexcept>
+
+#include "docraft/exception/docraft_exceptions.h"
 
 namespace docraft::backend::pdf {
     /**
@@ -134,11 +135,11 @@ namespace docraft::backend::pdf {
         /**
          * @brief Ensures the provider is available.
          *
-         * @throws std::runtime_error if provider is nullptr.
+         * @throws docraft::exception::BackendStateException if provider is nullptr.
          */
         IPageOperationsProvider *ensure_page_provider() const {
             if (!page_operations_provider) {
-                throw std::runtime_error(
+                throw docraft::exception::BackendStateException(
                     "Page operations provider not set. "
                     "Capability backend accessed before initialization."
                 );

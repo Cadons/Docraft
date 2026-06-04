@@ -39,6 +39,10 @@
 #include "docraft/utils/docraft_parser_utilis.h"
 
 namespace docraft::templating {
+    using exception::TemplateImageDataException;
+    using exception::TemplateVariableExistsException;
+    using exception::TemplateVariableNotFoundException;
+
     void DocraftTemplateEngine::template_nodes(const std::vector<std::shared_ptr<model::DocraftNode> > &nodes) {
         for (const auto &node: nodes) {
             template_node(node);
@@ -48,7 +52,7 @@ namespace docraft::templating {
     void DocraftTemplateEngine::add_template_variable(const std::string &name, const std::string &value) {
         auto normalized_name = normalize_name(name);
         if (has_template_variable(normalized_name)) {
-            throw std::runtime_error(fmt::format("Template variable '{}' already exists.", name));
+            throw TemplateVariableExistsException(fmt::format("Template variable '{}' already exists.", name));
         }
         template_variables_.insert({normalized_name, value});
     }
@@ -57,7 +61,7 @@ namespace docraft::templating {
         auto normalized_name = normalize_name(name);
         auto it = template_variables_.find(normalized_name);
         if (it == template_variables_.end()) {
-            throw std::runtime_error(fmt::format("Template variable '{}' not found.", name));
+            throw TemplateVariableNotFoundException(fmt::format("Template variable '{}' not found.", name));
         }
         return it->second;
     }
@@ -70,7 +74,7 @@ namespace docraft::templating {
         auto normalized_name = normalize_name(name);
         auto it = template_variables_.find(normalized_name);
         if (it == template_variables_.end()) {
-            throw std::runtime_error(fmt::format("Template variable '{}' not found.", name));
+            throw TemplateVariableNotFoundException(fmt::format("Template variable '{}' not found.", name));
         }
         template_variables_.erase(it);
     }
@@ -127,8 +131,8 @@ namespace docraft::templating {
                 try {
                     std::string resolved_color = render_template_string(text_node->color().template_expression(), foreach_item);
                     text_node->set_color(DocraftColor(resolved_color));
-                } catch (const std::exception &e) {
-                    LOG_ERROR("Failed to resolve color template expression: " + std::string(e.what()));
+                } catch (...) {
+                    LOG_ERROR("Failed to resolve color template expression");
                 }
             }
         }
@@ -138,8 +142,8 @@ namespace docraft::templating {
                 try {
                     std::string resolved_color = render_template_string(rectangle->background_color_template_expression(), foreach_item);
                     rectangle->set_background_color(DocraftColor(resolved_color));
-                } catch (const std::exception &e) {
-                    LOG_ERROR("Failed to resolve background color template expression: " + std::string(e.what()));
+                } catch (...) {
+                    LOG_ERROR("Failed to resolve background color template expression");
                 }
             }
             // Handle border color template expression
@@ -147,8 +151,8 @@ namespace docraft::templating {
                 try {
                     std::string resolved_color = render_template_string(rectangle->border_color_template_expression(), foreach_item);
                     rectangle->set_border_color(DocraftColor(resolved_color));
-                } catch (const std::exception &e) {
-                    LOG_ERROR("Failed to resolve border color template expression: " + std::string(e.what()));
+                } catch (...) {
+                    LOG_ERROR("Failed to resolve border color template expression");
                 }
             }
         }
@@ -164,8 +168,8 @@ namespace docraft::templating {
                         rendered_data.data,
                         rendered_data.width,
                         rendered_data.height);
-                } catch (const std::exception &e) {
-                    LOG_ERROR("Failed to render raw data for image '" + image->path() + "': " + std::string(e.what()));
+                } catch (...) {
+                    LOG_ERROR("Failed to render raw data for image '" + image->path() + "'");
                 }
             } else if (!image->path().empty()) {
                 std::string rendered_path = render_template_string(image->path(), foreach_item);
@@ -209,7 +213,7 @@ namespace docraft::templating {
                 foreach_node->clear_template_nodes();
             } else {
                 LOG_WARNING("docraft/model for foreach node is not an array: " + model);
-                throw std::runtime_error("docraft/model for foreach node is not an array or a valid json");
+                throw exception::DataFormatException("docraft/model for foreach node is not an array or a valid json");
             }
             return;
         }
@@ -245,8 +249,8 @@ namespace docraft::templating {
                     LOG_WARNING("Template variable '" + variable_name + "' not found in template engine.");
                     variable_value = text;
                 }
-            } catch (const std::exception &e) {
-                LOG_ERROR("Template variable '" + variable_name + "' not found: " + std::string(e.what()));
+            } catch (...) {
+                LOG_ERROR("Template variable '" + variable_name + "' not found");
                 variable_value = "";
             }
             result.replace(pos, end_pos - pos + 1, variable_value);
@@ -275,8 +279,8 @@ namespace docraft::templating {
                     LOG_WARNING("Template variable '" + variable_name + "' not found in template engine.");
                     variable_value = text;
                 }
-            } catch (const std::exception &e) {
-                LOG_ERROR("Template variable '" + variable_name + "' not found: " + std::string(e.what()));
+            } catch (...) {
+                LOG_ERROR("Template variable '" + variable_name + "' not found");
                 variable_value = "";
             }
             result.replace(pos, end_pos - pos + 1, variable_value);
@@ -291,10 +295,10 @@ namespace docraft::templating {
                                                int height) {
         auto name = normalize_name(image_id);
         if (image_data_.contains(name)) {
-            throw std::runtime_error(fmt::format("Image data for '{}' already exists.", image_id));
+            throw TemplateImageDataException(fmt::format("Image data for '{}' already exists.", image_id));
         }
         if (width <= 0 || height <= 0) {
-            throw std::runtime_error(fmt::format("Image data for '{}' has invalid dimensions.", image_id));
+            throw TemplateImageDataException(fmt::format("Image data for '{}' has invalid dimensions.", image_id));
         }
         //emplace the key also in the standard unordered_map with the same normalized name to ensure consistency
         template_variables_.insert({name, name});
@@ -306,7 +310,7 @@ namespace docraft::templating {
         auto name = normalize_name(image_id);
         auto it = image_data_.find(name);
         if (it == image_data_.end()) {
-            throw std::runtime_error(fmt::format("Image data for '{}' not found.", image_id));
+            throw TemplateImageDataException(fmt::format("Image data for '{}' not found.", image_id));
         }
         return it->second;
     }
@@ -319,7 +323,8 @@ namespace docraft::templating {
         const auto expected_size =
                 static_cast<size_t>(width) * static_cast<size_t>(height) * 3U; //3 bytes per pixel for RGB
         if (decoded.size() != expected_size) {
-            throw std::runtime_error(fmt::format("Base64 image '{}' size does not match dimensions (RGB expected).", image_id));
+            throw TemplateImageDataException(
+                fmt::format("Base64 image '{}' size does not match dimensions (RGB expected).", image_id));
         }
         add_image_data(image_id, decoded, width, height);
     }

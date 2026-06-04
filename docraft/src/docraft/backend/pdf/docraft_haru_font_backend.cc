@@ -21,6 +21,8 @@
 #include <hpdf.h>
 
 namespace docraft::backend::pdf {
+    using exception::BackendStateException;
+
     DocraftHaruFontBackend::DocraftHaruFontBackend(const std::shared_ptr<DocraftHaruSharedState> &state)
         : state_(state) {
     }
@@ -59,11 +61,11 @@ namespace docraft::backend::pdf {
                                           const char *encoder) const {
         auto *const pdf = state_ ? state_->pdf : nullptr;
         if (!pdf) {
-            throw std::runtime_error("Haru document is not initialized");
+            throw BackendStateException("Haru document is not initialized");
         }
         HPDF_Font font = HPDF_GetFont(pdf, internal_name.c_str(), encoder);
         if (!font) {
-            throw std::runtime_error("Failed to resolve font: " + internal_name);
+            throw BackendStateException("Failed to resolve font: " + internal_name);
         }
         const auto *provider = state_->ensure_page_provider();
         HPDF_Page_SetFontAndSize(provider->current_page(), font, size);

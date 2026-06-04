@@ -15,6 +15,7 @@
  */
 
 #include "docraft/docraft_document_context.h"
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/renderer/docraft_renderer.h"
 
 namespace docraft {
@@ -75,7 +76,7 @@ namespace docraft {
 
     std::shared_ptr<renderer::DocraftAbstractRenderer> DocraftDocumentContext::renderer() const {
         if (!renderer_) {
-            throw std::runtime_error("Renderer not set in DocraftDocumentContext");
+            throw docraft::exception::DocumentStateException("Renderer not set in DocraftDocumentContext");
         }
         return renderer_;
     }

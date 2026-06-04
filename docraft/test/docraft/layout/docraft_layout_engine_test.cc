@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <gtest/gtest.h>
 
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/model/docraft_blank_line.h"
 #include "docraft/model/docraft_body.h"
 #include "docraft/model/docraft_footer.h"
@@ -329,7 +330,7 @@ namespace docraft::test::layout {
         document_nodes.push_back(header);
         auto footer = std::make_shared<docraft::model::DocraftFooter>();
         document_nodes.push_back(footer);
-        EXPECT_THROW(engine->compute_document_layout(document_nodes), std::runtime_error);
+        EXPECT_THROW(engine->compute_document_layout(document_nodes), docraft::exception::DocumentStateException);
     }
     TEST_F(DocraftLayoutEngineTest, ComputeDocumentWithOnlyBody) {
         auto& engine =this->engine();

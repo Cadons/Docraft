@@ -19,6 +19,7 @@ set(TEST_SOURCES
         docraft/model/docraft_settings_test.cc
         docraft/model/docraft_node_test.cc
         docraft/model/docraft_z_index_test.cc
+        docraft/exception/docraft_exception_test.cc
         docraft/craft/docraft_table_parser_test.cc
         docraft/craft/docraft_craft_language_parser_test.cc
         docraft/craft/docraft_shape_parser_test.cc

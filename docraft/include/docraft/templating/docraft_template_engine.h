@@ -51,7 +51,7 @@ namespace docraft::templating {
                  * @brief Retrieves a template variable value.
                  * @param name Variable name (case-insensitive).
                  * @return Stored value.
-                 * @throws std::runtime_error if not found.
+                 * @throws docraft::exception::DocraftException if not found.
                  */
                 std::string find_template_variable(const std::string &name) const;
                 /**
@@ -61,7 +61,7 @@ namespace docraft::templating {
                 /**
                  * @brief Removes a template variable by name.
                  * @param name Variable name (case-insensitive).
-                 * @throws std::runtime_error if not found.
+                 * @throws docraft::exception::DocraftException if not found.
                  */
                 void remove_template_variable(const std::string &name);
                 /**
@@ -100,7 +100,7 @@ namespace docraft::templating {
                  * @param base64 Base64 string with raw RGB bytes (no data URI prefix).
                  * @param width Pixel width.
                  * @param height Pixel height.
-                 * @throws std::runtime_error if decoded size does not match width*height*3.
+                 * @throws docraft::exception::DataFormatException if decoded size does not match width*height*3.
                  */
                 void add_base64_image_data(const std::string &image_id,
                                            std::string_view base64,
@@ -110,7 +110,7 @@ namespace docraft::templating {
                  * @brief Retrieves raw image data by id.
                  * @param image_id Image id (case-insensitive).
                  * @return RawImageData reference.
-                 * @throws std::runtime_error if not found.
+                 * @throws docraft::exception::DocraftException if not found.
                  */
                 const RawImageData &get_image_data(const std::string &image_id) const;
 

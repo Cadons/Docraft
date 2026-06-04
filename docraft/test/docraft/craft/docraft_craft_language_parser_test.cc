@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "docraft/craft/docraft_craft_language_parser.h"
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/model/docraft_text.h"
 
 TEST(DocraftCraftLanguageParserTest, ParsesTitleSubtitleAndTextWithPredefinedDefaults) {
@@ -214,7 +215,7 @@ TEST(DocraftCraftLanguageParserTest, RejectsNestedTextInText) {
     docraft::craft::DocraftCraftLanguageParser parser;
     EXPECT_THROW({
         parser.parse(xml);
-    }, std::invalid_argument);
+        }, docraft::exception::InvalidInputException);
 }
 
 TEST(DocraftCraftLanguageParserTest, RejectsTitleInText) {
@@ -231,7 +232,7 @@ TEST(DocraftCraftLanguageParserTest, RejectsTitleInText) {
     docraft::craft::DocraftCraftLanguageParser parser;
     EXPECT_THROW({
         parser.parse(xml);
-    }, std::invalid_argument);
+        }, docraft::exception::InvalidInputException);
 }
 
 TEST(DocraftCraftLanguageParserTest, RejectsSubtitleInText) {
@@ -248,7 +249,7 @@ TEST(DocraftCraftLanguageParserTest, RejectsSubtitleInText) {
     docraft::craft::DocraftCraftLanguageParser parser;
     EXPECT_THROW({
         parser.parse(xml);
-    }, std::invalid_argument);
+        }, docraft::exception::InvalidInputException);
 }
 
 TEST(DocraftCraftLanguageParserTest, RejectsPageNumberInText) {
@@ -265,7 +266,7 @@ TEST(DocraftCraftLanguageParserTest, RejectsPageNumberInText) {
     docraft::craft::DocraftCraftLanguageParser parser;
     EXPECT_THROW({
         parser.parse(xml);
-    }, std::invalid_argument);
+        }, docraft::exception::InvalidInputException);
 }
 
 TEST(DocraftCraftLanguageParserTest, AllowsLayoutInBodyWithMultipleText) {

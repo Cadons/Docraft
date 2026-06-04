@@ -18,11 +18,11 @@
 #include "docraft/craft/docraft_craft_language_parser.h"
 
 #include <algorithm>
+#include <charconv>
 #include <cctype>
 #include <iostream>
 #include <memory>
 #include <optional>
-#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <unordered_set>
@@ -31,6 +31,7 @@
 
 #include "docraft/craft/docraft_craft_language_tokens.h"
 #include "docraft/craft/parser/docraft_parser.h"
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/model/docraft_header.h"
 #include "docraft/model/docraft_body.h"
 #include "docraft/model/docraft_footer.h"
@@ -130,7 +131,8 @@ namespace {
         if (value == "false" || value == "0" || value == "no" || value == "off") {
             return false;
         }
-        throw std::invalid_argument("Invalid boolean value '" + raw_value + "' for " + error_context);
+        throw docraft::exception::InvalidInputException(
+            "Invalid boolean value '" + raw_value + "' for " + error_context);
     }
 
     int parse_int_in_range(const std::optional<std::string> &value,
@@ -141,27 +143,29 @@ namespace {
                            int default_value = 0) {
         if (!value) {
             if (required) {
-                throw std::invalid_argument("Missing required metadata date field '" + field_name + "'");
+                throw docraft::exception::InvalidInputException(
+                    "Missing required metadata date field '" + field_name + "'");
             }
             return default_value;
         }
-        try {
-            const int parsed = std::stoi(*value);
-            if (parsed < min_value || parsed > max_value) {
-                throw std::invalid_argument("Metadata date field '" + field_name + "' out of range");
-            }
-            return parsed;
-        } catch (const std::invalid_argument &) {
-            throw std::invalid_argument("Invalid integer metadata date field '" + field_name + "': " + *value);
-        } catch (const std::out_of_range &) {
-            throw std::invalid_argument("Out-of-range metadata date field '" + field_name + "': " + *value);
+        int parsed = 0;
+        const char *begin = value->data();
+        const char *end = value->data() + value->size();
+        const auto [ptr, ec] = std::from_chars(begin, end, parsed);
+        if (ec != std::errc() || ptr != end) {
+            throw docraft::exception::InvalidInputException(
+                "Invalid integer metadata date field '" + field_name + "': " + *value);
         }
+        if (parsed < min_value || parsed > max_value) {
+            throw docraft::exception::InvalidInputException("Metadata date field '" + field_name + "' out of range");
+        }
+        return parsed;
     }
 
     docraft::DocraftDocumentMetadata::DateTime parse_metadata_date(const pugi::xml_node &date_node,
                                                                    const std::string &tag_name) {
         if (!date_node) {
-            throw std::invalid_argument("Missing metadata date node '" + tag_name + "'");
+            throw docraft::exception::InvalidInputException("Missing metadata date node '" + tag_name + "'");
         }
 
         const std::optional<std::string> year_value = read_attr_or_child_text(
@@ -212,7 +216,8 @@ namespace {
         char timezone_indicator = '+';
         if (ind_value) {
             if (ind_value->size() != 1U) {
-                throw std::invalid_argument("Metadata date field '" + tag_name + ".ind' must be a single character");
+                throw docraft::exception::InvalidInputException(
+                    "Metadata date field '" + tag_name + ".ind' must be a single character");
             }
             timezone_indicator = (*ind_value)[0];
         }
@@ -224,7 +229,8 @@ namespace {
             return date_time;
         }
         if (timezone_indicator != '+' && timezone_indicator != '-') {
-            throw std::invalid_argument("Metadata date field '" + tag_name + ".ind' must be '+' or '-'");
+            throw docraft::exception::InvalidInputException(
+                "Metadata date field '" + tag_name + ".ind' must be '+' or '-'");
         }
         date_time.ind = timezone_indicator;
         date_time.off_hour = parse_int_in_range(off_hour_value, tag_name + ".off_hour", 0, 23, false, 0);
@@ -403,7 +409,8 @@ namespace {
                         docraft::craft::elements::metadata::auto_keywords::attribute::kMaxKeywords}.c_str())) {
                 const int max_keywords = max_keywords_attr.as_int();
                 if (max_keywords <= 0) {
-                    throw std::invalid_argument("Metadata AutoKeywords max_keywords must be greater than 0");
+                    throw docraft::exception::InvalidInputException(
+                        "Metadata AutoKeywords max_keywords must be greater than 0");
                 }
                 outcome.auto_keyword_config.max_keywords = static_cast<std::size_t>(max_keywords);
             }
@@ -413,7 +420,8 @@ namespace {
                         docraft::craft::elements::metadata::auto_keywords::attribute::kMinLength}.c_str())) {
                 const int min_length = min_length_attr.as_int();
                 if (min_length <= 0) {
-                    throw std::invalid_argument("Metadata AutoKeywords min_length must be greater than 0");
+                    throw docraft::exception::InvalidInputException(
+                        "Metadata AutoKeywords min_length must be greater than 0");
                 }
                 outcome.auto_keyword_config.min_length = static_cast<std::size_t>(min_length);
             }
@@ -423,7 +431,7 @@ namespace {
                         docraft::craft::elements::metadata::auto_keywords::attribute::kLanguage}.c_str())) {
                 const auto parsed_languages = split_languages(language_attr.as_string());
                 if (parsed_languages.empty()) {
-                    throw std::invalid_argument("Metadata AutoKeywords language cannot be empty");
+                    throw docraft::exception::InvalidInputException("Metadata AutoKeywords language cannot be empty");
                 }
                 std::vector<std::string> validated_languages;
                 for (const auto &language: parsed_languages) {
@@ -432,7 +440,7 @@ namespace {
                         ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
                     }
                     if (!is_supported_stopword_language(normalized)) {
-                        throw std::invalid_argument(
+                        throw docraft::exception::InvalidInputException(
                             "Unsupported AutoKeywords language '" + language + "'. Supported: it,en,fr,de,es");
                     }
                     validated_languages.push_back(normalized);
@@ -477,7 +485,8 @@ void DocraftCraftLanguageParser::parse(const std::string &craft_language_source)
     xml_doc_ = pugi::xml_document();
     pugi::xml_parse_result result = xml_doc_.load_string(craft_language_source.c_str());
     if (!result) {
-        throw std::runtime_error("Error parsing .craft content: " + std::string(result.description()));
+        throw docraft::exception::DataFormatException(
+            "Error parsing .craft content: " + std::string(result.description()));
     }
     load_document();
 }
@@ -486,7 +495,8 @@ void DocraftCraftLanguageParser::load_from_file(const std::string &file_path) {
     xml_doc_ = pugi::xml_document();
     pugi::xml_parse_result result = xml_doc_.load_file(file_path.c_str());
     if (!result) {
-        throw std::runtime_error("Error loading .craft file: " + std::string(result.description()));
+        throw docraft::exception::DataFormatException(
+            "Error loading .craft file: " + std::string(result.description()));
     }
     load_document();
 }
@@ -545,7 +555,7 @@ std::shared_ptr<model::DocraftNode> DocraftCraftLanguageParser::parse_node(const
     std::string node_name = xml_node.name();
     auto it = parsers_.find(node_name);
     if (it == parsers_.end()) {
-        throw std::runtime_error("No parser registered for node: " + node_name);
+        throw docraft::exception::DataFormatException("No parser registered for node: " + node_name);
     }
 
     auto result = it->second->parse(xml_node);
@@ -561,7 +571,8 @@ std::shared_ptr<model::DocraftNode> DocraftCraftLanguageParser::parse_node(const
             }
             if (auto list_node = std::dynamic_pointer_cast<model::DocraftList>(result)) {
                 if (child.name() != std::string{elements::kText}) {
-                    throw std::invalid_argument(std::string(child.name()) + " cannot be placed in a list");
+                    throw docraft::exception::InvalidInputException(
+                        std::string(child.name()) + " cannot be placed in a list");
                 }
             }
 
@@ -572,7 +583,7 @@ std::shared_ptr<model::DocraftNode> DocraftCraftLanguageParser::parse_node(const
                     child_name == std::string{elements::kTitle} ||
                     child_name == std::string{elements::kSubtitle} ||
                     child_name == std::string{elements::kPageNumber}) {
-                    throw std::invalid_argument(
+                    throw docraft::exception::InvalidInputException(
                         "Text nodes cannot contain child <" + child_name + "> nodes. " +
                         "Text is a leaf node and only accepts text content. " +
                         "Use <Layout> as a container for multiple text elements instead.");
@@ -592,7 +603,7 @@ void DocraftCraftLanguageParser::load_document() {
     const std::string root_tag = tag_formatter(section::kDocument.data());
     pugi::xml_node root = xml_doc_.child(root_tag.c_str());
     if (!root) {
-        throw std::runtime_error("Invalid .craft file: missing <Document> root element");
+        throw docraft::exception::DataFormatException("Invalid .craft file: missing <Document> root element");
     }
     pugi::xml_node document = root;
     if (const pugi::xml_attribute path_attr = document.attribute(section::attribute::kPath.data())) {
@@ -641,7 +652,7 @@ void DocraftCraftLanguageParser::load_document() {
             }
         }
     } else {
-        throw std::runtime_error("Invalid .craft file: missing <body> element");
+        throw docraft::exception::DataFormatException("Invalid .craft file: missing <body> element");
     }
 
     // Footer (optional)

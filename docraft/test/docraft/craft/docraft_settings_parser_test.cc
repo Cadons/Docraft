@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <pugixml.hpp>
 
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/craft/parser/docraft_parser.h"
 #include "docraft/model/docraft_settings.h"
 
@@ -58,7 +59,7 @@ namespace docraft::test::craft {
         pugi::xml_document doc;
         ASSERT_TRUE(doc.load_string(xml));
 
-        EXPECT_THROW(parser.parse(doc.child("Settings")), std::invalid_argument);
+        EXPECT_THROW(parser.parse(doc.child("Settings")), docraft::exception::InvalidInputException);
     }
 
     TEST_F(DocraftSettingsParserTest, RejectsInvalidRatios) {
@@ -69,7 +70,7 @@ namespace docraft::test::craft {
         pugi::xml_document doc;
         ASSERT_TRUE(doc.load_string(xml));
 
-        EXPECT_THROW(parser.parse(doc.child("Settings")), std::invalid_argument);
+        EXPECT_THROW(parser.parse(doc.child("Settings")), docraft::exception::InvalidInputException);
     }
 
     TEST_F(DocraftSettingsParserTest, RejectsInvalidPageSize) {
@@ -80,7 +81,7 @@ namespace docraft::test::craft {
         pugi::xml_document doc;
         ASSERT_TRUE(doc.load_string(xml));
 
-        EXPECT_THROW(parser.parse(doc.child("Settings")), std::invalid_argument);
+        EXPECT_THROW(parser.parse(doc.child("Settings")), docraft::exception::InvalidInputException);
     }
 
     TEST_F(DocraftSettingsParserTest, RejectsInvalidPageOrientation) {
@@ -91,6 +92,6 @@ namespace docraft::test::craft {
         pugi::xml_document doc;
         ASSERT_TRUE(doc.load_string(xml));
 
-        EXPECT_THROW(parser.parse(doc.child("Settings")), std::invalid_argument);
+        EXPECT_THROW(parser.parse(doc.child("Settings")), docraft::exception::InvalidInputException);
     }
 }

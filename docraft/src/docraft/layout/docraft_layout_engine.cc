@@ -20,6 +20,7 @@
 #include <functional>
 #include <limits>
 
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/layout/handler/docraft_basic_layout_handler.h"
 #include "docraft/layout/handler/docraft_layout_blank_line.h"
 #include "docraft/layout/handler/docraft_layout_handler.h"
@@ -253,7 +254,7 @@ namespace docraft::layout {
         //Process nodes from here
         if (auto list_node = std::dynamic_pointer_cast<model::DocraftList>(node)) {
             if (!list_handler_) {
-                throw std::runtime_error("DocraftLayoutListHandler not configured");
+                throw docraft::exception::LayoutConfigurationException("DocraftLayoutListHandler not configured");
             }
             DocraftCursor list_cursor = *layout_cursor;
             list_handler_->compute_children(
@@ -324,10 +325,10 @@ namespace docraft::layout {
 
         if (rect_uses_origin_cursor) {
             if (!compute_node(node, &max_rect, rect_origin_cursor)) {
-                throw std::runtime_error("compute node failed");
+                throw docraft::exception::LayoutException("compute node failed");
             }
         } else if (!compute_node(node, &max_rect, *layout_cursor)) {
-            throw std::runtime_error("compute node failed");
+            throw docraft::exception::LayoutException("compute node failed");
         }
         node->set_position(max_rect.position());
         node->set_width(max_rect.width());
@@ -384,7 +385,7 @@ namespace docraft::layout {
     void DocraftLayoutEngine::compute_document_layout(const std::vector<std::shared_ptr<model::DocraftNode> > &nodes) {
         const Sections sections = split_sections(nodes);
         if (!sections.body) {
-            throw std::runtime_error("Document must have a body section");
+            throw docraft::exception::DocumentStateException("Document must have a body section");
         }
         if (const auto page_backend = context()->edit_rendering().edit_page_rendering()) {
             page_backend->go_to_first_page();

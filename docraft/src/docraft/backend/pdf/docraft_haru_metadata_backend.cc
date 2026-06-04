@@ -18,12 +18,12 @@
 
 #include <optional>
 #include <sstream>
-#include <stdexcept>
 #include <string>
 
 #include <hpdf.h>
 
 #include "docraft/docraft_document_metadata.h"
+#include "docraft/exception/docraft_exceptions.h"
 
 namespace docraft::backend::pdf {
     namespace {
@@ -33,7 +33,7 @@ namespace docraft::backend::pdf {
             }
             std::ostringstream stream;
             stream << operation << " (HPDF status 0x" << std::hex << status << ")";
-            throw std::runtime_error(stream.str());
+            throw docraft::exception::BackendStateException(stream.str());
         }
 
         HPDF_Date to_hpdf_date(const DocraftDocumentMetadata::DateTime &date) {
@@ -80,7 +80,7 @@ namespace docraft::backend::pdf {
     void DocraftHaruMetadataBackend::set_document_metadata(const DocraftDocumentMetadata &metadata) {
         const auto pdf = state_ ? state_->pdf : nullptr;
         if (!pdf) {
-            throw std::runtime_error("Haru document is not initialized");
+            throw docraft::exception::BackendStateException("Haru document is not initialized");
         }
         set_info_date_attr_if_present(pdf, HPDF_INFO_CREATION_DATE, metadata.creation_date(), "creation_date");
         set_info_date_attr_if_present(pdf, HPDF_INFO_MOD_DATE, metadata.modification_date(),

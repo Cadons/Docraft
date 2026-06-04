@@ -27,7 +27,7 @@ namespace docraft::layout::handler {
                                            model::DocraftTransform *box,
                                            DocraftCursor &cursor) {
         if (box == nullptr) {
-            throw std::invalid_argument("box is null");
+            throw docraft::exception::InvalidInputException("box is null");
         }
 
         if (node->position_mode() == model::DocraftPositionType::kBlock) {
@@ -46,7 +46,7 @@ namespace docraft::layout::handler {
             const std::shared_ptr<model::DocraftNode> &, DocraftCursor &)> &layout_child,
         float max_width) const {
         if (!node) {
-            throw std::invalid_argument("list node is null");
+            throw docraft::exception::InvalidInputException("list node is null");
         }
         auto &layout_service = edit_context()->edit_layout();
         auto text_backend = edit_context()->rendering().text_rendering();
@@ -57,7 +57,7 @@ namespace docraft::layout::handler {
         for (std::size_t i = 0; i < node->children().size(); ++i) {
             auto text_child = std::dynamic_pointer_cast<model::DocraftText>(node->children()[i]);
             if (!text_child) {
-                throw std::invalid_argument("List items must be Text nodes");
+                throw docraft::exception::InvalidInputException("List items must be Text nodes");
             }
 
             const float item_x = cursor.x();

@@ -194,7 +194,8 @@ set(DOCRAFT_SOURCES
 )
 set(DOCRAFT_LIBRARY_TYPE STATIC)
 if (BUILD_SHARED_LIBS)
-    set(DOCRAFT_LIBRARY_TYPE SHARED)
+    set(DOCRAFT_LIBRARY_TYPE SHARED
+            include/docraft/exception/docraft_exceptions.h)
 endif ()
 add_library(docraft ${DOCRAFT_LIBRARY_TYPE}
         ${DOCRAFT_SOURCES}

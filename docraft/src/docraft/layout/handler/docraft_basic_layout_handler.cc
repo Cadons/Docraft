@@ -27,7 +27,7 @@ namespace docraft::layout::handler {
                                             model::DocraftTransform *box,
                                             DocraftCursor& cursor) {
         if (box == nullptr) {
-            throw std::invalid_argument("box is null");
+            throw docraft::exception::InvalidInputException("box is null");
         }
 
         if (node->position_mode()==model::DocraftPositionType::kBlock) {

@@ -18,11 +18,13 @@
 
 #include <ostream>
 #include <memory>
-#include <stdexcept>
 
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/model/docraft_clone_utils.h"
 #include "docraft/renderer/docraft_renderer.h"
 namespace docraft::model {
+    using exception::ModelException;
+
     DocraftText::DocraftText() {
         set_padding(kDefaultTextPadding);
     }
@@ -43,7 +45,7 @@ namespace docraft::model {
             auto cloned_child = clone_node(child);
             auto text_child = std::dynamic_pointer_cast<DocraftText>(cloned_child);
             if (!text_child) {
-                throw std::runtime_error("Text line child does not clone to DocraftText");
+                throw ModelException("Text line child does not clone to DocraftText");
             }
             copy->add_line(text_child);
         }

@@ -1,13 +1,14 @@
 #pragma once
 
 #include <memory>
-#include <stdexcept>
 #include <string>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 
+#include "docraft/backend/docraft_backend_providers_factory.h"
 #include "docraft/backend/docraft_rendering_backend.h"
+#include "docraft/exception/docraft_exceptions.h"
 
 namespace docraft::test::utils {
     struct MockBackendSharedState {
@@ -35,9 +36,9 @@ namespace docraft::test::utils {
             pages = config.initial_pages > 0 ? config.initial_pages : 1;
         }
 
-        void ensure_supported(bool supported, const char *message) const {
+        static void ensure_supported(bool supported, const char *message) {
             if (!supported) {
-                throw std::runtime_error(message);
+                throw docraft::exception::BackendStateException(message);
             }
         }
 
@@ -47,13 +48,13 @@ namespace docraft::test::utils {
             }
             ensure_supported(config.supports_page_backend, "Page backend capability not supported");
             if (pages == 0 || current_page >= pages) {
-                throw std::runtime_error("No valid current page");
+                throw docraft::exception::BackendStateException("No valid current page");
             }
         }
 
         void ensure_text_scope_if_required() const {
             if (config.require_text_scope && !text_scope_active) {
-                throw std::runtime_error("Text scope required before drawing text");
+                throw docraft::exception::BackendStateException("Text scope required before drawing text");
             }
         }
 
@@ -109,7 +110,7 @@ namespace docraft::test::utils {
             state_->ensure_supported(state_->config.supports_text_backend, "Text backend capability not supported");
             state_->ensure_page_available();
             if (state_->text_scope_active) {
-                throw std::runtime_error("Text scope already active");
+                throw docraft::exception::BackendStateException("Text scope already active");
             }
             state_->text_scope_active = true;
         }
@@ -117,7 +118,7 @@ namespace docraft::test::utils {
         void end_text() const override {
             state_->ensure_supported(state_->config.supports_text_backend, "Text backend capability not supported");
             if (!state_->text_scope_active) {
-                throw std::runtime_error("Text scope not active");
+                throw docraft::exception::BackendStateException("Text scope not active");
             }
             state_->text_scope_active = false;
         }
@@ -230,7 +231,7 @@ namespace docraft::test::utils {
         void move_to_next_page() override {
             state_->ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
             if (state_->current_page + 1 >= state_->pages) {
-                throw std::runtime_error("Already at the last page");
+                throw docraft::exception::BackendStateException("Already at the last page");
             }
             ++state_->current_page;
         }
@@ -238,7 +239,7 @@ namespace docraft::test::utils {
         void go_to_page(std::size_t page_number) override {
             state_->ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
             if (page_number >= state_->pages) {
-                throw std::runtime_error("Invalid page number");
+                throw docraft::exception::BackendStateException("Invalid page number");
             }
             state_->current_page = page_number;
         }
@@ -246,7 +247,7 @@ namespace docraft::test::utils {
         void go_to_first_page() override {
             state_->ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
             if (state_->pages == 0) {
-                throw std::runtime_error("No pages");
+                throw docraft::exception::BackendStateException("No pages");
             }
             state_->current_page = 0;
         }
@@ -254,7 +255,7 @@ namespace docraft::test::utils {
         void go_to_previous_page() override {
             state_->ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
             if (state_->current_page == 0) {
-                throw std::runtime_error("Already at first page");
+                throw docraft::exception::BackendStateException("Already at first page");
             }
             --state_->current_page;
         }
@@ -262,7 +263,7 @@ namespace docraft::test::utils {
         void go_to_last_page() override {
             state_->ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
             if (state_->pages == 0) {
-                throw std::runtime_error("No pages");
+                throw docraft::exception::BackendStateException("No pages");
             }
             state_->current_page = state_->pages - 1;
         }
@@ -490,11 +491,7 @@ namespace docraft::test::utils {
         }
 
         [[nodiscard]] backend::DocraftCapabilityProviders create_capability_providers() const override {
-            return {
-                .rendering_provider = backend_,
-                .resource_provider = backend_,
-                .lifecycle_provider = backend_
-            };
+            return {backend_, backend_, backend_};
         }
 
     private:

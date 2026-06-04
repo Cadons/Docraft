@@ -7,6 +7,7 @@
 #include "docraft/backend/pdf/docraft_haru_page_backend.h"
 
 #include "docraft/docraft_document_metadata.h"
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/model/docraft_page_format.h"
 
 namespace docraft::test::backend {
@@ -114,7 +115,7 @@ TEST_F(DocraftHaruBackendTest, NavigatesFirstPreviousLastPages) {
 
 TEST_F(DocraftHaruBackendTest, ThrowsOnPreviousAtFirstPage) {
     edit_page_backend().go_to_first_page();
-    EXPECT_THROW(edit_page_backend().go_to_previous_page(), std::runtime_error);
+    EXPECT_THROW(edit_page_backend().go_to_previous_page(), docraft::exception::PageStateException);
 }
 
 TEST_F(DocraftHaruBackendTest, SetsPageFormat) {
@@ -125,12 +126,12 @@ TEST_F(DocraftHaruBackendTest, SetsPageFormat) {
 }
 
 TEST_F(DocraftHaruBackendTest, ThrowsWhenMovingPastLastPage) {
-    EXPECT_THROW(edit_page_backend().move_to_next_page(), std::runtime_error);
+    EXPECT_THROW(edit_page_backend().move_to_next_page(), docraft::exception::PageStateException);
 }
 
 TEST_F(DocraftHaruBackendTest, ThrowsOnInvalidPageNavigation) {
-    EXPECT_THROW(edit_page_backend().go_to_page(1U), std::runtime_error);
-    EXPECT_THROW(edit_page_backend().go_to_page(2U), std::runtime_error);
+    EXPECT_THROW(edit_page_backend().go_to_page(1U), docraft::exception::PageStateException);
+    EXPECT_THROW(edit_page_backend().go_to_page(2U), docraft::exception::PageStateException);
 }
 
 TEST_F(DocraftHaruBackendTest, SupportsBuiltInFontAndTextMeasure) {
@@ -152,7 +153,8 @@ TEST_F(DocraftHaruBackendTest, ReportsPdfFileExtension) {
 
 TEST_F(DocraftHaruBackendTest, ThrowsWhenSettingUnknownFont) {
     ASSERT_NE(backend().font_backend(), nullptr);
-    EXPECT_THROW(backend().font_backend()->set_font("__missing_font__", 12.0F, nullptr), std::runtime_error);
+    EXPECT_THROW(backend().font_backend()->set_font("__missing_font__", 12.0F, nullptr),
+                 docraft::exception::BackendStateException);
     EXPECT_FALSE(backend().font_backend()->can_use_font("__missing_font__", nullptr));
 }
 
@@ -203,6 +205,6 @@ TEST(DocraftHaruPageBackendLifetimeTest, ClearsProviderRegistrationOnDestruction
     }
 
     EXPECT_EQ(state->page_operations_provider, nullptr);
-    EXPECT_THROW(state->ensure_page_provider(), std::runtime_error);
+    EXPECT_THROW(state->ensure_page_provider(), docraft::exception::BackendStateException);
 }
 } // namespace docraft::test::backend

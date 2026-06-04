@@ -32,6 +32,9 @@
 #include "docraft/templating/docraft_template_engine.h"
 
 namespace docraft {
+    using exception::DocumentStateException;
+    using exception::RenderingFailedException;
+
     namespace {
         void apply_capability_providers_from_factory(const std::shared_ptr<DocraftDocumentContext> &context,
                                                      const std::shared_ptr<backend::IDocraftCapabilityProvidersFactory>
@@ -228,7 +231,7 @@ namespace docraft {
 
     void DocraftDocument::add_node(const std::shared_ptr<model::DocraftNode> &node) {
         if (!node) {
-            throw std::runtime_error("Null node cannot be added to the document");
+            throw DocumentStateException("Null node cannot be added to the document");
         }
         dom_.emplace_back(node);
     }
@@ -309,13 +312,13 @@ namespace docraft {
 
         const auto metadata_backend = rendering_service.edit_metadata_backend();
         if (!metadata_backend) {
-            throw std::runtime_error("Metadata backend capability is not available");
+            throw exception::CapabilityUnavailableException("Metadata backend capability is not available");
         }
         metadata_backend->set_document_metadata(config_.document_metadata());
 
         const auto output_backend = rendering_service.output_backend();
         if (!output_backend) {
-            throw std::runtime_error("Output backend capability is not available");
+            throw exception::CapabilityUnavailableException("Output backend capability is not available");
         }
         const std::string extension = output_backend->file_extension();
         const std::string output_file_name = with_extension(config_.document_title(), extension);

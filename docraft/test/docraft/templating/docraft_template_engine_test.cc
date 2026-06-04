@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "docraft/docraft_document.h"
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/model/docraft_foreach.h"
 #include "docraft/model/docraft_list.h"
 #include "docraft/model/docraft_table.h"
@@ -34,13 +35,14 @@ namespace docraft::test::templating {
 
     TEST_F(DocraftTemplateEngineTest, AddDuplicateVariableThrows) {
         engine_.add_template_variable("title", "Docraft");
-        EXPECT_THROW(engine_.add_template_variable("title", "Other"), std::runtime_error);
+        EXPECT_THROW(engine_.add_template_variable("title", "Other"),
+                     docraft::exception::TemplateVariableExistsException);
         EXPECT_EQ(engine_.items(), 1);
         EXPECT_EQ(engine_.find_template_variable("title"), "Docraft");
     }
 
     TEST_F(DocraftTemplateEngineTest, GetMissingVariableThrows) {
-        EXPECT_THROW(engine_.find_template_variable("missing"), std::runtime_error);
+        EXPECT_THROW(engine_.find_template_variable("missing"), docraft::exception::TemplateVariableNotFoundException);
     }
 
     TEST_F(DocraftTemplateEngineTest, RemoveVariable) {
@@ -52,7 +54,8 @@ namespace docraft::test::templating {
     }
 
     TEST_F(DocraftTemplateEngineTest, RemoveMissingVariableThrows) {
-        EXPECT_THROW(engine_.remove_template_variable("missing"), std::runtime_error);
+        EXPECT_THROW(engine_.remove_template_variable("missing"),
+                     docraft::exception::TemplateVariableNotFoundException);
     }
 
     TEST_F(DocraftTemplateEngineTest, ClearVariables) {

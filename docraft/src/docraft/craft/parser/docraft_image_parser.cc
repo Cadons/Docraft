@@ -22,6 +22,8 @@
 
 #include <string_view>
 
+#include "docraft/exception/docraft_exceptions.h"
+
 namespace docraft::craft::parser {
     namespace {
         bool extract_base64_payload(std::string_view value, std::string_view &payload) {
@@ -45,7 +47,7 @@ namespace docraft::craft::parser {
         //image cannot have path and data at the same time
         if (auto src_attr = (craft_language_source.attribute(elements::image::attribute::kSrc.data()) != nullptr) &&
             (craft_language_source.attribute(elements::image::attribute::kData.data()) != nullptr)) {
-            throw std::invalid_argument("Image node cannot have both 'src' and 'data' attributes.");
+            throw docraft::exception::InvalidInputException("Image node cannot have both 'src' and 'data' attributes.");
         }
         if (auto src_attr = craft_language_source.attribute(elements::image::attribute::kSrc.data())) {
             image_node->set_path(src_attr.as_string());
@@ -57,18 +59,20 @@ namespace docraft::craft::parser {
                 const auto width_attr = craft_language_source.attribute(elements::image::attribute::kDataWidth.data());
                 const auto height_attr = craft_language_source.attribute(elements::image::attribute::kDataHeight.data());
                 if (!width_attr || !height_attr) {
-                    throw std::invalid_argument("Base64 image data requires data_width and data_height.");
+                    throw docraft::exception::InvalidInputException(
+                        "Base64 image data requires data_width and data_height.");
                 }
                 const int pixel_width = width_attr.as_int();
                 const int pixel_height = height_attr.as_int();
                 if (pixel_width <= 0 || pixel_height <= 0) {
-                    throw std::invalid_argument("Base64 image data has invalid dimensions.");
+                    throw docraft::exception::InvalidInputException("Base64 image data has invalid dimensions.");
                 }
                 auto decoded = utils::decode_base64(payload);
                 const auto expected_size = static_cast<size_t>(pixel_width) *
                                            static_cast<size_t>(pixel_height) * 3U;
                 if (decoded.size() != expected_size) {
-                    throw std::invalid_argument("Base64 image data size does not match dimensions (RGB expected).");
+                    throw docraft::exception::InvalidInputException(
+                        "Base64 image data size does not match dimensions (RGB expected).");
                 }
                 image_node->set_raw_data(decoded, pixel_width, pixel_height);
             } else {

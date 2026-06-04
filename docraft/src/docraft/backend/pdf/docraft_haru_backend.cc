@@ -26,10 +26,11 @@
 
 #include <iostream>
 #include <sstream>
-#include <stdexcept>
 #include <unordered_map>
 
 #include <hpdf.h>
+
+#include "docraft/exception/docraft_exceptions.h"
 
 namespace {
     struct HPDFErrorMap {
@@ -177,7 +178,7 @@ namespace docraft::backend::pdf {
         HPDF_Doc create_hpdf_document() {
             HPDF_Doc pdf = HPDF_New(error_handler, nullptr);
             if (!pdf) {
-                throw std::runtime_error("Failed to initialize Haru PDF document");
+                throw docraft::exception::BackendStateException("Failed to initialize Haru PDF document");
             }
             return pdf;
         }

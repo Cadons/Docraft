@@ -6,6 +6,7 @@
 #include <sstream>
 
 #include "docraft/docraft_document.h"
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/model/docraft_body.h"
 #include "docraft/model/docraft_list.h"
 #include "docraft/model/docraft_rectangle.h"
@@ -371,7 +372,7 @@ namespace docraft::test {
                 .require_text_scope = true
             });
 
-        EXPECT_THROW(mock_backend->draw_text("hello", 1.0F, 1.0F), std::runtime_error);
+        EXPECT_THROW(mock_backend->draw_text("hello", 1.0F, 1.0F), docraft::exception::BackendStateException);
         EXPECT_NO_THROW(mock_backend->begin_text());
         EXPECT_NO_THROW(mock_backend->draw_text("hello", 1.0F, 1.0F));
         EXPECT_NO_THROW(mock_backend->end_text());

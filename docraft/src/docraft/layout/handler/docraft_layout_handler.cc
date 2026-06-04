@@ -24,7 +24,7 @@ namespace docraft::layout::handler {
                                        model::DocraftTransform *box,
                                        DocraftCursor& cursor) {
         if (box == nullptr) {
-            throw std::invalid_argument("box is null");
+            throw docraft::exception::InvalidInputException("box is null");
         }
         // If the layout has a weight, the parent already scoped available_space to that share.
         if (node->weight()!=-1.0F) {

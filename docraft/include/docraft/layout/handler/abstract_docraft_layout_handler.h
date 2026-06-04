@@ -20,12 +20,13 @@
 #include <memory>
 
 #include "docraft/docraft_document_context.h"
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/model/docraft_node.h"
 #include "docraft/generic/chain_of_responsibility_handler.h"
 
 namespace docraft::layout::handler {
     template<typename T>
-    requires std::derived_from<T, model::DocraftNode>
+        requires std::derived_from<T, model::DocraftNode>
     /**
      * @brief Base class for layout handlers in the chain of responsibility.
      *
@@ -34,27 +35,32 @@ namespace docraft::layout::handler {
      *
      * @tparam T Node type handled by this handler.
      */
-    class AbstractDocraftLayoutHandler :public generic::DocraftChainOfResponsibilityHandler<model::DocraftNode,model::DocraftTransform> {
+    class AbstractDocraftLayoutHandler : public generic::DocraftChainOfResponsibilityHandler<model::DocraftNode,
+                model::DocraftTransform> {
     public:
         using DocraftChainOfResponsibilityHandler::DocraftChainOfResponsibilityHandler;
+
         ~AbstractDocraftLayoutHandler() override = default;
 
         /**
          * @brief Creates a handler bound to a document context.
-         * @throws std::invalid_argument if context is null.
+         * @throws docraft::exception::InvalidInputException if context is null.
          */
-        explicit AbstractDocraftLayoutHandler(const std::shared_ptr<DocraftDocumentContext> &context) : context_(context) {
+        explicit AbstractDocraftLayoutHandler(const std::shared_ptr<DocraftDocumentContext> &context) : context_(
+            context) {
             if (!context_) {
-                throw std::invalid_argument("context is null");
+                throw docraft::exception::InvalidInputException("context is null");
             }
         }
+
         /**
          * @brief Computes the layout box for a concrete node type.
          * @param node Node to layout.
          * @param box Output transform.
          * @param cursor Layout cursor.
          */
-        virtual void compute(const std::shared_ptr<T>& node, model::DocraftTransform* box, DocraftCursor& cursor) =0;
+        virtual void compute(const std::shared_ptr<T> &node, model::DocraftTransform *box, DocraftCursor &cursor) =0;
+
         /**
          * @brief Returns the bound document context.
          * @return Document context.
@@ -70,6 +76,7 @@ namespace docraft::layout::handler {
         std::shared_ptr<const DocraftDocumentContext> context() const {
             return context_;
         }
+
     protected:
         std::shared_ptr<DocraftDocumentContext> context_;
     };

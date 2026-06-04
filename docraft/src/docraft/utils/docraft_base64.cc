@@ -19,6 +19,8 @@
 #include <array>
 #include <stdexcept>
 
+#include "docraft/exception/docraft_exceptions.h"
+
 namespace docraft::utils {
     namespace {
         constexpr unsigned char kInvalid = 0xFF;
@@ -64,7 +66,7 @@ namespace docraft::utils {
             }
             unsigned char value = kDecodeTable[static_cast<unsigned char>(ch)];//lookup the value of the base64 character using the decode table
             if (value == kInvalid) {//if the character is not a valid base64 character, throw an error
-                throw std::invalid_argument("Invalid base64 character.");
+                throw docraft::exception::InvalidInputException("Invalid base64 character.");
             }
             quartet[quartet_len++] = value;//add the decoded value to the quartet
             if (quartet_len == 4) {//once we have 4 valid base64 characters (or padding), we can decode them into bytes
@@ -82,7 +84,7 @@ namespace docraft::utils {
 
         // Any trailing, incomplete quartet indicates invalid base64 length.
         if (quartet_len != 0) {
-            throw std::invalid_argument("Invalid base64 length.");
+            throw docraft::exception::InvalidInputException("Invalid base64 length.");
         }
 
         return out;

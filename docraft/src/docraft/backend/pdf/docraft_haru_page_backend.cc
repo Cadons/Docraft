@@ -17,10 +17,11 @@
 #include "docraft/backend/pdf/docraft_haru_page_backend.h"
 
 #include <format>
-#include <stdexcept>
 #include <string>
 
 #include <hpdf.h>
+
+#include "docraft/exception/docraft_exceptions.h"
 
 namespace docraft::backend::pdf {
     namespace {
@@ -77,7 +78,7 @@ namespace docraft::backend::pdf {
     void DocraftHaruPageBackend::add_new_page() {
         HPDF_Page new_page = HPDF_AddPage(state_ ? state_->pdf : nullptr);
         if (!new_page) {
-            throw std::runtime_error("Failed to create a new page");
+            throw docraft::exception::PageStateException("Failed to create a new page");
         }
         apply_page_format(new_page);
         state_->add_page(new_page);
@@ -89,7 +90,7 @@ namespace docraft::backend::pdf {
             state_->edit_current_page_index() = state_->current_page_index() + 1;
             return;
         }
-        throw std::runtime_error("Already at the last page, cannot move to next page");
+        throw docraft::exception::PageStateException("Already at the last page, cannot move to next page");
     }
 
     void DocraftHaruPageBackend::go_to_page(std::size_t page_number) {
@@ -97,27 +98,28 @@ namespace docraft::backend::pdf {
             state_->edit_current_page_index() = page_number;
             return;
         }
-        throw std::runtime_error(std::format("Invalid page number: {}. Total pages: {}", page_number + 1,
-                                             state_->page_count()));
+        throw docraft::exception::PageStateException(std::format("Invalid page number: {}. Total pages: {}",
+                                                                 page_number + 1,
+                                                                 state_->page_count()));
     }
 
     void DocraftHaruPageBackend::go_to_first_page() {
         if (state_->page_count() == 0) {
-            throw std::runtime_error("No pages in document");
+            throw docraft::exception::PageStateException("No pages in document");
         }
         state_->edit_current_page_index() = 0;
     }
 
     void DocraftHaruPageBackend::go_to_previous_page() {
         if (state_->current_page_index() == 0) {
-            throw std::runtime_error("Already at the first page, cannot move to previous page");
+            throw docraft::exception::PageStateException("Already at the first page, cannot move to previous page");
         }
         state_->edit_current_page_index() = state_->current_page_index() - 1;
     }
 
     void DocraftHaruPageBackend::go_to_last_page() {
         if (state_->page_count() == 0) {
-            throw std::runtime_error("No pages in document");
+            throw docraft::exception::PageStateException("No pages in document");
         }
         state_->edit_current_page_index() = state_->page_count() - 1;
     }
@@ -143,17 +145,17 @@ namespace docraft::backend::pdf {
 
     HPDF_Page DocraftHaruPageBackend::current_page() const {
         if (state_->page_count() == 0) {
-            throw std::runtime_error("No pages in document");
+            throw docraft::exception::PageStateException("No pages in document");
         }
         if (state_->current_page_index() >= state_->page_count()) {
-            throw std::runtime_error("Current page index is out of bounds");
+            throw docraft::exception::PageStateException("Current page index is out of bounds");
         }
         return state_->pages()[state_->current_page_index()];
     }
 
     std::size_t DocraftHaruPageBackend::current_page_index() const {
         if (state_->page_count() == 0) {
-            throw std::runtime_error("No pages in document");
+            throw docraft::exception::PageStateException("No pages in document");
         }
         return state_->current_page_index();
     }

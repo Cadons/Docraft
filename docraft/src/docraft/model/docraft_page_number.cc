@@ -17,13 +17,15 @@
 #include "docraft/model/docraft_page_number.h"
 
 #include <string>
-#include <stdexcept>
 
 #include "docraft/backend/docraft_page_rendering_backend.h"
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/model/docraft_clone_utils.h"
 #include "docraft/renderer/docraft_renderer.h"
 
 namespace docraft::model {
+    using exception::ModelException;
+
     DocraftPageNumber::DocraftPageNumber() {
         set_text("xxxxx"); // Placeholder text to reserve space during layout until the actual page number is resolved.
     }
@@ -52,7 +54,7 @@ namespace docraft::model {
             auto cloned_child = clone_node(child);
             auto text_child = std::dynamic_pointer_cast<DocraftText>(cloned_child);
             if (!text_child) {
-                throw std::runtime_error("Page number line child does not clone to DocraftText");
+                throw ModelException("Page number line child does not clone to DocraftText");
             }
             copy->add_line(text_child);
         }
