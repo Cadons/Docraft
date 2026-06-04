@@ -343,7 +343,9 @@ namespace docraft::test::utils {
         std::shared_ptr<MockBackendSharedState> state_;
     };
 
-    class MockRenderingBackend : public backend::IDocraftBackend {
+    class MockRenderingBackend : public backend::IDocraftRenderingCapabilityProvider,
+                                 public backend::IDocraftResourceCapabilityProvider,
+                                 public backend::IDocraftLifecycleCapabilityProvider {
     public:
         using Config = MockBackendSharedState::Config;
 
@@ -480,7 +482,7 @@ namespace docraft::test::utils {
             : backend_(std::move(backend)) {
         }
 
-        [[nodiscard]] backend::DocraftBackendProviders create_backend_providers() const override {
+        [[nodiscard]] backend::DocraftCapabilityProviders create_capability_providers() const override {
             return {
                 .rendering_provider = backend_,
                 .resource_provider = backend_,

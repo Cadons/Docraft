@@ -22,17 +22,21 @@
 #include "docraft/docraft_lib.h"
 
 namespace docraft::backend {
-    struct DOCRAFT_LIB DocraftBackendProviders {
+    struct DOCRAFT_LIB DocraftCapabilityProviders {
         std::shared_ptr<IDocraftRenderingCapabilityProvider> rendering_provider;
         std::shared_ptr<IDocraftResourceCapabilityProvider> resource_provider;
         std::shared_ptr<IDocraftLifecycleCapabilityProvider> lifecycle_provider;
     };
 
-    class DOCRAFT_LIB IDocraftBackendProvidersFactory {
+    class DOCRAFT_LIB IDocraftCapabilityProvidersFactory {
     public:
-        virtual ~IDocraftBackendProvidersFactory() = default;
+        virtual ~IDocraftCapabilityProvidersFactory() = default;
 
-        [[nodiscard]] virtual DocraftBackendProviders create_backend_providers() const = 0;
+        [[nodiscard]] virtual DocraftCapabilityProviders create_capability_providers() const = 0;
     };
+
+    // Backward-compatibility aliases for existing integrations.
+    using DocraftBackendProviders = DocraftCapabilityProviders;
+    using IDocraftBackendProvidersFactory = IDocraftCapabilityProvidersFactory;
 } // namespace docraft::backend
 

@@ -85,6 +85,12 @@ namespace docraft {
          *
          * Passing nullptr restores the default Haru providers factory.
          */
+        void set_capability_providers_factory(
+            const std::shared_ptr<backend::IDocraftCapabilityProvidersFactory> &capability_providers_factory);
+
+        /**
+         * @brief Backward-compatible alias for set_capability_providers_factory.
+         */
         void set_backend_providers_factory(
             const std::shared_ptr<backend::IDocraftBackendProvidersFactory> &backend_providers_factory);
 
@@ -189,7 +195,7 @@ namespace docraft {
         std::shared_ptr<DocraftDocumentContext> context_;
         std::vector<std::shared_ptr<model::DocraftNode> > dom_;
         management::DocraftDocumentConfig config_;
-        std::shared_ptr<backend::IDocraftBackendProvidersFactory> backend_providers_factory_;
+        std::shared_ptr<backend::IDocraftCapabilityProvidersFactory> capability_providers_factory_;
     };
 }
 

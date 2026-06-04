@@ -27,8 +27,8 @@ namespace docraft {
     }
 
     DocraftDocumentContext::DocraftDocumentContext(
-        const std::shared_ptr<backend::IDocraftBackendProvidersFactory> &backend_providers_factory)
-        : rendering_(std::make_unique<services::RenderingService>(backend_providers_factory)),
+        const std::shared_ptr<backend::IDocraftCapabilityProvidersFactory> &capability_providers_factory)
+        : rendering_(std::make_unique<services::RenderingService>(capability_providers_factory)),
           layout_(std::make_unique<services::LayoutService>()),
           typography_(std::make_unique<services::TypographyService>()),
           navigation_(std::make_unique<services::NavigationService>()) {

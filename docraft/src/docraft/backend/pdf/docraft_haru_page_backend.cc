@@ -59,6 +59,12 @@ namespace docraft::backend::pdf {
         }
     }
 
+    DocraftHaruPageBackend::~DocraftHaruPageBackend() {
+        if (state_ && state_->page_operations_provider == this) {
+            state_->clear_page_operations_provider();
+        }
+    }
+
     float DocraftHaruPageBackend::page_width() const {
         return HPDF_Page_GetWidth(current_page());
     }

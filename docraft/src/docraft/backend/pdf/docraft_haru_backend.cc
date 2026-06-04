@@ -184,10 +184,10 @@ namespace docraft::backend::pdf {
     DocraftHaruBackend::DocraftHaruBackend()
         : state_(std::make_shared<DocraftHaruSharedState>()) {
         state_->pdf = create_hpdf_document();
-        output_backend_impl_ = std::make_unique<DocraftHaruOutputBackend>(state_);
+        output_backend_ = std::make_unique<DocraftHaruOutputBackend>(state_);
         page_backend_ = std::make_unique<DocraftHaruPageBackend>(state_);
-        font_backend_impl_ = std::make_unique<DocraftHaruFontBackend>(state_);
-        metadata_backend_impl_ = std::make_unique<DocraftHaruMetadataBackend>(state_);
+        font_backend_ = std::make_unique<DocraftHaruFontBackend>(state_);
+        metadata_backend_ = std::make_unique<DocraftHaruMetadataBackend>(state_);
         text_backend_ = std::make_unique<DocraftHaruTextBackend>(state_);
         line_backend_ = std::make_unique<DocraftHaruLineBackend>(state_);
         shape_backend_ = std::make_unique<DocraftHaruShapeBackend>(state_);
@@ -200,6 +200,16 @@ namespace docraft::backend::pdf {
     }
 
     DocraftHaruBackend::~DocraftHaruBackend() {
+        // Destroy capability backends explicitly to enforce teardown order.
+        image_backend_.reset();
+        shape_backend_.reset();
+        line_backend_.reset();
+        text_backend_.reset();
+        page_backend_.reset();
+        metadata_backend_.reset();
+        font_backend_.reset();
+        output_backend_.reset();
+
         if (state_ && state_->pdf) {
             HPDF_Free(state_->pdf);
             state_->pdf = nullptr;
@@ -247,38 +257,30 @@ namespace docraft::backend::pdf {
     }
 
     const docraft::backend::IDocraftOutputBackend *DocraftHaruBackend::output_backend() const {
-        return output_backend_impl_.get();
+        return output_backend_.get();
     }
 
     docraft::backend::IDocraftOutputBackend *DocraftHaruBackend::edit_output_backend() {
-        return output_backend_impl_.get();
+        return output_backend_.get();
     }
 
     const docraft::backend::IDocraftFontBackend *DocraftHaruBackend::font_backend() const {
-        return font_backend_impl_.get();
+        return font_backend_.get();
     }
 
     docraft::backend::IDocraftFontBackend *DocraftHaruBackend::edit_font_backend() {
-        return font_backend_impl_.get();
+        return font_backend_.get();
     }
 
     const docraft::backend::IDocraftMetadataBackend *DocraftHaruBackend::metadata_backend() const {
-        return metadata_backend_impl_.get();
+        return metadata_backend_.get();
     }
 
     docraft::backend::IDocraftMetadataBackend *DocraftHaruBackend::edit_metadata_backend() {
-        return metadata_backend_impl_.get();
+        return metadata_backend_.get();
     }
 
     HPDF_Doc DocraftHaruBackend::pdf_document() const {
         return state_ ? state_->pdf : nullptr;
-    }
-
-    const DocraftHaruPageBackend *DocraftHaruBackend::page_backend_impl() const {
-        return page_backend_.get();
-    }
-
-    DocraftHaruPageBackend *DocraftHaruBackend::edit_page_backend_impl() {
-        return page_backend_.get();
     }
 } // docraft::backend::pdf

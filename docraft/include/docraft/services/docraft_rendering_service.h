@@ -22,6 +22,23 @@
 #include <memory>
 
 namespace docraft::services {
+    enum class MissingCapabilityPolicy {
+        kFail,
+        kWarn,
+        kIgnore
+    };
+
+    struct CapabilityRequirements {
+        bool line_rendering = false;
+        bool text_rendering = false;
+        bool shape_rendering = false;
+        bool image_rendering = false;
+        bool page_rendering = false;
+        bool font_backend = false;
+        bool output_backend = false;
+        bool metadata_backend = false;
+    };
+
     /**
      * @brief Manages the rendering backend and capability caching.
      *
@@ -33,7 +50,7 @@ namespace docraft::services {
     class DOCRAFT_LIB RenderingService {
     public:
         explicit RenderingService(
-            const std::shared_ptr<backend::IDocraftBackendProvidersFactory> &backend_providers_factory);
+            const std::shared_ptr<backend::IDocraftCapabilityProvidersFactory> &capability_providers_factory);
 
         RenderingService();
 
@@ -42,8 +59,18 @@ namespace docraft::services {
         /**
          * @brief Sets backend providers factory.
          */
+        void set_capability_providers_factory(
+            const std::shared_ptr<backend::IDocraftCapabilityProvidersFactory> &capability_providers_factory);
+
+        // Backward-compatible API.
         void set_backend_providers_factory(
             const std::shared_ptr<backend::IDocraftBackendProvidersFactory> &backend_providers_factory);
+
+        void set_missing_capability_policy(MissingCapabilityPolicy policy);
+
+        [[nodiscard]] MissingCapabilityPolicy missing_capability_policy() const;
+
+        void validate_capabilities(const CapabilityRequirements &requirements) const;
 
         /**
          * @brief Returns cached line rendering capability.
@@ -89,8 +116,9 @@ namespace docraft::services {
         [[nodiscard]] std::shared_ptr<backend::IDocraftMetadataBackend> edit_metadata_backend();
 
     private:
-        backend::DocraftBackendProviders backend_providers_;
-        std::shared_ptr<backend::IDocraftBackendProvidersFactory> backend_providers_factory_;
+        backend::DocraftCapabilityProviders capability_providers_;
+        std::shared_ptr<backend::IDocraftCapabilityProvidersFactory> capability_providers_factory_;
+        MissingCapabilityPolicy missing_capability_policy_ = MissingCapabilityPolicy::kFail;
     };
 } // namespace docraft::services
 

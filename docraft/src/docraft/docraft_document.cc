@@ -33,15 +33,15 @@
 
 namespace docraft {
     namespace {
-        void apply_backend_providers_from_factory(const std::shared_ptr<DocraftDocumentContext> &context,
-                                                  const std::shared_ptr<backend::IDocraftBackendProvidersFactory>
-                                                  &factory) {
+        void apply_capability_providers_from_factory(const std::shared_ptr<DocraftDocumentContext> &context,
+                                                     const std::shared_ptr<backend::IDocraftCapabilityProvidersFactory>
+                                                     &factory) {
             if (!context || !factory) {
                 return;
             }
             auto &rendering_service = context->edit_rendering();
             auto &layout_service = context->edit_layout();
-            rendering_service.set_backend_providers_factory(factory);
+            rendering_service.set_capability_providers_factory(factory);
             if (const auto page_backend = rendering_service.page_rendering()) {
                 layout_service.set_page_dimensions(page_backend->page_width(), page_backend->page_height());
             }
@@ -222,8 +222,8 @@ namespace docraft {
     DocraftDocument::DocraftDocument(const std::string &document_title) {
         config_.set_document_title(document_title);
         context_ = std::make_shared<DocraftDocumentContext>();
-        backend_providers_factory_ = std::make_shared<backend::pdf::DocraftHaruBackendProvidersFactory>();
-        apply_backend_providers_from_factory(context_, backend_providers_factory_);
+        capability_providers_factory_ = std::make_shared<backend::pdf::DocraftHaruCapabilityProvidersFactory>();
+        apply_capability_providers_from_factory(context_, capability_providers_factory_);
     }
 
     void DocraftDocument::add_node(const std::shared_ptr<model::DocraftNode> &node) {
@@ -266,7 +266,7 @@ namespace docraft {
     }
 
     void DocraftDocument::render() {
-        apply_backend_providers_from_factory(context_, backend_providers_factory_);
+        apply_capability_providers_from_factory(context_, capability_providers_factory_);
         context_->set_renderer(std::make_shared<renderer::DocraftPDFRenderer>(context_));
         context_->edit_typography().set_font_applier(std::make_shared<generic::DocraftFontApplier>(context_));
         LOG_DEBUG("Rendering document: " + config_.document_title());
@@ -302,6 +302,10 @@ namespace docraft {
         }
 
         auto &rendering_service = context_->edit_rendering();
+        services::CapabilityRequirements required_capabilities;
+        required_capabilities.metadata_backend = true;
+        required_capabilities.output_backend = true;
+        rendering_service.validate_capabilities(required_capabilities);
 
         const auto metadata_backend = rendering_service.edit_metadata_backend();
         if (!metadata_backend) {
@@ -319,12 +323,17 @@ namespace docraft {
         output_backend->save_to_file(output_path);
     }
 
+    void DocraftDocument::set_capability_providers_factory(
+        const std::shared_ptr<backend::IDocraftCapabilityProvidersFactory> &capability_providers_factory) {
+        capability_providers_factory_ = capability_providers_factory
+                                            ? capability_providers_factory
+                                            : std::make_shared<backend::pdf::DocraftHaruCapabilityProvidersFactory>();
+        apply_capability_providers_from_factory(context_, capability_providers_factory_);
+    }
+
     void DocraftDocument::set_backend_providers_factory(
         const std::shared_ptr<backend::IDocraftBackendProvidersFactory> &backend_providers_factory) {
-        backend_providers_factory_ = backend_providers_factory
-                                         ? backend_providers_factory
-                                         : std::make_shared<backend::pdf::DocraftHaruBackendProvidersFactory>();
-        apply_backend_providers_from_factory(context_, backend_providers_factory_);
+        set_capability_providers_factory(backend_providers_factory);
     }
 
     std::vector<std::shared_ptr<const model::DocraftNode> > DocraftDocument::nodes() const {

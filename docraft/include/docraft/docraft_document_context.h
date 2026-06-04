@@ -56,7 +56,7 @@ namespace docraft {
          * @brief Constructs a context with backend providers factory.
          */
         DocraftDocumentContext(
-            const std::shared_ptr<backend::IDocraftBackendProvidersFactory> &backend_providers_factory);
+            const std::shared_ptr<backend::IDocraftCapabilityProvidersFactory> &capability_providers_factory);
 
         /**
          * @brief Destructor.

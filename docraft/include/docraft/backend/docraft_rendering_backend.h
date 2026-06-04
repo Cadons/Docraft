@@ -84,18 +84,4 @@ namespace docraft::backend {
         [[nodiscard]] virtual IDocraftMetadataBackend *edit_metadata_backend() = 0;
     };
 
-    /**
-     * @brief Aggregated backend interface.
-     *
-     * Backward-compatible facade that aggregates semantic capability providers.
-     */
-    class DOCRAFT_LIB IDocraftBackend : public IDocraftRenderingCapabilityProvider,
-                                        public IDocraftResourceCapabilityProvider,
-                                        public IDocraftLifecycleCapabilityProvider {
-    public:
-        /**
-         * @brief Virtual destructor.
-         */
-        virtual ~IDocraftBackend() = default;
-    };
 } // docraft::backend

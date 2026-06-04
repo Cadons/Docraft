@@ -48,6 +48,11 @@ namespace docraft::backend::pdf {
         explicit DocraftHaruPageBackend(const std::shared_ptr<DocraftHaruSharedState> &state);
 
         /**
+         * @brief Unregisters itself from shared state if still the active provider.
+         */
+        ~DocraftHaruPageBackend() override;
+
+        /**
          * @brief Returns the width of the current page.
          */
         float page_width() const override;

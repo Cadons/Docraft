@@ -19,9 +19,12 @@
 #include "docraft/backend/docraft_backend_providers_factory.h"
 
 namespace docraft::backend::pdf {
-    class DOCRAFT_LIB DocraftHaruBackendProvidersFactory : public backend::IDocraftBackendProvidersFactory {
+    class DOCRAFT_LIB DocraftHaruCapabilityProvidersFactory : public backend::IDocraftCapabilityProvidersFactory {
     public:
-        [[nodiscard]] backend::DocraftBackendProviders create_backend_providers() const override;
+        [[nodiscard]] backend::DocraftCapabilityProviders create_capability_providers() const override;
     };
+
+    // Backward-compatibility alias.
+    using DocraftHaruBackendProvidersFactory = DocraftHaruCapabilityProvidersFactory;
 } // namespace docraft::backend::pdf
 

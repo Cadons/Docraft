@@ -39,7 +39,9 @@ namespace docraft::backend::pdf {
 	/**
 	 * @brief This class is responsible for managing the Haru PDF document and providing an interface for rendering operations.
 	 */
-	class DOCRAFT_LIB DocraftHaruBackend : public docraft::backend::IDocraftBackend {
+	class DOCRAFT_LIB DocraftHaruBackend : public docraft::backend::IDocraftRenderingCapabilityProvider,
+	                                       public docraft::backend::IDocraftResourceCapabilityProvider,
+	                                       public docraft::backend::IDocraftLifecycleCapabilityProvider {
 	public:
 		/**
 		 * @brief Creates a Haru PDF backend with a new document and page.
@@ -86,15 +88,11 @@ namespace docraft::backend::pdf {
 
 		[[nodiscard]] HPDF_Doc pdf_document() const;
 
-		[[nodiscard]] const DocraftHaruPageBackend *page_backend_impl() const;
-
-		[[nodiscard]] DocraftHaruPageBackend *edit_page_backend_impl();
-
 	private:
 		std::shared_ptr<DocraftHaruSharedState> state_;
-		std::unique_ptr<DocraftHaruOutputBackend> output_backend_impl_;
-		std::unique_ptr<DocraftHaruFontBackend> font_backend_impl_;
-		std::unique_ptr<DocraftHaruMetadataBackend> metadata_backend_impl_;
+		std::unique_ptr<DocraftHaruOutputBackend> output_backend_;
+		std::unique_ptr<DocraftHaruFontBackend> font_backend_;
+		std::unique_ptr<DocraftHaruMetadataBackend> metadata_backend_;
 		std::unique_ptr<DocraftHaruTextBackend> text_backend_;
 		std::unique_ptr<DocraftHaruLineBackend> line_backend_;
 		std::unique_ptr<DocraftHaruShapeBackend> shape_backend_;

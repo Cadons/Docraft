@@ -4,6 +4,7 @@
 #include <string>
 
 #include "docraft/backend/pdf/docraft_haru_backend.h"
+#include "docraft/backend/pdf/docraft_haru_page_backend.h"
 
 #include "docraft/docraft_document_metadata.h"
 #include "docraft/model/docraft_page_format.h"
@@ -193,4 +194,15 @@ TEST_F(DocraftHaruBackendTest, SavesPdfWithMetadataInfo) {
     std::filesystem::remove(output_path);
 }
 
+TEST(DocraftHaruPageBackendLifetimeTest, ClearsProviderRegistrationOnDestruction) {
+    auto state = std::make_shared<docraft::backend::pdf::DocraftHaruSharedState>();
+
+    {
+        auto page_backend = std::make_unique<docraft::backend::pdf::DocraftHaruPageBackend>(state);
+        ASSERT_EQ(state->page_operations_provider, page_backend.get());
+    }
+
+    EXPECT_EQ(state->page_operations_provider, nullptr);
+    EXPECT_THROW(state->ensure_page_provider(), std::runtime_error);
+}
 } // namespace docraft::test::backend

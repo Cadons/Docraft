@@ -19,7 +19,7 @@
 #include "docraft/backend/pdf/docraft_haru_backend.h"
 
 namespace docraft::backend::pdf {
-    backend::DocraftBackendProviders DocraftHaruBackendProvidersFactory::create_backend_providers() const {
+    backend::DocraftCapabilityProviders DocraftHaruCapabilityProvidersFactory::create_capability_providers() const {
         auto backend = std::make_shared<DocraftHaruBackend>();
         return {
             .rendering_provider = backend,
