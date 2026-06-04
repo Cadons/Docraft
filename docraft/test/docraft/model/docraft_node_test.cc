@@ -17,7 +17,8 @@ namespace docraft::test::model {
                     .extension = ".pdf",
                     .can_use_font = true
                 });
-            context_ = std::make_shared<DocraftDocumentContext>(backend_);
+            context_ = std::make_shared<DocraftDocumentContext>(
+                std::make_shared<docraft::test::utils::MockBackendProvidersFactory>(backend_));
         }
 
         std::shared_ptr<docraft::test::utils::MockRenderingBackend> backend_;

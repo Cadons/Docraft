@@ -17,8 +17,8 @@
 #pragma once
 
 #include "docraft/docraft_lib.h"
+#include "docraft/backend/docraft_backend_providers_factory.h"
 #include "docraft/backend/docraft_rendering_backend.h"
-#include "docraft/management/docraft_backend_cache.h"
 #include <memory>
 
 namespace docraft::services {
@@ -32,21 +32,18 @@ namespace docraft::services {
      */
     class DOCRAFT_LIB RenderingService {
     public:
-        explicit RenderingService(const std::shared_ptr<backend::IDocraftBackend> &backend = nullptr);
+        explicit RenderingService(
+            const std::shared_ptr<backend::IDocraftBackendProvidersFactory> &backend_providers_factory);
+
+        RenderingService();
 
         ~RenderingService();
 
         /**
-         * @brief Returns the active rendering backend.
+         * @brief Sets backend providers factory.
          */
-        [[nodiscard]] std::shared_ptr<const backend::IDocraftBackend> backend() const;
-
-        [[nodiscard]] std::shared_ptr<backend::IDocraftBackend> edit_backend();
-
-        /**
-         * @brief Sets a new backend and refreshes caches.
-         */
-        void set_backend(const std::shared_ptr<backend::IDocraftBackend> &backend);
+        void set_backend_providers_factory(
+            const std::shared_ptr<backend::IDocraftBackendProvidersFactory> &backend_providers_factory);
 
         /**
          * @brief Returns cached line rendering capability.
@@ -83,18 +80,17 @@ namespace docraft::services {
 
         [[nodiscard]] std::shared_ptr<backend::IDocraftPageRenderingBackend> edit_page_rendering();
 
-        /**
-         * @brief Returns the backend capability cache.
-         */
-        [[nodiscard]] management::DocraftBackendCache &cache();
+        [[nodiscard]] std::shared_ptr<const backend::IDocraftFontBackend> font_backend() const;
 
-        [[nodiscard]] const management::DocraftBackendCache &cache() const;
+        [[nodiscard]] std::shared_ptr<const backend::IDocraftOutputBackend> output_backend() const;
+
+        [[nodiscard]] std::shared_ptr<const backend::IDocraftMetadataBackend> metadata_backend() const;
+
+        [[nodiscard]] std::shared_ptr<backend::IDocraftMetadataBackend> edit_metadata_backend();
 
     private:
-        void refresh_caches();
-
-        std::shared_ptr<backend::IDocraftBackend> backend_;
-        std::unique_ptr<management::DocraftBackendCache> cache_;
+        backend::DocraftBackendProviders backend_providers_;
+        std::shared_ptr<backend::IDocraftBackendProvidersFactory> backend_providers_factory_;
     };
 } // namespace docraft::services
 

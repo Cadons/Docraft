@@ -53,10 +53,10 @@ namespace docraft {
         DocraftDocumentContext();
 
         /**
-         * @brief Constructs a context with a specific backend.
-         * @param backend Backend instance to use.
+         * @brief Constructs a context with backend providers factory.
          */
-        explicit DocraftDocumentContext(const std::shared_ptr<backend::IDocraftBackend> &backend);
+        DocraftDocumentContext(
+            const std::shared_ptr<backend::IDocraftBackendProvidersFactory> &backend_providers_factory);
 
         /**
          * @brief Destructor.

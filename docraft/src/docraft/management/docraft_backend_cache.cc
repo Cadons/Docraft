@@ -15,24 +15,23 @@
  */
 
 #include "docraft/management/docraft_backend_cache.h"
-#include "docraft/docraft_lib.h"
 
 namespace docraft::management {
     namespace {
-        template <typename InterfaceType>
+        template<typename OwnerType, typename InterfaceType>
         std::shared_ptr<InterfaceType> alias_backend_interface(
-            const std::shared_ptr<backend::IDocraftBackend> &backend,
+            const std::shared_ptr<OwnerType> &owner,
             InterfaceType *interface_pointer) {
-            if (!backend || !interface_pointer) {
+            if (!owner || !interface_pointer) {
                 return {};
             }
-            return std::shared_ptr<InterfaceType>(backend, interface_pointer);
+            return std::shared_ptr<InterfaceType>(owner, interface_pointer);
         }
     } // namespace
 
-    void DocraftBackendCache::initialize_from_backend(
-        const std::shared_ptr<backend::IDocraftBackend> &backend) {
-        refresh_caches(backend);
+    void DocraftBackendCache::initialize_from_provider(
+        const std::shared_ptr<backend::IDocraftRenderingCapabilityProvider> &rendering_provider) {
+        refresh_caches(rendering_provider);
     }
 
     std::shared_ptr<const backend::IDocraftLineRenderingBackend> DocraftBackendCache::line_backend() const {
@@ -75,11 +74,27 @@ namespace docraft::management {
         return page_backend_;
     }
 
-    void DocraftBackendCache::refresh_caches(const std::shared_ptr<backend::IDocraftBackend> &backend) {
-        line_backend_ = alias_backend_interface(backend, backend ? backend->edit_line_rendering() : nullptr);
-        shape_backend_ = alias_backend_interface(backend, backend ? backend->edit_shape_rendering() : nullptr);
-        text_backend_ = alias_backend_interface(backend, backend ? backend->edit_text_rendering() : nullptr);
-        image_backend_ = alias_backend_interface(backend, backend ? backend->edit_image_rendering() : nullptr);
-        page_backend_ = alias_backend_interface(backend, backend ? backend->edit_page_rendering() : nullptr);
+    void DocraftBackendCache::refresh_caches(
+        const std::shared_ptr<backend::IDocraftRenderingCapabilityProvider> &rendering_provider) {
+        line_backend_ = alias_backend_interface(rendering_provider,
+                                                rendering_provider
+                                                    ? rendering_provider->edit_line_rendering()
+                                                    : nullptr);
+        shape_backend_ = alias_backend_interface(rendering_provider,
+                                                 rendering_provider
+                                                     ? rendering_provider->edit_shape_rendering()
+                                                     : nullptr);
+        text_backend_ = alias_backend_interface(rendering_provider,
+                                                rendering_provider
+                                                    ? rendering_provider->edit_text_rendering()
+                                                    : nullptr);
+        image_backend_ = alias_backend_interface(rendering_provider,
+                                                 rendering_provider
+                                                     ? rendering_provider->edit_image_rendering()
+                                                     : nullptr);
+        page_backend_ = alias_backend_interface(rendering_provider,
+                                                rendering_provider
+                                                    ? rendering_provider->edit_page_rendering()
+                                                    : nullptr);
     }
 } // docraft::management

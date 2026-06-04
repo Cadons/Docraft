@@ -273,10 +273,29 @@ namespace docraft::test {
                 .extension = ".mock"
             });
 
-        document.set_backend(mock_backend);
+        document.set_backend_providers_factory(
+            std::make_shared<docraft::test::utils::MockBackendProvidersFactory>(mock_backend));
         document.render();
 
         EXPECT_EQ(mock_backend->last_saved_path(), "custom_backend_test.mock");
+    }
+
+    TEST(DocraftDocumentTest, RenderUsesBackendProvidersFactorySetOnDocument) {
+        DocraftDocument document("factory_backend_test");
+        auto body = std::make_shared<model::DocraftBody>();
+        body->add_child(std::make_shared<model::DocraftText>("Simple text"));
+        document.add_node(body);
+
+        auto mock_backend = std::make_shared<docraft::test::utils::MockRenderingBackend>(
+            docraft::test::utils::MockRenderingBackend::Config{
+                .extension = ".factory"
+            });
+
+        document.set_backend_providers_factory(
+            std::make_shared<docraft::test::utils::MockBackendProvidersFactory>(mock_backend));
+        document.render();
+
+        EXPECT_EQ(mock_backend->last_saved_path(), "factory_backend_test.factory");
     }
 
     TEST(DocraftDocumentTest, RenderUsesDocumentPathWhenSet) {
@@ -290,7 +309,7 @@ namespace docraft::test {
                 .extension = ".mock"
             });
 
-        document.set_backend(mock_backend);
+        document.set_backend_providers_factory(std::make_shared<docraft::test::utils::MockBackendProvidersFactory>(mock_backend));
         document.set_document_path("exports/reports");
         document.set_document_title("monthly_summary");
         document.render();
@@ -315,13 +334,46 @@ namespace docraft::test {
                 .extension = ".mock"
             });
 
-        document.set_backend(mock_backend);
-        document.set_backend(nullptr);
+        document.set_backend_providers_factory(
+            std::make_shared<docraft::test::utils::MockBackendProvidersFactory>(mock_backend));
+        document.set_backend_providers_factory(nullptr);
         document.render();
 
         EXPECT_TRUE(mock_backend->last_saved_path().empty());
         EXPECT_TRUE(std::filesystem::exists(output_path));
 
         std::filesystem::remove(output_path, ec);
+    }
+
+    TEST(DocraftDocumentTest, MockBackendCapabilityMatrixReturnsNullWhenDisabled) {
+        auto mock_backend = std::make_shared<docraft::test::utils::MockRenderingBackend>(
+            docraft::test::utils::MockRenderingBackend::Config{
+                .supports_line_backend = false,
+                .supports_text_backend = false,
+                .supports_shape_backend = true,
+                .supports_image_backend = false,
+                .supports_page_backend = false,
+                .supports_output_backend = true,
+                .supports_font_backend = true,
+                .supports_metadata_backend = true
+            });
+
+        EXPECT_EQ(mock_backend->line_rendering(), nullptr);
+        EXPECT_EQ(mock_backend->text_rendering(), nullptr);
+        EXPECT_EQ(mock_backend->image_rendering(), nullptr);
+        EXPECT_EQ(mock_backend->page_rendering(), nullptr);
+        ASSERT_NE(mock_backend->shape_rendering(), nullptr);
+    }
+
+    TEST(DocraftDocumentTest, MockBackendEnforcesTextScopeWhenRequired) {
+        auto mock_backend = std::make_shared<docraft::test::utils::MockRenderingBackend>(
+            docraft::test::utils::MockRenderingBackend::Config{
+                .require_text_scope = true
+            });
+
+        EXPECT_THROW(mock_backend->draw_text("hello", 1.0F, 1.0F), std::runtime_error);
+        EXPECT_NO_THROW(mock_backend->begin_text());
+        EXPECT_NO_THROW(mock_backend->draw_text("hello", 1.0F, 1.0F));
+        EXPECT_NO_THROW(mock_backend->end_text());
     }
 } // namespace docraft::test

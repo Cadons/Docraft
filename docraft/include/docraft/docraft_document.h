@@ -24,6 +24,7 @@
 
 #include "docraft/docraft_document_context.h"
 #include "docraft/docraft_document_metadata.h"
+#include "docraft/backend/docraft_backend_providers_factory.h"
 #include "docraft/management/docraft_document_config.h"
 #include "docraft/management/docraft_document_query.h"
 #include "docraft/model/docraft_node.h"
@@ -80,12 +81,12 @@ namespace docraft {
         void render();
 
         /**
-         * @brief Overrides the backend used during render.
+         * @brief Sets a factory used to create backend providers.
          *
-         * Passing nullptr resets to the default backend.
-         * @param backend Backend implementation.
+         * Passing nullptr restores the default Haru providers factory.
          */
-        void set_backend(const std::shared_ptr<backend::IDocraftBackend> &backend);
+        void set_backend_providers_factory(
+            const std::shared_ptr<backend::IDocraftBackendProvidersFactory> &backend_providers_factory);
 
         /**
          * @brief Returns the document DOM nodes.
@@ -188,6 +189,7 @@ namespace docraft {
         std::shared_ptr<DocraftDocumentContext> context_;
         std::vector<std::shared_ptr<model::DocraftNode> > dom_;
         management::DocraftDocumentConfig config_;
+        std::shared_ptr<backend::IDocraftBackendProvidersFactory> backend_providers_factory_;
     };
 }
 

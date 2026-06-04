@@ -68,6 +68,7 @@ set(DOCRAFT_SOURCES
         include/docraft/backend/docraft_shape_rendering_backend.h
         include/docraft/backend/docraft_image_rendering_backend.h
         include/docraft/backend/docraft_page_rendering_backend.h
+        include/docraft/backend/docraft_backend_providers_factory.h
         include/docraft/backend/docraft_rendering_backend.h
         include/docraft/backend/docraft_output_backend.h
         include/docraft/backend/docraft_font_backend.h
@@ -154,6 +155,8 @@ set(DOCRAFT_SOURCES
         src/docraft/model/docraft_position.cc
         src/docraft/backend/pdf/docraft_haru_backend.cc
         include/docraft/backend/pdf/docraft_haru_backend.h
+        src/docraft/backend/pdf/docraft_haru_backend_providers_factory.cc
+        include/docraft/backend/pdf/docraft_haru_backend_providers_factory.h
         src/docraft/backend/pdf/docraft_haru_output_backend.cc
         include/docraft/backend/pdf/docraft_haru_output_backend.h
         src/docraft/backend/pdf/docraft_haru_font_backend.cc

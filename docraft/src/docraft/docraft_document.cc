@@ -24,6 +24,7 @@
 
 #include "docraft/layout/docraft_layout_engine.h"
 #include "docraft/layout/handler/docraft_layout_handler.h"
+#include "docraft/backend/pdf/docraft_haru_backend_providers_factory.h"
 #include "docraft/renderer/docraft_pdf_renderer.h"
 #include "docraft/utils/docraft_font_registry.h"
 #include "docraft/utils/docraft_logger.h"
@@ -32,6 +33,20 @@
 
 namespace docraft {
     namespace {
+        void apply_backend_providers_from_factory(const std::shared_ptr<DocraftDocumentContext> &context,
+                                                  const std::shared_ptr<backend::IDocraftBackendProvidersFactory>
+                                                  &factory) {
+            if (!context || !factory) {
+                return;
+            }
+            auto &rendering_service = context->edit_rendering();
+            auto &layout_service = context->edit_layout();
+            rendering_service.set_backend_providers_factory(factory);
+            if (const auto page_backend = rendering_service.page_rendering()) {
+                layout_service.set_page_dimensions(page_backend->page_width(), page_backend->page_height());
+            }
+        }
+
         std::string trim_copy(std::string_view source) {
             std::size_t start = 0;
             std::size_t end = source.size();
@@ -156,6 +171,26 @@ namespace docraft {
             }
         }
 
+        std::filesystem::path resolve_font_path(const std::string &font_path) {
+            std::filesystem::path resolved_path(font_path);
+            if (resolved_path.is_absolute()) {
+                return resolved_path;
+            }
+
+            const auto current_directory = std::filesystem::current_path();
+            auto current_directory_candidate = current_directory / resolved_path;
+            if (std::filesystem::exists(current_directory_candidate)) {
+                return current_directory_candidate;
+            }
+
+            auto parent_directory_candidate = current_directory.parent_path() / resolved_path;
+            if (std::filesystem::exists(parent_directory_candidate)) {
+                return parent_directory_candidate;
+            }
+
+            return resolved_path;
+        }
+
         void apply_font_settings(const std::shared_ptr<model::DocraftSettings> &settings) {
             if (!settings) {
                 return;
@@ -165,29 +200,20 @@ namespace docraft {
             }
             for (const auto &font: settings->fonts()) {
                 for (const auto &external_font: font.external_fonts) {
-                    auto font_path = external_font.path;
-                    std::filesystem::path resolved_path(font_path);
-                    if (!resolved_path.is_absolute()) {
-                        std::filesystem::path tried1 = std::filesystem::current_path() / resolved_path;
-                        if (std::filesystem::exists(tried1)) {
-                            resolved_path = tried1;
-                        } else {
-                            std::filesystem::path tried2 =
-                                    std::filesystem::current_path().parent_path() / resolved_path;
-                            if (std::filesystem::exists(tried2)) {
-                                resolved_path = tried2;
-                            }
-                        }
-                    }
-                    bool ok = utils::DocraftFontRegistry::instance().register_font(
+                    const std::string font_path = external_font.path;
+                    const std::filesystem::path resolved_path = resolve_font_path(font_path);
+
+                    const bool ok = utils::DocraftFontRegistry::instance().register_font(
                         external_font.name, resolved_path.string());
+
                     if (!ok) {
                         LOG_ERROR("Failed to register font '" + external_font.name + "' from path '" + font_path +
                             "' (resolved: '" + resolved_path.string() + "')");
-                    } else {
-                        LOG_DEBUG(
-                            "Registered font '" + external_font.name + "' from path '" + resolved_path.string() + "'");
+                        continue;
                     }
+
+                    LOG_DEBUG(
+                        "Registered font '" + external_font.name + "' from path '" + resolved_path.string() + "'");
                 }
             }
         }
@@ -196,6 +222,8 @@ namespace docraft {
     DocraftDocument::DocraftDocument(const std::string &document_title) {
         config_.set_document_title(document_title);
         context_ = std::make_shared<DocraftDocumentContext>();
+        backend_providers_factory_ = std::make_shared<backend::pdf::DocraftHaruBackendProvidersFactory>();
+        apply_backend_providers_from_factory(context_, backend_providers_factory_);
     }
 
     void DocraftDocument::add_node(const std::shared_ptr<model::DocraftNode> &node) {
@@ -238,6 +266,7 @@ namespace docraft {
     }
 
     void DocraftDocument::render() {
+        apply_backend_providers_from_factory(context_, backend_providers_factory_);
         context_->set_renderer(std::make_shared<renderer::DocraftPDFRenderer>(context_));
         context_->edit_typography().set_font_applier(std::make_shared<generic::DocraftFontApplier>(context_));
         LOG_DEBUG("Rendering document: " + config_.document_title());
@@ -272,18 +301,15 @@ namespace docraft {
             }
         }
 
-        const auto backend = context_->edit_rendering().edit_backend();
-        if (!backend) {
-            throw std::runtime_error("Rendering backend is not available");
-        }
+        auto &rendering_service = context_->edit_rendering();
 
-        auto *metadata_backend = backend->edit_metadata_backend();
+        const auto metadata_backend = rendering_service.edit_metadata_backend();
         if (!metadata_backend) {
             throw std::runtime_error("Metadata backend capability is not available");
         }
         metadata_backend->set_document_metadata(config_.document_metadata());
 
-        const auto *output_backend = backend->output_backend();
+        const auto output_backend = rendering_service.output_backend();
         if (!output_backend) {
             throw std::runtime_error("Output backend capability is not available");
         }
@@ -293,13 +319,12 @@ namespace docraft {
         output_backend->save_to_file(output_path);
     }
 
-    void DocraftDocument::set_backend(const std::shared_ptr<backend::IDocraftBackend> &backend) {
-        auto &rendering_service = context_->edit_rendering();
-        auto &layout_service = context_->edit_layout();
-        rendering_service.set_backend(backend);
-        if (const auto page_backend = rendering_service.page_rendering()) {
-            layout_service.set_page_dimensions(page_backend->page_width(), page_backend->page_height());
-        }
+    void DocraftDocument::set_backend_providers_factory(
+        const std::shared_ptr<backend::IDocraftBackendProvidersFactory> &backend_providers_factory) {
+        backend_providers_factory_ = backend_providers_factory
+                                         ? backend_providers_factory
+                                         : std::make_shared<backend::pdf::DocraftHaruBackendProvidersFactory>();
+        apply_backend_providers_from_factory(context_, backend_providers_factory_);
     }
 
     std::vector<std::shared_ptr<const model::DocraftNode> > DocraftDocument::nodes() const {

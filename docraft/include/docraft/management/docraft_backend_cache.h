@@ -31,10 +31,11 @@ namespace docraft::management {
     class DOCRAFT_LIB DocraftBackendCache {
     public:
         /**
-         * @brief Initializes the backend cache from a main backend.
-         * @param backend The main backend.
+         * @brief Initializes the backend cache from rendering capability provider.
+         * @param rendering_provider Rendering capability provider.
          */
-        void initialize_from_backend(const std::shared_ptr<backend::IDocraftBackend> &backend);
+        void initialize_from_provider(
+            const std::shared_ptr<backend::IDocraftRenderingCapabilityProvider> &rendering_provider);
 
         /**
          * @brief Returns the line backend (cached).
@@ -81,9 +82,9 @@ namespace docraft::management {
 
         /**
          * @brief Refreshes all cached backend interfaces (called internally).
-         * @param backend The main backend.
+         * @param rendering_provider Rendering capability provider.
          */
-        void refresh_caches(const std::shared_ptr<backend::IDocraftBackend> &backend);
+        void refresh_caches(const std::shared_ptr<backend::IDocraftRenderingCapabilityProvider> &rendering_provider);
 
         std::shared_ptr<backend::IDocraftLineRenderingBackend> line_backend_;
         std::shared_ptr<backend::IDocraftShapeRenderingBackend> shape_backend_;

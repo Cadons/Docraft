@@ -26,8 +26,9 @@ namespace docraft {
         sync_layout_page_dimensions_from_backend();
     }
 
-    DocraftDocumentContext::DocraftDocumentContext(const std::shared_ptr<backend::IDocraftBackend> &backend)
-        : rendering_(std::make_unique<services::RenderingService>(backend)),
+    DocraftDocumentContext::DocraftDocumentContext(
+        const std::shared_ptr<backend::IDocraftBackendProvidersFactory> &backend_providers_factory)
+        : rendering_(std::make_unique<services::RenderingService>(backend_providers_factory)),
           layout_(std::make_unique<services::LayoutService>()),
           typography_(std::make_unique<services::TypographyService>()),
           navigation_(std::make_unique<services::NavigationService>()) {
