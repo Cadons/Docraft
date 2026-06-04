@@ -25,11 +25,21 @@
 namespace docraft::backend::pdf {
     /**
      * @brief Haru implementation of page management operations.
+     *
+     * Implements both IDocraftPageRenderingBackend (for public page operations)
+     * and IPageOperationsProvider (for internal capability backend access).
+     *
+     * LIFETIME: Must register itself as the page operations provider with the
+     * shared state immediately upon construction, and be destroyed only after
+     * all capability backends that depend on it are destroyed.
      */
-    class DocraftHaruPageBackend : public docraft::backend::IDocraftPageRenderingBackend {
+    class DocraftHaruPageBackend : public docraft::backend::IDocraftPageRenderingBackend,
+                                   public IPageOperationsProvider {
     public:
         /**
          * @brief Creates a page backend bound to a Haru document owner.
+         *
+         * Automatically registers itself as the page operations provider.
          */
         explicit DocraftHaruPageBackend(const std::shared_ptr<DocraftHaruSharedState> &state);
 
@@ -92,12 +102,12 @@ namespace docraft::backend::pdf {
         /**
          * @brief Returns the current page handle for internal capability backends.
          */
-        [[nodiscard]] HPDF_Page current_page() const;
+        [[nodiscard]] HPDF_Page current_page() const override;
 
         /**
          * @brief Returns the current page index (0-based) for internal capability backends.
          */
-        [[nodiscard]] std::size_t current_page_index() const;
+        [[nodiscard]] std::size_t current_page_index() const override;
 
     private:
         void apply_page_format(HPDF_Page page) const;

@@ -16,21 +16,18 @@
 
 #include "docraft/backend/pdf/docraft_haru_font_backend.h"
 
-#include "docraft/backend/pdf/docraft_haru_page_backend.h"
-
 #include <stdexcept>
 
 #include <hpdf.h>
 
 namespace docraft::backend::pdf {
-    DocraftHaruFontBackend::DocraftHaruFontBackend(const std::shared_ptr<DocraftHaruSharedState> &state,
-                                                   DocraftHaruPageBackend *page_backend)
-        : state_(state), page_backend_(page_backend) {
+    DocraftHaruFontBackend::DocraftHaruFontBackend(const std::shared_ptr<DocraftHaruSharedState> &state)
+        : state_(state) {
     }
 
     const char *DocraftHaruFontBackend::register_ttf_font_from_file(const std::string &path,
                                                                     bool embed) const {
-        const auto pdf = state_ ? state_->pdf : nullptr;
+        auto *const pdf = state_ ? state_->pdf : nullptr;
         if (!pdf) {
             return nullptr;
         }
@@ -45,7 +42,7 @@ namespace docraft::backend::pdf {
 
     bool DocraftHaruFontBackend::can_use_font(const std::string &internal_name,
                                               const char *encoder) const {
-        const auto pdf = state_ ? state_->pdf : nullptr;
+        auto *const pdf = state_ ? state_->pdf : nullptr;
         if (!pdf) {
             return false;
         }
@@ -60,7 +57,7 @@ namespace docraft::backend::pdf {
     void DocraftHaruFontBackend::set_font(const std::string &internal_name,
                                           float size,
                                           const char *encoder) const {
-        const auto pdf = state_ ? state_->pdf : nullptr;
+        auto *const pdf = state_ ? state_->pdf : nullptr;
         if (!pdf) {
             throw std::runtime_error("Haru document is not initialized");
         }
@@ -68,6 +65,7 @@ namespace docraft::backend::pdf {
         if (!font) {
             throw std::runtime_error("Failed to resolve font: " + internal_name);
         }
-        HPDF_Page_SetFontAndSize(page_backend_->current_page(), font, size);
+        const auto *provider = state_->ensure_page_provider();
+        HPDF_Page_SetFontAndSize(provider->current_page(), font, size);
     }
 } // namespace docraft::backend::pdf

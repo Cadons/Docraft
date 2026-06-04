@@ -15,16 +15,14 @@
  */
 
 #include "docraft/backend/pdf/docraft_haru_image_backend.h"
-#include "docraft/backend/pdf/docraft_haru_page_backend.h"
 
 #include <stdexcept>
 
 #include <hpdf.h>
 
 namespace docraft::backend::pdf {
-    DocraftHaruImageBackend::DocraftHaruImageBackend(const std::shared_ptr<DocraftHaruSharedState> &state,
-                                                     DocraftHaruPageBackend *page_backend)
-        : state_(state), page_backend_(page_backend) {
+    DocraftHaruImageBackend::DocraftHaruImageBackend(const std::shared_ptr<DocraftHaruSharedState> &state)
+        : state_(state) {
     }
 
     void DocraftHaruImageBackend::draw_png_image(const std::string &path,
@@ -36,7 +34,8 @@ namespace docraft::backend::pdf {
         if (!image) {
             throw std::runtime_error("Failed to load PNG image: " + path);
         }
-        HPDF_Page_DrawImage(page_backend_->current_page(), image, x, y, width, height);
+        auto *provider = state_->ensure_page_provider();
+        HPDF_Page_DrawImage(provider->current_page(), image, x, y, width, height);
     }
 
     void DocraftHaruImageBackend::draw_png_image_from_memory(const unsigned char *data,
@@ -52,7 +51,8 @@ namespace docraft::backend::pdf {
         if (!image) {
             throw std::runtime_error("Failed to load PNG image from memory");
         }
-        HPDF_Page_DrawImage(page_backend_->current_page(), image, x, y, width, height);
+        auto *provider = state_->ensure_page_provider();
+        HPDF_Page_DrawImage(provider->current_page(), image, x, y, width, height);
     }
 
     void DocraftHaruImageBackend::draw_jpeg_image(const std::string &path,
@@ -64,7 +64,8 @@ namespace docraft::backend::pdf {
         if (!image) {
             throw std::runtime_error("Failed to load JPEG image: " + path);
         }
-        HPDF_Page_DrawImage(page_backend_->current_page(), image, x, y, width, height);
+        auto *provider = state_->ensure_page_provider();
+        HPDF_Page_DrawImage(provider->current_page(), image, x, y, width, height);
     }
 
     void DocraftHaruImageBackend::draw_jpeg_image_from_memory(const unsigned char *data,
@@ -75,12 +76,13 @@ namespace docraft::backend::pdf {
                                                               float height) const {
         auto *image = HPDF_LoadJpegImageFromMem(
             state_ ? state_->pdf : nullptr,
-            reinterpret_cast<const HPDF_BYTE *>(data),
+            data,
             static_cast<HPDF_UINT>(size));
         if (!image) {
             throw std::runtime_error("Failed to load JPEG image from memory");
         }
-        HPDF_Page_DrawImage(page_backend_->current_page(), image, x, y, width, height);
+        auto *provider = state_->ensure_page_provider();
+        HPDF_Page_DrawImage(provider->current_page(), image, x, y, width, height);
     }
 
     void DocraftHaruImageBackend::draw_raw_rgb_image(const std::string &path,
@@ -99,7 +101,8 @@ namespace docraft::backend::pdf {
         if (!image) {
             throw std::runtime_error("Failed to load raw RGB image: " + path);
         }
-        HPDF_Page_DrawImage(page_backend_->current_page(), image, x, y, width, height);
+        auto *provider = state_->ensure_page_provider();
+        HPDF_Page_DrawImage(provider->current_page(), image, x, y, width, height);
     }
 
     void DocraftHaruImageBackend::draw_raw_rgb_image_from_memory(const unsigned char *data,
@@ -112,7 +115,7 @@ namespace docraft::backend::pdf {
         constexpr HPDF_UINT kBitsPerComponent = 8;
         auto *image = HPDF_LoadRawImageFromMem(
             state_ ? state_->pdf : nullptr,
-            reinterpret_cast<const HPDF_BYTE *>(data),
+            data,
             static_cast<HPDF_UINT>(pixel_width),
             static_cast<HPDF_UINT>(pixel_height),
             HPDF_CS_DEVICE_RGB,
@@ -120,7 +123,7 @@ namespace docraft::backend::pdf {
         if (!image) {
             throw std::runtime_error("Failed to load raw RGB image from memory");
         }
-        HPDF_Page_DrawImage(page_backend_->current_page(), image, x, y, width, height);
+        auto *provider = state_->ensure_page_provider();
+        HPDF_Page_DrawImage(provider->current_page(), image, x, y, width, height);
     }
 } // namespace docraft::backend::pdf
-

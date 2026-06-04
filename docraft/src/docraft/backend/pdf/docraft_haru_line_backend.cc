@@ -15,28 +15,30 @@
  */
 
 #include "docraft/backend/pdf/docraft_haru_line_backend.h"
-#include "docraft/backend/pdf/docraft_haru_page_backend.h"
 
 #include <hpdf.h>
 
 namespace docraft::backend::pdf {
-    DocraftHaruLineBackend::DocraftHaruLineBackend(const std::shared_ptr<DocraftHaruSharedState> &state,
-                                                   DocraftHaruPageBackend *page_backend)
-        : state_(state), page_backend_(page_backend) {
+    DocraftHaruLineBackend::DocraftHaruLineBackend(const std::shared_ptr<DocraftHaruSharedState> &state)
+        : state_(state) {
     }
 
     void DocraftHaruLineBackend::set_stroke_color(float r, float g, float b) const {
-        HPDF_Page_SetRGBStroke(page_backend_->current_page(), r, g, b);
+        auto *provider = state_->ensure_page_provider();
+        HPDF_Page_SetRGBStroke(provider->current_page(), r, g, b);
     }
 
     void DocraftHaruLineBackend::set_line_width(float thickness) const {
-        HPDF_Page_SetLineWidth(page_backend_->current_page(), thickness);
+        auto *provider = state_->ensure_page_provider();
+        HPDF_Page_SetLineWidth(provider->current_page(), thickness);
     }
 
     void DocraftHaruLineBackend::draw_line(float x1, float y1, float x2, float y2) const {
-        HPDF_Page_MoveTo(page_backend_->current_page(), x1, y1);
-        HPDF_Page_LineTo(page_backend_->current_page(), x2, y2);
-        HPDF_Page_Stroke(page_backend_->current_page());
+        auto *provider = state_->ensure_page_provider();
+        HPDF_Page page = provider->current_page();
+        HPDF_Page_MoveTo(page, x1, y1);
+        HPDF_Page_LineTo(page, x2, y2);
+        HPDF_Page_Stroke(page);
     }
 } // namespace docraft::backend::pdf
 

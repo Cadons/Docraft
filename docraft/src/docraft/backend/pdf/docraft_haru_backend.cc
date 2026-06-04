@@ -186,12 +186,12 @@ namespace docraft::backend::pdf {
         state_->pdf = create_hpdf_document();
         output_backend_impl_ = std::make_unique<DocraftHaruOutputBackend>(state_);
         page_backend_ = std::make_unique<DocraftHaruPageBackend>(state_);
-        font_backend_impl_ = std::make_unique<DocraftHaruFontBackend>(state_, page_backend_.get());
+        font_backend_impl_ = std::make_unique<DocraftHaruFontBackend>(state_);
         metadata_backend_impl_ = std::make_unique<DocraftHaruMetadataBackend>(state_);
-        text_backend_ = std::make_unique<DocraftHaruTextBackend>(state_, page_backend_.get());
-        line_backend_ = std::make_unique<DocraftHaruLineBackend>(state_, page_backend_.get());
-        shape_backend_ = std::make_unique<DocraftHaruShapeBackend>(state_, page_backend_.get());
-        image_backend_ = std::make_unique<DocraftHaruImageBackend>(state_, page_backend_.get());
+        text_backend_ = std::make_unique<DocraftHaruTextBackend>(state_);
+        line_backend_ = std::make_unique<DocraftHaruLineBackend>(state_);
+        shape_backend_ = std::make_unique<DocraftHaruShapeBackend>(state_);
+        image_backend_ = std::make_unique<DocraftHaruImageBackend>(state_);
 
         HPDF_UseUTFEncodings(state_->pdf);
         HPDF_SetCurrentEncoder(state_->pdf, "UTF-8");

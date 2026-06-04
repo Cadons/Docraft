@@ -15,30 +15,32 @@
  */
 
 #include "docraft/backend/pdf/docraft_haru_text_backend.h"
-#include "docraft/backend/pdf/docraft_haru_page_backend.h"
 
 #include <hpdf.h>
 
 namespace docraft::backend::pdf {
-    DocraftHaruTextBackend::DocraftHaruTextBackend(const std::shared_ptr<DocraftHaruSharedState> &state,
-                                                   DocraftHaruPageBackend *page_backend)
-        : state_(state), page_backend_(page_backend) {
+    DocraftHaruTextBackend::DocraftHaruTextBackend(const std::shared_ptr<DocraftHaruSharedState> &state)
+        : state_(state) {
     }
 
     void DocraftHaruTextBackend::begin_text() const {
-        HPDF_Page_BeginText(page_backend_->current_page());
+        auto *provider = state_->ensure_page_provider();
+        HPDF_Page_BeginText(provider->current_page());
     }
 
     void DocraftHaruTextBackend::end_text() const {
-        HPDF_Page_EndText(page_backend_->current_page());
+        auto *provider = state_->ensure_page_provider();
+        HPDF_Page_EndText(provider->current_page());
     }
 
     void DocraftHaruTextBackend::draw_text(const std::string &text, float x, float y) const {
-        HPDF_Page_TextOut(page_backend_->current_page(), x, y, text.c_str());
+        auto *provider = state_->ensure_page_provider();
+        HPDF_Page_TextOut(provider->current_page(), x, y, text.c_str());
     }
 
     void DocraftHaruTextBackend::set_text_color(float r, float g, float b) const {
-        HPDF_Page_SetRGBFill(page_backend_->current_page(), r, g, b);
+        auto *provider = state_->ensure_page_provider();
+        HPDF_Page_SetRGBFill(provider->current_page(), r, g, b);
     }
 
     void DocraftHaruTextBackend::draw_text_matrix(const std::string &text,
@@ -48,19 +50,22 @@ namespace docraft::backend::pdf {
                                                   float scale_y,
                                                   float translate_x,
                                                   float translate_y) const {
+        auto provider = state_->ensure_page_provider();
+        HPDF_Page page = provider->current_page();
         HPDF_Page_SetTextMatrix(
-            page_backend_->current_page(),
+            page,
             scale_x,
             skew_x,
             skew_y,
             scale_y,
             translate_x,
             translate_y);
-        HPDF_Page_ShowText(page_backend_->current_page(), text.c_str());
+        HPDF_Page_ShowText(page, text.c_str());
     }
 
     float DocraftHaruTextBackend::measure_text_width(const std::string &text) const {
-        return HPDF_Page_TextWidth(page_backend_->current_page(), text.c_str());
+        auto *provider = state_->ensure_page_provider();
+        return HPDF_Page_TextWidth(provider->current_page(), text.c_str());
     }
 } // namespace docraft::backend::pdf
 

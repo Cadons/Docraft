@@ -52,6 +52,11 @@ namespace docraft::backend::pdf {
 
     DocraftHaruPageBackend::DocraftHaruPageBackend(
         const std::shared_ptr<DocraftHaruSharedState> &state) : state_(state) {
+        if (state_) {
+            // Register self as the page operations provider for capability backends.
+            // LIFETIME CONTRACT: This provider remains valid for the entire lifetime of state_.
+            state_->set_page_operations_provider(this);
+        }
     }
 
     float DocraftHaruPageBackend::page_width() const {

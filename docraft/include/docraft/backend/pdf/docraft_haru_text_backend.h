@@ -22,8 +22,6 @@
 #include <memory>
 
 namespace docraft::backend::pdf {
-    class DocraftHaruPageBackend;
-
     /**
      * @brief Haru implementation of text rendering operations.
      */
@@ -31,9 +29,11 @@ namespace docraft::backend::pdf {
     public:
         /**
          * @brief Creates a text backend bound to a Haru document owner.
+         *
+         * LIFETIME: The shared state must have a registered page operations provider.
+         * This is guaranteed if the device is used through DocraftHaruBackend.
          */
-        explicit DocraftHaruTextBackend(const std::shared_ptr<DocraftHaruSharedState> &state,
-                                        DocraftHaruPageBackend *page_backend);
+        explicit DocraftHaruTextBackend(const std::shared_ptr<DocraftHaruSharedState> &state);
 
         /**
          * @brief Begins a text object on the current page.
@@ -73,7 +73,6 @@ namespace docraft::backend::pdf {
 
     private:
         std::shared_ptr<DocraftHaruSharedState> state_;
-        DocraftHaruPageBackend *page_backend_ = nullptr;
     };
 } // namespace docraft::backend::pdf
 

@@ -22,18 +22,23 @@
 #include <memory>
 
 namespace docraft::backend::pdf {
-    class DocraftHaruPageBackend;
-
     /**
      * @brief Haru implementation of shape rendering operations.
+     *
+     * Implements IDocraftShapeRenderingBackend for shape drawing capabilities.
+     *
+     * LIFETIME: The shared state must have a registered page operations provider.
+     * This is guaranteed if the device is used through DocraftHaruBackend.
      */
     class DocraftHaruShapeBackend : public docraft::backend::IDocraftShapeRenderingBackend {
     public:
         /**
          * @brief Creates a shape backend bound to a Haru document owner.
+         *
+         * LIFETIME: The shared state must have a registered page operations provider.
+         * This is guaranteed if the device is used through DocraftHaruBackend.
          */
-        explicit DocraftHaruShapeBackend(const std::shared_ptr<DocraftHaruSharedState> &state,
-                                         DocraftHaruPageBackend *page_backend);
+        explicit DocraftHaruShapeBackend(const std::shared_ptr<DocraftHaruSharedState> &state);
 
         /**
          * @brief Saves the current graphics state.
@@ -94,7 +99,6 @@ namespace docraft::backend::pdf {
         void apply_alpha_state() const;
 
         std::shared_ptr<DocraftHaruSharedState> state_;
-        DocraftHaruPageBackend *page_backend_ = nullptr;
         mutable float fill_alpha_ = 1.0F;
         mutable float stroke_alpha_ = 1.0F;
     };

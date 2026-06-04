@@ -22,8 +22,6 @@
 #include <memory>
 
 namespace docraft::backend::pdf {
-    class DocraftHaruPageBackend;
-
     /**
      * @brief Haru implementation of line rendering operations.
      */
@@ -31,9 +29,11 @@ namespace docraft::backend::pdf {
     public:
         /**
          * @brief Creates a line backend bound to a Haru document owner.
+         *
+         * LIFETIME: The shared state must have a registered page operations provider.
+         * This is guaranteed if the device is used through DocraftHaruBackend.
          */
-        explicit DocraftHaruLineBackend(const std::shared_ptr<DocraftHaruSharedState> &state,
-                                        DocraftHaruPageBackend *page_backend);
+        explicit DocraftHaruLineBackend(const std::shared_ptr<DocraftHaruSharedState> &state);
 
         /**
          * @brief Sets the stroke color used for line drawing.
@@ -52,7 +52,6 @@ namespace docraft::backend::pdf {
 
     private:
         std::shared_ptr<DocraftHaruSharedState> state_;
-        DocraftHaruPageBackend *page_backend_ = nullptr;
     };
 } // namespace docraft::backend::pdf
 

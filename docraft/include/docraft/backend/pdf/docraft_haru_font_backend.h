@@ -22,15 +22,15 @@
 #include <memory>
 
 namespace docraft::backend::pdf {
-    class DocraftHaruPageBackend;
-
     /**
      * @brief Haru implementation of font operations.
+     *
+     * LIFETIME: The shared state must have a registered page operations provider.
+     * This is guaranteed if the device is used through DocraftHaruBackend.
      */
     class DocraftHaruFontBackend : public docraft::backend::IDocraftFontBackend {
     public:
-        explicit DocraftHaruFontBackend(const std::shared_ptr<DocraftHaruSharedState> &state,
-                                        DocraftHaruPageBackend *page_backend);
+        explicit DocraftHaruFontBackend(const std::shared_ptr<DocraftHaruSharedState> &state);
 
         const char *register_ttf_font_from_file(const std::string &path, bool embed) const override;
 
@@ -40,7 +40,6 @@ namespace docraft::backend::pdf {
 
     private:
         std::shared_ptr<DocraftHaruSharedState> state_;
-        DocraftHaruPageBackend *page_backend_ = nullptr;
     };
 } // namespace docraft::backend::pdf
 
