@@ -115,4 +115,21 @@ namespace docraft::test::layout {
         EXPECT_FLOAT_EQ(second_table->position().y+10, body->position().y); // 10 is the padding of the body section (defaultì)
         EXPECT_GE(second_table->anchors().bottom_left.y, body->anchors().bottom_left.y);
     }
+
+    TEST_F(DocraftPaginationTest, OversizedNodeAtPageTopDoesNotCreateExtraPage) {
+        auto body = std::make_shared<model::DocraftBody>();
+        body->set_margin_left(0.0F);
+        body->set_margin_right(0.0F);
+
+        auto oversized_rect = std::make_shared<model::DocraftRectangle>();
+        oversized_rect->set_height(300.0F); // Intentionally larger than body content area.
+        body->add_child(oversized_rect);
+
+        std::vector<std::shared_ptr<model::DocraftNode> > nodes{body};
+        engine_->compute_document_layout(nodes);
+
+        // Even if the node overflows, it already started from a fresh page top: no blank-page churn.
+        EXPECT_EQ(backend_->total_page_count(), 1U);
+        EXPECT_EQ(oversized_rect->page_owner(), 1);
+    }
 } // namespace docraft::test::layout

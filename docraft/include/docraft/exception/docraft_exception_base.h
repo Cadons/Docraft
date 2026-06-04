@@ -19,7 +19,7 @@ namespace docraft::exception {
          * @brief Constructs a DocraftException with a message.
          * @param message The error message.
          */
-        explicit DocraftException(const std::string &message) : message_(std::move(message)) {
+        explicit DocraftException(const std::string &message) : message_(message) {
         }
 
         /**

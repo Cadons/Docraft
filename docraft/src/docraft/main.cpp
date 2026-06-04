@@ -335,8 +335,8 @@ int main(int argc, char *argv[]) {
         }
 
         const std::filesystem::path output_parent = options.output_file.parent_path();
-        document->set_document_path(output_parent.empty() ? "." : output_parent.string());
-        document->set_document_title(options.output_file.stem().string());
+        document->edit_config().set_document_path(output_parent.empty() ? "." : output_parent.string());
+        document->edit_config().set_document_title(options.output_file.stem().string());
 
         if (options.has_data_file) {
             if (!std::filesystem::exists(options.data_file)) {
@@ -358,10 +358,10 @@ int main(int argc, char *argv[]) {
             for (const auto &[_, mapping]: mappings) {
                 template_engine->add_template_variable(mapping.first, mapping.second);
             }
-            document->set_document_template_engine(template_engine);
+            document->edit_config().set_document_template_engine(template_engine);
         }
 
-        std::filesystem::create_directories(document->document_path());//ensure output directory exists
+        std::filesystem::create_directories(document->config().document_path()); //ensure output directory exists
         LOG_INFO("Rendering document to PDF...");
         auto timer = std::chrono::high_resolution_clock::now();
         document->render();//render the document to PDF

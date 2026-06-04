@@ -77,7 +77,7 @@ namespace docraft::layout::handler {
             return context_;
         }
 
-    protected:
+    private:
         std::shared_ptr<DocraftDocumentContext> context_;
     };
 }

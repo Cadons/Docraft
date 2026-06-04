@@ -41,6 +41,8 @@ set(DOCRAFT_SOURCES
         include/docraft/renderer/painter/docraft_text_painter.h
         include/docraft/renderer/painter/i_painter.h
         src/docraft/layout/docraft_layout_engine.cc
+        src/docraft/layout/docraft_layout_engine_impl.cc
+        src/docraft/layout/docraft_layout_engine_impl.h
         include/docraft/layout/docraft_layout_engine.h
         src/docraft/layout/handler/docraft_layout_text_handler.cc
         include/docraft/layout/handler/docraft_layout_text_handler.h

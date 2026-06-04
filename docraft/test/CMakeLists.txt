@@ -1,8 +1,6 @@
-
-
-
 #gtest setup
 find_package(GTest REQUIRED)
+include(GoogleTest)
 #source files
 set(TEST_SOURCES
         docraft/main.cpp
@@ -35,11 +33,29 @@ set(TEST_SOURCES
         docraft/utils/docraft_parser_utils.cc
 )
 
+set(STRESS_TEST_SOURCES
+        docraft/main.cpp
+        docraft/layout/docraft_pagination_stress_test.cc
+)
+
 add_executable(docraft_test
         ${TEST_SOURCES}
 )
 target_link_libraries(docraft_test PRIVATE docraft GTest::GTest)
 target_include_directories(docraft_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-gtest_discover_tests(docraft_test
-        DISCOVERY_MODE PRE_TEST
+gtest_add_tests(TARGET docraft_test
+        TEST_LIST DOCRAFT_TESTS
 )
+
+add_executable(docraft_stress_test
+        ${STRESS_TEST_SOURCES}
+)
+target_link_libraries(docraft_stress_test PRIVATE docraft GTest::GTest)
+target_include_directories(docraft_stress_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+gtest_add_tests(TARGET docraft_stress_test
+        TEST_PREFIX "Stress."
+        TEST_LIST DOCRAFT_STRESS_TESTS
+)
+if (DOCRAFT_STRESS_TESTS)
+    set_tests_properties(${DOCRAFT_STRESS_TESTS} PROPERTIES LABELS "stress")
+endif ()

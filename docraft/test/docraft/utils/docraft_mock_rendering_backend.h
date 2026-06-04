@@ -87,12 +87,14 @@ namespace docraft::test::utils {
         }
 
         void set_line_width(float) const override {
-            state_->ensure_supported(state_->config.supports_line_backend, "Line backend capability not supported");
+            MockBackendSharedState::ensure_supported(state_->config.supports_line_backend,
+                                                     "Line backend capability not supported");
             state_->ensure_page_available();
         }
 
         void draw_line(float, float, float, float) const override {
-            state_->ensure_supported(state_->config.supports_line_backend, "Line backend capability not supported");
+            MockBackendSharedState::ensure_supported(state_->config.supports_line_backend,
+                                                     "Line backend capability not supported");
             state_->ensure_page_available();
             ++state_->line_count;
         }
@@ -107,7 +109,7 @@ namespace docraft::test::utils {
         }
 
         void begin_text() const override {
-            state_->ensure_supported(state_->config.supports_text_backend, "Text backend capability not supported");
+            MockBackendSharedState::ensure_supported(state_->config.supports_text_backend, "Text backend capability not supported");
             state_->ensure_page_available();
             if (state_->text_scope_active) {
                 throw docraft::exception::BackendStateException("Text scope already active");
@@ -116,7 +118,7 @@ namespace docraft::test::utils {
         }
 
         void end_text() const override {
-            state_->ensure_supported(state_->config.supports_text_backend, "Text backend capability not supported");
+            MockBackendSharedState::ensure_supported(state_->config.supports_text_backend, "Text backend capability not supported");
             if (!state_->text_scope_active) {
                 throw docraft::exception::BackendStateException("Text scope not active");
             }
@@ -124,13 +126,13 @@ namespace docraft::test::utils {
         }
 
         void draw_text(const std::string &, float, float) const override {
-            state_->ensure_supported(state_->config.supports_text_backend, "Text backend capability not supported");
+            MockBackendSharedState::ensure_supported(state_->config.supports_text_backend, "Text backend capability not supported");
             state_->ensure_page_available();
             state_->ensure_text_scope_if_required();
         }
 
         void set_text_color(float, float, float) const override {
-            state_->ensure_supported(state_->config.supports_text_backend, "Text backend capability not supported");
+            MockBackendSharedState::ensure_supported(state_->config.supports_text_backend, "Text backend capability not supported");
             state_->ensure_page_available();
         }
 
@@ -139,7 +141,7 @@ namespace docraft::test::utils {
         }
 
         float measure_text_width(const std::string &text) const override {
-            state_->ensure_supported(state_->config.supports_text_backend, "Text backend capability not supported");
+            MockBackendSharedState::ensure_supported(state_->config.supports_text_backend, "Text backend capability not supported");
             return static_cast<float>(text.size()) * state_->config.text_width_factor;
         }
 
@@ -166,7 +168,7 @@ namespace docraft::test::utils {
 
     private:
         void require() const {
-            state_->ensure_supported(state_->config.supports_shape_backend, "Shape backend capability not supported");
+            MockBackendSharedState::ensure_supported(state_->config.supports_shape_backend, "Shape backend capability not supported");
             state_->ensure_page_available();
         }
 
@@ -200,7 +202,7 @@ namespace docraft::test::utils {
 
     private:
         void require() const {
-            state_->ensure_supported(state_->config.supports_image_backend, "Image backend capability not supported");
+            MockBackendSharedState::ensure_supported(state_->config.supports_image_backend, "Image backend capability not supported");
             state_->ensure_page_available();
         }
 
@@ -213,23 +215,23 @@ namespace docraft::test::utils {
         }
 
         float page_width() const override {
-            state_->ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
+            MockBackendSharedState::ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
             return state_->config.page_width;
         }
 
         float page_height() const override {
-            state_->ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
+            MockBackendSharedState::ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
             return state_->config.page_height;
         }
 
         void add_new_page() override {
-            state_->ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
+            MockBackendSharedState::ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
             ++state_->pages;
             state_->current_page = state_->pages - 1;
         }
 
         void move_to_next_page() override {
-            state_->ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
+            MockBackendSharedState::ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
             if (state_->current_page + 1 >= state_->pages) {
                 throw docraft::exception::BackendStateException("Already at the last page");
             }
@@ -237,7 +239,7 @@ namespace docraft::test::utils {
         }
 
         void go_to_page(std::size_t page_number) override {
-            state_->ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
+            MockBackendSharedState::ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
             if (page_number >= state_->pages) {
                 throw docraft::exception::BackendStateException("Invalid page number");
             }
@@ -245,7 +247,7 @@ namespace docraft::test::utils {
         }
 
         void go_to_first_page() override {
-            state_->ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
+            MockBackendSharedState::ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
             if (state_->pages == 0) {
                 throw docraft::exception::BackendStateException("No pages");
             }
@@ -253,7 +255,7 @@ namespace docraft::test::utils {
         }
 
         void go_to_previous_page() override {
-            state_->ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
+            MockBackendSharedState::ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
             if (state_->current_page == 0) {
                 throw docraft::exception::BackendStateException("Already at first page");
             }
@@ -261,7 +263,7 @@ namespace docraft::test::utils {
         }
 
         void go_to_last_page() override {
-            state_->ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
+            MockBackendSharedState::ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
             if (state_->pages == 0) {
                 throw docraft::exception::BackendStateException("No pages");
             }
@@ -269,16 +271,16 @@ namespace docraft::test::utils {
         }
 
         void set_page_format(model::DocraftPageSize, model::DocraftPageOrientation) override {
-            state_->ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
+            MockBackendSharedState::ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
         }
 
         std::size_t current_page_number() const override {
-            state_->ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
+            MockBackendSharedState::ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
             return state_->current_page + 1;
         }
 
         std::size_t total_page_count() const override {
-            state_->ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
+            MockBackendSharedState::ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
             return state_->pages;
         }
 
@@ -292,12 +294,12 @@ namespace docraft::test::utils {
         }
 
         void save_to_file(const std::string &path) const override {
-            state_->ensure_supported(state_->config.supports_output_backend, "Output backend capability not supported");
+            MockBackendSharedState::ensure_supported(state_->config.supports_output_backend, "Output backend capability not supported");
             state_->last_saved_path = path;
         }
 
         [[nodiscard]] std::string file_extension() const override {
-            state_->ensure_supported(state_->config.supports_output_backend, "Output backend capability not supported");
+            MockBackendSharedState::ensure_supported(state_->config.supports_output_backend, "Output backend capability not supported");
             return state_->config.extension;
         }
 
@@ -330,7 +332,7 @@ namespace docraft::test::utils {
         }
 
         void set_font(const std::string &, float, const char *) const override {
-            state_->ensure_supported(state_->config.supports_font_backend, "Font backend capability not supported");
+            MockBackendSharedState::ensure_supported(state_->config.supports_font_backend, "Font backend capability not supported");
         }
 
     private:
@@ -343,8 +345,8 @@ namespace docraft::test::utils {
         }
 
         void set_document_metadata(const DocraftDocumentMetadata &) override {
-            state_->ensure_supported(state_->config.supports_metadata_backend,
-                                     "Metadata backend capability not supported");
+            MockBackendSharedState::ensure_supported(state_->config.supports_metadata_backend,
+                                                     "Metadata backend capability not supported");
         }
 
     private:
@@ -437,7 +439,7 @@ namespace docraft::test::utils {
         }
 
         void set_current_page(std::size_t one_based_page_number) {
-            state_->ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
+            MockBackendSharedState::ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
             state_->current_page = one_based_page_number > 0 ? one_based_page_number - 1 : 0;
             if (state_->current_page >= state_->pages) {
                 state_->current_page = state_->pages - 1;

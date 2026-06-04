@@ -513,7 +513,7 @@ namespace docraft::model {
     }
 
     std::shared_ptr<DocraftTable> DocraftTable::split_after_row(std::size_t rows_to_keep, bool repeat_header) {
-        if (rows_to_keep >= static_cast<std::size_t>(rows_)) {
+        if (std::cmp_greater_equal(rows_to_keep, rows_)) {
             return nullptr;
         }
 
@@ -528,10 +528,10 @@ namespace docraft::model {
                 htitle_nodes_, htitle_backgrounds_, remainder->htitle_nodes_, remainder->htitle_backgrounds_);
         }
 
-        const std::size_t total_rows = static_cast<std::size_t>(rows_);
+        const auto total_rows = static_cast<std::size_t>(rows_);
         const std::size_t keep_rows = std::min(rows_to_keep, total_rows);
         const std::size_t remain_rows = total_rows - keep_rows;
-        const std::size_t value_cols = static_cast<std::size_t>(content_cols());
+        const auto value_cols = static_cast<std::size_t>(content_cols());
         const std::size_t content_split_index = keep_rows * value_cols;
 
         remainder->content_nodes_ = split_tail(content_nodes_, content_split_index);

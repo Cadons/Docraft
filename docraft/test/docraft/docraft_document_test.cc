@@ -179,18 +179,18 @@ namespace docraft::test {
     TEST(DocraftDocumentTest, SettingDocumentTitleUpdatesMetadataTitle) {
         DocraftDocument document("Initial Title");
 
-        document.set_document_title("Updated Title");
+        document.edit_config().set_document_title("Updated Title");
 
-        ASSERT_TRUE(document.document_metadata().title().has_value());
-        EXPECT_EQ(document.document_metadata().title().value(), "Updated Title");
+        ASSERT_TRUE(document.config().document_metadata().title().has_value());
+        EXPECT_EQ(document.config().document_metadata().title().value(), "Updated Title");
     }
 
     TEST(DocraftDocumentTest, SettingDocumentPathUpdatesOutputDirectory) {
         DocraftDocument document("Initial Title");
 
-        document.set_document_path("exports/reports");
+        document.edit_config().set_document_path("exports/reports");
 
-        EXPECT_EQ(document.document_path(), "exports/reports");
+        EXPECT_EQ(document.config().document_path(), "exports/reports");
     }
 
     TEST(DocraftDocumentTest, SettingMetadataWithTitleUpdatesDocumentTitle) {
@@ -199,11 +199,11 @@ namespace docraft::test {
         metadata.set_title("Metadata Title");
         metadata.set_author("Metadata Author");
 
-        document.set_document_metadata(metadata);
+        document.edit_config().set_document_metadata(metadata);
 
-        EXPECT_EQ(document.document_title(), "Metadata Title");
-        ASSERT_TRUE(document.document_metadata().author().has_value());
-        EXPECT_EQ(document.document_metadata().author().value(), "Metadata Author");
+        EXPECT_EQ(document.config().document_title(), "Metadata Title");
+        ASSERT_TRUE(document.config().document_metadata().author().has_value());
+        EXPECT_EQ(document.config().document_metadata().author().value(), "Metadata Author");
     }
 
     TEST(DocraftDocumentTest, AutoKeywordsCanBeEnabledFromCpp) {
@@ -213,19 +213,19 @@ namespace docraft::test {
 
         DocraftDocumentMetadata metadata;
         metadata.set_keywords("manuale");
-        document.set_document_metadata(metadata);
+        document.edit_config().set_document_metadata(metadata);
 
-        document.set_auto_keywords_config({
+        document.edit_config().set_auto_keywords_config({
             .max_keywords = 3,
             .min_length = 4,
             .stop_word_languages = {"it", "en"}
         });
-        document.enable_auto_keywords();
+        document.edit_config().enable_auto_keywords();
         document.refresh_auto_keywords();
 
-        EXPECT_TRUE(document.auto_keywords_enabled());
-        ASSERT_TRUE(document.document_metadata().keywords().has_value());
-        EXPECT_EQ(document.document_metadata().keywords().value(), "manuale, engine, parser, metadata");
+        EXPECT_TRUE(document.config().auto_keywords_enabled());
+        ASSERT_TRUE(document.config().document_metadata().keywords().has_value());
+        EXPECT_EQ(document.config().document_metadata().keywords().value(), "manuale, engine, parser, metadata");
     }
 
     TEST(DocraftDocumentTest, RenderWritesMetadataSetFromCode) {
@@ -244,10 +244,10 @@ namespace docraft::test {
         metadata.set_author("Docraft Author From Code");
         metadata.set_subject("Docraft Subject From Code");
         metadata.set_keywords("alpha,beta");
-        document.set_document_metadata(metadata);
+        document.edit_config().set_document_metadata(metadata);
 
-        const std::filesystem::path output_path = document.document_title() + ".pdf";
-        EXPECT_EQ(document.document_title(), "Docraft Title From Code");
+        const std::filesystem::path output_path = document.config().document_title() + ".pdf";
+        EXPECT_EQ(document.config().document_title(), "Docraft Title From Code");
         document.render();
 
         ASSERT_TRUE(std::filesystem::exists(output_path));
@@ -311,8 +311,8 @@ namespace docraft::test {
             });
 
         document.set_backend_providers_factory(std::make_shared<docraft::test::utils::MockBackendProvidersFactory>(mock_backend));
-        document.set_document_path("exports/reports");
-        document.set_document_title("monthly_summary");
+        document.edit_config().set_document_path("exports/reports");
+        document.edit_config().set_document_title("monthly_summary");
         document.render();
 
         EXPECT_EQ(

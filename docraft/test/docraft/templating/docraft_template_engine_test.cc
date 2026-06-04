@@ -73,7 +73,7 @@ namespace docraft::test::templating {
         auto template_engine = std::make_shared<docraft::templating::DocraftTemplateEngine>();
         template_engine->add_template_variable("title", "Docraft");
         template_engine->add_template_variable("value", "42");
-        document.set_document_template_engine(template_engine);
+        document.edit_config().set_document_template_engine(template_engine);
 
         auto table = std::make_shared<model::DocraftTable>();
         table->set_cols(1);
@@ -95,7 +95,7 @@ namespace docraft::test::templating {
         docraft::DocraftDocument document("Test Document");
         auto template_engine = std::make_shared<docraft::templating::DocraftTemplateEngine>();
         template_engine->add_template_variable("item", "Alpha");
-        document.set_document_template_engine(template_engine);
+        document.edit_config().set_document_template_engine(template_engine);
 
         auto list = std::make_shared<model::DocraftList>();
         list->add_child(std::make_shared<model::DocraftText>("${item}"));
@@ -114,8 +114,8 @@ namespace docraft::test::templating {
         docraft::DocraftDocument document("Test Document");
         auto template_engine = std::make_shared<docraft::templating::DocraftTemplateEngine>();
         template_engine->add_template_variable("title", "Docraft");
-        document.set_document_template_engine(template_engine);
-        EXPECT_EQ(document.document_template_engine()->find_template_variable("title"), "Docraft");
+        document.edit_config().set_document_template_engine(template_engine);
+        EXPECT_EQ(document.config().document_template_engine()->find_template_variable("title"), "Docraft");
         //text
         std::shared_ptr<model::DocraftText> text_node1 = std::make_shared<model::DocraftText>("${title} is a great library!");
         document.add_node(text_node1);
@@ -135,7 +135,7 @@ namespace docraft::test::templating {
         template_engine->add_template_variable(
             "employees",
             R"([{"name":"Alice","tasks":[{"task":"Plan"},{"task":"Review"}]},{"name":"Bob","tasks":[{"task":"Ship"}]}])");
-        document.set_document_template_engine(template_engine);
+        document.edit_config().set_document_template_engine(template_engine);
 
         auto outer = std::make_shared<model::DocraftForeach>();
         outer->set_model("${employees}");

@@ -117,14 +117,6 @@ namespace docraft::management {
          */
         [[nodiscard]] const utils::DocraftKeywordExtractor::Config &auto_keywords_config() const;
 
-        /**
-         * @brief Extracts keywords from a set of nodes and merges them into metadata.
-         * @param nodes The nodes to extract keywords from (typically document DOM).
-         *
-         * No-op when auto-keyword extraction is disabled.
-         */
-        void refresh_auto_keywords(const std::vector<std::shared_ptr<model::DocraftNode> > &nodes);
-
         void set_document_template_engine(const std::shared_ptr<templating::DocraftTemplateEngine> &template_engine);
 
         [[nodiscard]] std::shared_ptr<const templating::DocraftTemplateEngine> document_template_engine() const;

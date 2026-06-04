@@ -26,6 +26,7 @@
 #include "docraft/docraft_document_metadata.h"
 #include "docraft/backend/docraft_backend_providers_factory.h"
 #include "docraft/management/docraft_document_config.h"
+#include "docraft/management/docraft_dom_facade.h"
 #include "docraft/management/docraft_document_query.h"
 #include "docraft/model/docraft_node.h"
 #include "docraft/model/docraft_settings.h"
@@ -46,7 +47,8 @@ namespace docraft {
      * and invoking rendering. Configuration (metadata, settings, keywords) is delegated
      * to DocraftDocumentConfig for single responsibility.
      */
-    class DOCRAFT_LIB DocraftDocument {
+    class DOCRAFT_LIB DocraftDocument
+            : public management::DocraftDOMFacade<DocraftDocument> {
     public:
         /**
          * @brief Creates a document with an optional title.
@@ -126,58 +128,7 @@ namespace docraft {
 
         [[nodiscard]] std::shared_ptr<const DocraftDocumentContext> context() const;
 
-        // Backward compatibility delegates to config_
-        void set_document_title(const std::string &document_title);
-
-        [[nodiscard]] const std::string &document_title() const;
-
-        void set_document_path(const std::string &document_path);
-
-        [[nodiscard]] const std::string &document_path() const;
-
-        void set_settings(const std::shared_ptr<model::DocraftSettings> &settings);
-
-        [[nodiscard]] std::shared_ptr<const model::DocraftSettings> settings() const;
-
-        void set_document_metadata(const DocraftDocumentMetadata &metadata);
-
-        [[nodiscard]] const DocraftDocumentMetadata &document_metadata() const;
-
-        // Backward compatibility: DOM query delegates
-        [[nodiscard]] std::vector<std::shared_ptr<const model::DocraftNode> > find_by_name(
-            const std::string &name) const;
-
-        [[nodiscard]] std::vector<std::shared_ptr<model::DocraftNode> > take_by_name(const std::string &name) const;
-
-        [[nodiscard]] std::shared_ptr<const model::DocraftNode> find_first_by_name(const std::string &name) const;
-
-        [[nodiscard]] std::shared_ptr<model::DocraftNode> take_first_by_name(const std::string &name);
-
-        [[nodiscard]] std::shared_ptr<const model::DocraftNode> find_last_by_name(const std::string &name) const;
-
-        [[nodiscard]] std::shared_ptr<model::DocraftNode> take_last_by_name(const std::string &name);
-
-        template<typename T>
-        [[nodiscard]] std::vector<std::shared_ptr<const T> > find_by_type() const;
-
-        template<typename T>
-        [[nodiscard]] std::vector<std::shared_ptr<T> > take_by_type();
-
-        // Backward compatibility: config shortcuts
-        void enable_auto_keywords(bool enabled = true);
-
-        [[nodiscard]] bool auto_keywords_enabled() const;
-
-        void set_auto_keywords_config(const utils::DocraftKeywordExtractor::Config &config);
-
-        [[nodiscard]] const utils::DocraftKeywordExtractor::Config &auto_keywords_config() const;
-
-        void set_document_template_engine(const std::shared_ptr<templating::DocraftTemplateEngine> &template_engine);
-
-        [[nodiscard]] std::shared_ptr<const templating::DocraftTemplateEngine> document_template_engine() const;
-
-        [[nodiscard]] std::shared_ptr<templating::DocraftTemplateEngine> edit_document_template_engine();
-
+        // Backward compatibility: non-trivial shortcut preserved on the main class.
         void refresh_auto_keywords();
 
     private:
@@ -199,4 +150,3 @@ namespace docraft {
     };
 }
 
-#include "docraft_document.hpp"

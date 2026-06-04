@@ -609,13 +609,13 @@ void DocraftCraftLanguageParser::load_document() {
     if (const pugi::xml_attribute path_attr = document.attribute(section::attribute::kPath.data())) {
         const std::string output_path = trim_copy(path_attr.as_string());
         if (!output_path.empty()) {
-            document_->set_document_path(output_path);
+            document_->edit_config().set_document_path(output_path);
         }
     }
 
     const DocraftMetadataParseOutcome metadata_parse_outcome = parse_metadata_node(document);
     if (metadata_parse_outcome.has_metadata) {
-        document_->set_document_metadata(metadata_parse_outcome.metadata);
+        document_->edit_config().set_document_metadata(metadata_parse_outcome.metadata);
     }
 
     //Settings
@@ -625,7 +625,7 @@ void DocraftCraftLanguageParser::load_document() {
         auto it = parsers_.find(settings_tag);
         if (it != parsers_.end()) {
             if (auto settings = std::dynamic_pointer_cast<model::DocraftSettings>(it->second->parse(settings_node))) {
-                document_->set_settings(settings);
+                document_->edit_config().set_settings(settings);
             }
         }
     }
@@ -668,7 +668,7 @@ void DocraftCraftLanguageParser::load_document() {
     }
 
     if (metadata_parse_outcome.auto_keyword_config.enabled) {
-        DocraftDocumentMetadata metadata = document_->document_metadata();
+        DocraftDocumentMetadata metadata = document_->config().document_metadata();
         utils::DocraftKeywordExtractor extractor({
             .max_keywords = metadata_parse_outcome.auto_keyword_config.max_keywords,
             .min_length = metadata_parse_outcome.auto_keyword_config.min_length,
@@ -677,11 +677,11 @@ void DocraftCraftLanguageParser::load_document() {
         const std::vector<std::string> extracted_keywords = extractor.extract(*document_);
         if (!extracted_keywords.empty()) {
             metadata.set_keywords(merge_keywords(metadata.keywords(), extracted_keywords));
-            document_->set_document_metadata(metadata);
+            document_->edit_config().set_document_metadata(metadata);
         }
     }
 
-    LOG_INFO("Document loaded successfully with title: " + document_->document_title());
+    LOG_INFO("Document loaded successfully with title: " + document_->config().document_title());
 }
 
 } // namespace docraft::craft

@@ -97,8 +97,8 @@ TEST(DocraftCraftLanguageParserTest, ParsesMetadataSubtags) {
     auto document = parser.get_document();
     ASSERT_TRUE(document);
 
-    EXPECT_EQ(document->document_title(), "Metadata Driven Title");
-    const auto &metadata = document->document_metadata();
+    EXPECT_EQ(document->config().document_title(), "Metadata Driven Title");
+    const auto &metadata = document->config().document_metadata();
 
     ASSERT_TRUE(metadata.author().has_value());
     EXPECT_EQ(metadata.author().value(), "Mario Rossi");
@@ -157,7 +157,7 @@ TEST(DocraftCraftLanguageParserTest, AutoKeywordsAreExtractedAndMergedWhenEnable
     auto document = parser.get_document();
     ASSERT_TRUE(document);
 
-    const auto &metadata = document->document_metadata();
+    const auto &metadata = document->config().document_metadata();
     ASSERT_TRUE(metadata.keywords().has_value());
     EXPECT_EQ(metadata.keywords().value(), "manuale, parser, documento, metadata, tecnica");
 }
@@ -179,7 +179,7 @@ TEST(DocraftCraftLanguageParserTest, AutoKeywordsUsesConfiguredStopwordLanguages
     auto document = parser.get_document();
     ASSERT_TRUE(document);
 
-    const auto &metadata = document->document_metadata();
+    const auto &metadata = document->config().document_metadata();
     ASSERT_TRUE(metadata.keywords().has_value());
     EXPECT_EQ(metadata.keywords().value(), "analyse, modelo, system");
 }
@@ -198,7 +198,7 @@ TEST(DocraftCraftLanguageParserTest, ParsesDocumentPathAttribute) {
     auto document = parser.get_document();
     ASSERT_TRUE(document);
 
-    EXPECT_EQ(document->document_path(), "exports/reports");
+    EXPECT_EQ(document->config().document_path(), "exports/reports");
 }
 
 TEST(DocraftCraftLanguageParserTest, RejectsNestedTextInText) {
@@ -309,11 +309,11 @@ TEST(DocraftCraftLanguageParserTest, EditDocumentReturnsMutableDocument) {
 
     const auto readonly_document = parser.get_document();
     ASSERT_TRUE(readonly_document);
-    EXPECT_EQ(readonly_document->document_title(), "Untitled Document");
+    EXPECT_EQ(readonly_document->config().document_title(), "Untitled Document");
 
     auto editable_document = parser.edit_document();
     ASSERT_TRUE(editable_document);
-    editable_document->set_document_title("Edited");
+    editable_document->edit_config().set_document_title("Edited");
 
-    EXPECT_EQ(readonly_document->document_title(), "Edited");
+    EXPECT_EQ(readonly_document->config().document_title(), "Edited");
 }

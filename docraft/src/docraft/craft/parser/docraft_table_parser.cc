@@ -25,6 +25,58 @@
 #include "docraft/model/docraft_text.h"
 
 namespace docraft::craft::parser {
+    namespace {
+        model::TextAlignment parse_table_title_alignment(const pugi::xml_node &title) {
+            if (auto alignment_attr = title.attribute(elements::table_title::attribute::kAlignment.data())) {
+                const std::string alignment_str = alignment_attr.as_string();
+                if (alignment_str == std::string{alignment::kLeft}) {
+                    return model::TextAlignment::kLeft;
+                }
+                if (alignment_str == std::string{alignment::kRight}) {
+                    return model::TextAlignment::kRight;
+                }
+                if (alignment_str == std::string{alignment::kJustified}) {
+                    return model::TextAlignment::kJustified;
+                }
+                if (alignment_str == std::string{alignment::kCenter}) {
+                    return model::TextAlignment::kCenter;
+                }
+                throw docraft::exception::InvalidInputException("Invalid table title alignment: " + alignment_str);
+            }
+            return model::TextAlignment::kCenter;
+        }
+
+        model::TextStyle parse_table_title_style(const pugi::xml_node &title) {
+            if (auto style_attr = title.attribute(elements::table_title::attribute::kStyle.data())) {
+                const std::string style_str = style_attr.as_string();
+                if (style_str == std::string{style::kBold}) {
+                    return model::TextStyle::kBold;
+                }
+                if (style_str == std::string{style::kItalic}) {
+                    return model::TextStyle::kItalic;
+                }
+                if (style_str == std::string{style::kBoldItalic}) {
+                    return model::TextStyle::kBoldItalic;
+                }
+                if (style_str == std::string{style::kNormal}) {
+                    return model::TextStyle::kNormal;
+                }
+                throw docraft::exception::InvalidInputException("Invalid table title style: " + style_str);
+            }
+            return model::TextStyle::kBold;
+        }
+
+        std::shared_ptr<model::DocraftText> parse_table_title_node(const pugi::xml_node &title) {
+            auto title_node = std::make_shared<model::DocraftText>(title.child_value());
+            title_node->set_alignment(parse_table_title_alignment(title));
+            title_node->set_style(parse_table_title_style(title));
+            if (auto color_attr = title.attribute(elements::table_title::attribute::kColor.data())) {
+                title_node->set_color(detail::get_docraft_color(color_attr));
+            }
+            return title_node;
+        }
+    } // namespace
+
     std::shared_ptr<model::DocraftNode> DocraftTableParser::parse(const pugi::xml_node &craft_language_source) {
         auto table_node = std::make_shared<model::DocraftTable>();
 
@@ -84,46 +136,6 @@ namespace docraft::craft::parser {
             table_node->set_default_cell_background(detail::get_docraft_color(tile_attr));
         }
 
-        auto parse_title_node = [](const pugi::xml_node &title) -> std::shared_ptr<model::DocraftText> {
-            auto title_node = std::make_shared<model::DocraftText>(title.child_value());
-            if (auto alignment_attr = title.attribute(elements::table_title::attribute::kAlignment.data())) {
-                std::string alignment_str = alignment_attr.as_string();
-                if (alignment_str == std::string{alignment::kLeft}) {
-                    title_node->set_alignment(model::TextAlignment::kLeft);
-                } else if (alignment_str == std::string{alignment::kRight}) {
-                    title_node->set_alignment(model::TextAlignment::kRight);
-                } else if (alignment_str == std::string{alignment::kJustified}) {
-                    title_node->set_alignment(model::TextAlignment::kJustified);
-                } else if (alignment_str == std::string{alignment::kCenter}) {
-                    title_node->set_alignment(model::TextAlignment::kCenter);
-                } else {
-                    throw docraft::exception::InvalidInputException("Invalid table title alignment: " + alignment_str);
-                }
-            } else {
-                title_node->set_alignment(model::TextAlignment::kCenter);
-            }
-            if (auto style_attr = title.attribute(elements::table_title::attribute::kStyle.data())) {
-                std::string style_str = style_attr.as_string();
-                if (style_str == std::string{style::kBold}) {
-                    title_node->set_style(model::TextStyle::kBold);
-                } else if (style_str == std::string{style::kItalic}) {
-                    title_node->set_style(model::TextStyle::kItalic);
-                } else if (style_str == std::string{style::kBoldItalic}) {
-                    title_node->set_style(model::TextStyle::kBoldItalic);
-                } else if (style_str == std::string{style::kNormal}) {
-                    title_node->set_style(model::TextStyle::kNormal);
-                } else {
-                    throw docraft::exception::InvalidInputException("Invalid table title style: " + style_str);
-                }
-            } else {
-                title_node->set_style(model::TextStyle::kBold);
-            }
-            if (auto color_attr = title.attribute(elements::table_title::attribute::kColor.data())) {
-                title_node->set_color(detail::get_docraft_color(color_attr));
-            }
-            return title_node;
-        };
-
         auto parse_background_color = [](const pugi::xml_node &node,
                                          const char *primary_attr,
                                          const char *alt_attr = nullptr)
@@ -164,7 +176,7 @@ namespace docraft::craft::parser {
                 for (auto title: table_header.children()) {
                     if (title.name() == std::string{elements::kHTitle}) {
                         header_cols++;
-                        auto title_node = parse_title_node(title);
+                        auto title_node = parse_table_title_node(title);
                         const auto bg = parse_background_color(
                             title,
                             elements::table_htitle::attribute::kBackgroundColor.data());
@@ -188,7 +200,7 @@ namespace docraft::craft::parser {
                 for (auto title: table_header.children()) {
                     if (title.name() == std::string{elements::kHTitle}) {
                         col_number++;
-                        auto title_node = parse_title_node(title);
+                        auto title_node = parse_table_title_node(title);
                         const auto bg = parse_background_color(
                             title,
                             elements::table_htitle::attribute::kBackgroundColor.data());
@@ -212,12 +224,12 @@ namespace docraft::craft::parser {
                 table_node->set_content_cols(col_number);
             }
         } else if (!is_vertical && !has_model_json && !has_model_template && !has_header_json && !has_header_template) {
-            throw docraft::exception::InvalidInputException(std::string(elements::kTHead.data()) +
-                                                            " tag not found, it is mandatory");
+            throw exception::InvalidInputException(std::string(elements::kTHead) +
+                                                   " tag not found, it is mandatory");
         }
 
         // Parse body rows when using explicit TBody.
-        table_body = craft_language_source.child(elements::kTBody.data());
+        table_body = craft_language_source.child(elements::kTBody);
         if (table_body) {
             int row_count = 0;
             int max_value_cols = 0;
@@ -242,7 +254,7 @@ namespace docraft::craft::parser {
                             throw docraft::exception::InvalidInputException("Only one VTitle is allowed per Row");
                         }
                         found_vtitle = true;
-                        auto title_node = parse_title_node(col);
+                        auto title_node = parse_table_title_node(col);
                         const auto bg = parse_background_color(
                             col,
                             elements::table_vtitle::attribute::kBackgroundColor.data());
