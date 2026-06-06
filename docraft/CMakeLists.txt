@@ -89,6 +89,10 @@ set(DOCRAFT_SOURCES
         include/docraft/renderer/painter/docraft_table_painter.h
         src/docraft/layout/handler/docraft_layout_table_handler.cc
         include/docraft/layout/handler/docraft_layout_table_handler.h
+        src/docraft/layout/handler/docraft_layout_horizontal_table_handler.cc
+        include/docraft/layout/handler/docraft_layout_horizontal_table_handler.h
+        src/docraft/layout/handler/docraft_layout_vertical_table_handler.cc
+        include/docraft/layout/handler/docraft_layout_vertical_table_handler.h
         include/docraft/utils/docraft_font_registry.h
         src/docraft/model/docraft_rectangle.cc
         include/docraft/model/docraft_rectangle.h

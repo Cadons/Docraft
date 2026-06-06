@@ -169,6 +169,8 @@ namespace docraft::model {
          */
         void add_htitle_node(const std::shared_ptr<DocraftText> &node,
                              std::optional<DocraftColor> background = std::nullopt);
+
+
         /**
          * @brief Adds a content node.
          * @param node Content node.
@@ -362,6 +364,16 @@ namespace docraft::model {
         void set_model_type(DocraftModelType model_type);
 
         static DocraftModelType identify_model_type(const std::string &model_str);
+
+    protected:
+        /**
+         * @brief Determines if a node is allowed as content in the table
+         * @note Only allows DocraftText and DocraftImage nodes for now, but can be extended in the future.
+         * @param node
+         * @return
+         */
+        bool is_content_allowed(const std::shared_ptr<DocraftNode> &node) const;
+
     private:
         int rows_;
         int cols_;

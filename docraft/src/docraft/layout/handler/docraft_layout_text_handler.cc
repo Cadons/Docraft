@@ -54,7 +54,7 @@ namespace docraft::layout::handler {
         generic::DocraftFontApplier font_applier(edit_context());
         font_applier.apply_font(node);
         auto global_cursor = cursor;
-
+        float specified_height = node->height();
         DocraftCursor text_cursor = cursor;//cursor for the text box, start from the current global cursor
         if (node->position_mode() == model::DocraftPositionType::kBlock) {
             node->set_position({.x=global_cursor.x(), .y=global_cursor.y()});
@@ -142,7 +142,7 @@ namespace docraft::layout::handler {
         }
 
         //Compute position for each line
- float total_height = 0.0F;
+        float total_height = 0.0F;
         float total_width = 0.0F;
 
         const float line_height = node->font_size() * interline_space_;
@@ -205,7 +205,11 @@ namespace docraft::layout::handler {
         }
 
         node->set_position({.x = global_cursor.x(), .y = global_cursor.y()});
-        node->set_height(total_height);
+        if (specified_height < total_height) {
+            node->set_height(total_height);
+        } else {
+            node->set_height(specified_height);
+        }
         node->set_width(total_width);
 
         if (box) {

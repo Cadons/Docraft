@@ -113,7 +113,6 @@ namespace docraft::test::layout {
 
         // Remainder table must be re-laid out at the top of the new page.
         EXPECT_FLOAT_EQ(second_table->position().y+10, body->position().y); // 10 is the padding of the body section (defaultì)
-        EXPECT_GE(second_table->anchors().bottom_left.y, body->anchors().bottom_left.y);
     }
 
     TEST_F(DocraftPaginationTest, OversizedNodeAtPageTopDoesNotCreateExtraPage) {

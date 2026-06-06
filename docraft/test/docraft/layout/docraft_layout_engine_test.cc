@@ -170,9 +170,9 @@ namespace docraft::test::layout {
         table->set_auto_fill_width(true);
 
         // 2x2 grid content (rectangles are deterministic for height)
-        auto c00 = std::make_shared<docraft::model::DocraftRectangle>();
+        auto c00 = std::make_shared<docraft::model::DocraftText>();
         c00->set_height(10.0F);
-        auto c01 = std::make_shared<docraft::model::DocraftRectangle>();
+        auto c01 = std::make_shared<docraft::model::DocraftText>();
         c01->set_height(20.0F);
         auto c10 = std::make_shared<docraft::model::DocraftText>();
         c10->set_text("Cell 10");
@@ -229,9 +229,9 @@ namespace docraft::test::layout {
         table->set_cols(2);                 // key/value
         table->set_auto_fill_width(true);
 
-        auto v0 = std::make_shared<docraft::model::DocraftRectangle>();
+        auto v0 = std::make_shared<docraft::model::DocraftText>();
         v0->set_height(10.0F);
-        auto v1 = std::make_shared<docraft::model::DocraftRectangle>();
+        auto v1 = std::make_shared<docraft::model::DocraftText>();
         v1->set_height(20.0F);
 
         table->add_content_node(v0);
@@ -678,10 +678,10 @@ namespace docraft::test::layout {
         table->set_column_weights({.5F, .5F});
         table->set_width(300.0F);
 
-        auto c00 = std::make_shared<docraft::model::DocraftRectangle>();
+        auto c00 = std::make_shared<docraft::model::DocraftText>();
         c00->set_width(90.0F); // Simulates <Cell width="90">...
         c00->set_height(10.0F);
-        auto c01 = std::make_shared<docraft::model::DocraftRectangle>();
+        auto c01 = std::make_shared<docraft::model::DocraftText>();
         c01->set_height(10.0F);
 
         table->add_content_node(c00);

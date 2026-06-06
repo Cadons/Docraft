@@ -230,9 +230,9 @@ namespace docraft::test::layout {
 
         constexpr std::size_t expected_rows = 8;
         for (std::size_t i = 0; i < expected_rows; ++i) {
-            auto c_left = std::make_shared<model::DocraftRectangle>();
+            auto c_left = std::make_shared<model::DocraftText>();
             c_left->set_height(6.0F);
-            auto c_right = std::make_shared<model::DocraftRectangle>();
+            auto c_right = std::make_shared<model::DocraftText>();
             c_right->set_height((i % 2 == 0) ? 34.0F : 44.0F);
             table->add_content_node(c_left);
             table->add_content_node(c_right);
@@ -344,7 +344,7 @@ namespace docraft::test::layout {
         constexpr std::size_t kExpectedRows = 120;
         for (std::size_t r = 0; r < kExpectedRows; ++r) {
             for (int c = 0; c < 3; ++c) {
-                auto cell = std::make_shared<model::DocraftRectangle>();
+                auto cell = std::make_shared<model::DocraftText>();
                 cell->set_height(6.0F + static_cast<float>((r + static_cast<std::size_t>(c)) % 7));
                 table->add_content_node(cell);
             }
@@ -423,7 +423,7 @@ namespace docraft::test::layout {
         constexpr std::size_t kExpectedRows = 300;
         for (std::size_t r = 0; r < kExpectedRows; ++r) {
             for (int c = 0; c < 4; ++c) {
-                auto cell = std::make_shared<model::DocraftRectangle>();
+                auto cell = std::make_shared<model::DocraftText>();
                 cell->set_height(4.0F + static_cast<float>((r + static_cast<std::size_t>(c)) % 11));
                 huge_table->add_content_node(cell);
             }
@@ -563,9 +563,22 @@ namespace docraft::test::layout {
         constexpr std::size_t kRows = 140;
         for (std::size_t r = 0; r < kRows; ++r) {
             for (int c = 0; c < 3; ++c) {
-                auto cell = std::make_shared<model::DocraftRectangle>();
-                cell->set_height(6.0F + static_cast<float>((r + static_cast<std::size_t>(c)) % 9));
-                table->add_content_node(cell);
+                auto cell = std::make_shared<model::DocraftText>();
+                cell->set_weight(1.0F / 3.0F);
+                auto height = 6.0F + static_cast<float>((r + static_cast<std::size_t>(c)) % 9);
+                cell->set_text(std::format("Row {} Col {}: {}", r, c, height));
+                cell->set_height(height);
+                //alternate colors
+                auto color = std::optional<DocraftColor>(
+                    r % 2 == 0
+                        ? DocraftColor::fromColorName(ColorName::kPurple)
+                        : DocraftColor::fromColorName(ColorName::kBlue));
+                if (c % 2 == 0) {
+                    color = std::optional<DocraftColor>(r % 2 == 0
+                                                            ? DocraftColor::fromColorName(ColorName::kRed)
+                                                            : DocraftColor::fromColorName(ColorName::kCyan));
+                }
+                table->add_content_node(cell, color);
             }
         }
         body->add_child(root);

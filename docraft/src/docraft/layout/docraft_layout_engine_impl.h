@@ -97,6 +97,59 @@ namespace docraft::layout {
 
         void assign_page_owner_recursive(const std::shared_ptr<model::DocraftNode> &node, int page) const;
 
+        // ── Layout orientation helpers ──────────────────────────────────────────
+
+        /**
+         * @brief Normalises child weights: when any child carries the sentinel
+         *        value -1 every child is assigned an equal share (1/N).
+         */
+        static void normalize_child_weights(model::DocraftChildrenContainerNode &container);
+
+        /**
+         * @brief Returns the width available to horizontal children after
+         *        subtracting the inter-child gap for all N-1 gaps.
+         */
+        static float compute_horizontal_available_width(float max_width, std::size_t child_count);
+
+        /**
+         * @brief Calls compute_layout for @p child, appends the resulting box to
+         *        @p out_boxes, and clamps the cursor to the section bottom when
+         *        applicable.  Used by both orientation helpers.
+         */
+        void process_child_layout(const std::shared_ptr<model::DocraftNode> &child,
+                                  DocraftCursor &cursor,
+                                  std::vector<model::DocraftTransform> &out_boxes,
+                                  bool section_has_bounds,
+                                  float section_content_bottom);
+
+        /**
+         * @brief Lays out children stacked top-to-bottom (vertical orientation).
+         *        Each child receives the full @p max_width.
+         */
+        void layout_children_vertical(const std::shared_ptr<model::DocraftChildrenContainerNode> &container,
+                                      int parent_z_index,
+                                      float max_width,
+                                      DocraftCursor &cursor,
+                                      std::vector<model::DocraftTransform> &out_boxes,
+                                      bool section_has_bounds,
+                                      float section_content_bottom);
+
+        /**
+         * @brief Lays out children side-by-side (horizontal orientation).
+         *        Each child's width is proportional to its weight.  The cursor is
+         *        advanced horizontally by the allocated slot width plus spacing
+         *        after every child.
+         */
+        void layout_children_horizontal(const std::shared_ptr<model::DocraftChildrenContainerNode> &container,
+                                        int parent_z_index,
+                                        float max_width,
+                                        DocraftCursor &cursor,
+                                        std::vector<model::DocraftTransform> &out_boxes,
+                                        bool section_has_bounds,
+                                        float section_content_bottom);
+
+        // ───────────────────────────────────────────────────────────────────────
+
         void advance_to_next_body_page(BodyLayoutState &state);
 
         bool handle_table_overflow_on_body_page(const std::shared_ptr<model::DocraftNode> &child,

@@ -84,6 +84,11 @@ namespace {
 }
 
 namespace docraft::layout {
+    // Layout engine workflow:
+    // 1) Measure constraints and establish the active cursor/available width for the current node.
+    // 2) Layout children (if any), collecting child boxes.
+    // 3) Compute and place the node itself, then advance cursor and handle page ownership/pagination.
+
     DocraftLayoutEngine::Impl::Impl(std::shared_ptr<DocraftDocumentContext> context, const bool reset_cursor)
         : context_(std::move(context)) {
         configure_handlers();
@@ -134,6 +139,8 @@ namespace docraft::layout {
         if (!node->visible()) {
             return model::DocraftTransform{};
         }
+
+        // Phase 1: derive measurement constraints and choose the cursor used by this node.
         std::vector<model::DocraftTransform> child_boxes;
         auto &layout_service = context_->edit_layout();
         float max_width = layout_service.available_space();
@@ -212,6 +219,8 @@ namespace docraft::layout {
                 layout_cursor->push_direction(DocraftCursorDirection::kVertical);
             }
         }
+
+        // Phase 2: layout children (lists/containers) and collect their boxes.
         if (auto list_node = std::dynamic_pointer_cast<model::DocraftList>(node)) {
             if (!list_handler_) {
                 throw docraft::exception::LayoutConfigurationException("DocraftLayoutListHandler not configured");
@@ -227,57 +236,24 @@ namespace docraft::layout {
                 max_width);
         } else if (std::dynamic_pointer_cast<model::DocraftChildrenContainerNode>(node)) {
             auto container_node = std::dynamic_pointer_cast<model::DocraftChildrenContainerNode>(node);
-            if (!container_node->children().empty()) {
-                bool has_variable_weight = false;
-                for (const auto &child: container_node->children()) {
-                    if (child->weight() == -1.0F) {
-                        has_variable_weight = true;
-                        break;
-                    }
-                }
-                if (has_variable_weight) {
-                    const float equal_weight = 1.0F / static_cast<float>(container_node->children().size());
-                    for (const auto &child: container_node->children()) {
-                        child->set_weight(equal_weight);
-                    }
-                }
-            }
+            normalize_child_weights(*container_node);
             const float saved_available_space = layout_service.available_space();
             const bool is_horizontal = (layout_cursor->direction() == DocraftCursorDirection::kHorizontal);
-            const std::size_t child_count = container_node->children().size();
-            float available_width_for_children = max_width;
-            if (is_horizontal && child_count > 1) {
-                const float total_spacing = kHorizontalSpacing * static_cast<float>(child_count - 1);
-                available_width_for_children = std::max(0.0F, max_width - total_spacing);
-            }
-            for (const auto &child: container_node->children()) {
-                if (child->z_index() == node->z_index()) {
-                    if (is_horizontal) {
-                        layout_service.set_current_rect_width(available_width_for_children * child->weight());
-                    } else {
-                        layout_service.set_current_rect_width(max_width);
-                    }
-                    const float start_x = layout_cursor->x();
-                    const float start_y = layout_cursor->y();
-                    const float allocated_width = is_horizontal
-                                                      ? available_width_for_children * child->weight()
-                                                      : max_width;
-                    auto child_box = compute_layout(child, *layout_cursor);
-
-                    child_boxes.emplace_back(child_box);
-                    if (is_horizontal) {
-                        layout_cursor->move_to(start_x + allocated_width + kHorizontalSpacing, start_y);
-                    }
-                    if (section_has_bounds && layout_cursor->y() < section_content_bottom) {
-                        layout_cursor->set_y(section_content_bottom);
-                    }
-                }
+            if (is_horizontal) {
+                layout_children_horizontal(container_node, node->z_index(), max_width,
+                                           *layout_cursor, child_boxes,
+                                           section_has_bounds, section_content_bottom);
+            } else {
+                layout_children_vertical(container_node, node->z_index(), max_width,
+                                         *layout_cursor, child_boxes,
+                                         section_has_bounds, section_content_bottom);
             }
             layout_service.set_current_rect_width(saved_available_space);
         }
 
         auto max_rect = compute_max_rect(child_boxes);
 
+        // Phase 3: compute this node box, place it, then update flow cursor for the next sibling.
         if (rect_uses_origin_cursor) {
             if (!compute_node(node, &max_rect, rect_origin_cursor)) {
                 throw docraft::exception::LayoutException("compute node failed");
@@ -303,6 +279,7 @@ namespace docraft::layout {
 
     void DocraftLayoutEngine::Impl::compute_document_layout(
         const std::vector<std::shared_ptr<model::DocraftNode> > &nodes) {
+        // Document pass: split header/body/footer, layout each visible section, then paginate body content.
         const Sections sections = split_sections(nodes);
         if (!sections.body) {
             throw docraft::exception::DocumentStateException("Document must have a body section");
@@ -328,6 +305,7 @@ namespace docraft::layout {
         handlers_.emplace_back(std::make_unique<handler::DocraftLayoutTextHandler>(context_));
         handlers_.emplace_back(std::make_unique<handler::DocraftLayoutHandler>(context_));
         handlers_.emplace_back(std::make_unique<handler::DocraftLayoutTableHandler>(context_));
+        // dispatches internally to horizontal/vertical sub-handlers
         handlers_.emplace_back(std::make_unique<handler::DocraftLayoutBlankLine>(context_));
         auto list_handler = std::make_unique<handler::DocraftLayoutListHandler>(context_);
         list_handler_ = list_handler.get();
@@ -377,6 +355,94 @@ namespace docraft::layout {
             }
         }
     }
+
+    // ── Layout orientation helpers ──────────────────────────────────────────────
+
+    void DocraftLayoutEngine::Impl::normalize_child_weights(
+        model::DocraftChildrenContainerNode &container) {
+        if (container.children().empty()) {
+            return;
+        }
+        bool has_variable = false;
+        for (const auto &child: container.children()) {
+            if (child->weight() == -1.0F) {
+                has_variable = true;
+                break;
+            }
+        }
+        if (has_variable) {
+            const float equal_weight = 1.0F / static_cast<float>(container.children().size());
+            for (const auto &child: container.children()) {
+                child->set_weight(equal_weight);
+            }
+        }
+    }
+
+    float DocraftLayoutEngine::Impl::compute_horizontal_available_width(
+        const float max_width, const std::size_t child_count) {
+        if (child_count <= 1) {
+            return max_width;
+        }
+        const float total_spacing = kHorizontalSpacing * static_cast<float>(child_count - 1);
+        return std::max(0.0F, max_width - total_spacing);
+    }
+
+    void DocraftLayoutEngine::Impl::process_child_layout(
+        const std::shared_ptr<model::DocraftNode> &child,
+        DocraftCursor &cursor,
+        std::vector<model::DocraftTransform> &out_boxes,
+        const bool section_has_bounds,
+        const float section_content_bottom) {
+        const auto box = compute_layout(child, cursor);
+        out_boxes.emplace_back(box);
+        if (section_has_bounds && cursor.y() < section_content_bottom) {
+            cursor.set_y(section_content_bottom);
+        }
+    }
+
+    void DocraftLayoutEngine::Impl::layout_children_vertical(
+        const std::shared_ptr<model::DocraftChildrenContainerNode> &container,
+        const int parent_z_index,
+        const float max_width,
+        DocraftCursor &cursor,
+        std::vector<model::DocraftTransform> &out_boxes,
+        const bool section_has_bounds,
+        const float section_content_bottom) {
+        auto &layout_service = context_->edit_layout();
+        for (const auto &child: container->children()) {
+            if (child->z_index() != parent_z_index) {
+                continue;
+            }
+            layout_service.set_current_rect_width(max_width);
+            process_child_layout(child, cursor, out_boxes, section_has_bounds, section_content_bottom);
+        }
+    }
+
+    void DocraftLayoutEngine::Impl::layout_children_horizontal(
+        const std::shared_ptr<model::DocraftChildrenContainerNode> &container,
+        const int parent_z_index,
+        const float max_width,
+        DocraftCursor &cursor,
+        std::vector<model::DocraftTransform> &out_boxes,
+        const bool section_has_bounds,
+        const float section_content_bottom) {
+        auto &layout_service = context_->edit_layout();
+        const float available = compute_horizontal_available_width(max_width, container->children().size());
+        for (const auto &child: container->children()) {
+            if (child->z_index() != parent_z_index) {
+                continue;
+            }
+            const float child_width = available * child->weight();
+            layout_service.set_current_rect_width(child_width);
+            const float start_x = cursor.x();
+            const float start_y = cursor.y();
+            process_child_layout(child, cursor, out_boxes, section_has_bounds, section_content_bottom);
+            // Advance the cursor to the next horizontal slot.
+            cursor.move_to(start_x + child_width + kHorizontalSpacing, start_y);
+        }
+    }
+
+    // ───────────────────────────────────────────────────────────────────────────
 
     void DocraftLayoutEngine::Impl::advance_to_next_body_page(BodyLayoutState &state) {
         if (state.page_backend) {

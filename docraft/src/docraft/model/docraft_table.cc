@@ -144,6 +144,14 @@ namespace docraft::model {
             return result;
         }
 
+        /**
+         * @brief Splits a vector into two parts at the specified index,
+         * keeping the head in the original vector and returning the tail as a new vector.
+         * @tparam T
+         * @param source
+         * @param split_index
+         * @return
+         */
         template <typename T>
         std::vector<T> split_tail(std::vector<T> &source, std::size_t split_index) {
             split_index = std::min(split_index, source.size());
@@ -314,8 +322,17 @@ namespace docraft::model {
         htitle_backgrounds_.emplace_back(std::move(background));
     }
 
+    bool DocraftTable::is_content_allowed(const std::shared_ptr<DocraftNode> &node) const {
+        return std::dynamic_pointer_cast<DocraftText>(node) || std::dynamic_pointer_cast<DocraftImage>(node);
+    }
+
     void DocraftTable::add_content_node(const std::shared_ptr<DocraftNode> &node,
                                         std::optional<DocraftColor> background) {
+        //table allow only text and image nodes as content, so we check the type of the node before adding it to the content nodes vector
+        if (!is_content_allowed(node)) {
+            throw docraft::exception::InvalidInputException(
+                "Content node must be either a DocraftText or a DocraftImage");
+        }
         content_nodes_.emplace_back(node);
         content_backgrounds_.emplace_back(std::move(background));
         if (orientation_ == LayoutOrientation::kHorizontal && content_cols() > 0) {

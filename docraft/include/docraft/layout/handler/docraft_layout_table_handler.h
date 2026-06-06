@@ -23,9 +23,14 @@
 
 namespace docraft::layout::handler {
     /**
-     * @brief Layout handler for table nodes.
+     * @brief Base layout handler for table nodes.
      *
-     * Calculates cell boxes and header/content areas based on weights.
+     * Handles the degenerate case of tables with no titles (zero-size output).
+     * Orientation-specific layout is delegated to the sub-handlers:
+     *   - DocraftLayoutHorizontalTableHandler  (kHorizontal)
+     *   - DocraftLayoutVerticalTableHandler    (kVertical)
+     *
+     * Register all three in the handler chain so each handles its own case.
      */
     class DOCRAFT_LIB DocraftLayoutTableHandler : public AbstractDocraftLayoutHandler<model::DocraftTable> {
     public:
@@ -36,7 +41,8 @@ namespace docraft::layout::handler {
          * @param box Output transform.
          * @param cursor Layout cursor.
          */
-        void compute(const std::shared_ptr<model::DocraftTable>& node, model::DocraftTransform* box, DocraftCursor& cursor) override;
+        void compute(const std::shared_ptr<model::DocraftTable> &node, model::DocraftTransform *box,
+                     DocraftCursor &cursor) override;
 
         /**
          * @brief Handles a node if it is a DocraftTable.
@@ -45,6 +51,7 @@ namespace docraft::layout::handler {
          * @param cursor Layout cursor.
          * @return true if handled.
          */
-        bool handle(const std::shared_ptr<model::DocraftNode> &request, model::DocraftTransform *result, DocraftCursor& cursor) override;
+        bool handle(const std::shared_ptr<model::DocraftNode> &request, model::DocraftTransform *result,
+                    DocraftCursor &cursor) override;
     };
 } // docraft
