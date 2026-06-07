@@ -42,9 +42,9 @@ namespace docraft::layout::handler {
         constexpr float kCellPaddingX = 2.5F;
         const float baseline_offset = node->baseline_offset();
 
-        auto center_text = [baseline_offset](const std::shared_ptr<model::DocraftText> &text_node,
-                                             const float row_top_y,
-                                             const float row_height) {
+        auto center_text_vertically = [baseline_offset](const std::shared_ptr<model::DocraftText> &text_node,
+                                                        const float row_top_y,
+                                                        const float row_height) {
             if (!text_node) {
                 return;
             }
@@ -147,22 +147,24 @@ namespace docraft::layout::handler {
         // but their height is determined by their content (plus padding) up to the maximum title row height.
         std::vector<float> title_heights(cols, 0.0F);
         title_row_height = 0.0F;
+        const float kOffsetY = 2.0F * kCellPaddingY;
+        const float kOffsetX = 2.0F * kCellPaddingX;
         for (std::size_t i = 0; i < cols; ++i) {
             const auto &title_node = node->title_nodes()[i];
 
             const float saved_x = table_cursor.x();
             const float saved_y = table_cursor.y();
-            const float inner_width = std::max(0.0F, col_widths[i] - (2.0F * kCellPaddingX));
+            const float inner_width = std::max(0.0F, col_widths[i] - kOffsetX);
             layout_service.set_current_rect_width(inner_width);
             table_cursor.move_to(col_lefts[i] + kCellPaddingX, fixed_y - kCellPaddingY);
             (void) engine.compute_layout(title_node, table_cursor);
             table_cursor.move_to(saved_x, saved_y);
 
             title_heights[i] = title_node->height();
-            title_row_height = std::max(title_row_height, title_heights[i] + (2.0F * kCellPaddingY));
+            title_row_height = std::max(title_row_height, title_heights[i]);
 
             if (auto text_node = std::dynamic_pointer_cast<model::DocraftText>(title_node)) {
-                center_text(text_node, fixed_y, title_row_height);
+                center_text_vertically(text_node, fixed_y, title_row_height + 4 * kCellPaddingY);
             }
             title_node->set_position({.x = col_lefts[i], .y = fixed_y});
             title_node->set_width(col_widths[i]);
@@ -174,8 +176,9 @@ namespace docraft::layout::handler {
         float total_content_height = 0.0F;
         float max_content_height = 0.0F;
         for (const auto &row: grid) {
-            float row_height = 20.0F + (2.0F * kCellPaddingY);
+            float row_height = 20.0F + kOffsetX;
 
+            float max_column_height = 0.0F;
             for (std::size_t c = 0; c < std::min(row.size(), cols); ++c) {
                 const auto &cell = row[c];
                 if (!cell) {
@@ -184,22 +187,29 @@ namespace docraft::layout::handler {
 
                 const float saved_x = table_cursor.x();
                 const float saved_y = table_cursor.y();
-                const float inner_width = std::max(0.0F, col_widths[c] - (2.0F * kCellPaddingX));
+                const float inner_width = std::max(0.0F, col_widths[c] - kOffsetX);
                 layout_service.set_current_rect_width(inner_width);
                 table_cursor.move_to(col_lefts[c] + kCellPaddingX, y - kCellPaddingY);
                 (void) engine.compute_layout(cell, table_cursor);
                 table_cursor.move_to(saved_x, saved_y);
 
-                row_height = std::max(max_content_height, cell->height() + (2.0F * kCellPaddingY));
-                max_content_height = std::max(max_content_height, row_height);
+                row_height = std::max(cell->height(), row_height);
+                max_column_height = std::max(max_column_height, cell->height());
                 if (auto text_cell = std::dynamic_pointer_cast<model::DocraftText>(cell)) {
-                    center_text(text_cell, y, row_height);
+                    center_text_vertically(text_cell, y, row_height + 4 *kCellPaddingY);
                 }
                 cell->set_position({.x = col_lefts[c], .y = y});
                 cell->set_width(col_widths[c]);
                 cell->set_height(row_height);
             }
-
+            // After computing the height of the tallest cell in the row, ensure all cells in the row have the same height to maintain a consistent grid appearance.
+            for (std::size_t c = 0; c < std::min(row.size(), cols); ++c) {
+                const auto &cell = row[c];
+                if (cell->height() < max_column_height) {
+                    cell->set_height(max_column_height);
+                }
+            }
+            max_content_height = std::max(max_content_height, max_column_height);
             total_content_height += row_height;
             y -= row_height;
         }

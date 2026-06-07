@@ -566,6 +566,7 @@ namespace docraft::test::layout {
                 auto cell = std::make_shared<model::DocraftText>();
                 cell->set_weight(1.0F / 3.0F);
                 auto height = 6.0F + static_cast<float>((r + static_cast<std::size_t>(c)) % 9);
+                //height variation to increase fragmentation pressure
                 cell->set_text(std::format("Row {} Col {}: {}", r, c, height));
                 cell->set_height(height);
                 //alternate colors
