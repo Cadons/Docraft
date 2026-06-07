@@ -301,7 +301,10 @@ namespace docraft::model {
          * @brief Returns title nodes.
          * @return Vector of title nodes.
          */
-        [[nodiscard]] const std::vector<std::shared_ptr<DocraftText>> &title_nodes() const;
+        [[nodiscard]] const std::vector<std::shared_ptr<DocraftNode> > title_nodes() const;
+
+        const std::vector<std::shared_ptr<DocraftText> > &title_text_nodes() const;
+
         /**
          * @brief Returns header title nodes (vertical tables only).
          * @return Vector of header title nodes.
@@ -372,7 +375,7 @@ namespace docraft::model {
          * @param node
          * @return
          */
-        bool is_content_allowed(const std::shared_ptr<DocraftNode> &node) const;
+        static bool is_content_allowed(const std::shared_ptr<DocraftNode> &node);
 
     private:
         int rows_;

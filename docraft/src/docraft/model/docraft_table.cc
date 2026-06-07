@@ -314,6 +314,9 @@ namespace docraft::model {
                                       std::optional<DocraftColor> background) {
         title_nodes_.emplace_back(node);
         title_backgrounds_.emplace_back(std::move(background));
+        if (orientation_ == LayoutOrientation::kVertical) {
+            set_rows(static_cast<int>(title_nodes_.size()));
+        }
     }
 
     void DocraftTable::add_htitle_node(const std::shared_ptr<DocraftText> &node,
@@ -322,7 +325,7 @@ namespace docraft::model {
         htitle_backgrounds_.emplace_back(std::move(background));
     }
 
-    bool DocraftTable::is_content_allowed(const std::shared_ptr<DocraftNode> &node) const {
+    bool DocraftTable::is_content_allowed(const std::shared_ptr<DocraftNode> &node) {
         return std::dynamic_pointer_cast<DocraftText>(node) || std::dynamic_pointer_cast<DocraftImage>(node);
     }
 
@@ -394,6 +397,9 @@ namespace docraft::model {
         }
         title_nodes_ = nodes;
         title_backgrounds_.resize(nodes.size());
+        if (orientation_ == LayoutOrientation::kVertical) {
+            set_rows(static_cast<int>(title_nodes_.size()));
+        }
     }
 
     void DocraftTable::set_htitle_nodes(const std::vector<std::shared_ptr<DocraftText>> &nodes) {
@@ -624,7 +630,16 @@ namespace docraft::model {
         return static_cast<int>(column_weights_.size()) - 1;
     }
 
-    const std::vector<std::shared_ptr<DocraftText>> &DocraftTable::title_nodes() const {
+    const std::vector<std::shared_ptr<DocraftNode> > DocraftTable::title_nodes() const {
+        std::vector<std::shared_ptr<DocraftNode> > result;
+        result.reserve(title_nodes_.size());
+        for (const auto &title_node: title_nodes_) {
+            result.emplace_back(title_node);
+        }
+        return result;
+    }
+
+    const std::vector<std::shared_ptr<DocraftText> > &DocraftTable::title_text_nodes() const {
         return title_nodes_;
     }
 

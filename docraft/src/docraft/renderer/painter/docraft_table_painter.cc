@@ -58,12 +58,15 @@ namespace docraft::renderer::painter {
              shape_backend->restore_state();
          };
 
+         const auto title_nodes = table_node_.title_nodes();
+         const auto htitle_nodes = table_node_.htitle_nodes();
+
          // draw backgrounds first (rows, titles, cells)
          if (table_node_.orientation() == model::LayoutOrientation::kHorizontal) {
              // Title backgrounds
              const auto &title_bgs = table_node_.title_backgrounds();
-             for (std::size_t i = 0; i < table_node_.title_nodes().size(); ++i) {
-                 const auto &title = table_node_.title_nodes()[i];
+             for (std::size_t i = 0; i < title_nodes.size(); ++i) {
+                 const auto &title = title_nodes[i];
                  if (!title) continue;
                  const auto &anchors = title->anchors();
                  const std::optional<docraft::DocraftColor> bg =
@@ -73,8 +76,8 @@ namespace docraft::renderer::painter {
          } else {
              // Header title backgrounds (vertical)
              const auto &htitle_bgs = table_node_.htitle_backgrounds();
-             for (std::size_t i = 0; i < table_node_.htitle_nodes().size(); ++i) {
-                 const auto &title = table_node_.htitle_nodes()[i];
+             for (std::size_t i = 0; i < htitle_nodes.size(); ++i) {
+                 const auto &title = htitle_nodes[i];
                  if (!title) continue;
                  const auto &anchors = title->anchors();
                  const std::optional<docraft::DocraftColor> bg =
@@ -83,8 +86,8 @@ namespace docraft::renderer::painter {
              }
              // Row title backgrounds (vertical)
              const auto &title_bgs = table_node_.title_backgrounds();
-             for (std::size_t i = 0; i < table_node_.title_nodes().size(); ++i) {
-                 const auto &title = table_node_.title_nodes()[i];
+             for (std::size_t i = 0; i < title_nodes.size(); ++i) {
+                 const auto &title = title_nodes[i];
                  if (!title) continue;
                  const auto &anchors = title->anchors();
                  const std::optional<docraft::DocraftColor> bg =
@@ -99,6 +102,7 @@ namespace docraft::renderer::painter {
          const auto &default_cell_bg = table_node_.default_cell_background();
          const auto content_rows = table_node_.content_nodes();
          int content_cols = table_node_.content_cols();
+         const std::size_t safe_content_cols = content_cols > 0 ? static_cast<std::size_t>(content_cols) : 0U;
 
          for (std::size_t r = 0; r < content_rows.size(); ++r) {
              const auto &row = content_rows[r];
@@ -107,8 +111,8 @@ namespace docraft::renderer::painter {
                  const auto &row_bg = row_bgs[r];
                  const model::DocraftNode *row_ref = nullptr;
                  if (table_node_.orientation() == model::LayoutOrientation::kVertical) {
-                     if (r < table_node_.title_nodes().size()) {
-                         row_ref = table_node_.title_nodes()[r].get();
+                     if (r < title_nodes.size() && title_nodes[r]) {
+                         row_ref = title_nodes[r].get();
                      }
                  } else {
                      for (const auto &cell : row) {
@@ -127,7 +131,9 @@ namespace docraft::renderer::painter {
 
              // Cell backgrounds
              for (std::size_t c = 0; c < row.size(); ++c) {
-                 const std::size_t flat_index = (r * static_cast<std::size_t>(content_cols)) + c;
+                 const std::size_t flat_index = safe_content_cols > 0
+                                                    ? ((r * safe_content_cols) + c)
+                                                    : c;
                  if (!row[c]) continue;
                  std::optional<docraft::DocraftColor> bg = std::nullopt;
                  if (flat_index < cell_bgs.size() && cell_bgs[flat_index].has_value()) {
@@ -174,8 +180,9 @@ namespace docraft::renderer::painter {
          }
 
          if (table_node_.orientation() == model::LayoutOrientation::kHorizontal &&
-             !table_node_.title_nodes().empty()) {
-             for (const auto &title: table_node_.title_nodes()) {
+             !title_nodes.empty()) {
+             for (const auto &title: title_nodes) {
+                 if (!title) continue;
                  // Line of columns
                  line_backend->draw_line(
                      title->anchors().top_left.x,
@@ -183,27 +190,32 @@ namespace docraft::renderer::painter {
                      title->anchors().top_left.x,
                      table_node_.anchors().bottom_left.y);
              }
-             float line_y = table_node_.title_nodes().front()->anchors().bottom_left.y;
-             line_backend->draw_line(
-                 start_x,
-                 line_y,
-                 start_x + table_width,
-                 line_y); // Line below titles
+             for (const auto &title: title_nodes) {
+                 if (!title) continue;
+                 const float line_y = title->anchors().bottom_left.y;
+                 line_backend->draw_line(start_x, line_y, start_x + table_width, line_y); // Line below titles
+                 break;
+             }
          }
 
          if (table_node_.orientation() == model::LayoutOrientation::kVertical) {
              // Vertical column separators (use header titles or first row cells)
-             if (!table_node_.htitle_nodes().empty()) {
-                 for (const auto &title : table_node_.htitle_nodes()) {
-                     line_backend->draw_line(
+              if (!htitle_nodes.empty()) {
+                  for (const auto &title: htitle_nodes) {
+                      if (!title) continue;
+                      line_backend->draw_line(
                          title->anchors().top_left.x,
                          table_node_.anchors().top_left.y,
                          title->anchors().top_left.x,
                          table_node_.anchors().bottom_left.y);
                  }
-                 const float header_line_y = table_node_.htitle_nodes().front()->anchors().bottom_left.y;
-                 line_backend->draw_line(start_x, header_line_y, start_x + table_width, header_line_y);
-             } else if (!content_rows.empty() && !content_rows.front().empty() && content_rows.front().front()) {
+                  for (const auto &title: htitle_nodes) {
+                      if (!title) continue;
+                      const float header_line_y = title->anchors().bottom_left.y;
+                      line_backend->draw_line(start_x, header_line_y, start_x + table_width, header_line_y);
+                      break;
+                  }
+              } else if (!content_rows.empty() && !content_rows.front().empty() && content_rows.front().front()) {
                  for (const auto &cell : content_rows.front()) {
                      if (!cell) continue;
                      line_backend->draw_line(
@@ -219,19 +231,28 @@ namespace docraft::renderer::painter {
          // compute boundaries for horizontal tables (column titles define columns)
          std::vector<float> col_lefts;
          if (table_node_.orientation() == model::LayoutOrientation::kHorizontal) {
-             for (const auto &title : table_node_.title_nodes()) {
-                 const auto &tb = title->anchors();
+              for (const auto &title: title_nodes) {
+                  if (!title) continue;
+                  const auto &tb = title->anchors();
                  col_lefts.push_back(tb.top_left.x);
              }
          }
 
          float content_top = start_y;
          if (table_node_.orientation() == model::LayoutOrientation::kHorizontal &&
-             !table_node_.title_nodes().empty()) {
-             content_top = table_node_.title_nodes().front()->anchors().bottom_left.y;
+             !title_nodes.empty()) {
+             for (const auto &title: title_nodes) {
+                 if (!title) continue;
+                 content_top = title->anchors().bottom_left.y;
+                 break;
+             }
          } else if (table_node_.orientation() == model::LayoutOrientation::kVertical &&
-                    !table_node_.htitle_nodes().empty()) {
-             content_top = table_node_.htitle_nodes().front()->anchors().bottom_left.y;
+                    !htitle_nodes.empty()) {
+             for (const auto &title: htitle_nodes) {
+                 if (!title) continue;
+                 content_top = title->anchors().bottom_left.y;
+                 break;
+             }
          }
 
          for (std::size_t row_index = 0; row_index < content_rows.size(); ++row_index) {
@@ -266,18 +287,21 @@ namespace docraft::renderer::painter {
 
          // Draw titles last for clarity
          if (table_node_.orientation() == model::LayoutOrientation::kHorizontal &&
-             !table_node_.title_nodes().empty()) {
-             for (const auto &title: table_node_.title_nodes()) {
+             !title_nodes.empty()) {
+             for (const auto &title: title_nodes) {
+                 if (!title) continue;
                  title->draw(context);
              }
          }
          if (table_node_.orientation() == model::LayoutOrientation::kVertical) {
-             for (const auto &title: table_node_.title_nodes()) {
-                 title->draw(context);
-             }
-             for (const auto &title: table_node_.htitle_nodes()) {
-                 title->draw(context);
-             }
+              for (const auto &title: title_nodes) {
+                  if (!title) continue;
+                  title->draw(context);
+              }
+              for (const auto &title: htitle_nodes) {
+                  if (!title) continue;
+                  title->draw(context);
+              }
          }
 
     }

@@ -555,7 +555,42 @@ namespace docraft::test::layout {
         }
         root->add_child(foreach_node);
 
-        // Heavy table to trigger splits.
+        // Vertical table with header titles and variable cells/colors.
+        auto vertical_table = std::make_shared<model::DocraftTable>();
+        vertical_table->set_orientation(model::LayoutOrientation::kVertical);
+        vertical_table->set_content_cols(2);
+        vertical_table->set_column_weights({0.30F, 0.35F, 0.35F});
+        vertical_table->set_auto_fill_width(true);
+        vertical_table->add_htitle_node(
+            std::make_shared<model::DocraftText>("Metric"),
+            std::optional<DocraftColor>(DocraftColor::fromColorName(ColorName::kYellow)));
+        vertical_table->add_htitle_node(
+            std::make_shared<model::DocraftText>("Value"),
+            std::optional<DocraftColor>(DocraftColor::fromColorName(ColorName::kGreen)));
+
+        constexpr std::size_t kVerticalRows = 100;
+        for (std::size_t r = 0; r < kVerticalRows; ++r) {
+            auto vtitle = std::make_shared<model::DocraftText>(std::format("VTitle {}", r));
+            vtitle->set_height(7.0F + static_cast<float>(r % 4));
+            auto title_color = std::optional(
+                r % 2 == 0
+                    ? DocraftColor::fromColorName(ColorName::kPurple)
+                    : DocraftColor::fromColorName(ColorName::kBlue));
+            vertical_table->add_title_node(vtitle, title_color);
+
+            for (int c = 0; c < 2; ++c) {
+                auto cell = std::make_shared<model::DocraftText>(std::format("VR{}C{}", r, c));
+                const auto h = 6.0F + static_cast<float>((r + static_cast<std::size_t>(c)) % 8);
+                cell->set_height(h);
+                auto bg = std::optional<DocraftColor>(
+                    ((r + static_cast<std::size_t>(c)) % 3 == 0)
+                        ? DocraftColor::fromColorName(ColorName::kCyan)
+                        : DocraftColor::fromColorName(ColorName::kRed));
+                vertical_table->add_content_node(cell, bg);
+            }
+        }
+
+        // Heavy horizontal table to trigger splits.
         auto table = std::make_shared<model::DocraftTable>();
         table->set_titles({"C1", "C2", "C3"});
         table->set_column_weights({0.34F, 0.33F, 0.33F});
@@ -583,6 +618,8 @@ namespace docraft::test::layout {
             }
         }
         body->add_child(root);
+        body->add_child(std::make_shared<model::DocraftNewPage>());
+        body->add_child(vertical_table);
         body->add_child(std::make_shared<model::DocraftNewPage>());
         body->add_child(table);
 
@@ -614,19 +651,32 @@ namespace docraft::test::layout {
             previous_owner = payload->page_owner();
         }
 
-        std::size_t table_fragments = 0;
-        std::size_t accumulated_rows = 0;
+        std::size_t horizontal_table_fragments = 0;
+        std::size_t horizontal_accumulated_rows = 0;
+        std::size_t vertical_table_fragments = 0;
+        std::size_t vertical_accumulated_rows = 0;
         for (const auto &node: body->children()) {
             auto table_fragment = std::dynamic_pointer_cast<model::DocraftTable>(node);
             if (!table_fragment) {
                 continue;
             }
-            ++table_fragments;
-            accumulated_rows += static_cast<std::size_t>(table_fragment->rows());
-            EXPECT_GT(table_fragment->rows(), 0);
+            if (table_fragment->orientation() == model::LayoutOrientation::kVertical) {
+                ++vertical_table_fragments;
+                const auto vertical_rows = table_fragment->title_nodes().size();
+                vertical_accumulated_rows += vertical_rows;
+                EXPECT_GT(vertical_rows, 0U);
+                const std::size_t value_cols = static_cast<std::size_t>(std::max(1, table_fragment->content_cols()));
+                EXPECT_EQ(table_fragment->content_backgrounds().size(), vertical_rows * value_cols);
+            } else {
+                ++horizontal_table_fragments;
+                horizontal_accumulated_rows += static_cast<std::size_t>(table_fragment->rows());
+                EXPECT_GT(table_fragment->rows(), 0);
+            }
         }
 
-        EXPECT_GE(table_fragments, 2U);
-        EXPECT_EQ(accumulated_rows, kRows);
+        EXPECT_GE(horizontal_table_fragments, 2U);
+        EXPECT_EQ(horizontal_accumulated_rows, kRows);
+        EXPECT_GE(vertical_table_fragments, 1U);
+        EXPECT_EQ(vertical_accumulated_rows, kVerticalRows);
     }
 } // namespace docraft::test::layout

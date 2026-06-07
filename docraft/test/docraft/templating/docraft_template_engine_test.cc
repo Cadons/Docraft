@@ -85,7 +85,7 @@ namespace docraft::test::templating {
 
         document.template_document();
 
-        EXPECT_EQ(table->title_nodes()[0]->text(), "Docraft");
+        EXPECT_EQ(table->title_text_nodes()[0]->text(), "Docraft");
         auto rows = table->content_nodes();
         auto cell_text = std::dynamic_pointer_cast<model::DocraftText>(rows[0][0]);
         EXPECT_EQ(cell_text->text(), "42");

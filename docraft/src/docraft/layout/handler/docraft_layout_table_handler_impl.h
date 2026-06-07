@@ -81,7 +81,9 @@ namespace docraft::layout::handler::table_impl {
         std::vector<std::shared_ptr<model::DocraftNode> > flat;
         for (const auto &row: node->content_nodes()) {
             for (const auto &cell: row) {
-                if (cell) flat.emplace_back(cell);
+                if (cell) {
+                    flat.emplace_back(cell);
+                }
             }
         }
         return flat;
@@ -164,7 +166,7 @@ namespace docraft::layout::handler::table_impl {
      *
      * If the source vector has a wrong size or sums to zero, equal weights are used.
      */
-    inline std::vector<float> normalized_weights(const std::vector<float> &source, const std::size_t cols) {
+    inline std::vector<float> assign_weights(const std::vector<float> &source, const std::size_t cols) {
         std::vector<float> weights = source;
         if (weights.size() != cols) weights.assign(cols, 1.0F);
         const float total = std::accumulate(weights.begin(), weights.end(), 0.0F);

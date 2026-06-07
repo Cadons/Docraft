@@ -217,9 +217,9 @@ TEST(DocraftTableParserTest, AcceptsJsonHeaderAttribute) {
     auto node = parser.parse(doc.child("Table"));
     auto table = std::dynamic_pointer_cast<docraft::model::DocraftTable>(node);
     ASSERT_TRUE(table);
-    ASSERT_EQ(table->title_nodes().size(), 2U);
-    EXPECT_EQ(table->title_nodes()[0]->text(), "H1");
-    EXPECT_EQ(table->title_nodes()[1]->text(), "H2");
+    ASSERT_EQ(table->title_text_nodes().size(), 2U);
+    EXPECT_EQ(table->title_text_nodes()[0]->text(), "H1");
+    EXPECT_EQ(table->title_text_nodes()[1]->text(), "H2");
 }
 
 TEST(DocraftTableParserTest, ParsesCellWidthAttribute) {

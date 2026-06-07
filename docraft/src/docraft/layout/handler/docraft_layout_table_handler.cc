@@ -32,7 +32,7 @@ namespace docraft::layout::handler {
             throw docraft::exception::InvalidInputException("table node is null");
         }
 
-        if (node->titles().empty()) {
+        if (node->titles().empty() && node->title_nodes().empty()) {
             if (node->position_mode() == model::DocraftPositionType::kBlock) {
                 node->set_position({.x = cursor.x(), .y = cursor.y()});
             } else {
