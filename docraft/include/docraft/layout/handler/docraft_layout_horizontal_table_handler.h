@@ -81,36 +81,27 @@ namespace docraft::layout::handler {
         /** Layout table title row and all body rows, returning body total height. */
         float layout_body_rows(const TableContent &content, float start_y, float min_row_height);
 
-        /** Write final node/box geometry and restore layout service width state. */
-        void finalize_output(const std::shared_ptr<model::DocraftTable> &node,
-                             model::DocraftTransform *box,
-                             float table_width,
-                             float table_height);
-
-        /** Emit debug logs for computed cell geometry. */
-        static void log_cells(const std::shared_ptr<model::DocraftTable> &node);
-
-        /** Release temporary compute resources kept in class state. */
-        void clear_compute_state();
-
         float layout_row(const std::vector<std::shared_ptr<model::DocraftNode> > &row_nodes,
                          float row_top_y,
                          float min_row_height);
 
-        std::shared_ptr<DocraftDocumentContext> context_;
-        std::optional<DocraftLayoutEngine> engine_;
-        DocraftCursor table_cursor_;
+        // Private state
         std::size_t cols_ = 0;
         std::vector<float> col_widths_;
         std::vector<float> col_lefts_;
         float offset_x_ = 0.0F;
         float offset_y_ = 0.0F;
-        float cell_padding_x_ = 0.0F;
-        float cell_padding_y_ = 0.0F;
-        float baseline_offset_ = 0.0F;
-        float fixed_x_ = 0.0F;
-        float fixed_y_ = 0.0F;
-        float saved_available_space_ = 0.0F;
+
+        // Protected accessors for private state
+        [[nodiscard]] std::size_t get_cols() const;
+
+        [[nodiscard]] const std::vector<float> &get_col_widths() const;
+
+        [[nodiscard]] const std::vector<float> &get_col_lefts() const;
+
+        [[nodiscard]] float get_offset_x() const;
+
+        [[nodiscard]] float get_offset_y() const;
     };
 } // namespace docraft::layout::handler
 

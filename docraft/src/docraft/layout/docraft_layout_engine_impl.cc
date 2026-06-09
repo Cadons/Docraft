@@ -42,7 +42,7 @@
 #include "docraft/model/docraft_table.h"
 
 namespace {
-    std::size_t count_rows_fit_horizontal(const docraft::model::DocraftTable &table, const float body_bottom_y) {
+    std::size_t count_rows_fit(const docraft::model::DocraftTable &table, const float body_bottom_y) {
         std::size_t fit = 0;
         const auto grid = table.content_nodes();
         for (const auto &row: grid) {
@@ -66,21 +66,6 @@ namespace {
         return fit;
     }
 
-    std::size_t count_rows_fit_vertical(const docraft::model::DocraftTable &table, const float body_bottom_y) {
-        std::size_t fit = 0;
-        const auto &titles = table.title_nodes();
-        for (const auto &title: titles) {
-            if (!title) {
-                return fit;
-            }
-            const float row_bottom = title->anchors().bottom_left.y;
-            if (row_bottom < body_bottom_y) {
-                return fit;
-            }
-            ++fit;
-        }
-        return fit;
-    }
 }
 
 namespace docraft::layout {
@@ -463,9 +448,9 @@ namespace docraft::layout {
         }
 
         const auto total_rows = static_cast<std::size_t>(table->rows());
-        const auto fit_rows = table->orientation() == model::LayoutOrientation::kVertical
-                                  ? count_rows_fit_vertical(*table, state.body_bottom_y)
-                                  : count_rows_fit_horizontal(*table, state.body_bottom_y);
+        auto footer = context()->navigation().footer();
+        const auto fit_rows = count_rows_fit(*table, state.body_bottom_y);
+
         if (fit_rows == 0 || fit_rows >= total_rows) {
             return false;
         }
@@ -520,6 +505,7 @@ namespace docraft::layout {
         const bool overflows_body =
                 child->position_mode() != model::DocraftPositionType::kAbsolute &&
                 child_box.anchors().bottom_left.y < state.body_bottom_y;
+
         if (!overflows_body) {
             return;
         }

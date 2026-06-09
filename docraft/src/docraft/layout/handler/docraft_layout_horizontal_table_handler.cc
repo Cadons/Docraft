@@ -21,36 +21,21 @@
 #include <numeric>
 #include <vector>
 
-#include "docraft_layout_table_handler_impl.h"
 #include "docraft/layout/docraft_layout_engine.h"
 #include "docraft/utils/docraft_logger.h"
 
 namespace docraft::layout::handler {
     void DocraftLayoutHorizontalTableHandler::setup_compute_state(const std::shared_ptr<model::DocraftTable> &node,
                                                                   DocraftCursor &cursor) {
-        auto &layout_service = edit_context()->edit_layout();
-        table_cursor_ = cursor;
-        table_impl::configure_cursor_position(node, table_cursor_);
-
-        fixed_x_ = table_cursor_.x();
-        fixed_y_ = table_cursor_.y() - node->padding();
-        saved_available_space_ = layout_service.available_space();
-
-        context_ = edit_context();
-        engine_.emplace(context_, false);
-
-        constexpr float kCellPaddingY = table_impl::kHorizontalCellPaddingY;
-        constexpr float kCellPaddingX = table_impl::kHorizontalCellPaddingX;
-        baseline_offset_ = node->baseline_offset();
-        cell_padding_x_ = kCellPaddingX;
-        cell_padding_y_ = kCellPaddingY;
-        offset_y_ = 2.0F * kCellPaddingY;
-        offset_x_ = 2.0F * kCellPaddingX;
+        initialize_base_state(node, cursor, kHorizontalCellPaddingX, kHorizontalCellPaddingY);
+        set_fixed_y(get_fixed_y() - node->padding());
+        offset_y_ = 2.0F * kHorizontalCellPaddingY;
+        offset_x_ = 2.0F * kHorizontalCellPaddingX;
     }
 
     DocraftLayoutHorizontalTableHandler::TableContent DocraftLayoutHorizontalTableHandler::collect_table_content(
         const std::shared_ptr<model::DocraftTable> &node) {
-        table_impl::ensure_title_nodes(node);
+        ensure_title_nodes(node);
         return TableContent{
             .title_nodes = node->title_nodes(),
             .rows = node->content_nodes()
@@ -64,19 +49,21 @@ namespace docraft::layout::handler {
         std::vector<float> natural_widths(cols, 0.0F);
 
         auto &layout_service = edit_context()->edit_layout();
+        auto &cursor = get_table_cursor();
+        auto &engine = get_engine();
         for (std::size_t i = 0; i < cols; ++i) {
             const auto &title_node = content.title_nodes[i];
-            const float saved_x = table_cursor_.x();
-            const float saved_y = table_cursor_.y();
-            table_cursor_.move_to(0.0F, layout_service.page_height());
-            (void) engine_->compute_layout(title_node, table_cursor_);
-            table_cursor_.move_to(saved_x, saved_y);
+            const float saved_x = cursor.x();
+            const float saved_y = cursor.y();
+            cursor.move_to(0.0F, layout_service.page_height());
+            (void) engine.compute_layout(title_node, cursor);
+            cursor.move_to(saved_x, saved_y);
 
             natural_widths[i] = title_node->width();
         }
 
         const float natural_sum = std::accumulate(natural_widths.begin(), natural_widths.end(), 0.0F);
-        const float available_width = table_impl::available_width_for(node, context_, natural_sum);
+        const float available_width = available_width_for(node, natural_sum);
 
         std::vector<float> explicit_col_widths(cols, 0.0F);
         for (const auto &row: content.rows) {
@@ -92,7 +79,7 @@ namespace docraft::layout::handler {
             return w > 0.0F;
         });
 
-        const std::vector<float> weights = table_impl::assign_weights(node->column_weights(), cols);
+        const std::vector<float> weights = assign_weights(node->column_weights(), cols);
         const float total_weight = std::accumulate(weights.begin(), weights.end(), 0.0F);
 
         std::vector<float> col_widths(cols, 0.0F);
@@ -120,7 +107,7 @@ namespace docraft::layout::handler {
 
     void DocraftLayoutHorizontalTableHandler::apply_width_plan(const WidthPlan &plan) {
         col_widths_.assign(plan.col_widths.begin(), plan.col_widths.end());
-        const auto lefts = table_impl::build_column_lefts(fixed_x_, col_widths_);
+        const auto lefts = build_column_lefts(get_fixed_x(), col_widths_);
         col_lefts_.assign(lefts.begin(), lefts.end());
         cols_ = col_widths_.size();
     }
@@ -138,68 +125,30 @@ namespace docraft::layout::handler {
         return total_content_height;
     }
 
-    void DocraftLayoutHorizontalTableHandler::finalize_output(const std::shared_ptr<model::DocraftTable> &node,
-                                                              model::DocraftTransform *box,
-                                                              const float table_width,
-                                                              const float table_height) {
-        auto &layout_service = edit_context()->edit_layout();
-        node->set_position({.x = fixed_x_, .y = fixed_y_});
-        node->set_width(table_width);
-        node->set_height(table_height);
-
-        if (box) {
-            box->set_position(node->position());
-            box->set_width(node->width());
-            box->set_height(node->height());
-        }
-        layout_service.set_current_rect_width(saved_available_space_);
-    }
-
-    void DocraftLayoutHorizontalTableHandler::log_cells(const std::shared_ptr<model::DocraftTable> &node) {
-        for (const auto &row: node->content_nodes()) {
-            for (const auto &cell: row) {
-                if (cell) {
-                    LOG_DEBUG(fmt::format("Cell at ({}, {}) with size ({}, {})", cell->position().x,
-                        cell->position().y, cell->width(), cell->height()));
-                }
-            }
-        }
-    }
-
-    void DocraftLayoutHorizontalTableHandler::clear_compute_state() {
-        engine_.reset();
-    }
-
     float DocraftLayoutHorizontalTableHandler::layout_row(
-        const std::vector<std::shared_ptr<model::DocraftNode> > &row_nodes,
-        const float row_top_y,
+        const std::vector<std::shared_ptr<model::DocraftNode> > &row_nodes, const float row_top_y,
         const float min_row_height) {
         float row_height = min_row_height;
-        for (std::size_t c = 0; c < std::min(row_nodes.size(), cols_); ++c) {
+        for (std::size_t c = 0; c < std::min(row_nodes.size(), get_cols()); ++c) {
             const auto &cell_node = row_nodes[c];
             if (!cell_node) {
                 continue;
             }
-            table_impl::compute_cell_layout({
-                .node = cell_node,
-                .engine = *engine_,
-                .context = context_,
-                .table_cursor = table_cursor_,
-                .inner_width = std::max(0.0F, col_widths_[c] - offset_x_),
-                .x = col_lefts_[c] + cell_padding_x_,
-                .y = row_top_y - cell_padding_y_
-            });
+            compute_cell_layout(cell_node,
+                                std::max(0.0F, get_col_widths()[c] - get_offset_x()),
+                                get_col_lefts()[c] + get_cell_padding_x(),
+                                row_top_y - get_cell_padding_y());
             row_height = std::max(row_height, cell_node->height());
         }
 
-        for (std::size_t c = 0; c < std::min(row_nodes.size(), cols_); ++c) {
+        for (std::size_t c = 0; c < std::min(row_nodes.size(), get_cols()); ++c) {
             const auto &cell_node = row_nodes[c];
             if (!cell_node) {
                 continue;
             }
-            table_impl::center_text_in_row(cell_node, row_top_y, row_height + (2.0F * offset_y_), baseline_offset_);
-            cell_node->set_position({.x = col_lefts_[c], .y = row_top_y});
-            cell_node->set_width(col_widths_[c]);
+            center_text_in_row(cell_node, row_top_y, row_height + (2.0F * get_offset_y()), get_baseline_offset());
+            cell_node->set_position({.x = get_col_lefts()[c], .y = row_top_y});
+            cell_node->set_width(get_col_widths()[c]);
             cell_node->set_height(row_height);
         }
 
@@ -214,13 +163,34 @@ namespace docraft::layout::handler {
         const WidthPlan width_plan = compute_width_plan(node, content);
         apply_width_plan(width_plan);
 
-        const float min_row_height = 20.0F + offset_y_;
-        const float title_row_height = layout_row(content.title_nodes, fixed_y_, min_row_height);
-        const float body_start_y = fixed_y_ - title_row_height;
+        const float min_row_height = 20.0F + get_offset_y();
+        const float title_row_height = layout_row(content.title_nodes, get_fixed_y(), min_row_height);
+        const float body_start_y = get_fixed_y() - title_row_height;
         const float body_height = layout_body_rows(content, body_start_y, min_row_height);
 
         finalize_output(node, box, width_plan.table_width, title_row_height + body_height);
         log_cells(node);
         clear_compute_state();
+    }
+
+
+    std::size_t DocraftLayoutHorizontalTableHandler::get_cols() const {
+        return cols_;
+    }
+
+    const std::vector<float> &DocraftLayoutHorizontalTableHandler::get_col_widths() const {
+        return col_widths_;
+    }
+
+    const std::vector<float> &DocraftLayoutHorizontalTableHandler::get_col_lefts() const {
+        return col_lefts_;
+    }
+
+    float DocraftLayoutHorizontalTableHandler::get_offset_x() const {
+        return offset_x_;
+    }
+
+    float DocraftLayoutHorizontalTableHandler::get_offset_y() const {
+        return offset_y_;
     }
 } // namespace docraft::layout::handler

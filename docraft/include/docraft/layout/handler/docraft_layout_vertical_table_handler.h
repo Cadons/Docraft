@@ -92,33 +92,18 @@ namespace docraft::layout::handler {
                                const ColumnPlan &plan,
                                float row_top_y);
 
-        /** Write final node/box geometry and restore layout service width state. */
-        void finalize_output(const std::shared_ptr<model::DocraftTable> &node,
-                             model::DocraftTransform *box,
-                             float table_width,
-                             float table_height);
-
-        /** Emit debug logs for computed cell geometry. */
-        static void log_cells(const std::shared_ptr<model::DocraftTable> &node);
-
-        /** Release temporary compute resources kept in class state. */
-        void clear_compute_state();
-
         float compute_band_height(const BandView &band, float row_top_y);
 
         void place_band(const BandView &band, float row_top_y, float row_height) const;
 
-        std::shared_ptr<DocraftDocumentContext> context_;
-        std::optional<DocraftLayoutEngine> engine_;
-        DocraftCursor table_cursor_;
+        // Private state accessors
+        [[nodiscard]] float get_padding_x() const;
+
+        [[nodiscard]] float get_padding_y() const;
+
+        // Private state
         float padding_x_ = 0.0F;
         float padding_y_ = 0.0F;
-        float cell_padding_x_ = 0.0F;
-        float cell_padding_y_ = 0.0F;
-        float baseline_offset_ = 0.0F;
-        float fixed_x_ = 0.0F;
-        float fixed_y_ = 0.0F;
-        float saved_available_space_ = 0.0F;
     };
 } // namespace docraft::layout::handler
 
