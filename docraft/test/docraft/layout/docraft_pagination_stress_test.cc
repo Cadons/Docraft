@@ -679,4 +679,55 @@ namespace docraft::test::layout {
         EXPECT_GE(vertical_table_fragments, 1U);
         EXPECT_EQ(vertical_accumulated_rows, kVerticalRows);
     }
+
+    TEST_F(DocraftPaginationStressTest, VerticalTable) {
+        auto header = std::make_shared<model::DocraftHeader>();
+        auto body = std::make_shared<model::DocraftBody>();
+        auto footer = std::make_shared<model::DocraftFooter>();
+        auto table = std::make_shared<model::DocraftTable>();
+        table->set_orientation(model::LayoutOrientation::kVertical);
+        table->set_titles({"A", "B", "C", "D"});
+        table->set_column_weights({0.25F, 0.25F, 0.25F, 0.25F});
+        table->set_auto_fill_width(true);
+        constexpr std::size_t kRows = 200;
+        constexpr std::size_t kCols = 3;
+        for (int c = 0; c < kCols; ++c) {
+            auto htitle = std::make_shared<model::DocraftText>(std::format("HTitle {}", c));
+            htitle->set_height(7.0F + static_cast<float>(c % 4));
+            auto title_color = std::optional(
+                c % 2 == 0
+                    ? DocraftColor::fromColorName(ColorName::kPurple)
+                    : DocraftColor::fromColorName(ColorName::kBlue));
+            table->add_htitle_node(htitle, title_color);
+        }
+        table->set_cols(kCols);
+        for (std::size_t r = 0; r < kRows; ++r) {
+            auto vtitle = std::make_shared<model::DocraftText>(std::format("VTitle {}", r));
+            vtitle->set_height(7.0F + static_cast<float>(r % 4));
+            auto title_color = std::optional(
+                r % 2 == 0
+                    ? DocraftColor::fromColorName(ColorName::kPurple)
+                    : DocraftColor::fromColorName(ColorName::kBlue));
+            table->add_title_node(vtitle, title_color);
+
+            for (int c = 0; c < kCols; ++c) {
+                auto cell = std::make_shared<model::DocraftText>(std::format("VR{}C{}", r, c));
+                const auto h = 6.0F + static_cast<float>((r + static_cast<std::size_t>(c)) % 8);
+                cell->set_height(h);
+                auto bg = std::optional<DocraftColor>(
+                    ((r + static_cast<std::size_t>(c)) % 3 == 0)
+                        ? DocraftColor::fromColorName(ColorName::kCyan)
+                        : DocraftColor::fromColorName(ColorName::kRed));
+                table->add_content_node(cell, bg);
+            }
+        }
+        body->add_child(table);
+        footer->add_child(std::make_shared<model::DocraftPageNumber>());
+        EXPECT_EQ(table->rows(), kRows);
+        EXPECT_EQ(table->cols(), kCols);
+        EXPECT_EQ(table->content_backgrounds().size(), kRows * kCols);
+        EXPECT_EQ(table->title_nodes().size(), kRows);
+        EXPECT_EQ(table->htitle_nodes().size(), kCols);
+        layout_and_render({header, body, footer});
+    }
 } // namespace docraft::test::layout

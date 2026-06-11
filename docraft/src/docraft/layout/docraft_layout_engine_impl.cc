@@ -26,6 +26,7 @@
 
 #include "docraft/backend/docraft_page_rendering_backend.h"
 #include "docraft/docraft_document_context.h"
+#include "docraft/craft/docraft_craft_language_tokens.h"
 #include "docraft/exception/docraft_exceptions.h"
 #include "docraft/layout/handler/docraft_basic_layout_handler.h"
 #include "docraft/layout/handler/docraft_layout_blank_line.h"
@@ -44,7 +45,7 @@
 namespace {
     std::size_t count_rows_fit(const docraft::model::DocraftTable &table, const float body_bottom_y) {
         std::size_t fit = 0;
-        const auto grid = table.content_nodes();
+        auto grid = table.content_nodes();
         for (const auto &row: grid) {
             float row_bottom = std::numeric_limits<float>::infinity();
             bool found = false;

@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <vector>
+#include <fmt/format.h>
 
 #include "docraft/layout/docraft_layout_engine.h"
 
@@ -33,9 +34,15 @@ namespace docraft::layout::handler {
         const std::shared_ptr<model::DocraftTable> &node) {
         ensure_title_nodes(node);
 
-        const std::size_t row_count = node->titles().empty() ? node->title_nodes().size() : node->titles().size();
+        const std::size_t row_count = node->titles().empty()
+                                          ? node->title_nodes().size()
+                                          : std::max(node->titles().size(), node->title_nodes().size());
         const std::size_t value_cols = static_cast<std::size_t>(std::max(1, node->content_cols()));
 
+        if (row_count > node->title_nodes().size()) {
+            throw docraft::exception::InvalidInputException(
+                fmt::format("table node has more titles ({}) than title nodes ({})", node->titles().size(), node->title_nodes().size()));
+        }
         return TableData{
             .title_nodes = node->title_nodes(),
             .flat_values = flatten_content_nodes(node),
