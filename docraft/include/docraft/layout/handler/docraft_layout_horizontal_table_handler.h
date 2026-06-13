@@ -81,16 +81,13 @@ namespace docraft::layout::handler {
         /** Layout table title row and all body rows, returning body total height. */
         float layout_body_rows(const TableContent &content, float start_y, float min_row_height);
 
-        float layout_row(const std::vector<std::shared_ptr<model::DocraftNode> > &row_nodes,
-                         float row_top_y,
-                         float min_row_height);
+        /** Build one horizontal row band from nodes, using current column geometry. */
+        [[nodiscard]] RowBand build_row_band(const std::vector<std::shared_ptr<model::DocraftNode> > &row_nodes) const;
 
         // Private state
         std::size_t cols_ = 0;
         std::vector<float> col_widths_;
         std::vector<float> col_lefts_;
-        float offset_x_ = 0.0F;
-        float offset_y_ = 0.0F;
 
         // Protected accessors for private state
         [[nodiscard]] std::size_t get_cols() const;
@@ -98,10 +95,6 @@ namespace docraft::layout::handler {
         [[nodiscard]] const std::vector<float> &get_col_widths() const;
 
         [[nodiscard]] const std::vector<float> &get_col_lefts() const;
-
-        [[nodiscard]] float get_offset_x() const;
-
-        [[nodiscard]] float get_offset_y() const;
     };
 } // namespace docraft::layout::handler
 

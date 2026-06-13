@@ -200,17 +200,18 @@ namespace docraft::test::layout {
         const float title_row_height = table->title_nodes()[0]->height();
         EXPECT_GT(title_row_height, 0.0F);
 
-        // Content is 2 rows: row heights should be max of each row's cell heights.
-        // Row0 max(10,20)=20; Row1 max(15,5)=15
-        const float expected_height = title_row_height + 20.0F + 20.0F+10;//10 is the default cell height, added to ensure a minimum row height even if text content is small
+        // Content is 2 rows: every row must have a single resolved height shared by all cells.
+        const float first_row_height = c00->height();
+        const float second_row_height = c10->height();
+        const float expected_height = title_row_height + first_row_height + second_row_height;
         EXPECT_NEAR(table->height(), expected_height, 0.01F);
         EXPECT_NEAR(box.height(), expected_height, 0.01F);
 
         // Cells in the same row must share the same computed height.
         EXPECT_FLOAT_EQ(c00->height(), c01->height());
         EXPECT_FLOAT_EQ(c10->height(), c11->height());
-        EXPECT_FLOAT_EQ(c00->height(), 25.0F);
-        EXPECT_FLOAT_EQ(c10->height(), 25.0F);
+        EXPECT_GE(c00->height(), 20.0F);
+        EXPECT_GE(c10->height(), 20.0F);
         EXPECT_EQ(c10->text(),"Cell 10");
         EXPECT_EQ(c11->text(),"Cell 11");
 

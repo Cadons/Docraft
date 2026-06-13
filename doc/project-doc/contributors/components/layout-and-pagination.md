@@ -105,3 +105,34 @@ Adding a new node type usually means:
 - Preserve stable ordering in recursive layout to avoid visual regressions.
 - Be explicit with cursor resets when changing pagination rules.
 - Cover overflow and `page_owner` propagation in tests.
+
+## 9. Table layout algorithm map
+
+Table layout is implemented by three handlers:
+
+- `DocraftLayoutTableHandler` (base): shared row algorithm + shared state.
+- `DocraftLayoutHorizontalTableHandler`: computes horizontal column plan and builds row bands.
+- `DocraftLayoutVerticalTableHandler`: computes key/value column plan and builds row bands.
+
+The **same row pipeline** is now used for both orientations.
+Each specialized handler only builds a `RowBand` (nodes + lefts + widths), then delegates
+to the base algorithm:
+
+1. `compute_row_height(band, row_top_y, min_row_height)`
+   - runs layout for each non-null cell using the cell inner width,
+   - computes `row_height = max(content_height + 2 * cell_padding_y)`,
+   - applies `min_row_height` clamp.
+2. `place_row_band(band, row_top_y, row_height)`
+   - aligns text vertically with baseline offset,
+   - writes final cell box (`x`, `y`, `width`, `height`) for every cell.
+3. `layout_row_band(...)`
+   - orchestration wrapper for step (1) + (2).
+
+### Why this matters
+
+- No orientation-specific "magic" offsets for row matching.
+- Header rows and body rows use identical geometry rules.
+- Horizontal and vertical handlers become easier to review:
+  they define **column planning** only, not cell placement semantics.
+- Regressions are isolated: row bugs are fixed once in the base handler.
+

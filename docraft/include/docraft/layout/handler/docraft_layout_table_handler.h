@@ -66,6 +66,21 @@ namespace docraft::layout::handler {
         static constexpr float kVerticalCellPaddingX = 2.0F;
 
         /**
+         * @brief Logical row view used by both horizontal and vertical table handlers.
+         *
+         * A band is one render row: same top-Y, multiple cells with independent x/width.
+         * The base handler computes content sizes first, derives a single row height, then
+         * places every cell with that height so row borders always align.
+         */
+        struct RowBand {
+            std::vector<std::shared_ptr<model::DocraftNode> > nodes; // Nodes in this row, in left-to-right order.
+            std::vector<float> lefts;
+            //lefts represent the left edge of each cell, used for horizontal tables; ignored for vertical tables
+            std::vector<float> widths;
+            //widths represent the width of each cell, used for horizontal tables; ignored for vertical tables
+        };
+
+        /**
          * @brief Initializes common state for cell computation.
          */
         void initialize_base_state(const std::shared_ptr<model::DocraftTable> &node,
@@ -191,6 +206,34 @@ namespace docraft::layout::handler {
          * @brief Returns saved available space before layout.
          */
         [[nodiscard]] float get_saved_available_space() const;
+
+        /**
+         * @brief Computes the row height for a band by laying out each cell content once.
+         *
+         * Height is derived from the tallest content cell plus vertical paddings, then clamped
+         * to @p min_row_height.
+         */
+        float compute_row_height(const RowBand &band, float row_top_y, float min_row_height);
+
+        /**
+         * @brief Writes final geometry for each cell in a row band using the resolved row height.
+         */
+        void place_row_band(const RowBand &band, float row_top_y, float row_height);
+
+        /**
+         * @brief Shared row pipeline used by both table orientations.
+         *
+         * Algorithm:
+         *  1) layout each cell content in its own inner box,
+         *  2) resolve a single row height,
+         *  3) place every cell with aligned row geometry.
+         */
+        float layout_row_band(const RowBand &band, float row_top_y, float min_row_height);
+
+        /**
+         * @brief Validates that row vectors are aligned and returns the effective cell count.
+         */
+        static std::size_t effective_band_size(const RowBand &band);
 
     private:
         std::shared_ptr<DocraftDocumentContext> context_;

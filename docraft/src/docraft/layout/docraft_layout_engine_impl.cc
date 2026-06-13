@@ -59,7 +59,8 @@ namespace {
             if (!found) {
                 return fit;
             }
-            if (row_bottom < body_bottom_y) {
+            //if the row bottom is above the body bottom, it fits, otherwise it doesn't
+            if (row_bottom <= body_bottom_y) {
                 return fit;
             }
             ++fit;
@@ -597,7 +598,6 @@ namespace docraft::layout {
         body->set_height(body_height);
         const float footer_height = plan.footer_to_render ? page_height * plan.footer_ratio : 0.0F;
         const float body_bottom_y = (body_start_y - body_height) + body->margin_bottom() + footer_height;
-        layout_service.set_current_rect_width(body->width());
 
         DocraftCursor body_cursor;
         body_cursor.move_to(body->position().x, body_start_y);

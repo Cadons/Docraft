@@ -161,6 +161,8 @@ namespace docraft::layout::handler {
         auto &layout_service = context_->edit_layout();
         const float saved_x = table_cursor_.x();
         const float saved_y = table_cursor_.y();
+
+        node->set_height(0.0F); // reset height to allow content to determine it
         layout_service.set_current_rect_width(inner_width); //inner width for cell content
         table_cursor_.move_to(x, y);
         (void) engine_->compute_layout(node, table_cursor_);
@@ -170,11 +172,11 @@ namespace docraft::layout::handler {
     //This function is used to adjust the position of the cell content to ensure that text nodes are vertically centered within the cell.
     std::vector<float> DocraftLayoutTableHandler::build_column_lefts(float fixed_x,
                                                                      const std::vector<float> &col_widths) {
-        std::vector<float> col_lefts(col_widths.size(), fixed_x);
+        std::vector col_lefts(col_widths.size(), fixed_x);
         float x = fixed_x;
         for (std::size_t i = 0; i < col_widths.size(); ++i) {
-            col_lefts[i] = x; ///assign left position for column i
-            x += col_widths[i]; //move x to the right edge of column i for the next iteration
+            col_lefts[i] = x; // assign left position for column i
+            x += col_widths[i]; // move x to the right edge of column i for the next iteration
         }
         return col_lefts;
     }
@@ -218,6 +220,60 @@ namespace docraft::layout::handler {
                 }
             }
         }
+    }
+
+    std::size_t DocraftLayoutTableHandler::effective_band_size(const RowBand &band) {
+        if (band.lefts.size() != band.nodes.size() || band.widths.size() != band.nodes.size()) {
+            throw docraft::exception::LayoutConfigurationException(
+                "table row band must have same number of nodes, lefts, widths");
+        }
+        return band.nodes.size();
+    }
+
+    float DocraftLayoutTableHandler::compute_row_height(const RowBand &band, const float row_top_y,
+                                                        const float min_row_height) {
+        const std::size_t cells = effective_band_size(band);
+        float resolved_row_height = std::max(0.0F, min_row_height);
+
+        for (std::size_t c = 0; c < cells; ++c) {
+            const auto &cell_node = band.nodes[c];
+            if (!cell_node) {
+                continue;
+            }
+
+            const float content_width = std::max(0.0F, band.widths[c]); // ensure non-negative width
+            compute_cell_layout(cell_node, content_width, band.lefts[c], row_top_y); // compute layout for cell content
+
+            const float total_cell_height = cell_node->height(); // get the computed height of the cell content
+            // update the resolved row height to be the maximum of the current resolved height and the cell's height
+            resolved_row_height = std::max(resolved_row_height, total_cell_height);
+        }
+
+        return resolved_row_height;
+    }
+
+    void DocraftLayoutTableHandler::place_row_band(const RowBand &band,
+                                                   const float row_top_y,
+                                                   const float row_height) {
+        const std::size_t cells = effective_band_size(band);
+        for (std::size_t c = 0; c < cells; ++c) {
+            const auto &cell_node = band.nodes[c];
+            if (!cell_node) {
+                continue;
+            }
+            // Align the cell content vertically within the row by centering it based on the computed row height
+            center_text_in_row(cell_node, row_top_y, row_height, get_baseline_offset());
+            cell_node->set_position({.x = band.lefts[c], .y = row_top_y}); //apply position
+            cell_node->set_width(std::max(0.0F, band.widths[c])); //apply width
+            cell_node->set_height(row_height); //apply height
+        }
+    }
+
+    float DocraftLayoutTableHandler::layout_row_band(const RowBand &band, const float row_top_y,
+                                                     const float min_row_height) {
+        const float row_height = compute_row_height(band, row_top_y, min_row_height);
+        place_row_band(band, row_top_y, row_height);
+        return row_height;
     }
 
     void DocraftLayoutTableHandler::clear_compute_state() {

@@ -62,12 +62,6 @@ namespace docraft::layout::handler {
             std::size_t value_cols = 0;
         };
 
-        struct BandView {
-            const std::vector<std::shared_ptr<model::DocraftNode> > *nodes = nullptr;
-            const std::vector<float> *lefts = nullptr;
-            const std::vector<float> *widths = nullptr;
-        };
-
         /** Initialize per-compute state and cursor anchoring. */
         void setup_compute_state(const std::shared_ptr<model::DocraftTable> &node, DocraftCursor &cursor);
 
@@ -92,18 +86,12 @@ namespace docraft::layout::handler {
                                const ColumnPlan &plan,
                                float row_top_y);
 
-        float compute_band_height(const BandView &band, float row_top_y);
+        /** Build a row band for the optional horizontal titles in a vertical table. */
+        [[nodiscard]] RowBand build_header_band(const std::shared_ptr<model::DocraftTable> &node,
+                                                const ColumnPlan &plan) const;
 
-        void place_band(const BandView &band, float row_top_y, float row_height) const;
-
-        // Private state accessors
-        [[nodiscard]] float get_padding_x() const;
-
-        [[nodiscard]] float get_padding_y() const;
-
-        // Private state
-        float padding_x_ = 0.0F;
-        float padding_y_ = 0.0F;
+        /** Build a row band for one vertical table body row (title + value cells). */
+        [[nodiscard]] RowBand build_body_band(const TableData &data, const ColumnPlan &plan, std::size_t row_index) const;
     };
 } // namespace docraft::layout::handler
 

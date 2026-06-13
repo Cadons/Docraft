@@ -17,20 +17,15 @@
 #include "docraft/layout/handler/docraft_layout_horizontal_table_handler.h"
 
 #include <algorithm>
-#include <fmt/format.h>
 #include <numeric>
 #include <vector>
 
 #include "docraft/layout/docraft_layout_engine.h"
-#include "docraft/utils/docraft_logger.h"
 
 namespace docraft::layout::handler {
     void DocraftLayoutHorizontalTableHandler::setup_compute_state(const std::shared_ptr<model::DocraftTable> &node,
                                                                   DocraftCursor &cursor) {
         initialize_base_state(node, cursor, kHorizontalCellPaddingX, kHorizontalCellPaddingY);
-        set_fixed_y(get_fixed_y() - node->padding());
-        offset_y_ = 2.0F * kHorizontalCellPaddingY;
-        offset_x_ = 2.0F * kHorizontalCellPaddingX;
     }
 
     DocraftLayoutHorizontalTableHandler::TableContent DocraftLayoutHorizontalTableHandler::collect_table_content(
@@ -118,56 +113,47 @@ namespace docraft::layout::handler {
         float y = start_y;
         float total_content_height = 0.0F;
         for (const auto &row: content.rows) {
-            const float row_height = layout_row(row, y, min_row_height);
-            total_content_height += row_height;
-            y -= row_height;
+            // Compute the maximum height of the row based on its cells
+            const float row_height = layout_row_band(build_row_band(row), y, min_row_height);
+            total_content_height += row_height; // Update the y position for the next row
+            y -= row_height; // Update the y position for the next row
         }
         return total_content_height;
     }
 
-    float DocraftLayoutHorizontalTableHandler::layout_row(
-        const std::vector<std::shared_ptr<model::DocraftNode> > &row_nodes, const float row_top_y,
-        const float min_row_height) {
-        float row_height = min_row_height;
-        for (std::size_t c = 0; c < std::min(row_nodes.size(), get_cols()); ++c) {
-            const auto &cell_node = row_nodes[c];
-            if (!cell_node) {
-                continue;
-            }
-            compute_cell_layout(cell_node,
-                                std::max(0.0F, get_col_widths()[c] - get_offset_x()),
-                                get_col_lefts()[c] + get_cell_padding_x(),
-                                row_top_y - get_cell_padding_y());
-            row_height = std::max(row_height, cell_node->height());
-        }
+    DocraftLayoutTableHandler::RowBand DocraftLayoutHorizontalTableHandler::build_row_band(
+        const std::vector<std::shared_ptr<model::DocraftNode> > &row_nodes) const {
+        RowBand band;
+        const std::size_t cells = std::min(row_nodes.size(), get_cols());
+        band.nodes.reserve(cells);
+        band.lefts.reserve(cells);
+        band.widths.reserve(cells);
 
-        for (std::size_t c = 0; c < std::min(row_nodes.size(), get_cols()); ++c) {
-            const auto &cell_node = row_nodes[c];
-            if (!cell_node) {
-                continue;
-            }
-            center_text_in_row(cell_node, row_top_y, row_height + (2.0F * get_offset_y()), get_baseline_offset());
-            cell_node->set_position({.x = get_col_lefts()[c], .y = row_top_y});
-            cell_node->set_width(get_col_widths()[c]);
-            cell_node->set_height(row_height);
+        for (std::size_t c = 0; c < cells; ++c) {
+            band.nodes.emplace_back(row_nodes[c]);
+            band.lefts.emplace_back(get_col_lefts()[c]);
+            band.widths.emplace_back(get_col_widths()[c]);
         }
-
-        return row_height;
+        return band;
     }
 
     void DocraftLayoutHorizontalTableHandler::compute(const std::shared_ptr<model::DocraftTable> &node,
                                                       model::DocraftTransform *box,
                                                       DocraftCursor &cursor) {
-        setup_compute_state(node, cursor);
-        const TableContent content = collect_table_content(node);
-        const WidthPlan width_plan = compute_width_plan(node, content);
-        apply_width_plan(width_plan);
+        setup_compute_state(node, cursor); // Collect table content
+        const TableContent content = collect_table_content(node); // Compute width plan
+        const WidthPlan width_plan = compute_width_plan(node, content); // Apply width plan
+        apply_width_plan(width_plan); // Layout title nodes
 
-        const float min_row_height = 20.0F + get_offset_y();
-        const float title_row_height = layout_row(content.title_nodes, get_fixed_y(), min_row_height);
-        const float body_start_y = get_fixed_y() - title_row_height;
+        const float min_row_height = std::max(0.0F, 2.0F * node->padding());
+        // Minimum row height to ensure padding is respected
+        const float title_row_height = layout_row_band(build_row_band(content.title_nodes), get_fixed_y(),
+                                                       min_row_height);
+        const float body_start_y = get_fixed_y() - title_row_height; // Layout body rows
         const float body_height = layout_body_rows(content, body_start_y, min_row_height);
+        // Total content height including title and body
 
+        // Apply final size and position to the table box
         finalize_output(node, box, width_plan.table_width, title_row_height + body_height);
         log_cells(node);
         clear_compute_state();
@@ -186,11 +172,4 @@ namespace docraft::layout::handler {
         return col_lefts_;
     }
 
-    float DocraftLayoutHorizontalTableHandler::get_offset_x() const {
-        return offset_x_;
-    }
-
-    float DocraftLayoutHorizontalTableHandler::get_offset_y() const {
-        return offset_y_;
-    }
 } // namespace docraft::layout::handler

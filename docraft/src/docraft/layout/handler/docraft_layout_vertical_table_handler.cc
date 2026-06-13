@@ -26,8 +26,6 @@ namespace docraft::layout::handler {
     void DocraftLayoutVerticalTableHandler::setup_compute_state(const std::shared_ptr<model::DocraftTable> &node,
                                                                 DocraftCursor &cursor) {
         initialize_base_state(node, cursor, kVerticalCellPaddingX, kVerticalCellPaddingY);
-        padding_x_ = 2.0F * kVerticalCellPaddingX;
-        padding_y_ = 2.0F * kVerticalCellPaddingY;
     }
 
     DocraftLayoutVerticalTableHandler::TableData DocraftLayoutVerticalTableHandler::collect_table_data(
@@ -111,26 +109,7 @@ namespace docraft::layout::handler {
             return 0.0F;
         }
 
-        const std::size_t header_cols = std::min(plan.value_cols, node->htitle_nodes().size());
-        std::vector<std::shared_ptr<model::DocraftNode> > header_nodes;
-        std::vector<float> header_lefts;
-        std::vector<float> header_widths;
-        //Allocate header nodes and compute their widths
-        header_nodes.reserve(header_cols);
-        header_lefts.reserve(header_cols);
-        header_widths.reserve(header_cols);
-
-        for (std::size_t c = 0; c < header_cols; ++c) {
-            header_nodes.emplace_back(node->htitle_nodes()[c]);
-            header_lefts.emplace_back(
-                get_fixed_x() + plan.title_col_width + (static_cast<float>(c) * plan.value_col_width));
-            header_widths.emplace_back(plan.value_col_width);
-        }
-
-        const BandView header_band{.nodes = &header_nodes, .lefts = &header_lefts, .widths = &header_widths};
-        const float header_row_height = compute_band_height(header_band, row_top_y);
-        place_band(header_band, row_top_y, header_row_height);
-        return header_row_height;
+        return layout_row_band(build_header_band(node, plan), row_top_y, 0.0F);
     }
 
     float DocraftLayoutVerticalTableHandler::layout_body_rows(const TableData &data,
@@ -140,78 +119,58 @@ namespace docraft::layout::handler {
         float total_height = 0.0F;
 
         for (std::size_t r = 0; r < data.row_count; ++r) {
-            std::vector<std::shared_ptr<model::DocraftNode> > row_nodes;
-            std::vector<float> row_lefts;
-            std::vector<float> row_widths;
-            row_nodes.reserve(plan.value_cols + 1);
-            row_lefts.reserve(plan.value_cols + 1);
-            row_widths.reserve(plan.value_cols + 1);
-
-            row_nodes.emplace_back(data.title_nodes[r]);
-            row_lefts.emplace_back(get_fixed_x());
-            row_widths.emplace_back(plan.title_col_width);
-
-            const std::size_t row_first = r * plan.value_cols;
-            for (std::size_t vc = 0; vc < plan.value_cols; ++vc) {
-                const std::size_t idx = row_first + vc;
-                if (idx >= data.flat_values.size()) {
-                    break;
-                }
-                row_nodes.emplace_back(data.flat_values[idx]);
-                row_lefts.emplace_back(
-                    get_fixed_x() + plan.title_col_width + (static_cast<float>(vc) * plan.value_col_width));
-                row_widths.emplace_back(plan.value_col_width);
-            }
-
-            const BandView row_band{.nodes = &row_nodes, .lefts = &row_lefts, .widths = &row_widths};
-            // Compute height using the actual y position where content will be placed
-            // This ensures page break calculations are consistent
-            const float cell_y = y; // Actual y position for cells
-            const float row_height = compute_band_height(row_band, cell_y);
-            place_band(row_band, cell_y, row_height);
-
+            // For each row, we need to build a band that includes the title cell and the value cells for that row.
+            const float row_height = layout_row_band(build_body_band(data, plan, r), y, 0.0F);
             total_height += row_height;
             y -= row_height;
         }
-
         return total_height;
     }
 
-    float DocraftLayoutVerticalTableHandler::compute_band_height(const BandView &band,
-                                                                 const float row_top_y) {
-        float row_height = 0.0F;
-        for (std::size_t i = 0; i < band.nodes->size(); ++i) {
-            const auto &cell_node = (*band.nodes)[i];
-            if (!cell_node) {
-                continue;
-            }
-            // Layout the cell with proper width accounting for padding
-            compute_cell_layout(cell_node,
-                                std::max(0.0F, (*band.widths)[i] - get_padding_x()),
-                                (*band.lefts)[i] + get_cell_padding_x(),
-                                row_top_y - get_cell_padding_y());
-            // Height includes both the content height and vertical padding
-            row_height = std::max(row_height, cell_node->height() + get_padding_y());
+    DocraftLayoutTableHandler::RowBand DocraftLayoutVerticalTableHandler::build_header_band(
+        const std::shared_ptr<model::DocraftTable> &node,
+        const ColumnPlan &plan) const {
+        RowBand band;
+        const std::size_t header_cols = std::min(plan.value_cols, node->htitle_nodes().size());
+        band.nodes.reserve(header_cols);
+        band.lefts.reserve(header_cols);
+        band.widths.reserve(header_cols);
+
+        for (std::size_t c = 0; c < header_cols; ++c) {
+            band.nodes.emplace_back(node->htitle_nodes()[c]);
+            band.lefts.emplace_back(
+                get_fixed_x() + plan.title_col_width + (static_cast<float>(c) * plan.value_col_width));
+            band.widths.emplace_back(plan.value_col_width);
         }
-        return row_height;
+        return band;
     }
 
-    void DocraftLayoutVerticalTableHandler::place_band(const BandView &band,
-                                                       const float row_top_y,
-                                                       const float row_height) const {
-        for (std::size_t i = 0; i < band.nodes->size(); ++i) {
-            const auto &cell_node = (*band.nodes)[i];
-            if (!cell_node) {
-                continue;
+    DocraftLayoutTableHandler::RowBand DocraftLayoutVerticalTableHandler::build_body_band(
+        const TableData &data,
+        const ColumnPlan &plan,
+        const std::size_t row_index) const {
+        RowBand band;
+        band.nodes.reserve(plan.value_cols + 1);
+        band.lefts.reserve(plan.value_cols + 1);
+        band.widths.reserve(plan.value_cols + 1);
+
+        band.nodes.emplace_back(data.title_nodes[row_index]);
+        band.lefts.emplace_back(get_fixed_x());
+        band.widths.emplace_back(plan.title_col_width);
+
+        const std::size_t row_first = row_index * plan.value_cols;
+        for (std::size_t vc = 0; vc < plan.value_cols; ++vc) {
+            const std::size_t idx = row_first + vc;
+            if (idx >= data.flat_values.size()) {
+                break;
             }
-            // Use VERTICAL padding for alignment and account for full cell height with padding
-            auto vertical_padding_offset = 2.0F * kVerticalCellPaddingY;
-            center_text_in_row(cell_node, row_top_y, row_height + (2.0F * vertical_padding_offset),
-                               get_baseline_offset());
-            cell_node->set_position({.x = (*band.lefts)[i], .y = row_top_y});
-            cell_node->set_width((*band.widths)[i]);
-            cell_node->set_height(row_height);
+            band.nodes.emplace_back(data.flat_values[idx]);
+            band.lefts.emplace_back(
+                get_fixed_x() + plan.title_col_width + (static_cast<float>(vc) * plan.value_col_width));
+            band.widths.emplace_back(plan.value_col_width);
         }
+
+        return band;
     }
 
     void DocraftLayoutVerticalTableHandler::compute(const std::shared_ptr<model::DocraftTable> &node,
@@ -230,15 +189,6 @@ namespace docraft::layout::handler {
         finalize_output(node, box, table_width, header_height + body_height);
         log_cells(node);
         clear_compute_state();
-    }
-
-
-    float DocraftLayoutVerticalTableHandler::get_padding_x() const {
-        return padding_x_;
-    }
-
-    float DocraftLayoutVerticalTableHandler::get_padding_y() const {
-        return padding_y_;
     }
 
 } // namespace docraft::layout::handler
