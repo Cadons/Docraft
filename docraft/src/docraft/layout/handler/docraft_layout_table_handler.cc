@@ -262,10 +262,12 @@ namespace docraft::layout::handler {
         return band.nodes.size();
     }
 
-    float DocraftLayoutTableHandler::compute_row_height(const RowBand &band, const float row_top_y,
-                                                        const float min_row_height) {
+    float DocraftLayoutTableHandler::compute_row_height(const RowBand &band, const float row_top_y) {
         const std::size_t cells = effective_band_size(band);
-        float resolved_row_height = std::max(0.0F, min_row_height);
+        float resolved_row_height = std::max(0.0F, band.min_row_height);
+
+        const float pad_x = get_cell_padding_x();
+        const float pad_y = get_cell_padding_y();
 
         for (std::size_t c = 0; c < cells; ++c) {
             const auto &cell_node = band.nodes[c];
@@ -273,12 +275,20 @@ namespace docraft::layout::handler {
                 continue;
             }
 
-            const float content_width = std::max(0.0F, band.widths[c]); // ensure non-negative width
-            compute_cell_layout(cell_node, content_width, band.lefts[c], row_top_y); // compute layout for cell content
+            // Shrink inner_width and offset x by cell padding so text content is inset from the column borders.
+            const float content_width = std::max(0.0F, band.widths[c] - (2.0F * pad_x));
+            // content width is the column width minus horizontal padding on both sides
+            const float content_x = band.lefts[c] + pad_x;
+            // content x position is the left edge of the column plus horizontal padding
+            compute_cell_layout(cell_node, content_width, content_x, row_top_y);
+            // compute the layout of the cell content, which will update the cell_node's height based on its content
 
-            const float total_cell_height = cell_node->height(); // get the computed height of the cell content
-            // update the resolved row height to be the maximum of the current resolved height and the cell's height
-            resolved_row_height = std::max(resolved_row_height, total_cell_height);
+            // Add vertical padding to the measured content height so the row has breathing room.
+            const float total_cell_height = cell_node->height() + (2.0F * pad_y);
+            // total cell height is the content height plus vertical padding on top and bottom
+            resolved_row_height = std::max(resolved_row_height, total_cell_height); // the resolved row height is
+            //the maximum of the current resolved row height and the total cell height, ensuring that the row is tall
+            //enough to fit its tallest cell content plus padding
         }
 
         return resolved_row_height;
@@ -301,9 +311,8 @@ namespace docraft::layout::handler {
         }
     }
 
-    float DocraftLayoutTableHandler::layout_row_band(const RowBand &band, const float row_top_y,
-                                                     const float min_row_height) {
-        const float row_height = compute_row_height(band, row_top_y, min_row_height);
+    float DocraftLayoutTableHandler::layout_row_band(const RowBand &band, const float row_top_y) {
+        const float row_height = compute_row_height(band, row_top_y);
         place_row_band(band, row_top_y, row_height);
         return row_height;
     }

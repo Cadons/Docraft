@@ -25,7 +25,8 @@
 namespace docraft::layout::handler {
     void DocraftLayoutVerticalTableHandler::setup_pipeline_state(const std::shared_ptr<model::DocraftTable> &node,
                                                                  DocraftCursor &cursor) {
-        initialize_base_state(node, cursor, kVerticalCellPaddingX, kVerticalCellPaddingY);
+        initialize_base_state(node, cursor, DocraftLayoutTableHandler::kVerticalCellPaddingX,
+                              DocraftLayoutTableHandler::kVerticalCellPaddingY);
     }
 
     DocraftLayoutVerticalTableHandler::TableData DocraftLayoutVerticalTableHandler::collect_table_data(
@@ -121,23 +122,30 @@ namespace docraft::layout::handler {
 
     float DocraftLayoutVerticalTableHandler::layout_header_row(const std::shared_ptr<model::DocraftTable> &node,
                                                                const ColumnPlan &plan,
-                                                               const float row_top_y) {
+                                                               const float row_top_y,
+                                                               const float min_row_height) {
         if (node->htitle_nodes().empty()) {
             return 0.0F;
         }
 
-        return layout_row_band(build_header_band(node, plan), row_top_y, 0.0F);
+        RowBand band = build_header_band(node, plan);
+        band.min_row_height = min_row_height;
+        return layout_row_band(band, row_top_y);
     }
 
-    float DocraftLayoutVerticalTableHandler::layout_body_rows(const TableData &data, const ColumnPlan &plan,
-                                                              const float row_top_y) {
+    float DocraftLayoutVerticalTableHandler::layout_body_rows(const TableData &data,
+                                                              const ColumnPlan &plan,
+                                                              const float row_top_y,
+                                                              const float min_row_height) {
         float y = row_top_y;
         float total_height = 0.0F;
         // For each row, we need to build a band that includes the title cell and the value cells for that row.
         for (std::size_t r = 0; r < data.row_count; ++r) {
             // Build a row band for this row, which includes the title node and the value nodes for this row,
             // with their corresponding left positions and widths based on the column plan.
-            const float row_height = layout_row_band(build_body_band(data, plan, r), y, 0.0F);
+            RowBand band = build_body_band(data, plan, r);
+            band.min_row_height = min_row_height;
+            const float row_height = layout_row_band(band, y);
             total_height += row_height;
             y -= row_height;
         }
@@ -214,11 +222,13 @@ namespace docraft::layout::handler {
     }
 
     float DocraftLayoutVerticalTableHandler::layout_table_content(const std::shared_ptr<model::DocraftTable> &node) {
+        const float min_row_height = std::max(0.0F, 2.0F * node->padding()); // match horizontal table behavior
+        //2*padding means that the row height will be at least enough to accommodate the padding on both top and bottom of the cell content
         // layout header row and get its height
-        const float header_height = layout_header_row(node, plan_, get_fixed_y());
+        const float header_height = layout_header_row(node, plan_, get_fixed_y(), min_row_height);
         const float body_top_y = get_fixed_y() - header_height; // compute the starting y position for the body rows
         // layout body rows and get their total height
-        const float body_height = layout_body_rows(data_, plan_, body_top_y);
+        const float body_height = layout_body_rows(data_, plan_, body_top_y, min_row_height);
         return header_height + body_height; // return the total height consumed by the table (header + body)
     }
 

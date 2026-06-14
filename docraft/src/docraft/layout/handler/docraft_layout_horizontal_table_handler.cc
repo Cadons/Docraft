@@ -25,7 +25,8 @@
 namespace docraft::layout::handler {
     void DocraftLayoutHorizontalTableHandler::setup_pipeline_state(const std::shared_ptr<model::DocraftTable> &node,
                                                                    DocraftCursor &cursor) {
-        initialize_base_state(node, cursor, kHorizontalCellPaddingX, kHorizontalCellPaddingY);
+        initialize_base_state(node, cursor, DocraftLayoutTableHandler::kHorizontalCellPaddingX,
+                              DocraftLayoutTableHandler::kHorizontalCellPaddingY);
     }
 
     DocraftLayoutHorizontalTableHandler::TableContent DocraftLayoutHorizontalTableHandler::collect_table_content(
@@ -138,7 +139,9 @@ namespace docraft::layout::handler {
         float total_content_height = 0.0F;
         for (const auto &row: content.rows) {
             // Compute the maximum height of the row based on its cells
-            const float row_height = layout_row_band(build_row_band(row), y, min_row_height);
+            RowBand band = build_row_band(row);
+            band.min_row_height = min_row_height;
+            const float row_height = layout_row_band(band, y);
             total_content_height += row_height; // Update the y position for the next row
             y -= row_height; // Update the y position for the next row
         }
@@ -175,8 +178,11 @@ namespace docraft::layout::handler {
 
     float DocraftLayoutHorizontalTableHandler::layout_table_content(const std::shared_ptr<model::DocraftTable> &node) {
         const float min_row_height = std::max(0.0F, 2.0F * node->padding());
-        const float title_row_height = layout_row_band(build_row_band(content_.title_nodes), get_fixed_y(),
-                                                       min_row_height);
+
+        RowBand title_band = build_row_band(content_.title_nodes);
+        title_band.min_row_height = min_row_height;
+        const float title_row_height = layout_row_band(title_band, get_fixed_y());
+
         const float body_start_y = get_fixed_y() - title_row_height;
         const float body_height = layout_body_rows(content_, body_start_y, min_row_height);
         return title_row_height + body_height;

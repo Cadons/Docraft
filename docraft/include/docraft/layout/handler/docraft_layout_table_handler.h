@@ -101,6 +101,7 @@ namespace docraft::layout::handler {
             //lefts represent the left edge of each cell, used for horizontal tables; ignored for vertical tables
             std::vector<float> widths;
             //widths represent the width of each cell, used for horizontal tables; ignored for vertical tables
+            float min_row_height = 0.0F; // Minimum height for this row band (from table.padding()).
         };
 
         /**
@@ -234,9 +235,9 @@ namespace docraft::layout::handler {
          * @brief Computes the row height for a band by laying out each cell content once.
          *
          * Height is derived from the tallest content cell plus vertical paddings, then clamped
-         * to @p min_row_height.
+         * to the band's min_row_height.
          */
-        float compute_row_height(const RowBand &band, float row_top_y, float min_row_height);
+        float compute_row_height(const RowBand &band, float row_top_y);
 
         /**
          * @brief Writes final geometry for each cell in a row band using the resolved row height.
@@ -251,7 +252,7 @@ namespace docraft::layout::handler {
          *  2) resolve a single row height,
          *  3) place every cell with aligned row geometry.
          */
-        float layout_row_band(const RowBand &band, float row_top_y, float min_row_height);
+        float layout_row_band(const RowBand &band, float row_top_y);
 
         /**
          * @brief Validates that row vectors are aligned and returns the effective cell count.

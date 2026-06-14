@@ -89,12 +89,14 @@ namespace docraft::layout::handler {
         /** Layout optional header row and return consumed height. */
         float layout_header_row(const std::shared_ptr<model::DocraftTable> &node,
                                 const ColumnPlan &plan,
-                                float row_top_y);
+                                float row_top_y,
+                                float min_row_height);
 
         /** Layout all table body rows and return consumed height. */
         float layout_body_rows(const TableData &data,
                                const ColumnPlan &plan,
-                               float row_top_y);
+                               float row_top_y,
+                               float min_row_height);
 
         /** Build a row band for the optional horizontal titles in a vertical table. */
         [[nodiscard]] RowBand build_header_band(const std::shared_ptr<model::DocraftTable> &node,
