@@ -24,8 +24,10 @@ namespace docraft::renderer::painter {
 
     void DocraftLinePainter::draw(const std::shared_ptr<DocraftDocumentContext> &context) {
         if (!context) return;
-        auto backend = context->shape_backend();
-        if (!backend) return;
+        auto &rendering_service = context->rendering();
+        auto shape_backend = rendering_service.shape_rendering();
+        auto line_backend = rendering_service.line_rendering();
+        if (!shape_backend || !line_backend) return;
 
         const auto &stroke_color = line_node_.border_color().toRGB();
         const float stroke_width = line_node_.border_width();
@@ -33,13 +35,13 @@ namespace docraft::renderer::painter {
             return;
         }
 
-        backend->save_state();
+        shape_backend->save_state();
 
         if (stroke_color.a < 1.0F) {
-            backend->set_stroke_alpha(stroke_color.a);
+            shape_backend->set_stroke_alpha(stroke_color.a);
         }
-        backend->set_line_width(stroke_width);
-        backend->set_stroke_color(stroke_color.r, stroke_color.g, stroke_color.b);
+        line_backend->set_line_width(stroke_width);
+        line_backend->set_stroke_color(stroke_color.r, stroke_color.g, stroke_color.b);
 
         const auto &start = line_node_.start();
         const auto &end = line_node_.end();
@@ -50,8 +52,8 @@ namespace docraft::renderer::painter {
         const float x2 = origin.x + end.x;
         const float y2 = origin.y - end.y;
 
-        backend->draw_line(x1, y1, x2, y2);
+        line_backend->draw_line(x1, y1, x2, y2);
 
-        backend->restore_state();
+        shape_backend->restore_state();
     }
 } // docraft::renderer::painter

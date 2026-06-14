@@ -139,8 +139,8 @@ namespace docraft::test::model {
         EXPECT_EQ(cloned->row_weights(), table->row_weights());
         EXPECT_FLOAT_EQ(cloned->baseline_offset(), table->baseline_offset());
 
-        const auto &original_titles = table->title_nodes();
-        const auto &cloned_titles = cloned->title_nodes();
+        const auto &original_titles = table->title_text_nodes();
+        const auto &cloned_titles = cloned->title_text_nodes();
         ASSERT_EQ(cloned_titles.size(), original_titles.size());
         EXPECT_NE(cloned_titles[0].get(), original_titles[0].get());
         EXPECT_EQ(cloned_titles[0]->text(), original_titles[0]->text());

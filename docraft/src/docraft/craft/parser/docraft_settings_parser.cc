@@ -17,6 +17,7 @@
 #include "docraft/craft/parser/docraft_parser.h"
 
 #include "docraft/craft/parser/docraft_parser_helpers.h"
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/model/docraft_settings.h"
 
 namespace docraft::craft::parser {
@@ -37,7 +38,7 @@ namespace docraft::craft::parser {
             if (size_str == "A4" || size_str == "a4") {
                 return model::DocraftPageSize::kA4;
             }
-            throw std::invalid_argument("Invalid page_size: " + size_str);
+            throw docraft::exception::InvalidInputException("Invalid page_size: " + size_str);
         }
 
         model::DocraftPageOrientation parse_page_orientation(const std::string &orientation_str) {
@@ -47,7 +48,7 @@ namespace docraft::craft::parser {
             if (orientation_str == "portrait") {
                 return model::DocraftPageOrientation::kPortrait;
             }
-            throw std::invalid_argument("Invalid page_orientation: " + orientation_str);
+            throw docraft::exception::InvalidInputException("Invalid page_orientation: " + orientation_str);
         }
 
         void parse_page_format(const pugi::xml_node &craft_language_source,
@@ -87,10 +88,10 @@ namespace docraft::craft::parser {
             const float footer_ratio = footer_attr ? footer_attr.as_float() : 0.06F;
 
             if (header_ratio < 0.0F || body_ratio < 0.0F || footer_ratio < 0.0F) {
-                throw std::invalid_argument("Section ratios must be non-negative");
+                throw docraft::exception::InvalidInputException("Section ratios must be non-negative");
             }
             if (header_ratio + body_ratio + footer_ratio > 1.0F + 1e-6F) {
-                throw std::invalid_argument("Section ratios must sum to 1.0 or less");
+                throw docraft::exception::InvalidInputException("Section ratios must sum to 1.0 or less");
             }
 
             settings_node->set_section_ratios(header_ratio, body_ratio, footer_ratio);
@@ -105,7 +106,7 @@ namespace docraft::craft::parser {
                         if (auto name_attr = font.attribute(elements::settings::fonts::attribute::kName.data())) {
                             docraft_font.name = name_attr.as_string();
                         } else {
-                            throw std::invalid_argument(
+                            throw docraft::exception::InvalidInputException(
                                 std::string{elements::settings::fonts::attribute::kName.data()} +
                                 " attribute is required for a font");
                         }
@@ -123,7 +124,8 @@ namespace docraft::craft::parser {
                         settings_node->add_font(docraft_font);
                     }
                 } else {
-                    throw std::invalid_argument(std::string(font_node.name()) + " cannot be placed in settings");
+                    throw docraft::exception::InvalidInputException(
+                        std::string(font_node.name()) + " cannot be placed in settings");
                 }
             }
         }

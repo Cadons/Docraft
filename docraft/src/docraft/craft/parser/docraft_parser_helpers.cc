@@ -19,6 +19,8 @@
 #include <cctype>
 #include <stdexcept>
 
+#include "docraft/exception/docraft_exceptions.h"
+
 namespace docraft::craft::parser::detail {
     bool is_hex_color(const std::string &color) {
         if (color.size() != 7 && color.size() != 9) {
@@ -38,7 +40,7 @@ namespace docraft::craft::parser::detail {
     DocraftColor get_docraft_color(const pugi::xml_attribute &color_attr) {
         std::string color_name_str = color_attr.as_string();
         if (color_name_str.empty()) {
-            throw std::invalid_argument("Color attribute cannot be empty");
+            throw docraft::exception::InvalidInputException("Color attribute cannot be empty");
         }
 
         // Support template expressions: ${data("fieldname")} or ${variable_name}
@@ -51,7 +53,7 @@ namespace docraft::craft::parser::detail {
 
         if (color_name_str[0] == '#') {
             if (!is_hex_color(color_name_str)) {
-                throw std::invalid_argument("Invalid hex color: " + color_name_str);
+                throw docraft::exception::InvalidInputException("Invalid hex color: " + color_name_str);
             }
             return DocraftColor(color_name_str);
         }
@@ -76,7 +78,7 @@ namespace docraft::craft::parser::detail {
             return DocraftColor(ColorName::kPurple);
         }
 
-        throw std::invalid_argument("Unknown color: " + color_name_str);
+        throw docraft::exception::InvalidInputException("Unknown color: " + color_name_str);
     }
 
     void add_external_fonts_from_node(const pugi::xml_node &font_node,
@@ -140,7 +142,7 @@ namespace docraft::craft::parser::detail {
             } else if (position_str == std::string{basic::attribute::position_type::kAbsolute}) {
                 node->set_position_mode(model::DocraftPositionType::kAbsolute);
             } else {
-                throw std::invalid_argument("Invalid position value: " + position_str);
+                throw docraft::exception::InvalidInputException("Invalid position value: " + position_str);
             }
         }
         if (has_xy && !has_position_attr) {

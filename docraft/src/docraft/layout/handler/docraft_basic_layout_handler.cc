@@ -27,7 +27,7 @@ namespace docraft::layout::handler {
                                             model::DocraftTransform *box,
                                             DocraftCursor& cursor) {
         if (box == nullptr) {
-            throw std::invalid_argument("box is null");
+            throw docraft::exception::InvalidInputException("box is null");
         }
 
         if (node->position_mode()==model::DocraftPositionType::kBlock) {
@@ -39,16 +39,17 @@ namespace docraft::layout::handler {
         const bool is_rectangle = static_cast<bool>(std::dynamic_pointer_cast<model::DocraftRectangle>(node));
         const float child_width = box->width();
         const float child_height = box->height();
+        const float available_width = edit_context()->layout().available_space();
 
         if (node->position_mode() == model::DocraftPositionType::kBlock) {
             if (node->width() > 0.0F) {
                 box->set_width(node->width());
             } else if (node->auto_fill_width()) {
-                box->set_width(std::max(edit_context()->available_space(), child_width));
+                box->set_width(std::max(available_width, child_width));
             } else if (is_rectangle) {
                 box->set_width(child_width);
-            } else if (edit_context()->available_space() < node->width() || node->width() == 0.0F) {
-                box->set_width(edit_context()->available_space());
+            } else if (available_width < node->width() || node->width() == 0.0F) {
+                box->set_width(available_width);
             } else {
                 box->set_width(node->width());
             }

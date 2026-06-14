@@ -35,8 +35,10 @@ namespace docraft::renderer {
         painter.draw(context());
     }
     void DocraftPDFRenderer::render_section(const model::DocraftSection &section_node) {
-        auto backend = context()->shape_backend();
-        if (!backend) return;
+        auto &rendering_service = context()->rendering();
+        auto shape_backend = rendering_service.shape_rendering();
+        auto line_backend = rendering_service.line_rendering();
+        if (!shape_backend || !line_backend) return;
 
         const float left = section_node.position().x;
         const float right = section_node.position().x + section_node.width();
@@ -54,56 +56,56 @@ namespace docraft::renderer {
         bool has_stroke = border_width > 0.0F && border_color.a > 0.0F;
 
         if (content_width > 0.0F && content_height > 0.0F && (has_fill || has_stroke)) {
-            backend->save_state();
+            shape_backend->save_state();
 
             if (bg_color.a < 1.0F || border_color.a < 1.0F) {
-                backend->set_fill_alpha(bg_color.a);
-                backend->set_stroke_alpha(border_color.a);
+                shape_backend->set_fill_alpha(bg_color.a);
+                shape_backend->set_stroke_alpha(border_color.a);
             }
             if (border_width > 0.0F) {
-                backend->set_line_width(border_width);
+                line_backend->set_line_width(border_width);
             }
-            backend->set_fill_color(bg_color.r, bg_color.g, bg_color.b);
-            backend->set_stroke_color(border_color.r, border_color.g, border_color.b);
+            shape_backend->set_fill_color(bg_color.r, bg_color.g, bg_color.b);
+            line_backend->set_stroke_color(border_color.r, border_color.g, border_color.b);
 
-            backend->draw_rectangle(left, bottom, content_width, content_height);
+            shape_backend->draw_rectangle(left, bottom, content_width, content_height);
 
             if (has_fill && has_stroke) {
-                backend->fill_stroke();
+                shape_backend->fill_stroke();
             } else if (has_fill) {
-                backend->fill();
+                shape_backend->fill();
             } else if (has_stroke) {
-                backend->stroke();
+                shape_backend->stroke();
             }
 
-            backend->restore_state();
+            shape_backend->restore_state();
         }
 
         const auto &stroke_color = section_node.border_color().toRGB();
         const float stroke_width = section_node.border_width();
         const bool has_margin_stroke = stroke_width > 0.0F && stroke_color.a > 0.0F;
         if (has_margin_stroke) {
-            backend->save_state();
+            shape_backend->save_state();
             if (stroke_color.a < 1.0F) {
-                backend->set_stroke_alpha(stroke_color.a);
+                shape_backend->set_stroke_alpha(stroke_color.a);
             }
-            backend->set_line_width(stroke_width);
-            backend->set_stroke_color(stroke_color.r, stroke_color.g, stroke_color.b);
+            line_backend->set_line_width(stroke_width);
+            line_backend->set_stroke_color(stroke_color.r, stroke_color.g, stroke_color.b);
 
             if (section_node.margin_left() > 0.0F) {
-                backend->draw_line(left, top, left, bottom);
+                line_backend->draw_line(left, top, left, bottom);
             }
             if (section_node.margin_right() > 0.0F) {
-                backend->draw_line(right, top, right, bottom);
+                line_backend->draw_line(right, top, right, bottom);
             }
             if (section_node.margin_top() > 0.0F) {
-                backend->draw_line(left, top, right, top);
+                line_backend->draw_line(left, top, right, top);
             }
             if (section_node.margin_bottom() > 0.0F) {
-                backend->draw_line(left, bottom, right, bottom);
+                line_backend->draw_line(left, bottom, right, bottom);
             }
 
-            backend->restore_state();
+            shape_backend->restore_state();
         }
     }
     void DocraftPDFRenderer::render_image(const model::DocraftImage &image_node) {

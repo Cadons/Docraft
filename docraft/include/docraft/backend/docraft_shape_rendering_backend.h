@@ -20,19 +20,18 @@
 
 #include <vector>
 
-#include "docraft/backend/docraft_line_rendering_backend.h"
 #include "docraft/model/docraft_position.h"
 
 namespace docraft::backend {
     /**
      * @brief Interface for shape rendering backends used by Docraft.
      */
-    class DOCRAFT_LIB IDocraftShapeRenderingBackend : public virtual IDocraftLineRenderingBackend {
+    class DOCRAFT_LIB IDocraftShapeRenderingBackend {
     public:
         /**
          * @brief Virtual destructor.
          */
-        ~IDocraftShapeRenderingBackend() override = default;
+        virtual ~IDocraftShapeRenderingBackend() = default;
         /**
          * @brief Saves the current graphics state.
          */

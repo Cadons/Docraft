@@ -28,7 +28,7 @@ namespace docraft::test::layout {
     TEST_F(DocraftLayoutTextHandlerTest, TextNewlinesArePreservedAsSeparateLines) {
         auto text = std::make_shared<docraft::model::DocraftText>();
         text->set_text("Alpha\nBeta\nGamma");
-        context()->set_current_rect_width(context()->page_width());
+        context()->edit_layout().set_current_rect_width(context()->layout().page_width());
 
         engine()->compute_layout(text);
 
@@ -42,7 +42,7 @@ namespace docraft::test::layout {
     TEST_F(DocraftLayoutTextHandlerTest, TextLinePositionsAreMonotonicNonIncreasing) {
         auto text = std::make_shared<docraft::model::DocraftText>();
         text->set_text("Line1\nLine2\nLine3\nLine4");
-        context()->set_current_rect_width(context()->page_width());
+        context()->edit_layout().set_current_rect_width(context()->layout().page_width());
 
         engine()->compute_layout(text);
 
@@ -58,7 +58,7 @@ namespace docraft::test::layout {
         text->set_text("Uno due tre quattro cinque sei sette otto nove dieci");
         text->set_alignment(docraft::model::TextAlignment::kJustified);
         text->set_font_size(12.0F);
-        context()->set_current_rect_width(80.0F);
+        context()->edit_layout().set_current_rect_width(80.0F);
 
         engine()->compute_layout(text);
 
@@ -66,6 +66,6 @@ namespace docraft::test::layout {
         ASSERT_GT(lines.size(), 1U);
         const auto &last_line = lines.back();
         EXPECT_EQ(last_line->alignment(), docraft::model::TextAlignment::kLeft);
-        EXPECT_LT(last_line->width(), context()->available_space());
+        EXPECT_LT(last_line->width(), context()->layout().available_space());
     }
 } // namespace docraft::test::layout

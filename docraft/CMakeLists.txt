@@ -22,6 +22,14 @@ set(DOCRAFT_SOURCES
         include/docraft/docraft_document_metadata.h
         src/docraft/docraft_document_context.cc
         include/docraft/docraft_document_context.h
+        src/docraft/services/docraft_rendering_service.cc
+        include/docraft/services/docraft_rendering_service.h
+        src/docraft/services/docraft_layout_service.cc
+        include/docraft/services/docraft_layout_service.h
+        src/docraft/services/docraft_typography_service.cc
+        include/docraft/services/docraft_typography_service.h
+        src/docraft/services/docraft_navigation_service.cc
+        include/docraft/services/docraft_navigation_service.h
         src/docraft/docraft_cursor.cc
         include/docraft/docraft_cursor.h
         src/docraft/docraft_color.cc
@@ -33,6 +41,8 @@ set(DOCRAFT_SOURCES
         include/docraft/renderer/painter/docraft_text_painter.h
         include/docraft/renderer/painter/i_painter.h
         src/docraft/layout/docraft_layout_engine.cc
+        src/docraft/layout/docraft_layout_engine_impl.cc
+        src/docraft/layout/docraft_layout_engine_impl.h
         include/docraft/layout/docraft_layout_engine.h
         src/docraft/layout/handler/docraft_layout_text_handler.cc
         include/docraft/layout/handler/docraft_layout_text_handler.h
@@ -60,7 +70,11 @@ set(DOCRAFT_SOURCES
         include/docraft/backend/docraft_shape_rendering_backend.h
         include/docraft/backend/docraft_image_rendering_backend.h
         include/docraft/backend/docraft_page_rendering_backend.h
+        include/docraft/backend/docraft_backend_providers_factory.h
         include/docraft/backend/docraft_rendering_backend.h
+        include/docraft/backend/docraft_output_backend.h
+        include/docraft/backend/docraft_font_backend.h
+        include/docraft/backend/docraft_metadata_backend.h
         src/docraft/model/docraft_image.cc
         include/docraft/model/docraft_image.h
         src/docraft/renderer/painter/docraft_image_painter.cc
@@ -75,6 +89,10 @@ set(DOCRAFT_SOURCES
         include/docraft/renderer/painter/docraft_table_painter.h
         src/docraft/layout/handler/docraft_layout_table_handler.cc
         include/docraft/layout/handler/docraft_layout_table_handler.h
+        src/docraft/layout/handler/docraft_layout_horizontal_table_handler.cc
+        include/docraft/layout/handler/docraft_layout_horizontal_table_handler.h
+        src/docraft/layout/handler/docraft_layout_vertical_table_handler.cc
+        include/docraft/layout/handler/docraft_layout_vertical_table_handler.h
         include/docraft/utils/docraft_font_registry.h
         src/docraft/model/docraft_rectangle.cc
         include/docraft/model/docraft_rectangle.h
@@ -143,6 +161,25 @@ set(DOCRAFT_SOURCES
         src/docraft/model/docraft_position.cc
         src/docraft/backend/pdf/docraft_haru_backend.cc
         include/docraft/backend/pdf/docraft_haru_backend.h
+        src/docraft/backend/pdf/docraft_haru_backend_providers_factory.cc
+        include/docraft/backend/pdf/docraft_haru_backend_providers_factory.h
+        src/docraft/backend/pdf/docraft_haru_output_backend.cc
+        include/docraft/backend/pdf/docraft_haru_output_backend.h
+        src/docraft/backend/pdf/docraft_haru_font_backend.cc
+        include/docraft/backend/pdf/docraft_haru_font_backend.h
+        src/docraft/backend/pdf/docraft_haru_metadata_backend.cc
+        include/docraft/backend/pdf/docraft_haru_metadata_backend.h
+        src/docraft/backend/pdf/docraft_haru_text_backend.cc
+        include/docraft/backend/pdf/docraft_haru_text_backend.h
+        src/docraft/backend/pdf/docraft_haru_line_backend.cc
+        include/docraft/backend/pdf/docraft_haru_line_backend.h
+        src/docraft/backend/pdf/docraft_haru_shape_backend.cc
+        include/docraft/backend/pdf/docraft_haru_shape_backend.h
+        src/docraft/backend/pdf/docraft_haru_image_backend.cc
+        include/docraft/backend/pdf/docraft_haru_image_backend.h
+        src/docraft/backend/pdf/docraft_haru_page_backend.cc
+        include/docraft/backend/pdf/docraft_haru_page_backend.h
+        include/docraft/backend/pdf/docraft_haru_shared_state.h
         src/docraft/model/docraft_settings.cc
         include/docraft/model/docraft_settings.h
         include/docraft/model/docraft_page_format.h
@@ -163,7 +200,8 @@ set(DOCRAFT_SOURCES
 )
 set(DOCRAFT_LIBRARY_TYPE STATIC)
 if (BUILD_SHARED_LIBS)
-    set(DOCRAFT_LIBRARY_TYPE SHARED)
+    set(DOCRAFT_LIBRARY_TYPE SHARED
+            include/docraft/exception/docraft_exceptions.h)
 endif ()
 add_library(docraft ${DOCRAFT_LIBRARY_TYPE}
         ${DOCRAFT_SOURCES}

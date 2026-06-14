@@ -7,6 +7,7 @@
 #include "docraft/craft/parser/docraft_triangle_parser.h"
 #include "docraft/craft/parser/docraft_parser.h"
 #include "docraft/docraft_color.h"
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/model/docraft_circle.h"
 #include "docraft/model/docraft_line.h"
 #include "docraft/model/docraft_polygon.h"
@@ -97,7 +98,7 @@ TEST(DocraftTriangleParserTest, RejectsInvalidPointCount) {
     ASSERT_TRUE(doc.load_string(xml));
 
     docraft::craft::parser::DocraftTriangleParser parser;
-    EXPECT_THROW(parser.parse(doc.child("Triangle")), std::invalid_argument);
+    EXPECT_THROW(parser.parse(doc.child("Triangle")), docraft::exception::InvalidInputException);
 }
 
 TEST(DocraftPolygonParserTest, ParsesPolygonPoints) {

@@ -1,0 +1,50 @@
+# Build directories - will be rebuilt in container
+build/
+cmake-build-*/
+_deps/
+
+# IDE and editor configurations
+.idea/
+.vscode/
+.project
+.cproject
+.settings/
+.vs/
+*.pro.user
+*.qmake.stash
+*.autosave
+*.vcxproj*
+*.sln
+*.user
+*.suo
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Local/sensitive files
+.local/
+.git/
+.gitignore
+
+# User presets
+CMakeUserPresets.json
+
+# Build artifacts outside Docker
+stress_artifacts/
+
+# Documentation source (build from container if needed)
+doc/build/
+
+# Test artifacts
+*.log
+coverage/
+
+# CI/CD and other config
+.github/
+.gitlab-ci.yml
+.circleci/
+

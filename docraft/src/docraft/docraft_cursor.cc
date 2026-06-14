@@ -21,7 +21,6 @@ namespace docraft {
     DocraftCursor::DocraftCursor() {
     }
 
-    DocraftCursor::~DocraftCursor() = default;
 
     float DocraftCursor::x() const {
         return point_.x;

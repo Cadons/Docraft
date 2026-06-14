@@ -20,6 +20,8 @@
 #include <sstream>
 #include <stdexcept>
 
+#include "docraft/exception/docraft_exceptions.h"
+
 namespace docraft::craft::parser::detail {
     std::vector<model::DocraftPoint> parse_points_attribute(const pugi::xml_node &node, const char *attr_name) {
         std::vector<model::DocraftPoint> points;
@@ -44,12 +46,12 @@ namespace docraft::craft::parser::detail {
             }
             auto comma_pos = token.find(',');
             if (comma_pos == std::string::npos) {
-                throw std::invalid_argument("Invalid point token: " + token);
+                throw docraft::exception::InvalidInputException("Invalid point token: " + token);
             }
             std::string x_str = token.substr(0, comma_pos);
             std::string y_str = token.substr(comma_pos + 1);
             if (x_str.empty() || y_str.empty()) {
-                throw std::invalid_argument("Invalid point token: " + token);
+                throw docraft::exception::InvalidInputException("Invalid point token: " + token);
             }
             float x = std::stof(x_str);
             float y = std::stof(y_str);

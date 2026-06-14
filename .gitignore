@@ -59,8 +59,9 @@ Thumbs.db
 *.swo
 *~
 
-# Docker
-.dockerignore
 
 #CMake presets
 CMakeUserPresets.json
+
+# Local documentation and analysis (for Copilot/internal use)
+.local/

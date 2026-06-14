@@ -21,10 +21,10 @@ namespace docraft::layout::handler {
                                          model::DocraftTransform* box,
                                          DocraftCursor& cursor) {
         if (box == nullptr) {
-            throw std::invalid_argument("box is null");
+            throw docraft::exception::InvalidInputException("box is null");
         }
         node->set_weight(1.0F); //blank line takes full width
-        box->set_width(edit_context()->available_space()); //get full available width
+        box->set_width(edit_context()->layout().available_space()); //get full available width
         if (node->height() > 0.0F) {
             box->set_height(node->height());
         } else {

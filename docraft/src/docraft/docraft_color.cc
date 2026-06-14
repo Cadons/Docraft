@@ -21,6 +21,7 @@
 #include <ostream>
 #include <stdexcept>
 
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/utils/docraft_parser_utilis.h"
 
 namespace docraft {
@@ -65,11 +66,11 @@ namespace docraft {
         }
 
         if ((hex_code.size() != 7 && hex_code.size() != 9) || hex_code[0] != '#') {
-            throw std::invalid_argument("Invalid hex code: " + hex_code);
+            throw docraft::exception::InvalidInputException("Invalid hex code: " + hex_code);
         }
         for (size_t i = 1; i < hex_code.size(); ++i) {
             if (!std::isxdigit(static_cast<unsigned char>(hex_code[i]))) {
-                throw std::invalid_argument("Invalid hex code: " + hex_code);
+                throw docraft::exception::InvalidInputException("Invalid hex code: " + hex_code);
             }
         }
         //example of color: #RRGGBB or #RRGGBBAA

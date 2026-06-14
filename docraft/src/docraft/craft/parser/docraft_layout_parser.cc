@@ -17,6 +17,7 @@
 #include "docraft/craft/parser/docraft_parser.h"
 
 #include "docraft/craft/parser/docraft_parser_helpers.h"
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/model/docraft_layout.h"
 
 namespace docraft::craft::parser {
@@ -29,7 +30,7 @@ namespace docraft::craft::parser {
             } else if (orientation_str == std::string{orientation::kVertical}) {
                 layout_node->set_orientation(model::LayoutOrientation::kVertical);
             } else {
-                throw std::invalid_argument("Invalid layout orientation: " + orientation_str);
+                throw docraft::exception::InvalidInputException("Invalid layout orientation: " + orientation_str);
             }
         }
         detail::configure_docraft_node_attributes(layout_node, craft_language_source);

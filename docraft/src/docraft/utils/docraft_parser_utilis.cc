@@ -55,8 +55,8 @@ namespace docraft::utils {
 
                 }
                 return "";
-            } catch (const std::exception &e) {
-                LOG_ERROR("Error extracting data attribute '" + field + "': " + e.what());
+            } catch (...) {
+                LOG_ERROR("Error extracting data attribute '" + field + "'");
                 return "";
             }
         }

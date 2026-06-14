@@ -18,8 +18,8 @@
 
 #include <utility>
 #include <nlohmann/json.hpp>
-#include <stdexcept>
 
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/model/docraft_clone_utils.h"
 #include "docraft/renderer/docraft_pdf_renderer.h"
 #include "docraft/utils/docraft_base64.h"
@@ -32,35 +32,38 @@ namespace docraft::model {
             try {
                 parsed = nlohmann::json::parse(json_str);
             } catch (const nlohmann::json::parse_error &e) {
-                throw std::invalid_argument(
+                throw docraft::exception::InvalidInputException(
                     std::string("Table model must be a JSON matrix of strings: ") + e.what());
             }
             if (!parsed.is_array() || parsed.empty()) {
-                throw std::invalid_argument("Table model must be a non-empty JSON matrix of strings");
+                throw docraft::exception::InvalidInputException(
+                    "Table model must be a non-empty JSON matrix of strings");
             }
             std::vector<std::vector<std::string>> matrix;
             std::size_t expected_cols = 0;
             for (const auto &row : parsed) {
                 if (!row.is_array() || row.empty()) {
-                    throw std::invalid_argument("Table model must be a non-empty JSON matrix of strings");
+                    throw docraft::exception::InvalidInputException(
+                        "Table model must be a non-empty JSON matrix of strings");
                 }
                 std::vector<std::string> row_values;
                 row_values.reserve(row.size());
                 for (const auto &cell : row) {
                     if (!cell.is_string()) {
-                        throw std::invalid_argument("Table model must contain only strings");
+                        throw docraft::exception::InvalidInputException("Table model must contain only strings");
                     }
                     row_values.emplace_back(cell.get<std::string>());
                 }
                 if (expected_cols == 0) {
                     expected_cols = row_values.size();
                 } else if (row_values.size() != expected_cols) {
-                    throw std::invalid_argument("Table model rows must have the same number of columns");
+                    throw docraft::exception::InvalidInputException(
+                        "Table model rows must have the same number of columns");
                 }
                 matrix.emplace_back(std::move(row_values));
             }
             if (expected_cols == 0) {
-                throw std::invalid_argument("Table model must contain at least one column");
+                throw docraft::exception::InvalidInputException("Table model must contain at least one column");
             }
             return matrix;
         }
@@ -70,17 +73,17 @@ namespace docraft::model {
             try {
                 parsed = nlohmann::json::parse(json_str);
             } catch (const nlohmann::json::parse_error &e) {
-                throw std::invalid_argument(
+                throw docraft::exception::InvalidInputException(
                     std::string("Table header must be a JSON array of strings: ") + e.what());
             }
             if (!parsed.is_array() || parsed.empty()) {
-                throw std::invalid_argument("Table header must be a non-empty JSON array of strings");
+                throw docraft::exception::InvalidInputException("Table header must be a non-empty JSON array of strings");
             }
             std::vector<std::string> header;
             header.reserve(parsed.size());
-            for (const auto &cell : parsed) {
+            for (const auto &cell: parsed) {
                 if (!cell.is_string()) {
-                    throw std::invalid_argument("Table header must contain only strings");
+                    throw docraft::exception::InvalidInputException("Table header must contain only strings");
                 }
                 header.emplace_back(cell.get<std::string>());
             }
@@ -98,21 +101,22 @@ namespace docraft::model {
             std::vector<std::shared_ptr<DocraftNode>> result;
             try {
                parsed = nlohmann::json::parse(json_str);
-            }catch (const nlohmann::json::parse_error &e) {
-                throw std::invalid_argument(
+            } catch (const nlohmann::json::parse_error &e) {
+                throw docraft::exception::InvalidInputException(
                     std::string("Table model must be a JSON array of objects: ") + e.what());
             }
             if (!parsed.is_array() || parsed.empty()) {
-                throw std::invalid_argument("Table model must be a non-empty JSON array of objects");
+                throw docraft::exception::InvalidInputException("Table model must be a non-empty JSON array of objects");
             }
             //build content items for each item in the array
-            for (const auto &item : parsed) {
+            for (const auto &item: parsed) {
                 if (!item.is_object()) {
-                    throw std::invalid_argument("Table model must be a JSON array of objects");
+                    throw docraft::exception::InvalidInputException("Table model must be a JSON array of objects");
                 }
                 for (const auto &value : item.items()) {
                     if (!value.value().is_string()) {
-                        throw std::invalid_argument("Table model objects must contain only string values");
+                        throw docraft::exception::InvalidInputException(
+                            "Table model objects must contain only string values");
                     }
 
                 }
@@ -140,6 +144,14 @@ namespace docraft::model {
             return result;
         }
 
+        /**
+         * @brief Splits a vector into two parts at the specified index,
+         * keeping the head in the original vector and returning the tail as a new vector.
+         * @tparam T
+         * @param source
+         * @param split_index
+         * @return
+         */
         template <typename T>
         std::vector<T> split_tail(std::vector<T> &source, std::size_t split_index) {
             split_index = std::min(split_index, source.size());
@@ -206,7 +218,7 @@ namespace docraft::model {
             auto cloned = clone_node(titles[i]);
             auto text = std::dynamic_pointer_cast<DocraftText>(cloned);
             if (!text) {
-                throw std::runtime_error("Title node does not clone to DocraftText");
+                throw docraft::exception::DocumentStateException("Title node does not clone to DocraftText");
             }
             copy->set_title_node(static_cast<int>(i), text);
         }
@@ -216,7 +228,7 @@ namespace docraft::model {
             auto cloned = clone_node(htitles[i]);
             auto text = std::dynamic_pointer_cast<DocraftText>(cloned);
             if (!text) {
-                throw std::runtime_error("Header title node does not clone to DocraftText");
+                throw docraft::exception::DocumentStateException("Header title node does not clone to DocraftText");
             }
             copy->set_htitle_node(static_cast<int>(i), text);
         }
@@ -254,14 +266,14 @@ namespace docraft::model {
 
     void DocraftTable::set_column_weight(int index, float weight) {
         if (index < 0 || std::cmp_greater_equal(index, column_weights_.size())) {
-            throw std::out_of_range("Column weight index out of range");
+            throw docraft::exception::InvalidInputException("Column weight index out of range");
         }
         column_weights_[index] = weight;
     }
 
     void DocraftTable::set_row_weight(int index, float weight) {
         if (index < 0 || std::cmp_greater_equal(index, row_weights_.size())) {
-            throw std::out_of_range("Row weight index out of range");
+            throw docraft::exception::InvalidInputException("Row weight index out of range");
         }
         row_weights_[index] = weight;
     }
@@ -272,7 +284,7 @@ namespace docraft::model {
 
     void DocraftTable::set_title(int index, const std::string &title) {
         if (index < 0 || std::cmp_greater_equal(index, titles_.size())) {
-            throw std::out_of_range("Title index out of range");
+            throw docraft::exception::InvalidInputException("Title index out of range");
         }
         titles_[index] = title;
     }
@@ -302,6 +314,9 @@ namespace docraft::model {
                                       std::optional<DocraftColor> background) {
         title_nodes_.emplace_back(node);
         title_backgrounds_.emplace_back(std::move(background));
+        if (orientation_ == LayoutOrientation::kVertical) {
+            set_rows(static_cast<int>(title_nodes_.size()));
+        }
     }
 
     void DocraftTable::add_htitle_node(const std::shared_ptr<DocraftText> &node,
@@ -310,8 +325,17 @@ namespace docraft::model {
         htitle_backgrounds_.emplace_back(std::move(background));
     }
 
+    bool DocraftTable::is_content_allowed(const std::shared_ptr<DocraftNode> &node) {
+        return std::dynamic_pointer_cast<DocraftText>(node) || std::dynamic_pointer_cast<DocraftImage>(node);
+    }
+
     void DocraftTable::add_content_node(const std::shared_ptr<DocraftNode> &node,
                                         std::optional<DocraftColor> background) {
+        //table allow only text and image nodes as content, so we check the type of the node before adding it to the content nodes vector
+        if (!is_content_allowed(node)) {
+            throw docraft::exception::InvalidInputException(
+                "Content node must be either a DocraftText or a DocraftImage");
+        }
         content_nodes_.emplace_back(node);
         content_backgrounds_.emplace_back(std::move(background));
         if (orientation_ == LayoutOrientation::kHorizontal && content_cols() > 0) {
@@ -323,14 +347,14 @@ namespace docraft::model {
 
     void DocraftTable::set_content_node(int index, const std::shared_ptr<DocraftNode> &node) {
         if (index < 0 || std::cmp_greater_equal(index, content_nodes_.size())) {
-            throw std::out_of_range("Content node index out of range");
+            throw docraft::exception::InvalidInputException("Content node index out of range");
         }
         content_nodes_[index] = node;
     }
 
     void DocraftTable::set_content_node_background(int index, const DocraftColor &color) {
         if (index < 0 || std::cmp_greater_equal(index, content_backgrounds_.size())) {
-            throw std::out_of_range("Content background index out of range");
+            throw docraft::exception::InvalidInputException("Content background index out of range");
         }
         content_backgrounds_[index] = color;
     }
@@ -349,30 +373,33 @@ namespace docraft::model {
 
     void DocraftTable::set_title_node(int index, const std::shared_ptr<DocraftText> &node) {
         if (index < 0 || std::cmp_greater_equal(index, title_nodes_.size())) {
-            throw std::out_of_range("Title node index out of range");
+            throw docraft::exception::InvalidInputException("Title node index out of range");
         }
         if (!node) {
-            throw std::invalid_argument("Title node cannot be null");
+            throw docraft::exception::InvalidInputException("Title node cannot be null");
         }
         title_nodes_[index] = node;
     }
 
     void DocraftTable::set_htitle_node(int index, const std::shared_ptr<DocraftText> &node) {
         if (index < 0 || std::cmp_greater_equal(index, htitle_nodes_.size())) {
-            throw std::out_of_range("Header title node index out of range");
+            throw docraft::exception::InvalidInputException("Header title node index out of range");
         }
         if (!node) {
-            throw std::invalid_argument("Header title node cannot be null");
+            throw docraft::exception::InvalidInputException("Header title node cannot be null");
         }
         htitle_nodes_[index] = node;
     }
 
-    void DocraftTable::set_title_nodes(const std::vector<std::shared_ptr<DocraftText>> &nodes) {
+    void DocraftTable::set_title_nodes(const std::vector<std::shared_ptr<DocraftText> > &nodes) {
         if (nodes.size() != titles_.size()) {
-            throw std::invalid_argument("Number of title nodes must be equal to number of titles");
+            throw docraft::exception::InvalidInputException("Number of title nodes must be equal to number of titles");
         }
         title_nodes_ = nodes;
         title_backgrounds_.resize(nodes.size());
+        if (orientation_ == LayoutOrientation::kVertical) {
+            set_rows(static_cast<int>(title_nodes_.size()));
+        }
     }
 
     void DocraftTable::set_htitle_nodes(const std::vector<std::shared_ptr<DocraftText>> &nodes) {
@@ -386,7 +413,7 @@ namespace docraft::model {
 
     void DocraftTable::set_row_background(int index, const DocraftColor &background) {
         if (index < 0 || std::cmp_greater_equal(index, row_backgrounds_.size())) {
-            throw std::out_of_range("Row background index out of range");
+            throw docraft::exception::InvalidInputException("Row background index out of range");
         }
         row_backgrounds_[index] = background;
     }
@@ -413,14 +440,14 @@ namespace docraft::model {
 
     const std::string &DocraftTable::model_template() const {
         if (!model_template_.has_value()) {
-            throw std::runtime_error("docraft/model template not set");
+            throw docraft::exception::TemplateException("docraft/model template not set");
         }
         return *model_template_;
     }
 
     const std::string &DocraftTable::header_template() const {
         if (!header_template_.has_value()) {
-            throw std::runtime_error("Header template not set");
+            throw docraft::exception::TemplateException("Header template not set");
         }
         return *header_template_;
     }
@@ -445,14 +472,14 @@ namespace docraft::model {
 
             const auto matrix = parse_json_matrix(json_str);
             if (matrix.empty()) {
-                throw std::invalid_argument("Table model must be a non-empty JSON matrix of strings");
+                throw docraft::exception::InvalidInputException("Table model must be a non-empty JSON matrix of strings");
             }
 
             const std::size_t cols = matrix.front().size();
             const std::size_t rows = matrix.size();
 
             if (!titles_.empty() && titles_.size() != cols) {
-                throw std::invalid_argument("Table model columns do not match header size");
+                throw docraft::exception::InvalidInputException("Table model columns do not match header size");
             }
 
             orientation_ = LayoutOrientation::kHorizontal;
@@ -481,10 +508,10 @@ namespace docraft::model {
     void DocraftTable::apply_json_header(const std::string &json_str) {
         const auto header = parse_json_header(json_str);
         if (header.empty()) {
-            throw std::invalid_argument("Table header must be a non-empty JSON array of strings");
+            throw docraft::exception::InvalidInputException("Table header must be a non-empty JSON array of strings");
         }
         if (content_cols_ > 0 && static_cast<std::size_t>(content_cols_) != header.size()) {
-            throw std::invalid_argument("Table header size does not match model columns");
+            throw docraft::exception::InvalidInputException("Table header size does not match model columns");
         }
 
         orientation_ = LayoutOrientation::kHorizontal;
@@ -509,7 +536,7 @@ namespace docraft::model {
     }
 
     std::shared_ptr<DocraftTable> DocraftTable::split_after_row(std::size_t rows_to_keep, bool repeat_header) {
-        if (rows_to_keep >= static_cast<std::size_t>(rows_)) {
+        if (std::cmp_greater_equal(rows_to_keep, rows_)) {
             return nullptr;
         }
 
@@ -524,10 +551,10 @@ namespace docraft::model {
                 htitle_nodes_, htitle_backgrounds_, remainder->htitle_nodes_, remainder->htitle_backgrounds_);
         }
 
-        const std::size_t total_rows = static_cast<std::size_t>(rows_);
+        const auto total_rows = static_cast<std::size_t>(rows_);
         const std::size_t keep_rows = std::min(rows_to_keep, total_rows);
         const std::size_t remain_rows = total_rows - keep_rows;
-        const std::size_t value_cols = static_cast<std::size_t>(content_cols());
+        const auto value_cols = static_cast<std::size_t>(content_cols());
         const std::size_t content_split_index = keep_rows * value_cols;
 
         remainder->content_nodes_ = split_tail(content_nodes_, content_split_index);
@@ -603,7 +630,16 @@ namespace docraft::model {
         return static_cast<int>(column_weights_.size()) - 1;
     }
 
-    const std::vector<std::shared_ptr<DocraftText>> &DocraftTable::title_nodes() const {
+    const std::vector<std::shared_ptr<DocraftNode> > DocraftTable::title_nodes() const {
+        std::vector<std::shared_ptr<DocraftNode> > result;
+        result.reserve(title_nodes_.size());
+        for (const auto &title_node: title_nodes_) {
+            result.emplace_back(title_node);
+        }
+        return result;
+    }
+
+    const std::vector<std::shared_ptr<DocraftText> > &DocraftTable::title_text_nodes() const {
         return title_nodes_;
     }
 
@@ -677,7 +713,7 @@ namespace docraft::model {
                 }
             }
         } catch (const nlohmann::json::parse_error &) {
-            throw std::invalid_argument("Table model must be a JSON array of arrays or a JSON array of objects");
+            throw docraft::exception::InvalidInputException("Table model must be a JSON array of arrays or a JSON array of objects");
         }
         return DocraftModelType::kNone;
     }

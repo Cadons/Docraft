@@ -47,7 +47,15 @@ namespace docraft {
         /**
          * @brief Destructor.
          */
-        ~DocraftCursor();
+        ~DocraftCursor() = default;
+
+        DocraftCursor(const DocraftCursor &) = default;
+
+        DocraftCursor &operator=(const DocraftCursor &) = default;
+
+        DocraftCursor(DocraftCursor &&) noexcept = default;
+
+        DocraftCursor &operator=(DocraftCursor &&) noexcept = default;
 
         /**
          * @brief Returns the current x position.
@@ -115,6 +123,6 @@ namespace docraft {
 
     private:
         model::DocraftPoint point_;
-        std::stack<DocraftCursorDirection> direction_stack_=std::stack<DocraftCursorDirection>();
+        std::stack<DocraftCursorDirection> direction_stack_;
     };
 } // docraft

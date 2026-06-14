@@ -19,6 +19,8 @@
 #include <iostream>
 #include <ostream>
 
+#include "docraft/exception/docraft_exceptions.h"
+
 namespace docraft::model {
 
     int DocraftNode::next_id_ = 0;
@@ -90,7 +92,7 @@ namespace docraft::model {
         if (!context) {
             return true;
         }
-        const auto &page_backend = context->page_backend();
+        const auto &page_backend = context->rendering().page_rendering();
         if (!page_backend) {
             return true;
         }
@@ -120,13 +122,13 @@ namespace docraft::model {
 
     void DocraftNode::set_weight(float weight) {
         if (weight < 0) {
-            throw std::invalid_argument("Weight must be positive");
+            throw docraft::exception::InvalidInputException("Weight must be positive");
         }
         if (weight == 0) {
-            throw std::invalid_argument("Weight cannot be zero");
+            throw docraft::exception::InvalidInputException("Weight cannot be zero");
         }
         if (weight > 1.0F) {
-            throw std::invalid_argument("Weight must be less than or equal to one");
+            throw docraft::exception::InvalidInputException("Weight must be less than or equal to one");
         }
         weight_ = weight;
     }

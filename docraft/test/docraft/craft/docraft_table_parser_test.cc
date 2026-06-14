@@ -2,6 +2,7 @@
 #include <pugixml.hpp>
 
 #include "docraft/craft/parser/docraft_parser.h"
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/model/docraft_table.h"
 
 namespace {
@@ -86,7 +87,7 @@ TEST(DocraftTableParserTest, RejectsLegacyTitleTagInTableHeader) {
     ASSERT_TRUE(doc.load_string(xml));
 
     docraft::craft::parser::DocraftTableParser parser;
-    EXPECT_THROW(parser.parse(doc.child("Table")), std::invalid_argument);
+    EXPECT_THROW(parser.parse(doc.child("Table")), docraft::exception::InvalidInputException);
 }
 
 TEST(DocraftTableParserTest, ParsesVerticalTableWithHeaderRow) {
@@ -185,7 +186,7 @@ TEST(DocraftTableParserTest, RejectsInvalidJsonModelAttribute) {
     ASSERT_TRUE(doc.load_string(xml));
 
     docraft::craft::parser::DocraftTableParser parser;
-    EXPECT_THROW(parser.parse(doc.child("Table")), std::invalid_argument);
+    EXPECT_THROW(parser.parse(doc.child("Table")), docraft::exception::InvalidInputException);
 }
 
 TEST(DocraftTableParserTest, AcceptsTemplateModelAttribute) {
@@ -216,9 +217,9 @@ TEST(DocraftTableParserTest, AcceptsJsonHeaderAttribute) {
     auto node = parser.parse(doc.child("Table"));
     auto table = std::dynamic_pointer_cast<docraft::model::DocraftTable>(node);
     ASSERT_TRUE(table);
-    ASSERT_EQ(table->title_nodes().size(), 2U);
-    EXPECT_EQ(table->title_nodes()[0]->text(), "H1");
-    EXPECT_EQ(table->title_nodes()[1]->text(), "H2");
+    ASSERT_EQ(table->title_text_nodes().size(), 2U);
+    EXPECT_EQ(table->title_text_nodes()[0]->text(), "H1");
+    EXPECT_EQ(table->title_text_nodes()[1]->text(), "H2");
 }
 
 TEST(DocraftTableParserTest, ParsesCellWidthAttribute) {

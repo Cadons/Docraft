@@ -19,6 +19,8 @@
 #include <algorithm>
 #include <ostream>
 
+#include "docraft/exception/docraft_exceptions.h"
+
 namespace docraft::model {
     DocraftChildrenContainerNode::DocraftChildrenContainerNode(DocraftChildrenContainerNode *node)
         : DocraftNode(node) {
@@ -29,7 +31,7 @@ namespace docraft::model {
 
     void DocraftChildrenContainerNode::add_child(const std::shared_ptr<DocraftNode> &child) {
         if (!child) {
-            throw std::invalid_argument("Child node cannot be null");
+            throw docraft::exception::InvalidInputException("Child node cannot be null");
         }
         children_.emplace_back(child);
         on_child_added();
@@ -37,7 +39,7 @@ namespace docraft::model {
 
     void DocraftChildrenContainerNode::insert_child(std::size_t index, const std::shared_ptr<DocraftNode> &child) {
         if (!child) {
-            throw std::invalid_argument("Child node cannot be null");
+            throw docraft::exception::InvalidInputException("Child node cannot be null");
         }
         if (index > children_.size()) {
             index = children_.size();

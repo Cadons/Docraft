@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main, dev ]
   pull_request:
-    branches: [ main, develop, dev ]
+    branches: [ main, dev ]
 
 jobs:
   build-linux:
@@ -221,8 +221,19 @@ jobs:
       - name: Configure CMake
         run: |
           $WarningPreference = "SilentlyContinue"
+          $capabilities = cmake -E capabilities | ConvertFrom-Json
+          $vsGenerator = $capabilities.generators |
+            Where-Object { $_.name -like 'Visual Studio *' } |
+            Sort-Object { [int]([regex]::Match($_.name, 'Visual Studio\s+(\d+)').Groups[1].Value) } -Descending |
+            Select-Object -First 1 -ExpandProperty name
+
+          if (-not $vsGenerator) {
+            throw "No Visual Studio CMake generator found on this runner."
+          }
+
+          Write-Host "Using CMake generator: $vsGenerator"
           cmake -S . -B build `
-            -G "Visual Studio 17 2022" `
+            -G "$vsGenerator" `
             -A x64 `
             -DCMAKE_BUILD_TYPE=Release `
             -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" `

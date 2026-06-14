@@ -6,6 +6,7 @@
 #include <sstream>
 
 #include "docraft/docraft_document.h"
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/model/docraft_body.h"
 #include "docraft/model/docraft_list.h"
 #include "docraft/model/docraft_rectangle.h"
@@ -178,18 +179,18 @@ namespace docraft::test {
     TEST(DocraftDocumentTest, SettingDocumentTitleUpdatesMetadataTitle) {
         DocraftDocument document("Initial Title");
 
-        document.set_document_title("Updated Title");
+        document.edit_config().set_document_title("Updated Title");
 
-        ASSERT_TRUE(document.document_metadata().title().has_value());
-        EXPECT_EQ(document.document_metadata().title().value(), "Updated Title");
+        ASSERT_TRUE(document.config().document_metadata().title().has_value());
+        EXPECT_EQ(document.config().document_metadata().title().value(), "Updated Title");
     }
 
     TEST(DocraftDocumentTest, SettingDocumentPathUpdatesOutputDirectory) {
         DocraftDocument document("Initial Title");
 
-        document.set_document_path("exports/reports");
+        document.edit_config().set_document_path("exports/reports");
 
-        EXPECT_EQ(document.document_path(), "exports/reports");
+        EXPECT_EQ(document.config().document_path(), "exports/reports");
     }
 
     TEST(DocraftDocumentTest, SettingMetadataWithTitleUpdatesDocumentTitle) {
@@ -198,11 +199,11 @@ namespace docraft::test {
         metadata.set_title("Metadata Title");
         metadata.set_author("Metadata Author");
 
-        document.set_document_metadata(metadata);
+        document.edit_config().set_document_metadata(metadata);
 
-        EXPECT_EQ(document.document_title(), "Metadata Title");
-        ASSERT_TRUE(document.document_metadata().author().has_value());
-        EXPECT_EQ(document.document_metadata().author().value(), "Metadata Author");
+        EXPECT_EQ(document.config().document_title(), "Metadata Title");
+        ASSERT_TRUE(document.config().document_metadata().author().has_value());
+        EXPECT_EQ(document.config().document_metadata().author().value(), "Metadata Author");
     }
 
     TEST(DocraftDocumentTest, AutoKeywordsCanBeEnabledFromCpp) {
@@ -212,19 +213,19 @@ namespace docraft::test {
 
         DocraftDocumentMetadata metadata;
         metadata.set_keywords("manuale");
-        document.set_document_metadata(metadata);
+        document.edit_config().set_document_metadata(metadata);
 
-        document.set_auto_keywords_config({
+        document.edit_config().set_auto_keywords_config({
             .max_keywords = 3,
             .min_length = 4,
             .stop_word_languages = {"it", "en"}
         });
-        document.enable_auto_keywords();
+        document.edit_config().enable_auto_keywords();
         document.refresh_auto_keywords();
 
-        EXPECT_TRUE(document.auto_keywords_enabled());
-        ASSERT_TRUE(document.document_metadata().keywords().has_value());
-        EXPECT_EQ(document.document_metadata().keywords().value(), "manuale, engine, parser, metadata");
+        EXPECT_TRUE(document.config().auto_keywords_enabled());
+        ASSERT_TRUE(document.config().document_metadata().keywords().has_value());
+        EXPECT_EQ(document.config().document_metadata().keywords().value(), "manuale, engine, parser, metadata");
     }
 
     TEST(DocraftDocumentTest, RenderWritesMetadataSetFromCode) {
@@ -243,10 +244,10 @@ namespace docraft::test {
         metadata.set_author("Docraft Author From Code");
         metadata.set_subject("Docraft Subject From Code");
         metadata.set_keywords("alpha,beta");
-        document.set_document_metadata(metadata);
+        document.edit_config().set_document_metadata(metadata);
 
-        const std::filesystem::path output_path = document.document_title() + ".pdf";
-        EXPECT_EQ(document.document_title(), "Docraft Title From Code");
+        const std::filesystem::path output_path = document.config().document_title() + ".pdf";
+        EXPECT_EQ(document.config().document_title(), "Docraft Title From Code");
         document.render();
 
         ASSERT_TRUE(std::filesystem::exists(output_path));
@@ -273,10 +274,29 @@ namespace docraft::test {
                 .extension = ".mock"
             });
 
-        document.set_backend(mock_backend);
+        document.set_backend_providers_factory(
+            std::make_shared<docraft::test::utils::MockBackendProvidersFactory>(mock_backend));
         document.render();
 
         EXPECT_EQ(mock_backend->last_saved_path(), "custom_backend_test.mock");
+    }
+
+    TEST(DocraftDocumentTest, RenderUsesBackendProvidersFactorySetOnDocument) {
+        DocraftDocument document("factory_backend_test");
+        auto body = std::make_shared<model::DocraftBody>();
+        body->add_child(std::make_shared<model::DocraftText>("Simple text"));
+        document.add_node(body);
+
+        auto mock_backend = std::make_shared<docraft::test::utils::MockRenderingBackend>(
+            docraft::test::utils::MockRenderingBackend::Config{
+                .extension = ".factory"
+            });
+
+        document.set_backend_providers_factory(
+            std::make_shared<docraft::test::utils::MockBackendProvidersFactory>(mock_backend));
+        document.render();
+
+        EXPECT_EQ(mock_backend->last_saved_path(), "factory_backend_test.factory");
     }
 
     TEST(DocraftDocumentTest, RenderUsesDocumentPathWhenSet) {
@@ -290,9 +310,9 @@ namespace docraft::test {
                 .extension = ".mock"
             });
 
-        document.set_backend(mock_backend);
-        document.set_document_path("exports/reports");
-        document.set_document_title("monthly_summary");
+        document.set_backend_providers_factory(std::make_shared<docraft::test::utils::MockBackendProvidersFactory>(mock_backend));
+        document.edit_config().set_document_path("exports/reports");
+        document.edit_config().set_document_title("monthly_summary");
         document.render();
 
         EXPECT_EQ(
@@ -315,13 +335,46 @@ namespace docraft::test {
                 .extension = ".mock"
             });
 
-        document.set_backend(mock_backend);
-        document.set_backend(nullptr);
+        document.set_backend_providers_factory(
+            std::make_shared<docraft::test::utils::MockBackendProvidersFactory>(mock_backend));
+        document.set_backend_providers_factory(nullptr);
         document.render();
 
         EXPECT_TRUE(mock_backend->last_saved_path().empty());
         EXPECT_TRUE(std::filesystem::exists(output_path));
 
         std::filesystem::remove(output_path, ec);
+    }
+
+    TEST(DocraftDocumentTest, MockBackendCapabilityMatrixReturnsNullWhenDisabled) {
+        auto mock_backend = std::make_shared<docraft::test::utils::MockRenderingBackend>(
+            docraft::test::utils::MockRenderingBackend::Config{
+                .supports_line_backend = false,
+                .supports_text_backend = false,
+                .supports_shape_backend = true,
+                .supports_image_backend = false,
+                .supports_page_backend = false,
+                .supports_output_backend = true,
+                .supports_font_backend = true,
+                .supports_metadata_backend = true
+            });
+
+        EXPECT_EQ(mock_backend->line_rendering(), nullptr);
+        EXPECT_EQ(mock_backend->text_rendering(), nullptr);
+        EXPECT_EQ(mock_backend->image_rendering(), nullptr);
+        EXPECT_EQ(mock_backend->page_rendering(), nullptr);
+        ASSERT_NE(mock_backend->shape_rendering(), nullptr);
+    }
+
+    TEST(DocraftDocumentTest, MockBackendEnforcesTextScopeWhenRequired) {
+        auto mock_backend = std::make_shared<docraft::test::utils::MockRenderingBackend>(
+            docraft::test::utils::MockRenderingBackend::Config{
+                .require_text_scope = true
+            });
+
+        EXPECT_THROW(mock_backend->draw_text("hello", 1.0F, 1.0F), docraft::exception::BackendStateException);
+        EXPECT_NO_THROW(mock_backend->begin_text());
+        EXPECT_NO_THROW(mock_backend->draw_text("hello", 1.0F, 1.0F));
+        EXPECT_NO_THROW(mock_backend->end_text());
     }
 } // namespace docraft::test

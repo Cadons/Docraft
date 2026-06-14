@@ -1,0 +1,78 @@
+/*
+ * Copyright 2026 Matteo Cadoni (https://github.com/cadons)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#pragma once
+
+#include "docraft/backend/docraft_text_rendering_backend.h"
+#include "docraft/backend/pdf/docraft_haru_shared_state.h"
+
+#include <memory>
+
+namespace docraft::backend::pdf {
+    /**
+     * @brief Haru implementation of text rendering operations.
+     */
+    class DocraftHaruTextBackend : public docraft::backend::IDocraftTextRenderingBackend {
+    public:
+        /**
+         * @brief Creates a text backend bound to a Haru document owner.
+         *
+         * LIFETIME: The shared state must have a registered page operations provider.
+         * This is guaranteed if the device is used through DocraftHaruBackend.
+         */
+        explicit DocraftHaruTextBackend(const std::shared_ptr<DocraftHaruSharedState> &state);
+
+        /**
+         * @brief Begins a text object on the current page.
+         */
+        void begin_text() const override;
+
+        /**
+         * @brief Ends the current text object on the current page.
+         */
+        void end_text() const override;
+
+        /**
+         * @brief Draws plain text at the given page coordinates.
+         */
+        void draw_text(const std::string &text, float x, float y) const override;
+
+        /**
+         * @brief Sets the text fill color for subsequent text drawing.
+         */
+        void set_text_color(float r, float g, float b) const override;
+
+        /**
+         * @brief Draws text using an explicit text transformation matrix.
+         */
+        void draw_text_matrix(const std::string &text,
+                              float scale_x,
+                              float skew_x,
+                              float skew_y,
+                              float scale_y,
+                              float translate_x,
+                              float translate_y) const override;
+
+        /**
+         * @brief Measures the width of a text string using current font settings.
+         */
+        float measure_text_width(const std::string &text) const override;
+
+    private:
+        std::shared_ptr<DocraftHaruSharedState> state_;
+    };
+} // namespace docraft::backend::pdf
+

@@ -47,8 +47,8 @@ namespace docraft::utils {
             }
             registry_.insert({name, {data.release(), static_cast<size_t>(std::filesystem::file_size(file_path))}});
             return true;
-        } catch (const std::exception &e) {
-            std::cerr << "Error registering font from file: " << e.what() << std::endl;
+        } catch (...) {
+            std::cerr << "Error registering font from file." << std::endl;
             return false;
         }
     }

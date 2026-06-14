@@ -21,6 +21,7 @@
 #include "docraft/craft/docraft_craft_language_tokens.h"
 #include "docraft/craft/parser/docraft_parser_helpers.h"
 #include "docraft/craft/parser/docraft_shape_parser_utils.h"
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/model/docraft_triangle.h"
 
 namespace docraft::craft::parser {
@@ -43,7 +44,7 @@ namespace docraft::craft::parser {
                                                      elements::triangle::attribute::kPoints.data());
         if (!points.empty()) {
             if (points.size() != 3U) {
-                throw std::invalid_argument("Triangle requires exactly 3 points");
+                throw docraft::exception::InvalidInputException("Triangle requires exactly 3 points");
             }
             triangle->set_points(points);
         }

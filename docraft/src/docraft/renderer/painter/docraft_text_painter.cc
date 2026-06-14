@@ -30,7 +30,7 @@ namespace docraft::renderer::painter {
 
     void DocraftTextPainter::render_justified(const std::shared_ptr<DocraftDocumentContext> &context,
                                               const std::string &text) {
-        auto backend = context->text_backend();
+        auto backend = context->rendering().text_rendering();
 
         // Use the computed line width as the target for justification.
         float max_width = current_line_->width();
@@ -65,7 +65,7 @@ namespace docraft::renderer::painter {
 
     std::pair<std::pair<float, float>, std::pair<float, float> > DocraftTextPainter::render_text(
         const std::shared_ptr<DocraftDocumentContext> &context, const std::string &text) {
-        auto backend = context->text_backend();
+        auto backend = context->rendering().text_rendering();
 
         //begin drawing
         backend->begin_text();
@@ -95,7 +95,14 @@ namespace docraft::renderer::painter {
 
     void DocraftTextPainter::
     draw_underline(const std::shared_ptr<DocraftDocumentContext> &context, const std::string &text) {
-        auto backend = context->text_backend();
+        const auto text_backend = context->rendering().text_rendering();
+        if (!text_backend) {
+            return;
+        }
+        auto line_backend = context->rendering().line_rendering();
+        if (!line_backend) {
+            return;
+        }
 
         // 1. Draw the text normally first
         auto result = draw_text(context, text);
@@ -106,17 +113,19 @@ namespace docraft::renderer::painter {
 
         // 3. Draw the line
         auto rgb = current_line_->color().toRGB();
-        backend->set_stroke_color(rgb.r, rgb.g, rgb.b);
-        backend->set_line_width(thickness);
-        backend->draw_line(result.first.first, underline_top, result.second.first, underline_top);
+        line_backend->set_stroke_color(rgb.r, rgb.g, rgb.b);
+        line_backend->set_line_width(thickness);
+        line_backend->draw_line(result.first.first, underline_top, result.second.first, underline_top);
     }
 
     void DocraftTextPainter::draw(const std::shared_ptr<DocraftDocumentContext> &context) {
+        auto font_applier = context->typography().font_applier();
+        auto text_backend = context->rendering().text_rendering();
         for (const auto &line: text_node_.lines()) {
             current_line_ = line;
-             context->font_applier()->apply_font(current_line_);
+            font_applier->apply_font(current_line_);
             auto rgb = current_line_->color().toRGB();
-            context->text_backend()->set_text_color(rgb.r, rgb.g, rgb.b);
+            text_backend->set_text_color(rgb.r, rgb.g, rgb.b);
             if (line->underline()) {
                 draw_underline(context, line->text());
             } else {

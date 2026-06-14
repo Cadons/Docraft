@@ -21,6 +21,7 @@
 #include <ostream>
 #include <utility>
 
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/model/docraft_clone_utils.h"
 #include "docraft/utils/docraft_logger.h"
 
@@ -72,7 +73,7 @@ namespace docraft::model {
     }
     void DocraftLayout::set_weight_for_child(const int index, float weight) const {
         if (index < 0 || std::cmp_greater_equal(index ,children().size())) {
-            throw std::out_of_range("Child index out of range");
+            throw docraft::exception::InvalidInputException("Child index out of range");
         }
         children()[index]->set_weight(weight);
     }

@@ -19,7 +19,6 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -28,6 +27,7 @@
 
 #include "docraft/craft/docraft_craft_language_parser.h"
 #include "docraft/docraft_document.h"
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/templating/docraft_template_engine.h"
 #include "nlohmann/json.hpp"
 #include "docraft/utils/docraft_logger.h"
@@ -146,20 +146,21 @@ namespace {
      * @brief Parses a JSON file into an unordered map.
      * @param json_file Path to the JSON file.
      * @return An unordered map where keys are normalized (lowercase) and values are pairs of original key and value.
-     * @throws std::runtime_error if the file cannot be opened or if JSON is invalid.
+     * @throws docraft::exception::CannotOpenFileException if the file cannot be opened.
+     * @throws docraft::exception::InvalidJSONException if JSON is invalid.
      */
     std::unordered_map<std::string, std::pair<std::string, std::string> > parse_json_file(
         const std::filesystem::path &json_file) {
         std::ifstream input(json_file);
         if (!input) {
-            throw std::runtime_error("Unable to open JSON file: " + json_file.string());
+            throw docraft::exception::CannotOpenFileException("Unable to open JSON file: " + json_file.string());
         }
 
         try {
             json json_obj = json::parse(input);
             return flatten_json(json_obj);
         } catch (const json::parse_error &ex) {
-            throw std::runtime_error(
+            throw docraft::exception::InvalidJSONException(
                 "Invalid JSON in file '" + json_file.string() +
                 "': " + std::string(ex.what()));
         }
@@ -183,7 +184,8 @@ namespace {
      * @param argc Argument count.
      * @param argv Argument vector.
      * @return Parsed command-line options.
-     * @throws std::runtime_error if arguments are invalid or missing.
+     * @throws docraft::exception::ConfigurationException if arguments are invalid.
+     * @throws docraft::exception::MissingArgumentException if a required value is missing.
      */
     CliOptions parse_args(int argc, char *argv[]) {
         CliOptions options;
@@ -204,7 +206,7 @@ namespace {
 
             if (arg == "-d" || arg == "--data") {
                 if (i + 1 >= argc) {
-                    throw std::runtime_error("Missing file path after " + arg);
+                    throw docraft::exception::MissingArgumentException("Missing file path after " + arg);
                 }
                 options.data_file = argv[++i]; //get the next argument as data file path
                 options.has_data_file = true;
@@ -212,14 +214,14 @@ namespace {
             }
 
             if (!arg.empty() && arg.front() == '-') {
-                throw std::runtime_error("Unknown option: " + arg);
+                throw docraft::exception::ConfigurationException("Unknown option: " + arg);
             }
 
             positional_args.push_back(arg); //collect positional arguments
         }
 
         if (positional_args.size() != 2) {
-            throw std::runtime_error("Expected required arguments: <file.craft> <output.pdf>");
+            throw docraft::exception::ConfigurationException("Expected required arguments: <file.craft> <output.pdf>");
         }
 
         options.craft_file = positional_args[0]; //first positional argument is the input .craft file, always
@@ -227,10 +229,10 @@ namespace {
 
         // Validate input and output file paths
         if (!has_craft_extension(options.craft_file)) {
-            throw std::runtime_error("Input file must have .craft extension");
+            throw docraft::exception::ConfigurationException("Input file must have .craft extension");
         }
         if (options.output_file.filename().empty()) {
-            throw std::runtime_error("Output destination must include a filename");
+            throw docraft::exception::ConfigurationException("Output destination must include a filename");
         }
         // If output file has no extension, add .pdf. If it has an extension, ensure it's .pdf (case-insensitive).
         if (!options.output_file.has_extension()) {
@@ -242,7 +244,7 @@ namespace {
                 return static_cast<char>(std::tolower(ch));
             });
             if (extension != ".pdf") {
-                throw std::runtime_error("Output file extension must be .pdf");
+                throw docraft::exception::ConfigurationException("Output file extension must be .pdf");
             }
         }
 
@@ -253,13 +255,14 @@ namespace {
      * @brief Parses a mapping file with 'key: value' entries into an unordered map.
      * @param mapping_file Path to the mapping file.
      * @return An unordered map where keys are normalized (lowercase) and values are pairs of original key and value.
-     * @throws std::runtime_error if the file cannot be opened or if any line is invalid.
+     * @throws docraft::exception::CannotOpenFileException if the file cannot be opened.
+     * @throws docraft::exception::DataFormatException if a line is invalid.
      */
     std::unordered_map<std::string, std::pair<std::string, std::string> > parse_data_mapping_file(
         const std::filesystem::path &mapping_file) {
         std::ifstream input(mapping_file);
         if (!input) {
-            throw std::runtime_error("Unable to open mapping file: " + mapping_file.string());
+            throw docraft::exception::CannotOpenFileException("Unable to open mapping file: " + mapping_file.string());
         }
 
         std::unordered_map<std::string, std::pair<std::string, std::string> > mappings;
@@ -281,7 +284,7 @@ namespace {
 
             const std::size_t separator = trimmed.find(':');
             if (separator == std::string::npos) {
-                throw std::runtime_error(
+                throw docraft::exception::DataFormatException(
                     "Invalid mapping at line " + std::to_string(line_number) +
                     " in file '" + mapping_file.string() + "': expected 'key: value'");
             }
@@ -289,7 +292,7 @@ namespace {
             std::string key = trim_copy(trimmed.substr(0, separator));
             std::string value = trim_copy(trimmed.substr(separator + 1));
             if (key.empty()) {
-                throw std::runtime_error(
+                throw docraft::exception::DataFormatException(
                     "Invalid mapping at line " + std::to_string(line_number) +
                     " in file '" + mapping_file.string() + "': empty key");
             }
@@ -319,7 +322,8 @@ int main(int argc, char *argv[]) {
 
         const CliOptions options = parse_args(argc, argv);
         if (!std::filesystem::exists(options.craft_file)) {
-            throw std::runtime_error("docraft/craft file not found: " + options.craft_file.string());
+            throw docraft::exception::FileNotFoundException(
+                "docraft/craft file not found: " + options.craft_file.string());
         }
 
         docraft::craft::DocraftCraftLanguageParser parser;
@@ -327,16 +331,16 @@ int main(int argc, char *argv[]) {
 
         auto document = parser.edit_document();
         if (!document) {
-            throw std::runtime_error("Unable to build document from .craft file");
+            throw docraft::exception::RenderingFailedException("Unable to build document from .craft file");
         }
 
         const std::filesystem::path output_parent = options.output_file.parent_path();
-        document->set_document_path(output_parent.empty() ? "." : output_parent.string());
-        document->set_document_title(options.output_file.stem().string());
+        document->edit_config().set_document_path(output_parent.empty() ? "." : output_parent.string());
+        document->edit_config().set_document_title(options.output_file.stem().string());
 
         if (options.has_data_file) {
             if (!std::filesystem::exists(options.data_file)) {
-                throw std::runtime_error("Data file not found: " + options.data_file.string());
+                throw docraft::exception::FileNotFoundException("Data file not found: " + options.data_file.string());
             }
 
             std::unordered_map<std::string, std::pair<std::string, std::string> > mappings;
@@ -354,10 +358,10 @@ int main(int argc, char *argv[]) {
             for (const auto &[_, mapping]: mappings) {
                 template_engine->add_template_variable(mapping.first, mapping.second);
             }
-            document->set_document_template_engine(template_engine);
+            document->edit_config().set_document_template_engine(template_engine);
         }
 
-        std::filesystem::create_directories(document->document_path());//ensure output directory exists
+        std::filesystem::create_directories(document->config().document_path()); //ensure output directory exists
         LOG_INFO("Rendering document to PDF...");
         auto timer = std::chrono::high_resolution_clock::now();
         document->render();//render the document to PDF
@@ -366,7 +370,7 @@ int main(int argc, char *argv[]) {
         LOG_INFO("Document rendered in " + std::to_string(duration) + " ms");
         LOG_INFO("Generated: " + options.output_file.string());
         return 0;
-    } catch (const std::exception &ex) {
+    } catch (const docraft::exception::DocraftException &ex) {
         LOG_ERROR("Error: " + std::string(ex.what()));
         LOG_INFO("Use -h or --help for usage information.");
         return 1;

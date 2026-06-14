@@ -11,6 +11,7 @@ Explore the library's modules below to understand how to build, layout, and rend
 
    document
    context
+   exceptions
    model_nodes
    model_shapes
    model_containers
@@ -42,6 +43,13 @@ Core Components
 
       Runtime context and cursor management — tracks the current rendering position,
       page boundaries, and layout state.
+
+   .. grid-item-card:: ⚠️ Exceptions
+      :link: exceptions
+      :link-type: doc
+
+      Domain-driven exception hierarchy used across parser, layout, rendering,
+      backend, and templating subsystems.
 
 Document Model
 --------------

@@ -18,7 +18,8 @@ namespace docraft::test::renderer {
                 .extension = ".pdf",
                 .can_use_font = true
             });
-        auto context = std::make_shared<DocraftDocumentContext>(backend);
+        auto context = std::make_shared<DocraftDocumentContext>(
+            std::make_shared<docraft::test::utils::MockBackendProvidersFactory>(backend));
         context->set_renderer(std::make_shared<docraft::renderer::DocraftPDFRenderer>(context));
 
         model::DocraftHeader header;
@@ -34,6 +35,6 @@ namespace docraft::test::renderer {
 
         header.draw(context);
 
-        EXPECT_EQ(backend->line_count, 4);
+        EXPECT_EQ(backend->line_count(), 4);
     }
 } // namespace docraft::test::renderer

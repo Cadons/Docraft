@@ -16,9 +16,8 @@
 
 #include "docraft/renderer/painter/docraft_image_painter.h"
 
-#include <stdexcept>
-
 #include "docraft/backend/docraft_image_rendering_backend.h"
+#include "docraft/exception/docraft_exceptions.h"
 
 namespace docraft::renderer::painter {
     DocraftImagePainter::DocraftImagePainter(const model::DocraftImage &image_node) : image_node_(image_node) {
@@ -26,7 +25,7 @@ namespace docraft::renderer::painter {
 
     void DocraftImagePainter::draw(const std::shared_ptr<DocraftDocumentContext> &context) {
         if (!context) return;
-        auto backend = context->image_backend();
+        auto backend = context->rendering().image_rendering();
         if (!backend) return;
 
         if (!image_node_.visible()) {
@@ -52,7 +51,7 @@ namespace docraft::renderer::painter {
                 break;
             case model::ImageFormat::kRaw:
                 if (image_node_.raw_data().empty()) {
-                    throw std::runtime_error("Raw image data is empty");
+                    throw docraft::exception::InvalidInputException("Raw image data is empty");
                 }
                 backend->draw_raw_rgb_image_from_memory(
                     image_node_.raw_data().data(),
@@ -64,7 +63,7 @@ namespace docraft::renderer::painter {
                     image_node_.height());
                 break;
             default:
-                throw std::runtime_error("Unsupported image format");
+                throw docraft::exception::RenderingFailedException("Unsupported image format");
         }
     }
 } // docraft

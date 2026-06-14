@@ -17,6 +17,7 @@
 #include "docraft/craft/parser/docraft_parser.h"
 
 #include "docraft/craft/parser/docraft_parser_helpers.h"
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/model/docraft_list.h"
 
 namespace docraft::craft::parser {
@@ -30,7 +31,7 @@ namespace docraft::craft::parser {
             } else if (style_str == std::string{elements::list::style::kRoman}) {
                 list_node->set_ordered_style(model::OrderedListStyle::kRoman);
             } else {
-                throw std::invalid_argument("Invalid list style: " + style_str);
+                throw docraft::exception::InvalidInputException("Invalid list style: " + style_str);
             }
         }
 
@@ -52,7 +53,7 @@ namespace docraft::craft::parser {
             } else if (dot_str == std::string{elements::ulist::dot::kBox}) {
                 list_node->set_unordered_dot(model::UnorderedListDot::kBox);
             } else {
-                throw std::invalid_argument("Invalid unordered list dot: " + dot_str);
+                throw docraft::exception::InvalidInputException("Invalid unordered list dot: " + dot_str);
             }
         }
 

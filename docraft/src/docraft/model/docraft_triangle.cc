@@ -16,8 +16,7 @@
 
 #include "docraft/model/docraft_triangle.h"
 
-#include <stdexcept>
-
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/renderer/docraft_renderer.h"
 #include "docraft/utils/docraft_logger.h"
 
@@ -29,7 +28,7 @@ namespace docraft::model {
 
     void DocraftTriangle::set_points(const std::vector<DocraftPoint> &points) {
         if (points.size() != 3U) {
-            throw std::invalid_argument("Triangle requires exactly 3 points");
+            throw docraft::exception::InvalidInputException("Triangle requires exactly 3 points");
         }
         points_ = points;
     }

@@ -38,7 +38,7 @@ namespace docraft::craft::parser::detail {
      * Supports hex colors (e.g., \#RRGGBB or \#RRGGBBAA) and named colors (e.g., "red", "blue").
      * @param color_attr XML attribute containing the color value.
      * @return A DocraftColor object representing the parsed color.
-     * @throws std::invalid_argument if the color string is not in a valid format or is an unsupported named color.
+     * @throws docraft::exception::InvalidInputException if the color string is not in a valid format or is an unsupported named color.
      */
     DocraftColor get_docraft_color(const pugi::xml_attribute &color_attr);
 
