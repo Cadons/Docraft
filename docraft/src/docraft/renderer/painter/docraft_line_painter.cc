@@ -48,9 +48,9 @@ namespace docraft::renderer::painter {
         const auto &origin = line_node_.position();
 
         const float x1 = origin.x + start.x;
-        const float y1 = origin.y - start.y;
+        const float y1 = origin.y + start.y;
         const float x2 = origin.x + end.x;
-        const float y2 = origin.y - end.y;
+        const float y2 = origin.y + end.y;
 
         line_backend->draw_line(x1, y1, x2, y2);
 
