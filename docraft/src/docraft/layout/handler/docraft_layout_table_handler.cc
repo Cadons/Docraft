@@ -78,6 +78,38 @@ namespace docraft::layout::handler {
         return false;
     }
 
+    void DocraftLayoutTableHandler::compute_with_pipeline(const std::shared_ptr<model::DocraftTable> &node,
+                                                          model::DocraftTransform *box,
+                                                          DocraftCursor &cursor) {
+        setup_pipeline_state(node, cursor);
+        prepare_table_layout(node);
+        const float table_height = layout_table_content(node);
+        finalize_output(node, box, resolve_table_width(), table_height);
+        log_cells(node);
+        clear_compute_state();
+    }
+
+    void DocraftLayoutTableHandler::setup_pipeline_state(const std::shared_ptr<model::DocraftTable> &,
+                                                         DocraftCursor &) {
+        throw docraft::exception::LayoutConfigurationException(
+            "table pipeline hook setup_pipeline_state not implemented");
+    }
+
+    void DocraftLayoutTableHandler::prepare_table_layout(const std::shared_ptr<model::DocraftTable> &) {
+        throw docraft::exception::LayoutConfigurationException(
+            "table pipeline hook prepare_table_layout not implemented");
+    }
+
+    float DocraftLayoutTableHandler::layout_table_content(const std::shared_ptr<model::DocraftTable> &) {
+        throw docraft::exception::LayoutConfigurationException(
+            "table pipeline hook layout_table_content not implemented");
+    }
+
+    float DocraftLayoutTableHandler::resolve_table_width() const {
+        throw docraft::exception::LayoutConfigurationException(
+            "table pipeline hook resolve_table_width not implemented");
+    }
+
 
     void DocraftLayoutTableHandler::initialize_base_state(const std::shared_ptr<model::DocraftTable> &node,
                                                           DocraftCursor &cursor,

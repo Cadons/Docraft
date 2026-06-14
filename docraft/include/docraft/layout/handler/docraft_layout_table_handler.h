@@ -60,6 +60,29 @@ namespace docraft::layout::handler {
                     DocraftCursor &cursor) override;
 
     protected:
+        /**
+         * @brief Template-method entrypoint used by orientation handlers.
+         *
+         * The parent executes the full lifecycle while children override hook methods
+         * for orientation-specific logic.
+         */
+        void compute_with_pipeline(const std::shared_ptr<model::DocraftTable> &node,
+                                   model::DocraftTransform *box,
+                                   DocraftCursor &cursor);
+
+        /** Initialize per-orientation state before table layout. */
+        virtual void setup_pipeline_state(const std::shared_ptr<model::DocraftTable> &node,
+                                          DocraftCursor &cursor);
+
+        /** Resolve and cache orientation-specific geometry state. */
+        virtual void prepare_table_layout(const std::shared_ptr<model::DocraftTable> &node);
+
+        /** Layout rows/cells and return total table height. */
+        [[nodiscard]] virtual float layout_table_content(const std::shared_ptr<model::DocraftTable> &node);
+
+        /** Return computed table width after preparation/layout. */
+        [[nodiscard]] virtual float resolve_table_width() const;
+
         static constexpr float kHorizontalCellPaddingY = 2.5F;
         static constexpr float kHorizontalCellPaddingX = 2.5F;
         static constexpr float kVerticalCellPaddingY = 2.0F;

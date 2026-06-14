@@ -48,6 +48,16 @@ namespace docraft::layout::handler {
                      model::DocraftTransform *box,
                      DocraftCursor &cursor) override;
 
+    protected:
+        void setup_pipeline_state(const std::shared_ptr<model::DocraftTable> &node,
+                                  DocraftCursor &cursor) override;
+
+        void prepare_table_layout(const std::shared_ptr<model::DocraftTable> &node) override;
+
+        [[nodiscard]] float layout_table_content(const std::shared_ptr<model::DocraftTable> &node) override;
+
+        [[nodiscard]] float resolve_table_width() const override;
+
     private:
         struct TableData {
             std::vector<std::shared_ptr<model::DocraftNode> > title_nodes;
@@ -92,6 +102,10 @@ namespace docraft::layout::handler {
 
         /** Build a row band for one vertical table body row (title + value cells). */
         [[nodiscard]] RowBand build_body_band(const TableData &data, const ColumnPlan &plan, std::size_t row_index) const;
+
+        TableData data_;
+        ColumnPlan plan_;
+        float table_width_ = 0.0F;
     };
 } // namespace docraft::layout::handler
 

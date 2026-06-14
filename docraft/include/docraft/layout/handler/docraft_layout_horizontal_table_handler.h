@@ -48,6 +48,16 @@ namespace docraft::layout::handler {
                      model::DocraftTransform *box,
                      DocraftCursor &cursor) override;
 
+    protected:
+        void setup_pipeline_state(const std::shared_ptr<model::DocraftTable> &node,
+                                  DocraftCursor &cursor) override;
+
+        void prepare_table_layout(const std::shared_ptr<model::DocraftTable> &node) override;
+
+        [[nodiscard]] float layout_table_content(const std::shared_ptr<model::DocraftTable> &node) override;
+
+        [[nodiscard]] float resolve_table_width() const override;
+
     private:
         struct TableContent {
             std::vector<std::shared_ptr<model::DocraftNode> > title_nodes;
@@ -88,6 +98,8 @@ namespace docraft::layout::handler {
         std::size_t cols_ = 0;
         std::vector<float> col_widths_;
         std::vector<float> col_lefts_;
+        TableContent content_;
+        WidthPlan width_plan_;
 
         // Protected accessors for private state
         [[nodiscard]] std::size_t get_cols() const;
