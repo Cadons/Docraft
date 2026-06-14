@@ -121,6 +121,16 @@ namespace docraft::layout {
             DocraftCursor local_node_cursor;
             DocraftCursor rect_origin_cursor;
             DocraftCursor *layout_cursor = nullptr;
+
+            LayoutComputationState() = default;
+
+            LayoutComputationState(const LayoutComputationState &) = default;
+
+            LayoutComputationState &operator=(const LayoutComputationState &) = default;
+
+            LayoutComputationState(LayoutComputationState &&) noexcept = default;
+
+            LayoutComputationState &operator=(LayoutComputationState &&) noexcept = default;
         };
 
         /**
