@@ -53,7 +53,7 @@ namespace docraft::layout {
         /**
          * @brief Destructor.
          */
-        ~DocraftLayoutEngine();
+        virtual ~DocraftLayoutEngine();
 
         /**
          * @brief Computes the layout for a single node tree.
