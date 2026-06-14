@@ -31,7 +31,8 @@ namespace docraft::layout {
 
     DocraftLayoutEngine &DocraftLayoutEngine::operator=(DocraftLayoutEngine &&) noexcept = default;
 
-    DocraftLayoutEngine::~DocraftLayoutEngine() = default;
+    DocraftLayoutEngine::~DocraftLayoutEngine() {
+    }
 
     const std::shared_ptr<DocraftDocumentContext> &DocraftLayoutEngine::context() const {
         return impl_->context();
