@@ -127,141 +127,10 @@ namespace docraft::layout {
             return model::DocraftTransform{};
         }
 
-        // Phase 1: derive measurement constraints and choose the cursor used by this node.
-        std::vector<model::DocraftTransform> child_boxes;
-        auto &layout_service = context_->edit_layout();
-        float max_width = layout_service.available_space();
-        const float flow_origin_x = cursor.x();
-        const float flow_origin_y = cursor.y();
-        const bool is_absolute = (node->position_mode() == model::DocraftPositionType::kAbsolute);
-        DocraftCursor local_cursor = cursor;
-        DocraftCursor &active_cursor = is_absolute ? local_cursor : cursor;
-        if (is_absolute) {
-            active_cursor.move_to(flow_origin_x + node->position().x, flow_origin_y - node->position().y);
-        }
-        DocraftCursor local_node_cursor = active_cursor;
-        DocraftCursor *layout_cursor = &active_cursor;
-        const bool layout_text_flow = !is_absolute &&
-                                      (std::dynamic_pointer_cast<model::DocraftText>(node) ||
-                                       std::dynamic_pointer_cast<model::DocraftList>(node));
-        if (layout_text_flow) {
-            local_node_cursor.move_to(active_cursor.x(), active_cursor.y());
-            layout_cursor = &local_node_cursor;
-        }
-        bool rect_uses_origin_cursor = false;
-        DocraftCursor rect_origin_cursor = active_cursor;
-        if (auto rect_container = std::dynamic_pointer_cast<model::DocraftRectangle>(node)) {
-            if (std::dynamic_pointer_cast<model::DocraftSection>(node)) {
-                // Sections handle their own padding/margins; don't override cursor here.
-            } else if (!rect_container->children().empty()) {
-                DocraftCursor rect_cursor = active_cursor;
-                if (rect_container->position_mode() == model::DocraftPositionType::kAbsolute) {
-                    rect_cursor.move_to(flow_origin_x + rect_container->position().x,
-                                        flow_origin_y - rect_container->position().y);
-                } else {
-                    rect_cursor.move_to(active_cursor.x(), active_cursor.y());
-                }
-                rect_container->set_position({.x = rect_cursor.x(), .y = rect_cursor.y()});
-                rect_origin_cursor = rect_cursor;
-                rect_uses_origin_cursor = true;
-                local_node_cursor = rect_cursor;
-                layout_cursor = &local_node_cursor;
-                if (rect_container->width() > 0.0F) {
-                    max_width = rect_container->width();
-                }
-                layout_service.set_current_rect_width(max_width);
-            }
-        }
-        std::shared_ptr<model::DocraftSection> section_node = nullptr;
-        float section_content_bottom = 0.0F;
-        bool section_has_bounds = false;
-        if (auto section = std::dynamic_pointer_cast<model::DocraftSection>(node)) {
-            section_node = section;
-            const float left_margin = section_node->margin_left();
-            const float right_margin = section_node->margin_right();
-            const float top_margin = section_node->margin_top();
-            const float padding = std::max(0.0F, section_node->padding());
-            float base_x = section_node->position().x;
-            if (base_x == 0.0F && left_margin > 0.0F) {
-                base_x = left_margin;
-            }
-            active_cursor.move_to(base_x, active_cursor.y() - top_margin - padding);
-            if (section_node->width() > 0.0F) {
-                max_width = section_node->width();
-            } else {
-                max_width = max_width - left_margin - right_margin;
-            }
-            layout_service.set_current_rect_width(max_width);
-            if (section_node->height() > 0.0F) {
-                section_content_bottom = section_node->position().y - section_node->height() +
-                                         section_node->margin_bottom() + padding;
-                section_has_bounds = true;
-            }
-        }
-        if (std::dynamic_pointer_cast<model::DocraftLayout>(node)) {
-            auto layout_node = std::dynamic_pointer_cast<model::DocraftLayout>(node);
-            if (layout_node->orientation() == model::LayoutOrientation::kHorizontal) {
-                layout_cursor->push_direction(DocraftCursorDirection::kHorizontal);
-            } else {
-                layout_cursor->push_direction(DocraftCursorDirection::kVertical);
-            }
-        }
-
-        // Phase 2: layout children (lists/containers) and collect their boxes.
-        if (auto list_node = std::dynamic_pointer_cast<model::DocraftList>(node)) {
-            if (!list_handler_) {
-                throw docraft::exception::LayoutConfigurationException("DocraftLayoutListHandler not configured");
-            }
-            DocraftCursor list_cursor = *layout_cursor;
-            list_handler_->compute_children(
-                list_node,
-                list_cursor,
-                child_boxes,
-                [this](const std::shared_ptr<model::DocraftNode> &child, DocraftCursor &child_cursor) {
-                    return compute_layout(child, child_cursor);
-                },
-                max_width);
-        } else if (std::dynamic_pointer_cast<model::DocraftChildrenContainerNode>(node)) {
-            auto container_node = std::dynamic_pointer_cast<model::DocraftChildrenContainerNode>(node);
-            normalize_child_weights(*container_node);
-            const float saved_available_space = layout_service.available_space();
-            const bool is_horizontal = (layout_cursor->direction() == DocraftCursorDirection::kHorizontal);
-            if (is_horizontal) {
-                layout_children_horizontal(container_node, node->z_index(), max_width,
-                                           *layout_cursor, child_boxes,
-                                           section_has_bounds, section_content_bottom);
-            } else {
-                layout_children_vertical(container_node, node->z_index(), max_width,
-                                         *layout_cursor, child_boxes,
-                                         section_has_bounds, section_content_bottom);
-            }
-            layout_service.set_current_rect_width(saved_available_space);
-        }
-
-        auto max_rect = compute_max_rect(child_boxes);
-
-        // Phase 3: compute this node box, place it, then update flow cursor for the next sibling.
-        if (rect_uses_origin_cursor) {
-            if (!compute_node(node, &max_rect, rect_origin_cursor)) {
-                throw docraft::exception::LayoutException("compute node failed");
-            }
-        } else if (!compute_node(node, &max_rect, *layout_cursor)) {
-            throw docraft::exception::LayoutException("compute node failed");
-        }
-        node->set_position(max_rect.position());
-        node->set_width(max_rect.width());
-        node->set_height(max_rect.height());
-        if (!is_absolute && active_cursor.direction() == DocraftCursorDirection::kHorizontal) {
-            cursor.move_to(max_rect.anchors().top_right.x + kHorizontalSpacing, max_rect.anchors().top_right.y);
-        } else if (!is_absolute) {
-            const float spacing = std::max(kVerticalSpacing, node->padding());
-            float next_y = max_rect.anchors().bottom_left.y - spacing;
-            if (next_y < 0.0F) {
-                next_y = 0.0F;
-            }
-            cursor.move_to(flow_origin_x, next_y);
-        }
-        return max_rect;
+        auto state = prepare_layout_state(node, cursor);
+        layout_node_children(node, state);
+        auto max_rect = compute_max_rect(state.child_boxes);
+        return finalize_layout(node, cursor, state, max_rect);
     }
 
     void DocraftLayoutEngine::Impl::compute_document_layout(
@@ -311,6 +180,152 @@ namespace docraft::layout {
         return false;
     }
 
+    DocraftLayoutEngine::Impl::LayoutComputationState DocraftLayoutEngine::Impl::prepare_layout_state(
+        const std::shared_ptr<model::DocraftNode> &node,
+        DocraftCursor &cursor) {
+        LayoutComputationState state;
+        auto &layout_service = context_->edit_layout();
+        state.max_width = layout_service.available_space();
+        state.flow_origin_x = cursor.x();
+        state.flow_origin_y = cursor.y();
+        state.is_absolute = (node->position_mode() == model::DocraftPositionType::kAbsolute);
+
+        DocraftCursor local_cursor = cursor;
+        state.active_cursor = state.is_absolute ? local_cursor : cursor;
+        if (state.is_absolute) {
+            state.active_cursor.move_to(state.flow_origin_x + node->position().x,
+                                        state.flow_origin_y - node->position().y);
+        }
+
+        state.local_node_cursor = state.active_cursor;
+        state.rect_origin_cursor = state.active_cursor;
+        state.layout_cursor = &state.active_cursor;
+
+        if (!state.is_absolute && (std::dynamic_pointer_cast<model::DocraftText>(node) ||
+                                   std::dynamic_pointer_cast<model::DocraftList>(node))) {
+            state.local_node_cursor.move_to(state.active_cursor.x(), state.active_cursor.y());
+            state.layout_cursor = &state.local_node_cursor;
+        }
+
+        if (auto rect_container = std::dynamic_pointer_cast<model::DocraftRectangle>(node)) {
+            if (!std::dynamic_pointer_cast<model::DocraftSection>(node) && !rect_container->children().empty()) {
+                DocraftCursor rect_cursor = state.active_cursor;
+                if (rect_container->position_mode() == model::DocraftPositionType::kAbsolute) {
+                    rect_cursor.move_to(state.flow_origin_x + rect_container->position().x,
+                                        state.flow_origin_y - rect_container->position().y);
+                } else {
+                    rect_cursor.move_to(state.active_cursor.x(), state.active_cursor.y());
+                }
+                rect_container->set_position({.x = rect_cursor.x(), .y = rect_cursor.y()});
+                state.rect_origin_cursor = rect_cursor;
+                state.rect_uses_origin_cursor = true;
+                state.local_node_cursor = rect_cursor;
+                state.layout_cursor = &state.local_node_cursor;
+                if (rect_container->width() > 0.0F) {
+                    state.max_width = rect_container->width();
+                }
+                layout_service.set_current_rect_width(state.max_width);
+            }
+        }
+
+        if (auto section = std::dynamic_pointer_cast<model::DocraftSection>(node)) {
+            const float left_margin = section->margin_left();
+            const float right_margin = section->margin_right();
+            const float top_margin = section->margin_top();
+            const float padding = std::max(0.0F, section->padding());
+            float base_x = section->position().x;
+            if (base_x == 0.0F && left_margin > 0.0F) {
+                base_x = left_margin;
+            }
+            state.active_cursor.move_to(base_x, state.active_cursor.y() - top_margin - padding);
+            if (section->width() > 0.0F) {
+                state.max_width = section->width();
+            } else {
+                state.max_width = state.max_width - left_margin - right_margin;
+            }
+            layout_service.set_current_rect_width(state.max_width);
+            if (section->height() > 0.0F) {
+                state.section_content_bottom = section->position().y - section->height() + section->margin_bottom() +
+                                               padding;
+                state.section_has_bounds = true;
+            }
+        }
+
+        if (auto layout_node = std::dynamic_pointer_cast<model::DocraftLayout>(node)) {
+            if (layout_node->orientation() == model::LayoutOrientation::kHorizontal) {
+                state.layout_cursor->push_direction(DocraftCursorDirection::kHorizontal);
+            } else {
+                state.layout_cursor->push_direction(DocraftCursorDirection::kVertical);
+            }
+        }
+
+        return state;
+    }
+
+    void DocraftLayoutEngine::Impl::layout_node_children(const std::shared_ptr<model::DocraftNode> &node,
+                                                         LayoutComputationState &state) {
+        auto &layout_service = context_->edit_layout();
+        auto &layout_cursor = *state.layout_cursor;
+
+        if (auto list_node = std::dynamic_pointer_cast<model::DocraftList>(node)) {
+            if (!list_handler_) {
+                throw docraft::exception::LayoutConfigurationException("DocraftLayoutListHandler not configured");
+            }
+            DocraftCursor list_cursor = layout_cursor;
+            list_handler_->compute_children(
+                list_node,
+                list_cursor,
+                state.child_boxes,
+                [this](const std::shared_ptr<model::DocraftNode> &child, DocraftCursor &child_cursor) { // NOLINT(readability-function-cognitive-complexity)
+                    return compute_layout(child, child_cursor);
+                },
+                state.max_width);
+            return;
+        }
+
+        if (auto container_node = std::dynamic_pointer_cast<model::DocraftChildrenContainerNode>(node)) {
+            normalize_child_weights(*container_node);
+            const float saved_available_space = layout_service.available_space();
+            const bool is_horizontal = (layout_cursor.direction() == DocraftCursorDirection::kHorizontal);
+            if (is_horizontal) {
+                layout_children_horizontal(container_node, node->z_index(), state.max_width,
+                                           layout_cursor, state.child_boxes,
+                                           state.section_has_bounds, state.section_content_bottom);
+            } else {
+                layout_children_vertical(container_node, node->z_index(), state.max_width,
+                                         layout_cursor, state.child_boxes,
+                                         state.section_has_bounds, state.section_content_bottom);
+            }
+            layout_service.set_current_rect_width(saved_available_space);
+        }
+    }
+
+    model::DocraftTransform DocraftLayoutEngine::Impl::finalize_layout(const std::shared_ptr<model::DocraftNode> &node,
+                                                                       DocraftCursor &cursor,
+                                                                       LayoutComputationState &state,
+                                                                       model::DocraftTransform &max_rect) {
+        auto &layout_cursor = *state.layout_cursor;
+        if (state.rect_uses_origin_cursor) {
+            if (!compute_node(node, &max_rect, state.rect_origin_cursor)) {
+                throw docraft::exception::LayoutException("compute node failed");
+            }
+        } else if (!compute_node(node, &max_rect, layout_cursor)) {
+            throw docraft::exception::LayoutException("compute node failed");
+        }
+
+        node->set_position(max_rect.position());
+        node->set_width(max_rect.width());
+        node->set_height(max_rect.height());
+        if (!state.is_absolute && layout_cursor.direction() == DocraftCursorDirection::kHorizontal) {
+            cursor.move_to(max_rect.anchors().top_right.x + kHorizontalSpacing, max_rect.anchors().top_right.y);
+        } else if (!state.is_absolute) {
+            const float spacing = std::max(kVerticalSpacing, node->padding());
+            const float next_y = std::max(0.0F, max_rect.anchors().bottom_left.y - spacing);
+            cursor.move_to(state.flow_origin_x, next_y);
+        }
+        return max_rect;
+    }
+
     float DocraftLayoutEngine::Impl::compute_width(const std::shared_ptr<model::DocraftSection> &node) const {
         const float margin_left = node->margin_left();
         const float margin_right = node->margin_right();
@@ -318,7 +333,7 @@ namespace docraft::layout {
     }
 
     void DocraftLayoutEngine::Impl::assign_page_owner_recursive(const std::shared_ptr<model::DocraftNode> &node,
-                                                                const int page) const {
+                                                                const int page) const { // NOLINT(readability-function-cognitive-complexity)
         if (!node) {
             return;
         }
@@ -477,7 +492,7 @@ namespace docraft::layout {
 
     void DocraftLayoutEngine::Impl::process_body_child_with_pagination(const std::shared_ptr<model::DocraftNode> &child,
                                                                        const std::size_t *index_ptr,
-                                                                       BodyLayoutState &state) {
+                                                                       BodyLayoutState &state) { // NOLINT(readability-function-cognitive-complexity)
         if (!child) {
             return;
         }
@@ -516,8 +531,7 @@ namespace docraft::layout {
             return;
         }
 
-        if (const bool starts_at_fresh_page_top = std::abs(child_start_cursor.y() - state.body_start_y) <= 0.01F) {
-            // Node cannot fit even on a fresh page; avoid generating pointless blank pages.
+        if (std::abs(child_start_cursor.y() - state.body_start_y) <= 0.01F) {
             return;
         }
 
@@ -527,7 +541,7 @@ namespace docraft::layout {
     }
 
     DocraftLayoutEngine::Impl::Sections DocraftLayoutEngine::Impl::split_sections(
-        const std::vector<std::shared_ptr<model::DocraftNode> > &nodes) const {
+        const std::vector<std::shared_ptr<model::DocraftNode> > &nodes) {
         Sections sections;
         for (const auto &node: nodes) {
             if (const auto header_node = std::dynamic_pointer_cast<model::DocraftHeader>(node)) {

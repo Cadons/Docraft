@@ -87,6 +87,21 @@ namespace docraft::layout {
             int current_page = 1;
         };
 
+        struct LayoutComputationState {
+            std::vector<model::DocraftTransform> child_boxes;
+            float max_width = 0.0F;
+            float flow_origin_x = 0.0F;
+            float flow_origin_y = 0.0F;
+            bool is_absolute = false;
+            bool rect_uses_origin_cursor = false;
+            bool section_has_bounds = false;
+            float section_content_bottom = 0.0F;
+            DocraftCursor active_cursor;
+            DocraftCursor local_node_cursor;
+            DocraftCursor rect_origin_cursor;
+            DocraftCursor *layout_cursor = nullptr;
+        };
+
         void configure_handlers();
 
         bool compute_node(const std::shared_ptr<model::DocraftNode> &node,
@@ -122,6 +137,17 @@ namespace docraft::layout {
                                   bool section_has_bounds,
                                   float section_content_bottom);
 
+        LayoutComputationState prepare_layout_state(const std::shared_ptr<model::DocraftNode> &node,
+                                                    DocraftCursor &cursor);
+
+        void layout_node_children(const std::shared_ptr<model::DocraftNode> &node,
+                                  LayoutComputationState &state);
+
+        model::DocraftTransform finalize_layout(const std::shared_ptr<model::DocraftNode> &node,
+                                                DocraftCursor &cursor,
+                                                LayoutComputationState &state,
+                                                model::DocraftTransform &max_rect);
+
         /**
          * @brief Lays out children stacked top-to-bottom (vertical orientation).
          *        Each child receives the full @p max_width.
@@ -150,7 +176,7 @@ namespace docraft::layout {
 
         // ───────────────────────────────────────────────────────────────────────
 
-        void advance_to_next_body_page(BodyLayoutState &state);
+        static void advance_to_next_body_page(BodyLayoutState &state);
 
         bool handle_table_overflow_on_body_page(const std::shared_ptr<model::DocraftNode> &child,
                                                 const std::size_t *index_ptr,
@@ -161,7 +187,7 @@ namespace docraft::layout {
                                                 const std::size_t *index_ptr,
                                                 BodyLayoutState &state);
 
-        Sections split_sections(const std::vector<std::shared_ptr<model::DocraftNode> > &nodes) const;
+        static Sections split_sections(const std::vector<std::shared_ptr<model::DocraftNode> > &nodes);
 
         SectionPlan build_section_plan(const Sections &sections) const;
 
