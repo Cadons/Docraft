@@ -76,6 +76,9 @@ namespace docraft::layout {
     // 2) Layout children (if any), collecting child boxes.
     // 3) Compute and place the node itself, then advance cursor and handle page ownership/pagination.
 
+    /**
+     * @brief Constructs the implementation, configures handlers, and optionally resets the cursor.
+     */
     DocraftLayoutEngine::Impl::Impl(std::shared_ptr<DocraftDocumentContext> context, const bool reset_cursor)
         : context_(std::move(context)) {
         configure_handlers();
@@ -85,10 +88,16 @@ namespace docraft::layout {
         }
     }
 
+    /**
+     * @brief Returns the shared document context used by the layout engine.
+     */
     const std::shared_ptr<DocraftDocumentContext> &DocraftLayoutEngine::Impl::context() const {
         return context_;
     }
 
+    /**
+     * @brief Computes the minimal bounding rectangle that encloses a set of boxes.
+     */
     model::DocraftTransform DocraftLayoutEngine::Impl::compute_max_rect(
         const std::vector<model::DocraftTransform> &boxes) {
         if (boxes.empty()) {
@@ -113,6 +122,9 @@ namespace docraft::layout {
         return model::DocraftTransform({.x = min_x, .y = max_y}, width, height);
     }
 
+    /**
+     * @brief Lays out a node using the default layout cursor from the document context.
+     */
     model::DocraftTransform DocraftLayoutEngine::Impl::compute_layout(const std::shared_ptr<model::DocraftNode> &node) {
         if (!node->visible()) {
             return model::DocraftTransform{};
@@ -121,6 +133,12 @@ namespace docraft::layout {
         return compute_layout(node, cursor);
     }
 
+    /**
+     * @brief Lays out a node starting from an explicit cursor position.
+     */
+    /**
+     * @brief Lays out a node starting from an explicit cursor position.
+     */
     model::DocraftTransform DocraftLayoutEngine::Impl::compute_layout(const std::shared_ptr<model::DocraftNode> &node,
                                                                       DocraftCursor &cursor) {
         if (!node->visible()) {
@@ -133,6 +151,9 @@ namespace docraft::layout {
         return finalize_layout(node, cursor, state, max_rect);
     }
 
+    /**
+     * @brief Lays out the document sections in Header/Body/Footer order.
+     */
     void DocraftLayoutEngine::Impl::compute_document_layout(
         const std::vector<std::shared_ptr<model::DocraftNode> > &nodes) {
         // Document pass: split header/body/footer, layout each visible section, then paginate body content.
@@ -155,6 +176,9 @@ namespace docraft::layout {
         }
     }
 
+    /**
+     * @brief Installs the concrete layout handlers in priority order.
+     */
     void DocraftLayoutEngine::Impl::configure_handlers() {
         list_handler_ = nullptr;
         handlers_.clear();
@@ -163,12 +187,14 @@ namespace docraft::layout {
         handlers_.emplace_back(std::make_unique<handler::DocraftLayoutTableHandler>(context_));
         // dispatches internally to horizontal/vertical sub-handlers
         handlers_.emplace_back(std::make_unique<handler::DocraftLayoutBlankLine>(context_));
-        auto list_handler = std::make_unique<handler::DocraftLayoutListHandler>(context_);
-        list_handler_ = list_handler.get();
-        handlers_.emplace_back(std::move(list_handler));
+        handlers_.emplace_back(std::make_unique<handler::DocraftLayoutListHandler>(context_));
+        list_handler_ = static_cast<handler::DocraftLayoutListHandler *>(handlers_.back().get());
         handlers_.emplace_back(std::make_unique<handler::DocraftBasicLayoutHandler>(context_));
     }
 
+    /**
+     * @brief Dispatches the current node through the handler chain.
+     */
     bool DocraftLayoutEngine::Impl::compute_node(const std::shared_ptr<model::DocraftNode> &node,
                                                  model::DocraftTransform *box,
                                                  DocraftCursor &cursor) const {
@@ -180,6 +206,9 @@ namespace docraft::layout {
         return false;
     }
 
+    /**
+     * @brief Captures cursor, width, and positioning state before laying out a node.
+     */
     DocraftLayoutEngine::Impl::LayoutComputationState DocraftLayoutEngine::Impl::prepare_layout_state(
         const std::shared_ptr<model::DocraftNode> &node,
         DocraftCursor &cursor) {
@@ -262,6 +291,12 @@ namespace docraft::layout {
         return state;
     }
 
+    /**
+     * @brief Lays out the children of the current node using the prepared state.
+     */
+    /**
+     * @brief Lays out the children of the current node using the prepared state.
+     */
     void DocraftLayoutEngine::Impl::layout_node_children(const std::shared_ptr<model::DocraftNode> &node,
                                                          LayoutComputationState &state) {
         auto &layout_service = context_->edit_layout();
@@ -300,6 +335,9 @@ namespace docraft::layout {
         }
     }
 
+    /**
+     * @brief Resolves the final box for the current node and advances the cursor.
+     */
     model::DocraftTransform DocraftLayoutEngine::Impl::finalize_layout(const std::shared_ptr<model::DocraftNode> &node,
                                                                        DocraftCursor &cursor,
                                                                        LayoutComputationState &state,
@@ -326,14 +364,23 @@ namespace docraft::layout {
         return max_rect;
     }
 
+    /**
+     * @brief Computes the usable width for a section-like node.
+     */
     float DocraftLayoutEngine::Impl::compute_width(const std::shared_ptr<model::DocraftSection> &node) const {
         const float margin_left = node->margin_left();
         const float margin_right = node->margin_right();
         return context_->layout().page_width() - (margin_left + margin_right);
     }
 
+    /**
+     * @brief Propagates page ownership recursively through a node subtree.
+     */
+    /**
+     * @brief Propagates page ownership recursively through a node subtree.
+     */
     void DocraftLayoutEngine::Impl::assign_page_owner_recursive(const std::shared_ptr<model::DocraftNode> &node,
-                                                                const int page) const { // NOLINT(readability-function-cognitive-complexity)
+                                                                const int page) const {
         if (!node) {
             return;
         }
@@ -360,6 +407,9 @@ namespace docraft::layout {
 
     // ── Layout orientation helpers ──────────────────────────────────────────────
 
+    /**
+     * @brief Normalises child weights when a layout uses the sentinel variable-weight value.
+     */
     void DocraftLayoutEngine::Impl::normalize_child_weights(
         model::DocraftChildrenContainerNode &container) {
         if (container.children().empty()) {
@@ -380,6 +430,9 @@ namespace docraft::layout {
         }
     }
 
+    /**
+     * @brief Returns the width available to horizontal children after spacing.
+     */
     float DocraftLayoutEngine::Impl::compute_horizontal_available_width(
         const float max_width, const std::size_t child_count) {
         if (child_count <= 1) {
@@ -389,6 +442,12 @@ namespace docraft::layout {
         return std::max(0.0F, max_width - total_spacing);
     }
 
+    /**
+     * @brief Lays out a child, stores its box, and clamps the cursor to the section bottom.
+     */
+    /**
+     * @brief Lays out a child, stores its box, and clamps the cursor to the section bottom.
+     */
     void DocraftLayoutEngine::Impl::process_child_layout(
         const std::shared_ptr<model::DocraftNode> &child,
         DocraftCursor &cursor,
@@ -402,6 +461,12 @@ namespace docraft::layout {
         }
     }
 
+    /**
+     * @brief Lays out children stacked vertically.
+     */
+    /**
+     * @brief Lays out children stacked vertically.
+     */
     void DocraftLayoutEngine::Impl::layout_children_vertical(
         const std::shared_ptr<model::DocraftChildrenContainerNode> &container,
         const int parent_z_index,
@@ -420,6 +485,12 @@ namespace docraft::layout {
         }
     }
 
+    /**
+     * @brief Lays out children side by side using their assigned weights.
+     */
+    /**
+     * @brief Lays out children side by side using their assigned weights.
+     */
     void DocraftLayoutEngine::Impl::layout_children_horizontal(
         const std::shared_ptr<model::DocraftChildrenContainerNode> &container,
         const int parent_z_index,
@@ -446,6 +517,9 @@ namespace docraft::layout {
 
     // ───────────────────────────────────────────────────────────────────────────
 
+    /**
+     * @brief Advances the body cursor to the top of the next page.
+     */
     void DocraftLayoutEngine::Impl::advance_to_next_body_page(BodyLayoutState &state) {
         if (state.page_backend) {
             state.page_backend->add_new_page();
@@ -455,6 +529,9 @@ namespace docraft::layout {
         state.body_cursor.move_to(state.body->position().x, state.body_start_y);
     }
 
+    /**
+     * @brief Splits an overflowing table and relayouts the current fragment.
+     */
     bool DocraftLayoutEngine::Impl::handle_table_overflow_on_body_page(const std::shared_ptr<model::DocraftNode> &child,
                                                                        const std::size_t *index_ptr,
                                                                        const DocraftCursor &child_start_cursor,
@@ -490,6 +567,12 @@ namespace docraft::layout {
         return true;
     }
 
+    /**
+     * @brief Processes a body child, handling page breaks, foreach expansion, and overflow.
+     */
+    /**
+     * @brief Processes a body child, handling page breaks, foreach expansion, and overflow.
+     */
     void DocraftLayoutEngine::Impl::process_body_child_with_pagination(const std::shared_ptr<model::DocraftNode> &child,
                                                                        const std::size_t *index_ptr,
                                                                        BodyLayoutState &state) { // NOLINT(readability-function-cognitive-complexity)
@@ -540,6 +623,9 @@ namespace docraft::layout {
         (void) compute_layout(child, state.body_cursor);
     }
 
+    /**
+     * @brief Extracts the top-level Header/Body/Footer sections from the node list.
+     */
     DocraftLayoutEngine::Impl::Sections DocraftLayoutEngine::Impl::split_sections(
         const std::vector<std::shared_ptr<model::DocraftNode> > &nodes) {
         Sections sections;
@@ -555,6 +641,9 @@ namespace docraft::layout {
         return sections;
     }
 
+    /**
+     * @brief Builds the section visibility and ratio plan used during document layout.
+     */
     DocraftLayoutEngine::Impl::SectionPlan
     DocraftLayoutEngine::Impl::build_section_plan(const Sections &sections) const {
         SectionPlan plan;
@@ -579,6 +668,9 @@ namespace docraft::layout {
         return plan;
     }
 
+    /**
+     * @brief Lays out the header section and re-anchors it to the page top.
+     */
     void DocraftLayoutEngine::Impl::layout_header_section(const std::shared_ptr<model::DocraftHeader> &header,
                                                           const float header_ratio) {
         auto &layout_service = context_->edit_layout();
@@ -595,6 +687,9 @@ namespace docraft::layout {
         assign_page_owner_recursive(header, -1);
     }
 
+    /**
+     * @brief Lays out the body section and paginates its children.
+     */
     void DocraftLayoutEngine::Impl::layout_body_section(const std::shared_ptr<model::DocraftBody> &body,
                                                         const std::shared_ptr<model::DocraftHeader> &header,
                                                         const SectionPlan &plan) {
@@ -646,6 +741,9 @@ namespace docraft::layout {
         body->set_height(body_height);
     }
 
+    /**
+     * @brief Lays out the footer section and re-anchors it to the page bottom area.
+     */
     void DocraftLayoutEngine::Impl::layout_footer_section(const std::shared_ptr<model::DocraftFooter> &footer,
                                                           const std::shared_ptr<model::DocraftBody> &body,
                                                           const SectionPlan &plan) {
