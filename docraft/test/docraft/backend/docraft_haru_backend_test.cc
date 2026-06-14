@@ -15,6 +15,9 @@ namespace docraft::test::backend {
 class DocraftHaruBackendTest : public ::testing::Test {
 protected:
     void SetUp() override {
+        if (!std::filesystem::exists(std::filesystem::temp_directory_path())) {
+            GTEST_SKIP() << "Temporary directory does not exist, cannot test file output";
+        }
         backend_ = std::make_unique<docraft::backend::pdf::DocraftHaruBackend>();
     }
 

@@ -59,8 +59,6 @@ Thumbs.db
 *.swo
 *~
 
-# Docker
-.dockerignore
 
 #CMake presets
 CMakeUserPresets.json
