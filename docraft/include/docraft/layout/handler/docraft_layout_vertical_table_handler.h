@@ -23,6 +23,7 @@
 #include "docraft/docraft_lib.h"
 #include "docraft/layout/docraft_layout_engine.h"
 #include "docraft/layout/handler/docraft_layout_table_handler.h"
+#include "docraft/layout/handler/docraft_layout_table_pipeline_overrides.h"
 
 namespace docraft::layout::handler {
     /**
@@ -49,14 +50,7 @@ namespace docraft::layout::handler {
                      DocraftCursor &cursor) override;
 
     protected:
-        void setup_pipeline_state(const std::shared_ptr<model::DocraftTable> &node,
-                                  DocraftCursor &cursor) override;
-
-        void prepare_table_layout(const std::shared_ptr<model::DocraftTable> &node) override;
-
-        [[nodiscard]] float layout_table_content(const std::shared_ptr<model::DocraftTable> &node) override;
-
-        [[nodiscard]] float resolve_table_width() const override;
+        DOCRAFT_TABLE_PIPELINE_OVERRIDES;
 
     private:
         struct TableData {

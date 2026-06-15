@@ -108,6 +108,8 @@ set(DOCRAFT_SOURCES
         include/docraft/renderer/painter/docraft_rectangle_painter.h
         src/docraft/renderer/painter/docraft_circle_painter.cc
         include/docraft/renderer/painter/docraft_circle_painter.h
+        src/docraft/renderer/painter/docraft_polygonal_shape_painter_base.cc
+        include/docraft/renderer/painter/docraft_polygonal_shape_painter_base.h
         src/docraft/renderer/painter/docraft_triangle_painter.cc
         include/docraft/renderer/painter/docraft_triangle_painter.h
         src/docraft/renderer/painter/docraft_line_painter.cc
@@ -118,6 +120,8 @@ set(DOCRAFT_SOURCES
         include/docraft/model/docraft_blank_line.h
         src/docraft/layout/handler/docraft_layout_blank_line.cc
         include/docraft/layout/handler/docraft_layout_blank_line.h
+        src/docraft/layout/handler/docraft_layout_line_handler.cc
+        include/docraft/layout/handler/docraft_layout_line_handler.h
         src/docraft/renderer/painter/docraft_blank_line_painter.cc
         include/docraft/renderer/painter/docraft_blank_line_painter.h
         src/docraft/craft/docraft_craft_language_parser.cc

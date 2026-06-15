@@ -14,17 +14,13 @@
  * limitations under the License.
  */
 
-#include "docraft/services/docraft_navigation_service.h"
+#pragma once
 
-namespace docraft::services {
-    management::DocraftDocumentSectionManager &NavigationService::section_manager() {
-        return *this;
-    }
-
-    const management::DocraftDocumentSectionManager &NavigationService::section_manager() const {
-        return *this;
-    }
-} // namespace docraft::services
-
-
+// Shared override declarations used by horizontal/vertical table handlers.
+#define DOCRAFT_TABLE_PIPELINE_OVERRIDES \
+    void setup_pipeline_state(const std::shared_ptr<model::DocraftTable> &node, \
+                              DocraftCursor &cursor) override; \
+    void prepare_table_layout(const std::shared_ptr<model::DocraftTable> &node) override; \
+    [[nodiscard]] float layout_table_content(const std::shared_ptr<model::DocraftTable> &node) override; \
+    [[nodiscard]] float resolve_table_width() const override
 

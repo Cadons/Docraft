@@ -114,13 +114,17 @@ namespace docraft::layout {
             float flow_origin_x = 0.0F;
             float flow_origin_y = 0.0F;
             bool is_absolute = false;
-            bool rect_uses_origin_cursor = false;
+            bool use_box_origin_cursor = false;
             bool section_has_bounds = false;
             float section_content_bottom = 0.0F;
-            DocraftCursor active_cursor;
-            DocraftCursor local_node_cursor;
-            DocraftCursor rect_origin_cursor;
-            DocraftCursor *layout_cursor = nullptr;
+            // Base cursor for the current node (flow cursor or absolute-position anchor).
+            DocraftCursor node_cursor;
+            // Scratch cursor used when children need isolated progression from node_cursor.
+            DocraftCursor child_cursor;
+            // Origin used to place the node box when container anchoring differs from child flow.
+            DocraftCursor box_origin_cursor;
+            // Pointer to the cursor currently driving child layout (node_cursor or child_cursor).
+            DocraftCursor *selected_cursor = nullptr;
 
             LayoutComputationState() = default;
 
@@ -277,10 +281,27 @@ namespace docraft::layout {
                                    const std::shared_ptr<model::DocraftBody> &body,
                                    const SectionPlan &plan);
 
+        /**
+         * @brief Applies section margins/limits and updates section-bound constraints.
+         */
+        void setup_section_bounds_state(const std::shared_ptr<model::DocraftNode> &node,
+                                        LayoutComputationState &state);
+
+        /**
+         * @brief Configures container-origin cursors for rectangle-like nodes with children.
+         */
+        void setup_container_cursor_state(const std::shared_ptr<model::DocraftNode> &node,
+                                          LayoutComputationState &state);
+
+        /**
+         * @brief Pushes layout orientation (horizontal/vertical) on the selected cursor.
+         */
+        static void setup_layout_direction_state(const std::shared_ptr<model::DocraftNode> &node,
+                                                 LayoutComputationState &state);
+
         std::shared_ptr<DocraftDocumentContext> context_;
         std::vector<std::unique_ptr<generic::DocraftChainOfResponsibilityHandler<model::DocraftNode,
             model::DocraftTransform> > > handlers_;
         handler::DocraftLayoutListHandler *list_handler_ = nullptr;
     };
 } // namespace docraft::layout
-

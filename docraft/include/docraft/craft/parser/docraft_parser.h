@@ -211,7 +211,8 @@ namespace docraft::craft::parser {
      */
     class DOCRAFT_LIB DocraftForeachParser : public IDocraftParser {
     public:
-        DocraftForeachParser(DocraftCraftLanguageParser* craft_language_parser);
+        explicit DocraftForeachParser(DocraftCraftLanguageParser *craft_language_parser);
+
         /**
          * @brief Parses a foreach XML node.
          * @param craft_language_source XML node.
