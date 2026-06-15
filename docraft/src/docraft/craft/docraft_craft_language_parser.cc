@@ -335,15 +335,8 @@ namespace {
         return supported_languages.find(normalized) != supported_languages.end();
     }
 
-    DocraftMetadataParseOutcome parse_metadata_node(const pugi::xml_node &document_node) {
-        DocraftMetadataParseOutcome outcome;
-        const std::string metadata_tag = normalize_tag_name(std::string{docraft::craft::section::kMetadata});
-        const pugi::xml_node metadata_node = document_node.child(metadata_tag.c_str());
-        if (!metadata_node) {
-            return outcome;
-        }
-        outcome.has_metadata = true;
-
+    void parse_metadata_text_fields(const pugi::xml_node &metadata_node,
+                                    docraft::DocraftDocumentMetadata &metadata) {
         const std::string title_tag = normalize_tag_name(std::string{docraft::craft::elements::metadata::kDocumentTitle});
         const std::string author_tag = normalize_tag_name(std::string{docraft::craft::elements::metadata::kAuthor});
         const std::string creator_tag = normalize_tag_name(std::string{docraft::craft::elements::metadata::kCreator});
@@ -352,102 +345,140 @@ namespace {
         const std::string keywords_tag = normalize_tag_name(std::string{docraft::craft::elements::metadata::kKeywords});
         const std::string trapped_tag = normalize_tag_name(std::string{docraft::craft::elements::metadata::kTrapped});
         const std::string gts_pdfx_tag = normalize_tag_name(std::string{docraft::craft::elements::metadata::kGtsPdfx});
+
+        if (const auto value = read_child_text(metadata_node, title_tag)) {
+            metadata.set_title(*value);
+        }
+        if (const auto value = read_child_text(metadata_node, author_tag)) {
+            metadata.set_author(*value);
+        }
+        if (const auto value = read_child_text(metadata_node, creator_tag)) {
+            metadata.set_creator(*value);
+        }
+        if (const auto value = read_child_text(metadata_node, producer_tag)) {
+            metadata.set_producer(*value);
+        }
+        if (const auto value = read_child_text(metadata_node, subject_tag)) {
+            metadata.set_subject(*value);
+        }
+        if (const auto value = read_child_text(metadata_node, keywords_tag)) {
+            metadata.set_keywords(*value);
+        }
+        if (const auto value = read_child_text(metadata_node, trapped_tag)) {
+            metadata.set_trapped(*value);
+        }
+        if (const auto value = read_child_text(metadata_node, gts_pdfx_tag)) {
+            metadata.set_gts_pdfx(*value);
+        }
+    }
+
+    void parse_metadata_date_fields(const pugi::xml_node &metadata_node,
+                                    docraft::DocraftDocumentMetadata &metadata) {
         const std::string creation_date_tag = normalize_tag_name(
             std::string{docraft::craft::elements::metadata::kCreationDate});
         const std::string modification_date_tag = normalize_tag_name(
             std::string{docraft::craft::elements::metadata::kModificationDate});
+
+        if (const pugi::xml_node creation_date_node = metadata_node.child(creation_date_tag.c_str())) {
+            metadata.set_creation_date(parse_metadata_date(creation_date_node, creation_date_tag));
+        }
+        if (const pugi::xml_node modification_date_node = metadata_node.child(modification_date_tag.c_str())) {
+            metadata.set_modification_date(parse_metadata_date(modification_date_node, modification_date_tag));
+        }
+    }
+
+    std::vector<std::string> parse_validated_auto_keyword_languages(const pugi::xml_attribute &language_attr) {
+        const auto parsed_languages = split_languages(language_attr.as_string());
+        if (parsed_languages.empty()) {
+            throw docraft::exception::InvalidInputException("Metadata AutoKeywords language cannot be empty");
+        }
+
+        std::vector<std::string> validated_languages;
+        validated_languages.reserve(parsed_languages.size());
+        for (const auto &language: parsed_languages) {
+            std::string normalized = language;
+            for (char &ch: normalized) {
+                ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
+            }
+            if (!is_supported_stopword_language(normalized)) {
+                throw docraft::exception::InvalidInputException(
+                    "Unsupported AutoKeywords language '" + language + "'. Supported: it,en,fr,de,es");
+            }
+            validated_languages.push_back(normalized);
+        }
+        return validated_languages;
+    }
+
+    void parse_auto_keyword_numeric_limits(const pugi::xml_node &auto_keywords_node,
+                                           DocraftAutoKeywordConfig &config) {
+        if (const pugi::xml_attribute max_keywords_attr = auto_keywords_node.attribute(
+            std::string{docraft::craft::elements::metadata::auto_keywords::attribute::kMaxKeywords}.c_str())) {
+            const int max_keywords = max_keywords_attr.as_int();
+            if (max_keywords <= 0) {
+                throw docraft::exception::InvalidInputException(
+                    "Metadata AutoKeywords max_keywords must be greater than 0");
+            }
+            config.max_keywords = static_cast<std::size_t>(max_keywords);
+        }
+
+        if (const pugi::xml_attribute min_length_attr = auto_keywords_node.attribute(
+            std::string{docraft::craft::elements::metadata::auto_keywords::attribute::kMinLength}.c_str())) {
+            const int min_length = min_length_attr.as_int();
+            if (min_length <= 0) {
+                throw docraft::exception::InvalidInputException(
+                    "Metadata AutoKeywords min_length must be greater than 0");
+            }
+            config.min_length = static_cast<std::size_t>(min_length);
+        }
+    }
+
+    void parse_auto_keyword_enabled_flag(const pugi::xml_node &auto_keywords_node,
+                                         const std::string &auto_keywords_tag,
+                                         DocraftAutoKeywordConfig &config) {
+        config.enabled = true;
+        if (const pugi::xml_attribute enabled_attr = auto_keywords_node.attribute(
+            std::string{docraft::craft::elements::metadata::auto_keywords::attribute::kEnabled}.c_str())) {
+            config.enabled = parse_bool_string(enabled_attr.as_string(), auto_keywords_tag + ".enabled");
+            return;
+        }
+
+        const std::string node_value = trim_copy(auto_keywords_node.child_value());
+        if (!node_value.empty()) {
+            config.enabled = parse_bool_string(node_value, auto_keywords_tag + " body value");
+        }
+    }
+
+    void parse_auto_keyword_config(const pugi::xml_node &metadata_node,
+                                   const std::string &auto_keywords_tag,
+                                   DocraftAutoKeywordConfig &config) {
+        const pugi::xml_node auto_keywords_node = metadata_node.child(auto_keywords_tag.c_str());
+        if (!auto_keywords_node) {
+            return;
+        }
+
+        parse_auto_keyword_enabled_flag(auto_keywords_node, auto_keywords_tag, config);
+        parse_auto_keyword_numeric_limits(auto_keywords_node, config);
+
+        if (const pugi::xml_attribute language_attr = auto_keywords_node.attribute(
+            std::string{docraft::craft::elements::metadata::auto_keywords::attribute::kLanguage}.c_str())) {
+            config.stop_word_languages = parse_validated_auto_keyword_languages(language_attr);
+        }
+    }
+
+    DocraftMetadataParseOutcome parse_metadata_node(const pugi::xml_node &document_node) {
+        DocraftMetadataParseOutcome outcome;
+        const std::string metadata_tag = normalize_tag_name(std::string{docraft::craft::section::kMetadata});
+        const pugi::xml_node metadata_node = document_node.child(metadata_tag.c_str());
+        if (!metadata_node) {
+            return outcome;
+        }
+        outcome.has_metadata = true;
         const std::string auto_keywords_tag = normalize_tag_name(
             std::string{docraft::craft::elements::metadata::kAutoKeywords});
 
-        if (const auto value = read_child_text(metadata_node, title_tag)) {
-            outcome.metadata.set_title(*value);
-        }
-        if (const auto value = read_child_text(metadata_node, author_tag)) {
-            outcome.metadata.set_author(*value);
-        }
-        if (const auto value = read_child_text(metadata_node, creator_tag)) {
-            outcome.metadata.set_creator(*value);
-        }
-        if (const auto value = read_child_text(metadata_node, producer_tag)) {
-            outcome.metadata.set_producer(*value);
-        }
-        if (const auto value = read_child_text(metadata_node, subject_tag)) {
-            outcome.metadata.set_subject(*value);
-        }
-        if (const auto value = read_child_text(metadata_node, keywords_tag)) {
-            outcome.metadata.set_keywords(*value);
-        }
-        if (const auto value = read_child_text(metadata_node, trapped_tag)) {
-            outcome.metadata.set_trapped(*value);
-        }
-        if (const auto value = read_child_text(metadata_node, gts_pdfx_tag)) {
-            outcome.metadata.set_gts_pdfx(*value);
-        }
-        if (const pugi::xml_node creation_date_node = metadata_node.child(creation_date_tag.c_str())) {
-            outcome.metadata.set_creation_date(parse_metadata_date(creation_date_node, creation_date_tag));
-        }
-        if (const pugi::xml_node modification_date_node = metadata_node.child(modification_date_tag.c_str())) {
-            outcome.metadata.set_modification_date(parse_metadata_date(modification_date_node, modification_date_tag));
-        }
-
-        if (const pugi::xml_node auto_keywords_node = metadata_node.child(auto_keywords_tag.c_str())) {
-            outcome.auto_keyword_config.enabled = true;
-            if (const pugi::xml_attribute enabled_attr = auto_keywords_node.attribute(
-                    std::string{docraft::craft::elements::metadata::auto_keywords::attribute::kEnabled}.c_str())) {
-                outcome.auto_keyword_config.enabled = parse_bool_string(
-                    enabled_attr.as_string(), auto_keywords_tag + ".enabled");
-            } else {
-                const std::string node_value = trim_copy(auto_keywords_node.child_value());
-                if (!node_value.empty()) {
-                    outcome.auto_keyword_config.enabled = parse_bool_string(
-                        node_value, auto_keywords_tag + " body value");
-                }
-            }
-
-            if (const pugi::xml_attribute max_keywords_attr = auto_keywords_node.attribute(
-                    std::string{
-                        docraft::craft::elements::metadata::auto_keywords::attribute::kMaxKeywords}.c_str())) {
-                const int max_keywords = max_keywords_attr.as_int();
-                if (max_keywords <= 0) {
-                    throw docraft::exception::InvalidInputException(
-                        "Metadata AutoKeywords max_keywords must be greater than 0");
-                }
-                outcome.auto_keyword_config.max_keywords = static_cast<std::size_t>(max_keywords);
-            }
-
-            if (const pugi::xml_attribute min_length_attr = auto_keywords_node.attribute(
-                    std::string{
-                        docraft::craft::elements::metadata::auto_keywords::attribute::kMinLength}.c_str())) {
-                const int min_length = min_length_attr.as_int();
-                if (min_length <= 0) {
-                    throw docraft::exception::InvalidInputException(
-                        "Metadata AutoKeywords min_length must be greater than 0");
-                }
-                outcome.auto_keyword_config.min_length = static_cast<std::size_t>(min_length);
-            }
-
-            if (const pugi::xml_attribute language_attr = auto_keywords_node.attribute(
-                    std::string{
-                        docraft::craft::elements::metadata::auto_keywords::attribute::kLanguage}.c_str())) {
-                const auto parsed_languages = split_languages(language_attr.as_string());
-                if (parsed_languages.empty()) {
-                    throw docraft::exception::InvalidInputException("Metadata AutoKeywords language cannot be empty");
-                }
-                std::vector<std::string> validated_languages;
-                for (const auto &language: parsed_languages) {
-                    std::string normalized = language;
-                    for (char &ch: normalized) {
-                        ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
-                    }
-                    if (!is_supported_stopword_language(normalized)) {
-                        throw docraft::exception::InvalidInputException(
-                            "Unsupported AutoKeywords language '" + language + "'. Supported: it,en,fr,de,es");
-                    }
-                    validated_languages.push_back(normalized);
-                }
-                outcome.auto_keyword_config.stop_word_languages = std::move(validated_languages);
-            }
-        }
+        parse_metadata_text_fields(metadata_node, outcome.metadata);
+        parse_metadata_date_fields(metadata_node, outcome.metadata);
+        parse_auto_keyword_config(metadata_node, auto_keywords_tag, outcome.auto_keyword_config);
 
         return outcome;
     }

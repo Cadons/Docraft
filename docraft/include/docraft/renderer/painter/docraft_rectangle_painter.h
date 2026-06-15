@@ -32,7 +32,8 @@ namespace docraft::renderer::painter {
          * @brief Creates a rectangle painter bound to the rectangle node.
          * @param rectangle_node Rectangle node.
          */
-        DocraftRectanglePainter(const model::DocraftRectangle &rectangle_node);
+        explicit DocraftRectanglePainter(const model::DocraftRectangle &rectangle_node);
+
         /**
          * @brief Draws the rectangle using the provided context.
          * @param context Document context.

@@ -32,7 +32,7 @@ namespace docraft::renderer::painter {
          * @brief Creates a table painter bound to the table node.
          * @param table_node Table node.
          */
-        DocraftTablePainter(const model::DocraftTable &table_node);
+        explicit DocraftTablePainter(const model::DocraftTable &table_node);
 
         /**
          * @brief Draws the table using the provided context.
