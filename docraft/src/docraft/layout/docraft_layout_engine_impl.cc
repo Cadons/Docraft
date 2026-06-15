@@ -206,58 +206,36 @@ namespace docraft::layout {
         return false;
     }
 
-    /**
-     * @brief Captures cursor, width, and positioning state before laying out a node.
-     */
-    DocraftLayoutEngine::Impl::LayoutComputationState DocraftLayoutEngine::Impl::prepare_layout_state(
-        const std::shared_ptr<model::DocraftNode> &node,
-        DocraftCursor &cursor) {
-        LayoutComputationState state;
-        auto &layout_service = context_->edit_layout();
-        state.max_width = layout_service.available_space();
-        state.flow_origin_x = cursor.x();
-        state.flow_origin_y = cursor.y();
-        state.is_absolute = (node->position_mode() == model::DocraftPositionType::kAbsolute);
-
-        DocraftCursor local_cursor = cursor;
-        state.active_cursor = state.is_absolute ? local_cursor : cursor;
-        if (state.is_absolute) {
-            state.active_cursor.move_to(state.flow_origin_x + node->position().x,
-                                        state.flow_origin_y - node->position().y);
-        }
-
-        state.local_node_cursor = state.active_cursor;
-        state.rect_origin_cursor = state.active_cursor;
-        state.layout_cursor = &state.active_cursor;
-
-        if (!state.is_absolute && (std::dynamic_pointer_cast<model::DocraftText>(node) ||
-                                   std::dynamic_pointer_cast<model::DocraftList>(node))) {
-            state.local_node_cursor.move_to(state.active_cursor.x(), state.active_cursor.y());
-            state.layout_cursor = &state.local_node_cursor;
-        }
-
+    void DocraftLayoutEngine::Impl::setup_container_cursor_state(const std::shared_ptr<model::DocraftNode> &node,
+                                                                 LayoutComputationState &state) {
         if (auto rect_container = std::dynamic_pointer_cast<model::DocraftRectangle>(node)) {
+            auto &layout_service = context_->edit_layout();
             if (!std::dynamic_pointer_cast<model::DocraftSection>(node) && !rect_container->children().empty()) {
-                DocraftCursor rect_cursor = state.active_cursor;
+                DocraftCursor rect_cursor = state.node_cursor;
                 if (rect_container->position_mode() == model::DocraftPositionType::kAbsolute) {
                     rect_cursor.move_to(state.flow_origin_x + rect_container->position().x,
                                         state.flow_origin_y - rect_container->position().y);
                 } else {
-                    rect_cursor.move_to(state.active_cursor.x(), state.active_cursor.y());
+                    rect_cursor.move_to(state.node_cursor.x(), state.node_cursor.y());
                 }
                 rect_container->set_position({.x = rect_cursor.x(), .y = rect_cursor.y()});
-                state.rect_origin_cursor = rect_cursor;
-                state.rect_uses_origin_cursor = true;
-                state.local_node_cursor = rect_cursor;
-                state.layout_cursor = &state.local_node_cursor;
+                state.box_origin_cursor = rect_cursor;
+                state.use_box_origin_cursor = true;
+                state.child_cursor = rect_cursor;
+                // Rectangle children flow from a local cursor, while the node box keeps its own origin.
+                state.selected_cursor = &state.child_cursor;
                 if (rect_container->width() > 0.0F) {
                     state.max_width = rect_container->width();
                 }
                 layout_service.set_current_rect_width(state.max_width);
             }
         }
+    }
 
+    void DocraftLayoutEngine::Impl::setup_section_bounds_state(const std::shared_ptr<model::DocraftNode> &node,
+                                                               LayoutComputationState &state) {
         if (auto section = std::dynamic_pointer_cast<model::DocraftSection>(node)) {
+            auto &layout_service = context_->edit_layout();
             const float left_margin = section->margin_left();
             const float right_margin = section->margin_right();
             const float top_margin = section->margin_top();
@@ -266,7 +244,7 @@ namespace docraft::layout {
             if (base_x == 0.0F && left_margin > 0.0F) {
                 base_x = left_margin;
             }
-            state.active_cursor.move_to(base_x, state.active_cursor.y() - top_margin - padding);
+            state.node_cursor.move_to(base_x, state.node_cursor.y() - top_margin - padding);
             if (section->width() > 0.0F) {
                 state.max_width = section->width();
             } else {
@@ -279,15 +257,71 @@ namespace docraft::layout {
                 state.section_has_bounds = true;
             }
         }
+    }
 
+    void DocraftLayoutEngine::Impl::setup_layout_direction_state(const std::shared_ptr<model::DocraftNode> &node,
+                                                                 LayoutComputationState &state) {
         if (auto layout_node = std::dynamic_pointer_cast<model::DocraftLayout>(node)) {
             if (layout_node->orientation() == model::LayoutOrientation::kHorizontal) {
-                state.layout_cursor->push_direction(DocraftCursorDirection::kHorizontal);
+                state.selected_cursor->push_direction(DocraftCursorDirection::kHorizontal);
             } else {
-                state.layout_cursor->push_direction(DocraftCursorDirection::kVertical);
+                state.selected_cursor->push_direction(DocraftCursorDirection::kVertical);
             }
         }
+    }
 
+    /**
+     * @brief Captures cursor, width, and positioning state before laying out a node.
+
+    * Cursor model used by LayoutComputationState:
+    * - node_cursor: base cursor for the current node (flow position or absolute anchor).
+    * - child_cursor: optional scratch cursor for child layout when child flow must be isolated.
+    * - box_origin_cursor: cursor used to place the node box when box anchoring differs
+    *   from child flow (for example rectangle-like containers).
+    * - selected_cursor: pointer to the cursor currently driving child traversal
+    *   (usually node_cursor, sometimes child_cursor).
+    *
+    * Typical flow:
+    * 1) prepare_layout_state() initializes node_cursor and defaults selected_cursor.
+    * 2) setup_section_bounds_state()/setup_container_cursor_state() may adjust limits and
+    *    switch selected_cursor to child_cursor.
+    * 3) layout_node_children() consumes *selected_cursor.
+    * 4) finalize_layout() computes the node box using box_origin_cursor only when needed;
+    *    otherwise it uses *selected_cursor and then advances the external flow cursor.
+    */
+    DocraftLayoutEngine::Impl::LayoutComputationState DocraftLayoutEngine::Impl::prepare_layout_state(
+        const std::shared_ptr<model::DocraftNode> &node, DocraftCursor &cursor) {
+        //general state setup
+        LayoutComputationState state;
+        auto &layout_service = context_->edit_layout();
+        state.max_width = layout_service.available_space();
+        state.flow_origin_x = cursor.x();
+        state.flow_origin_y = cursor.y();
+        state.is_absolute = (node->position_mode() == model::DocraftPositionType::kAbsolute);
+        // configure cursor and width based on node type
+        DocraftCursor local_cursor = cursor;
+        state.node_cursor = state.is_absolute ? local_cursor : cursor;
+        if (state.is_absolute) {
+            //if absolute positions set cursor to the node's position
+            const float x = state.flow_origin_x + node->position().x; //absolute position is relative to the flow origin
+            const float y = state.flow_origin_y + node->position().y; //absolute position is relative to the flow origin
+            state.node_cursor.move_to(x, y);
+        }
+        // Default behavior: children consume node_cursor directly.
+        state.child_cursor = state.node_cursor;
+        state.box_origin_cursor = state.node_cursor;
+        state.selected_cursor = &state.node_cursor;
+
+        if (!state.is_absolute && (std::dynamic_pointer_cast<model::DocraftText>(node) ||
+                                   std::dynamic_pointer_cast<model::DocraftList>(node))) {
+            // Text/List measure with an isolated cursor to avoid mutating parent flow prematurely.
+            state.child_cursor.move_to(state.node_cursor.x(), state.node_cursor.y());
+            state.selected_cursor = &state.child_cursor;
+        }
+        // Apply section limits first, then optional container-origin cursor behavior.
+        setup_section_bounds_state(node, state);
+        setup_container_cursor_state(node, state);
+        setup_layout_direction_state(node, state);
         return state;
     }
 
@@ -300,7 +334,7 @@ namespace docraft::layout {
     void DocraftLayoutEngine::Impl::layout_node_children(const std::shared_ptr<model::DocraftNode> &node,
                                                          LayoutComputationState &state) {
         auto &layout_service = context_->edit_layout();
-        auto &layout_cursor = *state.layout_cursor;
+        auto &layout_cursor = *state.selected_cursor;
 
         if (auto list_node = std::dynamic_pointer_cast<model::DocraftList>(node)) {
             if (!list_handler_) {
@@ -342,9 +376,10 @@ namespace docraft::layout {
                                                                        DocraftCursor &cursor,
                                                                        LayoutComputationState &state,
                                                                        model::DocraftTransform &max_rect) {
-        auto &layout_cursor = *state.layout_cursor;
-        if (state.rect_uses_origin_cursor) {
-            if (!compute_node(node, &max_rect, state.rect_origin_cursor)) {
+        auto &layout_cursor = *state.selected_cursor;
+        // Some containers layout children with a local cursor but resolve their own box from box_origin_cursor.
+        if (state.use_box_origin_cursor) {
+            if (!compute_node(node, &max_rect, state.box_origin_cursor)) {
                 throw docraft::exception::LayoutException("compute node failed");
             }
         } else if (!compute_node(node, &max_rect, layout_cursor)) {
