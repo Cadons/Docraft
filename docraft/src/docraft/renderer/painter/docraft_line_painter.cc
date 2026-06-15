@@ -43,16 +43,27 @@ namespace docraft::renderer::painter {
         line_backend->set_line_width(stroke_width);
         line_backend->set_stroke_color(stroke_color.r, stroke_color.g, stroke_color.b);
 
-        const auto &start = line_node_.start();
-        const auto &end = line_node_.end();
         const auto &origin = line_node_.position();
 
-        const float x1 = origin.x + start.x;
-        const float y1 = origin.y + start.y;
-        const float x2 = origin.x + end.x;
-        const float y2 = origin.y + end.y;
+        // If line has width in block mode: draw as horizontal line from origin.
+        if (line_node_.width() > 0.0F && line_node_.position_mode() == model::DocraftPositionType::kBlock) {
+            const float x1 = origin.x;
+            const float y1 = origin.y;
+            const float x2 = origin.x + line_node_.width();
+            const float y2 = origin.y;
+            line_backend->draw_line(x1, y1, x2, y2);
+        } else {
+            // Use explicit start/end points (absolute positioning).
+            const auto &start = line_node_.start();
+            const auto &end = line_node_.end();
 
-        line_backend->draw_line(x1, y1, x2, y2);
+            const float x1 = origin.x + start.x;
+            const float y1 = origin.y + start.y;
+            const float x2 = origin.x + end.x;
+            const float y2 = origin.y + end.y;
+
+            line_backend->draw_line(x1, y1, x2, y2);
+        }
 
         shape_backend->restore_state();
     }

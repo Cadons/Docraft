@@ -31,6 +31,7 @@
 #include "docraft/layout/handler/docraft_basic_layout_handler.h"
 #include "docraft/layout/handler/docraft_layout_blank_line.h"
 #include "docraft/layout/handler/docraft_layout_handler.h"
+#include "docraft/layout/handler/docraft_layout_line_handler.h"
 #include "docraft/layout/handler/docraft_layout_list_handler.h"
 #include "docraft/layout/handler/docraft_layout_table_handler.h"
 #include "docraft/layout/handler/docraft_layout_text_handler.h"
@@ -187,6 +188,7 @@ namespace docraft::layout {
         handlers_.emplace_back(std::make_unique<handler::DocraftLayoutTableHandler>(context_));
         // dispatches internally to horizontal/vertical sub-handlers
         handlers_.emplace_back(std::make_unique<handler::DocraftLayoutBlankLine>(context_));
+        handlers_.emplace_back(std::make_unique<handler::DocraftLayoutLineHandler>(context_));
         handlers_.emplace_back(std::make_unique<handler::DocraftLayoutListHandler>(context_));
         list_handler_ = static_cast<handler::DocraftLayoutListHandler *>(handlers_.back().get());
         handlers_.emplace_back(std::make_unique<handler::DocraftBasicLayoutHandler>(context_));

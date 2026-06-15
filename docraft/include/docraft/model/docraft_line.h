@@ -81,9 +81,9 @@ namespace docraft::model {
          */
         float border_width() const;
     private:
-        DocraftPoint start_{};
-        DocraftPoint end_{};
-        DocraftColor border_color_ = DocraftColor(0, 0, 0, 0);
+        DocraftPoint start_{.x = 0.0F, .y = 0.0F};
+        DocraftPoint end_{.x = 100.0F, .y = 0.0F};
+        DocraftColor border_color_ = DocraftColor(0, 0, 0, 1);
         float border_width_ = 1.0F;
     };
 } // docraft::model
