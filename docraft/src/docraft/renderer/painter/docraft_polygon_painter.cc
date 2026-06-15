@@ -16,66 +16,28 @@
 
 #include "docraft/renderer/painter/docraft_polygon_painter.h"
 
-#include "docraft/backend/docraft_shape_rendering_backend.h"
-
 namespace docraft::renderer::painter {
-    DocraftPolygonPainter::DocraftPolygonPainter(const model::DocraftPolygon &polygon_node) : polygon_node_(polygon_node) {
+    DocraftPolygonPainter::DocraftPolygonPainter(const model::DocraftPolygon &polygon_node) : polygon_node_(
+        polygon_node) {
     }
 
-    void DocraftPolygonPainter::draw(const std::shared_ptr<DocraftDocumentContext> &context) {
-        if (!context) return;
-        auto &rendering_service = context->rendering();
-        auto shape_backend = rendering_service.shape_rendering();
-        auto line_backend = rendering_service.line_rendering();
-        if (!shape_backend || !line_backend) return;
+    const std::vector<model::DocraftPoint> &DocraftPolygonPainter::shape_points() const {
+        return polygon_node_.points();
+    }
 
-        const auto &bg_color = polygon_node_.background_color().toRGB();
-        const auto &border_color = polygon_node_.border_color().toRGB();
-        float border_width = polygon_node_.border_width();
+    const model::DocraftPoint &DocraftPolygonPainter::shape_origin() const {
+        return polygon_node_.position();
+    }
 
-        if (bg_color.a <= 0.0F && (border_width <= 0.0F || border_color.a <= 0.0F)) {
-            return;
-        }
+    const DocraftColor &DocraftPolygonPainter::shape_background_color() const {
+        return polygon_node_.background_color();
+    }
 
-        const auto &points = polygon_node_.points();
-        if (points.size() < 3U) {
-            return;
-        }
+    const DocraftColor &DocraftPolygonPainter::shape_border_color() const {
+        return polygon_node_.border_color();
+    }
 
-        std::vector<model::DocraftPoint> transformed;
-        transformed.reserve(points.size());
-        const auto &origin = polygon_node_.position();
-        for (const auto &pt : points) {
-            transformed.push_back({.x = origin.x + pt.x, .y = origin.y - pt.y});
-        }
-
-        shape_backend->save_state();
-
-        if (bg_color.a < 1.0F || border_color.a < 1.0F) {
-            shape_backend->set_fill_alpha(bg_color.a);
-            shape_backend->set_stroke_alpha(border_color.a);
-        }
-
-        if (border_width > 0.0F) {
-            line_backend->set_line_width(border_width);
-        }
-
-        shape_backend->set_fill_color(bg_color.r, bg_color.g, bg_color.b);
-        line_backend->set_stroke_color(border_color.r, border_color.g, border_color.b);
-
-        shape_backend->draw_polygon(transformed);
-
-        const bool has_fill = bg_color.a > 0.0F;
-        const bool has_stroke = border_width > 0.0F && border_color.a > 0.0F;
-
-        if (has_fill && has_stroke) {
-            shape_backend->fill_stroke();
-        } else if (has_fill) {
-            shape_backend->fill();
-        } else if (has_stroke) {
-            shape_backend->stroke();
-        }
-
-        shape_backend->restore_state();
+    float DocraftPolygonPainter::shape_border_width() const {
+        return polygon_node_.border_width();
     }
 } // docraft::renderer::painter

@@ -108,6 +108,8 @@ set(DOCRAFT_SOURCES
         include/docraft/renderer/painter/docraft_rectangle_painter.h
         src/docraft/renderer/painter/docraft_circle_painter.cc
         include/docraft/renderer/painter/docraft_circle_painter.h
+        src/docraft/renderer/painter/docraft_polygonal_shape_painter_base.cc
+        include/docraft/renderer/painter/docraft_polygonal_shape_painter_base.h
         src/docraft/renderer/painter/docraft_triangle_painter.cc
         include/docraft/renderer/painter/docraft_triangle_painter.h
         src/docraft/renderer/painter/docraft_line_painter.cc

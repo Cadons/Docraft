@@ -18,24 +18,33 @@
 
 #include "docraft/docraft_lib.h"
 #include "docraft/model/docraft_polygon.h"
-#include "docraft/renderer/painter/i_painter.h"
+#include "docraft/renderer/painter/docraft_polygonal_shape_painter_base.h"
 
 namespace docraft::renderer::painter {
     /**
      * @brief Painter that draws DocraftPolygon nodes.
      */
-    class DOCRAFT_LIB DocraftPolygonPainter : public IPainter {
+    class DOCRAFT_LIB DocraftPolygonPainter : public DocraftPolygonalShapePainterBase {
     public:
         /**
          * @brief Creates a polygon painter bound to the polygon node.
          * @param polygon_node Polygon node.
          */
         explicit DocraftPolygonPainter(const model::DocraftPolygon &polygon_node);
-        /**
-         * @brief Draws the polygon using the provided context.
-         * @param context Document context.
-         */
-        void draw(const std::shared_ptr<DocraftDocumentContext> &context) override;
+
+        // draw(...) is inherited from DocraftPolygonalShapePainterBase.
+
+    protected:
+        [[nodiscard]] const std::vector<model::DocraftPoint> &shape_points() const override;
+
+        [[nodiscard]] const model::DocraftPoint &shape_origin() const override;
+
+        [[nodiscard]] const DocraftColor &shape_background_color() const override;
+
+        [[nodiscard]] const DocraftColor &shape_border_color() const override;
+
+        [[nodiscard]] float shape_border_width() const override;
+
     private:
         model::DocraftPolygon polygon_node_;
     };

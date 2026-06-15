@@ -18,24 +18,33 @@
 
 #include "docraft/docraft_lib.h"
 #include "docraft/model/docraft_triangle.h"
-#include "docraft/renderer/painter/i_painter.h"
+#include "docraft/renderer/painter/docraft_polygonal_shape_painter_base.h"
 
 namespace docraft::renderer::painter {
     /**
      * @brief Painter that draws DocraftTriangle nodes.
      */
-    class DOCRAFT_LIB DocraftTrianglePainter : public IPainter {
+    class DOCRAFT_LIB DocraftTrianglePainter : public DocraftPolygonalShapePainterBase {
     public:
         /**
          * @brief Creates a triangle painter bound to the triangle node.
          * @param triangle_node Triangle node.
          */
         explicit DocraftTrianglePainter(const model::DocraftTriangle &triangle_node);
-        /**
-         * @brief Draws the triangle using the provided context.
-         * @param context Document context.
-         */
-        void draw(const std::shared_ptr<DocraftDocumentContext> &context) override;
+
+        // draw(...) is inherited from DocraftPolygonalShapePainterBase.
+
+    protected:
+        [[nodiscard]] const std::vector<model::DocraftPoint> &shape_points() const override;
+
+        [[nodiscard]] const model::DocraftPoint &shape_origin() const override;
+
+        [[nodiscard]] const DocraftColor &shape_background_color() const override;
+
+        [[nodiscard]] const DocraftColor &shape_border_color() const override;
+
+        [[nodiscard]] float shape_border_width() const override;
+
     private:
         model::DocraftTriangle triangle_node_;
     };
