@@ -12,6 +12,7 @@
 #include "docraft/model/docraft_rectangle.h"
 #include "docraft/model/docraft_table.h"
 #include "docraft/model/docraft_text.h"
+#include "docraft/model/docraft_line.h"
 
 namespace docraft::test::layout {
     class DocraftLayoutEngineTest : public ::testing::Test {
@@ -694,4 +695,98 @@ namespace docraft::test::layout {
         EXPECT_GT(c01->width(), c00->width());
     }
 
+    TEST_F(DocraftLayoutEngineTest, ComputeLineInHorizontalLayout) {
+        auto &engine = this->engine();
+        auto context = this->context();
+
+        // Create a horizontal layout with a line and a rectangle
+        auto layout_node = std::make_shared<docraft::model::DocraftLayout>();
+        layout_node->set_orientation(docraft::model::LayoutOrientation::kHorizontal);
+
+        // Add a line as the first child
+        auto line = std::make_shared<docraft::model::DocraftLine>();
+        line->set_weight(0.5F);
+        line->set_border_width(2.0F);
+        layout_node->add_child(line);
+
+        // Add a rectangle as the second child
+        auto rect = std::make_shared<docraft::model::DocraftRectangle>();
+        rect->set_weight(0.5F);
+        rect->set_height(40);
+        layout_node->add_child(rect);
+
+        EXPECT_EQ(layout_node->children().size(), 2);
+
+        auto layout = engine->compute_layout(layout_node);
+
+        // Check that the line has been properly laid out
+        EXPECT_GT(line->width(), 0.0F);
+        EXPECT_GT(line->height(), 0.0F);
+
+        // Line should have equal Y coordinates for horizontal alignment
+        EXPECT_FLOAT_EQ(line->start().y, line->end().y);
+
+        // Line end X should be at the allocated width.
+        // With 2 equal-weight children and one spacing gap between them:
+        //   available = page_width - kHorizontalSpacing_
+        //   child_width = available * 0.5  (weight = 0.5)
+        const float allocated_width = (context->layout().page_width() - kHorizontalSpacing_) * 0.5F;
+        EXPECT_NEAR(line->end().x, allocated_width, 1.0F);
+
+        // Rectangle should be positioned to the right of the line
+        EXPECT_GT(rect->position().x, line->position().x + line->width());
+
+        // In horizontal layout, line is baseline-aligned to row bottom.
+        const float expected_baseline_y = rect->anchors().bottom_left.y + (line->border_width() * 0.5F);
+        EXPECT_NEAR(line->position().y, expected_baseline_y, 1.0F);
+    }
+
+    TEST_F(DocraftLayoutEngineTest, ComputeLineWidthClampedToHorizontalSlot) {
+        auto &engine = this->engine();
+        auto context = this->context();
+
+        auto layout_node = std::make_shared<docraft::model::DocraftLayout>();
+        layout_node->set_orientation(docraft::model::LayoutOrientation::kHorizontal);
+
+        auto line = std::make_shared<docraft::model::DocraftLine>();
+        line->set_weight(0.5F);
+        line->set_width(10000.0F); // Deliberately oversized to verify clamping to slot.
+        layout_node->add_child(line);
+
+        auto rect = std::make_shared<docraft::model::DocraftRectangle>();
+        rect->set_weight(0.5F);
+        rect->set_height(20.0F);
+        layout_node->add_child(rect);
+
+        (void) engine->compute_layout(layout_node);
+
+        const float allocated_width = (context->layout().page_width() - kHorizontalSpacing_) * 0.5F;
+        EXPECT_NEAR(line->width(), allocated_width, 1.0F);
+        EXPECT_NEAR(line->end().x, allocated_width, 1.0F);
+        const float expected_baseline_y = rect->anchors().bottom_left.y + (line->border_width() * 0.5F);
+        EXPECT_NEAR(line->position().y, expected_baseline_y, 1.0F);
+    }
+
+    TEST_F(DocraftLayoutEngineTest, ComputeLineBaselineAlignedWithTextInHorizontalLayout) {
+        auto &engine = this->engine();
+
+        auto layout_node = std::make_shared<docraft::model::DocraftLayout>();
+        layout_node->set_orientation(docraft::model::LayoutOrientation::kHorizontal);
+
+        auto text = std::make_shared<docraft::model::DocraftText>();
+        text->set_text("Baseline text");
+        text->set_weight(0.5F);
+        layout_node->add_child(text);
+
+        auto line = std::make_shared<docraft::model::DocraftLine>();
+        line->set_weight(0.5F);
+        line->set_border_width(2.0F);
+        layout_node->add_child(line);
+
+        (void) engine->compute_layout(layout_node);
+
+        // In horizontal rows, block lines should sit on the row baseline (text box bottom).
+        const float expected_baseline_y = text->anchors().bottom_left.y + (line->border_width() * 0.5F);
+        EXPECT_NEAR(line->position().y, expected_baseline_y, 1.0F);
+    }
 }

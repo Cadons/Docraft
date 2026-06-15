@@ -391,6 +391,16 @@ namespace docraft::layout {
         node->set_position(max_rect.position());
         node->set_width(max_rect.width());
         node->set_height(max_rect.height());
+
+        // A Layout container pushes its orientation onto the cursor so that children are arranged
+        // correctly (horizontal vs vertical). However, the Layout *block itself* must always advance
+        // the parent flow vertically (like any other block element). Pop the direction that was
+        // pushed in setup_layout_direction_state before deciding how to move the outer cursor.
+        const bool is_layout_container = (std::dynamic_pointer_cast<model::DocraftLayout>(node) != nullptr);
+        if (is_layout_container) {
+            layout_cursor.pop_direction();
+        }
+
         if (!state.is_absolute && layout_cursor.direction() == DocraftCursorDirection::kHorizontal) {
             cursor.move_to(max_rect.anchors().top_right.x + kHorizontalSpacing, max_rect.anchors().top_right.y);
         } else if (!state.is_absolute) {
@@ -538,6 +548,7 @@ namespace docraft::layout {
         const float section_content_bottom) {
         auto &layout_service = context_->edit_layout();
         const float available = compute_horizontal_available_width(max_width, container->children().size());
+        std::vector<handler::DocraftLayoutLineHandler::HorizontalChildPlacement> row_placements;
         for (const auto &child: container->children()) {
             if (child->z_index() != parent_z_index) {
                 continue;
@@ -547,9 +558,17 @@ namespace docraft::layout {
             const float start_x = cursor.x();
             const float start_y = cursor.y();
             process_child_layout(child, cursor, out_boxes, section_has_bounds, section_content_bottom);
+
+            if (!out_boxes.empty()) {
+                row_placements.push_back({.node = child, .box_index = out_boxes.size() - 1});
+            }
+
             // Advance the cursor to the next horizontal slot.
             cursor.move_to(start_x + child_width + kHorizontalSpacing, start_y);
         }
+
+        // Post-process horizontal placements to align them vertically within the row.
+        handler::DocraftLayoutLineHandler::align_horizontal_row_lines_to_baseline(row_placements, out_boxes);
     }
 
     // ───────────────────────────────────────────────────────────────────────────

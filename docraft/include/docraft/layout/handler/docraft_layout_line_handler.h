@@ -16,6 +16,9 @@
 
 #pragma once
 
+#include <cstddef>
+#include <vector>
+
 #include "docraft/docraft_lib.h"
 #include "abstract_docraft_layout_handler.h"
 #include "docraft/model/docraft_line.h"
@@ -30,7 +33,16 @@ namespace docraft::layout::handler {
      */
     class DOCRAFT_LIB DocraftLayoutLineHandler : public AbstractDocraftLayoutHandler<model::DocraftLine> {
     public:
+        struct HorizontalChildPlacement {
+            std::shared_ptr<model::DocraftNode> node;
+            std::size_t box_index;
+        };
+
         using AbstractDocraftLayoutHandler::AbstractDocraftLayoutHandler;
+
+        static void align_horizontal_row_lines_to_baseline(
+            const std::vector<HorizontalChildPlacement> &placements,
+            std::vector<model::DocraftTransform> &row_boxes);
 
         void compute(const std::shared_ptr<model::DocraftLine> &node,
                      model::DocraftTransform *box,
