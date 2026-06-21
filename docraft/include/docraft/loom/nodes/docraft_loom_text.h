@@ -3,6 +3,7 @@
 
 #include "docraft/loom/nodes/docraft_loom_node.h"
 #include "docraft/docraft_color.h"
+#include "docraft/model/docraft_text.h"
 
 namespace docraft::loom::nodes {
     class DOCRAFT_LIB DocraftLoomText : public DocraftLoomNode
@@ -27,6 +28,8 @@ namespace docraft::loom::nodes {
         void set_underline(bool underline);
         const DocraftColor& color() const;
         void set_color(const DocraftColor& color);
+        model::TextAlignment alignment() const;
+        void set_alignment(model::TextAlignment alignment);
 
     private:
         std::string text_;
@@ -36,5 +39,6 @@ namespace docraft::loom::nodes {
         bool italic_;
         bool underline_;
         DocraftColor color_;
+        model::TextAlignment alignment_;
     };
 } // docraft

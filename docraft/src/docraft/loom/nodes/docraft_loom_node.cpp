@@ -7,7 +7,6 @@
 #include "docraft/exception/docraft_input_exceptions.h"
 #define CHILD_NODE_NULL_EXCEPTION_MESSAGE "Child node cannot be null"
 #define CHILD_NODE_INDEX_OUT_OF_RANGE_EXCEPTION_MESSAGE "Child index out of range"
-#define LAYOUT_BOX_EXCEPTION_MESSAGE "Layout box cannot be null"
 
 namespace docraft::loom::nodes {
     namespace {

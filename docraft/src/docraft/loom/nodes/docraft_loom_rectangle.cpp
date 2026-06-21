@@ -4,9 +4,5 @@
 
 #include "docraft/loom/nodes/docraft_loom_rectangle.h"
 
-namespace docraft {
-    namespace loom {
-        namespace nodes {
-        } // nodes
-    } // loom
+namespace docraft::loom::nodes {
 } // docraft

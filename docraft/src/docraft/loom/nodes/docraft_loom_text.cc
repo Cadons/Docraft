@@ -12,7 +12,8 @@ namespace docraft::loom::nodes {
           bold_(false),
           italic_(false),
           underline_(false),
-          color_(DocraftColor::fromRGB(0.0F, 0.0F, 0.0F, 1.0F)) // default to black
+          color_(DocraftColor::fromRGB(0.0F, 0.0F, 0.0F, 1.0F)), // default to black
+          alignment_(model::TextAlignment::kLeft)
     {
     }
 
@@ -89,5 +90,15 @@ namespace docraft::loom::nodes {
     void DocraftLoomText::set_color(const DocraftColor& color)
     {
         color_ = color;
+    }
+
+    model::TextAlignment DocraftLoomText::alignment() const
+    {
+        return alignment_;
+    }
+
+    void DocraftLoomText::set_alignment(model::TextAlignment alignment)
+    {
+        alignment_ = alignment;
     }
 } // docraft
