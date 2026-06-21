@@ -201,11 +201,22 @@ set(DOCRAFT_SOURCES
         include/docraft/management/docraft_document_query.hpp
         src/docraft/management/docraft_document_config.cc
         include/docraft/management/docraft_document_config.h
+        include/docraft/exception/docraft_exceptions.h
+        src/docraft/loom/nodes/docraft_loom_text.cc
+        include/docraft/loom/nodes/docraft_loom_text.h
+        src/docraft/loom/nodes/docraft_loom_rectangle.cpp
+        include/docraft/loom/nodes/docraft_loom_rectangle.h
+        include/docraft/loom/interfaces/docraft_loom_measure_visitor.h
+        include/docraft/loom/nodes/docraft_loom_text.h
+        src/docraft/loom/nodes/docraft_loom_node.cpp
+        include/docraft/loom/nodes/docraft_loom_node.h
+
 )
 set(DOCRAFT_LIBRARY_TYPE STATIC)
 if (BUILD_SHARED_LIBS)
     set(DOCRAFT_LIBRARY_TYPE SHARED
-            include/docraft/exception/docraft_exceptions.h)
+
+    )
 endif ()
 add_library(docraft ${DOCRAFT_LIBRARY_TYPE}
         ${DOCRAFT_SOURCES}
