@@ -17,6 +17,11 @@ namespace docraft::loom::nodes {
     {
     }
 
+    DocraftLoomText::DocraftLoomText(const std::string& text) : DocraftLoomText()
+    {
+        text_ = text;
+    }
+
     void DocraftLoomText::accept(loom::interfaces::DocraftLoomIVisitor& visitor)
     {
         visitor.visit(this);

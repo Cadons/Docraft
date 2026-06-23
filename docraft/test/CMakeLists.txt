@@ -31,6 +31,8 @@ set(TEST_SOURCES
         docraft/utils/docraft_keyword_extractor_test.cc
         docraft/utils/docraft_logger_test.cc
         docraft/utils/docraft_parser_utils.cc
+        docraft/loom/pipeline/docraft_loom_measure_processor_test.cpp
+        docraft/backend/docraft_mock_backend.h
 )
 
 set(STRESS_TEST_SOURCES
@@ -41,7 +43,7 @@ set(STRESS_TEST_SOURCES
 add_executable(docraft_test
         ${TEST_SOURCES}
 )
-target_link_libraries(docraft_test PRIVATE docraft GTest::GTest)
+target_link_libraries(docraft_test PRIVATE docraft GTest::GTest GTest::gmock)
 target_include_directories(docraft_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 gtest_add_tests(TARGET docraft_test
         TEST_LIST DOCRAFT_TESTS
@@ -50,7 +52,7 @@ gtest_add_tests(TARGET docraft_test
 add_executable(docraft_stress_test
         ${STRESS_TEST_SOURCES}
 )
-target_link_libraries(docraft_stress_test PRIVATE docraft GTest::GTest)
+target_link_libraries(docraft_stress_test PRIVATE docraft GTest::GTest GTest::gmock)
 target_include_directories(docraft_stress_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 gtest_add_tests(TARGET docraft_stress_test
         TEST_PREFIX "Stress."

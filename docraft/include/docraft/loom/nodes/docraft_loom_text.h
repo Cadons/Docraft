@@ -10,6 +10,7 @@ namespace docraft::loom::nodes {
     {
     public:
         DocraftLoomText();
+        DocraftLoomText(const std::string& text);
         ~DocraftLoomText() override = default;
         void accept(loom::interfaces::DocraftLoomIVisitor& visitor) override;
         //setter
