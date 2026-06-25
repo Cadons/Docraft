@@ -6,6 +6,7 @@
 namespace docraft::loom::nodes {
     class DocraftLoomText;
     class DocraftLoomRectangle;
+    class DocraftLoomParagraph;
 }
 
 namespace docraft::loom::interfaces {
@@ -19,6 +20,7 @@ namespace docraft::loom::interfaces {
         virtual ~DocraftLoomIVisitor() = default;
         virtual void visit(docraft::loom::nodes::DocraftLoomText*) = 0;
         virtual void visit(docraft::loom::nodes::DocraftLoomRectangle*) = 0;
+        virtual void visit(docraft::loom::nodes::DocraftLoomParagraph*) = 0;
     };
 
     /**

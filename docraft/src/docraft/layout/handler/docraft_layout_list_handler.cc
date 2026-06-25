@@ -76,7 +76,8 @@ namespace docraft::layout::handler {
             } else {
                 generic::DocraftFontApplier font_applier(edit_context());
                 font_applier.apply_font(marker_text);
-                marker_width = text_backend->measure_text_width(marker_text->text());
+                const char* rn = generic::DocraftFontApplier::get_font_registred_name(marker_text->font_name());
+                marker_width = text_backend->measure_text_width(marker_text->text(), rn ? rn : "", marker_text->font_size());
             }
             const float marker_gap = marker_width > 0.0F ? 6.0F : 0.0F;
 

@@ -5,6 +5,8 @@
 #include "docraft/loom/pipeline/docraft_loom_measure_processor.h"
 
 #include "docraft/loom/nodes/docraft_loom_text.h"
+#include "docraft/loom/nodes/docraft_loom_paragraph.h"
+#include "docraft/generic/docraft_font_applier.h"
 
 namespace docraft::loom::pipeline {
     DocraftLoomMeasureProcessor::DocraftLoomMeasureProcessor(
@@ -17,12 +19,13 @@ namespace docraft::loom::pipeline {
     {
         if (text)
         {
-            // Perform measurement logic for DocraftLoomText node
-            auto text_width = text_backend_->measure_text_width(text->text());
-            auto& measure_size = text->edit_layout_box().measured_size;
+            const char* rn = generic::DocraftFontApplier::get_font_registred_name(text->font_family());
+            const std::string reg_font = rn ? rn : "";
+            const float font_size = text->font_size();
 
-            measure_size.width = text_width;
-            measure_size.height = text->font_size(); // Assuming font size is the height of the text
+            auto& measure_size = text->edit_layout_box().measured_size;
+            measure_size.width = text_backend_->measure_text_width(text->text(), reg_font, font_size);
+            measure_size.height = text_backend_->measure_text_height(reg_font, font_size);
         }
     }
 
@@ -32,5 +35,29 @@ namespace docraft::loom::pipeline {
         {
             // Perform measurement logic for DocraftLoomRectangle node
         }
+    }
+
+    void DocraftLoomMeasureProcessor::visit(docraft::loom::nodes::DocraftLoomParagraph* paragraph)
+    {
+        if (!paragraph)
+            return;
+
+        float total_height = paragraph->space_before() + paragraph->space_after(); // Start with space before and after
+        float max_width = 0.0f;
+
+        for (int i = 0; i < paragraph->children_count(); ++i)
+        {
+            auto child = paragraph->edit_child(i);
+            child->accept(*this);
+            const auto& child_size = child->layout_box().measured_size;
+            total_height += child_size.height * paragraph->line_spacing();
+            // Update max_width if the child's width is greater
+            if (child_size.width > max_width)
+                max_width = child_size.width;
+        }
+        // Set the measured size of the paragraph node
+        auto& measured_size = paragraph->edit_layout_box().measured_size;
+        measured_size.width = max_width;
+        measured_size.height = total_height;
     }
 } // docraft

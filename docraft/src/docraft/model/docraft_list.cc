@@ -20,6 +20,7 @@
 #include <utility>
 
 #include "docraft/exception/docraft_exceptions.h"
+#include "docraft/generic/docraft_font_applier.h"
 #include "docraft/model/docraft_clone_utils.h"
 #include "docraft/renderer/docraft_renderer.h"
 #include "docraft/utils/docraft_logger.h"
@@ -67,7 +68,8 @@ namespace docraft::model {
             line->set_underline(false);
             line->set_position(marker.position);
             if (const auto text_backend = context->rendering().text_rendering()) {
-                line->set_width(text_backend->measure_text_width(marker.text));
+                const char* rn = generic::DocraftFontApplier::get_font_registred_name(line->font_name());
+                line->set_width(text_backend->measure_text_width(marker.text, rn ? rn : "", line->font_size()));
             }
             line->set_height(text_node->font_size() * 1.2F);
             marker_text.add_line(line);

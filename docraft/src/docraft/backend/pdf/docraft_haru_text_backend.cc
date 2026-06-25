@@ -63,9 +63,54 @@ namespace docraft::backend::pdf {
         HPDF_Page_ShowText(page, text.c_str());
     }
 
-    float DocraftHaruTextBackend::measure_text_width(const std::string &text) const {
-        auto *provider = state_->ensure_page_provider();
+    HPDF_Font DocraftHaruTextBackend::resolve_font(const std::string& font_name) const
+    {
+        if (font_name.empty() || !state_->pdf)
+            return nullptr;
+        HPDF_Font font = HPDF_GetFont(state_->pdf, font_name.c_str(), "UTF-8");
+        if (!font || HPDF_GetError(state_->pdf) != HPDF_OK)
+        {
+            HPDF_ResetError(state_->pdf);
+            font = HPDF_GetFont(state_->pdf, font_name.c_str(), nullptr);
+            if (!font || HPDF_GetError(state_->pdf) != HPDF_OK)
+            {
+                HPDF_ResetError(state_->pdf);
+                return nullptr;
+            }
+        }
+        return font;
+    }
+
+    float DocraftHaruTextBackend::measure_text_width(const std::string& text, const std::string& font_name,
+                                                     float font_size) const
+    {
+        constexpr float kEM = 1000.0F;
+        HPDF_Font font = resolve_font(font_name);
+        if (font && font_size > 0.0F)
+        {
+            HPDF_TextWidth tw = HPDF_Font_TextWidth(font,
+                                                    reinterpret_cast<const HPDF_BYTE*>(text.c_str()),
+                                                    static_cast<HPDF_UINT>(text.size()));
+            return static_cast<float>(tw.width) * font_size / kEM;
+        }
+        auto* provider = state_->ensure_page_provider();
         return HPDF_Page_TextWidth(provider->current_page(), text.c_str());
+    }
+
+    float DocraftHaruTextBackend::measure_text_height(const std::string& font_name, float font_size) const
+    {
+        constexpr float kEM = 1000.0F;
+        HPDF_Font font = resolve_font(font_name);
+        if (!font || font_size <= 0.0F)
+        {
+            auto* provider = state_->ensure_page_provider();
+            HPDF_Page page = provider->current_page();
+            font = HPDF_Page_GetCurrentFont(page);
+            font_size = HPDF_Page_GetCurrentFontSize(page);
+        }
+        const float ascent = static_cast<float>(HPDF_Font_GetAscent(font))  * font_size / kEM;
+        const float descent = static_cast<float>(HPDF_Font_GetDescent(font)) * font_size / kEM;
+        return ascent - descent;
     }
 } // namespace docraft::backend::pdf
 

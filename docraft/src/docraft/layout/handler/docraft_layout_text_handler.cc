@@ -40,11 +40,15 @@ namespace docraft::layout::handler {
     float DocraftLayoutTextHandler::measure_text_width(const std::shared_ptr<model::DocraftText> &node) const {
         generic::DocraftFontApplier font_applier(edit_context());
         font_applier.apply_font(node);
-        return edit_context()->rendering().text_rendering()->measure_text_width(node->text());
+        const char* rn = generic::DocraftFontApplier::get_font_registred_name(node->font_name());
+        return edit_context()->rendering().text_rendering()->measure_text_width(
+            node->text(), rn ? rn : "", node->font_size());
     }
 
-    float DocraftLayoutTextHandler::measure_test_width(const std::string &text) const {
-        return edit_context()->rendering().text_rendering()->measure_text_width(text);
+    float DocraftLayoutTextHandler::measure_test_width(const std::string& text, const std::string& font_name,
+                                                       float font_size) const
+    {
+        return edit_context()->rendering().text_rendering()->measure_text_width(text, font_name, font_size);
     }
 
     void DocraftLayoutTextHandler::compute(const std::shared_ptr<model::DocraftText> &node,
@@ -53,6 +57,9 @@ namespace docraft::layout::handler {
         filter_text(node);
         generic::DocraftFontApplier font_applier(edit_context());
         font_applier.apply_font(node);
+        const char* rn = generic::DocraftFontApplier::get_font_registred_name(node->font_name());
+        const std::string reg_font = rn ? rn : "";
+        const float node_font_size = node->font_size();
         auto global_cursor = cursor;
         float specified_height = node->height();
         DocraftCursor text_cursor = cursor;//cursor for the text box, start from the current global cursor
@@ -68,11 +75,12 @@ namespace docraft::layout::handler {
 
         const float padding = std::max(0.0F, node->padding());
         const float available_width = std::max(0.0F, edit_context()->layout().available_space() - (2.0F * padding));
-        auto add_wrapped_word = [this,available_width,node](const std::string &word) {
-            if (word.empty()) {
+        auto add_wrapped_word = [this, available_width, node, reg_font, node_font_size](const std::string& word) {
+            if (word.empty())
+            {
                 return;
             }
-            if (measure_test_width(word) <= available_width) {
+            if (measure_test_width(word, reg_font, node_font_size) <= available_width) {
                 node->add_line(std::make_shared<model::DocraftText>(word));
                 return;
             }
@@ -83,7 +91,7 @@ namespace docraft::layout::handler {
                 size_t last_fit_end = line_start;
                 while (probe_end <= word.length()) {
                     std::string sub_line = word.substr(line_start, probe_end - line_start);
-                    float sub_line_width = measure_test_width(sub_line);
+                    float sub_line_width = measure_test_width(sub_line, reg_font, node_font_size);
                     if (sub_line_width > available_width) {
                         break;
                     }
@@ -100,13 +108,15 @@ namespace docraft::layout::handler {
             }
         };
 
-        auto wrap_paragraph = [this, available_width, add_wrapped_word, node](const std::string &paragraph) {
+        auto wrap_paragraph = [this, available_width, add_wrapped_word, node, reg_font, node_font_size](const std::string& paragraph) {
             std::istringstream iss(paragraph);
             std::string word;
             std::string current_line;
-            while (iss >> word) {
-                if (current_line.empty()) {
-                    if (measure_test_width(word) <= available_width) {
+            while (iss >> word)
+            {
+                if (current_line.empty())
+                {
+                    if (measure_test_width(word, reg_font, node_font_size) <= available_width) {
                         current_line = word;
                     } else {
                         add_wrapped_word(word);
@@ -114,12 +124,12 @@ namespace docraft::layout::handler {
                     continue;
                 }
                 std::string candidate = current_line + " " + word;
-                if (measure_test_width(candidate) <= available_width) {
+                if (measure_test_width(candidate, reg_font, node_font_size) <= available_width) {
                     current_line = candidate;
                 } else {
                     node->add_line(std::make_shared<model::DocraftText>(current_line));
                     current_line.clear();
-                    if (measure_test_width(word) <= available_width) {
+                    if (measure_test_width(word, reg_font, node_font_size) <= available_width) {
                         current_line = word;
                     } else {
                         add_wrapped_word(word);

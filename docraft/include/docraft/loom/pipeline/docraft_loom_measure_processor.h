@@ -58,6 +58,16 @@ namespace docraft::loom::pipeline {
          */
         void visit(docraft::loom::nodes::DocraftLoomRectangle*) override;
 
+        /**
+         * @brief Visits a DocraftLoomParagraph node during the measurement process.
+         *
+         * Measures the paragraph as the sum of its children's heights plus inter-line spacing,
+         * plus space_before and space_after.
+         *
+         * @param paragraph Pointer to the DocraftLoomParagraph node being visited.
+         */
+        void visit(docraft::loom::nodes::DocraftLoomParagraph*) override;
+
     private:
         std::shared_ptr<docraft::backend::IDocraftTextRenderingBackend> text_backend_;
     };

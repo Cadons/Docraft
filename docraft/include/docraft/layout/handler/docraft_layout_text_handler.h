@@ -67,7 +67,8 @@ namespace docraft::layout::handler {
          * @param text Text string.
          * @return Width in points.
          */
-        float measure_test_width(const std::string& text) const;
+        float measure_test_width(const std::string& text, const std::string& font_name, float font_size) const;
+
     private:
         const float interline_space_ = 1.2F;
 

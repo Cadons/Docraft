@@ -23,7 +23,8 @@ namespace docraft::backend {
     /**
      * @brief Interface for text rendering backends used by Docraft.
      */
-    class DOCRAFT_LIB IDocraftTextRenderingBackend {
+    class DOCRAFT_LIB IDocraftTextRenderingBackend
+    {
     public:
         /**
          * @brief Virtual destructor.
@@ -46,7 +47,7 @@ namespace docraft::backend {
          * @param x The x-coordinate where the text should start.
          * @param y The y-coordinate where the text should start.
          */
-        virtual void draw_text(const std::string &text, float x, float y) const = 0;
+        virtual void draw_text(const std::string& text, float x, float y) const = 0;
 
         /**
          * @brief Sets the fill color used for subsequent text drawing.
@@ -67,7 +68,7 @@ namespace docraft::backend {
          * @param translate_y The vertical translation (movement) in points.
          */
         virtual void draw_text_matrix(
-            const std::string &text,
+            const std::string& text,
             float scale_x,
             float skew_x,
             float skew_y,
@@ -76,10 +77,21 @@ namespace docraft::backend {
             float translate_y) const = 0;
 
         /**
-         * @brief Measures the width of the specified text using the current font settings.
+         * @brief Measures the width of the specified text using the given font.
          * @param text The text to be measured.
+         * @param font_name Backend-registered font name (from IDocraftFontBackend).
+         * @param font_size Font size in points.
          * @return The width of the text in points.
          */
-        virtual float measure_text_width(const std::string &text) const = 0;
+        virtual float measure_text_width(const std::string& text, const std::string& font_name, float font_size) const =
+        0;
+
+        /**
+         * @brief Measures the line height (ascent − descent) for the given font.
+         * @param font_name Backend-registered font name.
+         * @param font_size Font size in points.
+         * @return Line height in points.
+         */
+        virtual float measure_text_height(const std::string& font_name, float font_size) const = 0;
     };
 } // docraft::backend

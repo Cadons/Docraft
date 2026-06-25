@@ -31,10 +31,13 @@ namespace docraft::renderer::painter {
     void DocraftTextPainter::render_justified(const std::shared_ptr<DocraftDocumentContext> &context,
                                               const std::string &text) {
         auto backend = context->rendering().text_rendering();
+        const char* rn = generic::DocraftFontApplier::get_font_registred_name(text_node_.font_name());
+        const std::string reg_font = rn ? rn : "";
+        const float font_size = text_node_.font_size();
 
         // Use the computed line width as the target for justification.
         float max_width = current_line_->width();
-        float actual_width = backend->measure_text_width(text);
+        float actual_width = backend->measure_text_width(text, reg_font, font_size);
 
         size_t spaces = std::count(text.begin(), text.end(), ' ');
 
@@ -46,7 +49,7 @@ namespace docraft::renderer::painter {
 
         // Manually distribute extra space between words for visible justification.
         const float extra_space = (max_width - actual_width) / static_cast<float>(spaces);
-        const float space_width = backend->measure_text_width(" ");
+        const float space_width = backend->measure_text_width(" ", reg_font, font_size);
         float x = current_line_->position().x;
         const float y = current_line_->position().y;
 
@@ -58,7 +61,7 @@ namespace docraft::renderer::painter {
                 x += space_width + extra_space;
             }
             backend->draw_text_matrix(word, 1, 0, 0, 1, x, y);
-            x += backend->measure_text_width(word);
+            x += backend->measure_text_width(word, reg_font, font_size);
             first = false;
         }
     }
@@ -66,6 +69,9 @@ namespace docraft::renderer::painter {
     std::pair<std::pair<float, float>, std::pair<float, float> > DocraftTextPainter::render_text(
         const std::shared_ptr<DocraftDocumentContext> &context, const std::string &text) {
         auto backend = context->rendering().text_rendering();
+        const char* rn = generic::DocraftFontApplier::get_font_registred_name(text_node_.font_name());
+        const std::string reg_font = rn ? rn : "";
+        const float font_size = text_node_.font_size();
 
         //begin drawing
         backend->begin_text();
@@ -75,7 +81,7 @@ namespace docraft::renderer::painter {
             backend->draw_text(text, current_line_->position().x, current_line_->position().y);
         }
         backend->end_text();
-        const float actual_width = backend->measure_text_width(text);
+        const float actual_width = backend->measure_text_width(text, reg_font, font_size);
         float rendered_width = actual_width;
         if (current_line_->alignment() == model::TextAlignment::kJustified) {
             const size_t spaces = std::count(text.begin(), text.end(), ' ');
