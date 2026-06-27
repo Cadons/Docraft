@@ -46,9 +46,11 @@ namespace docraft::test {
     {
         auto text_node = std::make_unique<docraft::loom::nodes::DocraftLoomText>("Hello\nWorld");
         text_node->set_font_size(12.0F);
-        EXPECT_CALL(*text_backend_mock(), measure_text_width("Hello\nWorld"))
-            .WillOnce(::testing::Return(11.0F)); // Mock the width measurement
-        text_node->accept(*processor()); //process node
+        EXPECT_CALL(*text_backend_mock(), measure_text_width("Hello\nWorld", ::testing::_, ::testing::_))
+            .WillOnce(::testing::Return(11.0F));
+        EXPECT_CALL(*text_backend_mock(), measure_text_height(::testing::_, 12.0F))
+            .WillOnce(::testing::Return(12.0F));
+        text_node->accept(*processor());
 
         EXPECT_EQ(text_node->edit_layout_box().measured_size.width, 11.0F);
         EXPECT_EQ(text_node->edit_layout_box().measured_size.height, 12.0F);

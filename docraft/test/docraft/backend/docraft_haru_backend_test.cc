@@ -146,7 +146,7 @@ TEST_F(DocraftHaruBackendTest, SupportsBuiltInFontAndTextMeasure) {
     edit_text_backend().draw_text("Hello backend", 20.0F, 20.0F);
     edit_text_backend().end_text();
 
-    EXPECT_GT(text_backend().measure_text_width("Hello backend"), 0.0F);
+    EXPECT_GT(text_backend().measure_text_width("Hello backend", "Helvetica", 12.0F), 0.0F);
 }
 
 TEST_F(DocraftHaruBackendTest, ReportsPdfFileExtension) {
