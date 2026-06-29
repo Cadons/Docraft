@@ -67,6 +67,8 @@ namespace docraft::loom::pipeline {
          * @param paragraph Pointer to the DocraftLoomParagraph node being visited.
          */
         void visit(docraft::loom::nodes::DocraftLoomParagraph*) override;
+        void visit(docraft::loom::nodes::DocraftLoomVStack*) override;
+        void visit(docraft::loom::nodes::DocraftLoomHStack*) override;
 
     private:
         std::shared_ptr<docraft::backend::IDocraftTextRenderingBackend> text_backend_;

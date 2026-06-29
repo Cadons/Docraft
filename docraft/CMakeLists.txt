@@ -214,6 +214,10 @@ set(DOCRAFT_SOURCES
         include/docraft/loom/pipeline/docraft_loom_measure_processor.h
         src/docraft/loom/nodes/docraft_loom_paragraph.cc
         include/docraft/loom/nodes/docraft_loom_paragraph.h
+        src/docraft/loom/nodes/docraft_loom_vstack.cpp
+        include/docraft/loom/nodes/docraft_loom_vstack.h
+        src/docraft/loom/nodes/docraft_loom_hstack.cpp
+        include/docraft/loom/nodes/docraft_loom_hstack.h
         src/docraft/loom/pipeline/docraft_loom_layout_processor.cpp
         include/docraft/loom/pipeline/docraft_loom_layout_processor.h
         src/docraft/loom/pipeline/docraft_loom_pagination_processor.cpp

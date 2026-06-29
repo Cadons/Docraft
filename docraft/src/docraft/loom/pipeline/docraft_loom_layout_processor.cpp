@@ -1,7 +1,9 @@
 #include "docraft/loom/pipeline/docraft_loom_layout_processor.h"
 
+#include "docraft/loom/nodes/docraft_loom_hstack.h"
 #include "docraft/loom/nodes/docraft_loom_paragraph.h"
 #include "docraft/loom/nodes/docraft_loom_text.h"
+#include "docraft/loom/nodes/docraft_loom_vstack.h"
 
 namespace docraft::loom::pipeline {
 #pragma region Cursor
@@ -64,5 +66,51 @@ namespace docraft::loom::pipeline {
             float nextY = position.y + child->layout_box().measured_size.height * node->line_spacing();
             cursor_.set_position(start_x, cursor_.y() + nextY);
         }
+    }
+
+    void DocraftLoomLayoutProcessor::visit(docraft::loom::nodes::DocraftLoomVStack* node)
+    {
+        if (!node) return;
+        auto& layoutBox = node->edit_layout_box();
+        layoutBox.frame.position = {cursor_.x(), cursor_.y()};
+
+        const float start_x = cursor_.x();
+        float current_y = cursor_.y();
+        const int n = node->children_count();
+        for (int i = 0; i < n; ++i)
+        {
+            cursor_.set_position(start_x, current_y);
+            auto child = node->edit_child(i);
+            child->accept(*this);
+            current_y += child->layout_box().measured_size.height;
+            if (i < n - 1)
+            {
+                current_y += node->spacing();
+            }
+        }
+        cursor_.set_position(start_x, current_y);
+    }
+
+    void DocraftLoomLayoutProcessor::visit(docraft::loom::nodes::DocraftLoomHStack* node)
+    {
+        if (!node) return;
+        auto& layoutBox = node->edit_layout_box();
+        layoutBox.frame.position = {cursor_.x(), cursor_.y()};
+
+        const float start_y = cursor_.y();
+        float current_x = cursor_.x();
+        const int n = node->children_count();
+        for (int i = 0; i < n; ++i)
+        {
+            cursor_.set_position(current_x, start_y);
+            auto child = node->edit_child(i);
+            child->accept(*this);
+            current_x += child->layout_box().measured_size.width;
+            if (i < n - 1)
+            {
+                current_x += node->spacing();
+            }
+        }
+        cursor_.set_position(current_x, start_y);
     }
 } // pipeline

@@ -32,6 +32,7 @@ set(TEST_SOURCES
         docraft/utils/docraft_logger_test.cc
         docraft/utils/docraft_parser_utils.cc
         docraft/loom/pipeline/docraft_loom_measure_processor_test.cpp
+        docraft/loom/nodes/docraft_loom_stack_nodes_test.cpp
         docraft/backend/docraft_mock_backend.h
 )
 

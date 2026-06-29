@@ -5,8 +5,10 @@
 #include "docraft/loom/pipeline/docraft_loom_rendering_processor.h"
 
 #include "docraft/backend/pdf/docraft_haru_text_backend.h"
+#include "docraft/loom/nodes/docraft_loom_hstack.h"
 #include "docraft/loom/nodes/docraft_loom_paragraph.h"
 #include "docraft/loom/nodes/docraft_loom_text.h"
+#include "docraft/loom/nodes/docraft_loom_vstack.h"
 
 namespace docraft::loom::pipeline {
     DocraftLoomRenderingProcessor::DocraftLoomRenderingProcessor(
@@ -37,5 +39,21 @@ namespace docraft::loom::pipeline {
             if (paragraph->edit_child(i))
                 paragraph->edit_child(i)->accept(*this);
         }
+    }
+
+    void DocraftLoomRenderingProcessor::visit(docraft::loom::nodes::DocraftLoomVStack* node)
+    {
+        if (!node) return;
+        for (int i = 0; i < node->children_count(); ++i)
+            if (auto child = node->edit_child(i))
+                child->accept(*this);
+    }
+
+    void DocraftLoomRenderingProcessor::visit(docraft::loom::nodes::DocraftLoomHStack* node)
+    {
+        if (!node) return;
+        for (int i = 0; i < node->children_count(); ++i)
+            if (auto child = node->edit_child(i))
+                child->accept(*this);
     }
 } // docraft

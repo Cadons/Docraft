@@ -12,5 +12,7 @@ namespace docraft::loom::pipeline {
         void visit(docraft::loom::nodes::DocraftLoomText*) override;
         void visit(docraft::loom::nodes::DocraftLoomRectangle*) override;
         void visit(docraft::loom::nodes::DocraftLoomParagraph*) override;
+        void visit(docraft::loom::nodes::DocraftLoomVStack*) override;
+        void visit(docraft::loom::nodes::DocraftLoomHStack*) override;
     };
 } // docraft

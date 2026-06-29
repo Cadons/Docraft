@@ -1,34 +1,51 @@
-#include "docraft/loom/docraft_loom_pdf_creator.h"
-#include "docraft/loom/nodes/docraft_loom_paragraph.h"
-#include "docraft/loom/nodes/docraft_loom_text.h"
 //
 // Created by Matteo on 29/06/2026.
 //
+#include "docraft/loom/docraft_loom_pdf_creator.h"
+#include "docraft/loom/nodes/docraft_loom_hstack.h"
+#include "docraft/loom/nodes/docraft_loom_paragraph.h"
+#include "docraft/loom/nodes/docraft_loom_text.h"
+
 int main()
 {
-    //create a test document with a text and a paragraphd
-    std::shared_ptr<docraft::loom::nodes::DocraftLoomText> text_node = std::make_shared<
-        docraft::loom::nodes::DocraftLoomText>("Hello, World!");
-    text_node->set_font_family("Helvetica");
-    text_node->set_font_size(12.0F);
+    auto make_paragraph = [](const std::string& title, std::initializer_list<std::string> lines)
+    {
+        auto para = std::make_shared<docraft::loom::nodes::DocraftLoomParagraph>();
+        para->set_line_spacing(1.4F);
+        para->set_space_before(5.0F);
+        para->set_space_after(5.0F);
+        auto heading = std::make_shared<docraft::loom::nodes::DocraftLoomText>(title);
+        heading->set_font_family("Helvetica");
+        heading->set_font_size(14.0F);
+        para->add_child(heading);
+        for (const auto& line : lines)
+        {
+            auto t = std::make_shared<docraft::loom::nodes::DocraftLoomText>(line);
+            t->set_font_family("Helvetica");
+            t->set_font_size(11.0F);
+            para->add_child(t);
+        }
+        return para;
+    };
 
-    std::shared_ptr<docraft::loom::nodes::DocraftLoomParagraph> paragraph_node = std::make_shared<
-        docraft::loom::nodes::DocraftLoomParagraph>();
-    paragraph_node->set_line_spacing(1.2F);
-    paragraph_node->set_space_before(10.0F);
-    paragraph_node->set_space_after(10.0F);
-    paragraph_node->add_child(std::make_shared<docraft::loom::nodes::DocraftLoomText>("This is a paragraph."));
-    paragraph_node->
-        add_child(std::make_shared<docraft::loom::nodes::DocraftLoomText>("It has multiple lines of text."));
-    paragraph_node->add_child(
-        std::make_shared<docraft::loom::nodes::DocraftLoomText>("Each line is a separate text node."));
-    paragraph_node->add_child(
-        std::make_shared<docraft::loom::nodes::DocraftLoomText>("The paragraph will be measured and laid out."));
-    paragraph_node->add_child(
-        std::make_shared<docraft::loom::nodes::DocraftLoomText>(
-            "The layout processor will position each line correctly."));
+    auto left_para = make_paragraph("Left Column", {
+                                        "First line of the left paragraph.",
+                                        "Second line with more content.",
+                                        "Third line to fill the column."
+                                    });
 
-    docraft::loom::DocraftLoomPdfCreator creator(paragraph_node);
+    auto right_para = make_paragraph("Right Column", {
+                                         "First line of the right paragraph.",
+                                         "Second line alongside the left.",
+                                         "Third line in the right column."
+                                     });
+
+    auto hstack = std::make_shared<docraft::loom::nodes::DocraftLoomHStack>();
+    hstack->set_spacing(20.0F);
+    hstack->add_child(left_para);
+    hstack->add_child(right_para);
+
+    docraft::loom::DocraftLoomPdfCreator creator(hstack);
     creator.create();
     creator.render("loom_output.pdf");
 }
