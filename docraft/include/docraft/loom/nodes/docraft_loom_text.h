@@ -34,7 +34,7 @@ namespace docraft::loom::nodes {
 
     private:
         std::string text_;
-        std::string font_family_;
+        std::string font_family_ = "Helvetica";
         float font_size_;
         bool bold_;
         bool italic_;

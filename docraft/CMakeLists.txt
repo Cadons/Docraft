@@ -206,7 +206,7 @@ set(DOCRAFT_SOURCES
         include/docraft/loom/nodes/docraft_loom_text.h
         src/docraft/loom/nodes/docraft_loom_rectangle.cpp
         include/docraft/loom/nodes/docraft_loom_rectangle.h
-        include/docraft/loom/interfaces/docraft_loom_measure_visitor.h
+        include/docraft/loom/interfaces/docraft_loom_visitor.h
         include/docraft/loom/nodes/docraft_loom_text.h
         src/docraft/loom/nodes/docraft_loom_node.cpp
         include/docraft/loom/nodes/docraft_loom_node.h
@@ -214,11 +214,21 @@ set(DOCRAFT_SOURCES
         include/docraft/loom/pipeline/docraft_loom_measure_processor.h
         src/docraft/loom/nodes/docraft_loom_paragraph.cc
         include/docraft/loom/nodes/docraft_loom_paragraph.h
+        src/docraft/loom/pipeline/docraft_loom_layout_processor.cpp
+        include/docraft/loom/pipeline/docraft_loom_layout_processor.h
+        src/docraft/loom/pipeline/docraft_loom_pagination_processor.cpp
+        include/docraft/loom/pipeline/docraft_loom_pagination_processor.h
+        src/docraft/loom/pipeline/docraft_loom_rendering_processor.cpp
+        include/docraft/loom/pipeline/docraft_loom_rendering_processor.h
+        src/docraft/loom/docraft_loom_pdf_creator.cpp
+        include/docraft/loom/docraft_loom_pdf_creator.h
 
 )
 set(DOCRAFT_LIBRARY_TYPE STATIC)
 if (BUILD_SHARED_LIBS)
     set(DOCRAFT_LIBRARY_TYPE SHARED
+            src/docraft/loom/main_loom.cpp
+
 
     )
 endif ()
@@ -242,9 +252,12 @@ endif ()
 
 generate_docraft_fonts(docraft "${CMAKE_CURRENT_SOURCE_DIR}/fonts.json")
 add_executable(docraft_tool src/docraft/main.cpp)
+add_executable(docraft_loom_tool src/docraft/loom/main_loom.cpp)
 #declare define in the c++ code to export version
 target_compile_definitions(docraft_tool PRIVATE DOCRAFT_VERSION="${DOCRAFT_LIBRARY_VERSION}")
+target_compile_definitions(docraft_loom_tool PRIVATE DOCRAFT_VERSION="${DOCRAFT_LIBRARY_VERSION}")
 configure_artifact_version(docraft_tool ${PROJECT_VERSION})
+configure_artifact_version(docraft_loom_tool ${PROJECT_VERSION})
 if (TARGET pugixml::static)
     set(PUGIXML_TARGET pugixml::static)
 elseif (TARGET pugixml::pugixml)
@@ -255,6 +268,7 @@ endif ()
 
 target_link_libraries(docraft PUBLIC ${PUGIXML_TARGET} nlohmann_json::nlohmann_json ${LIBHARU_TARGET} fmt::fmt)
 target_link_libraries(docraft_tool PRIVATE docraft)
+target_link_libraries(docraft_loom_tool PRIVATE docraft)
 
 target_include_directories(docraft
         PUBLIC

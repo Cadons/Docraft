@@ -6,7 +6,7 @@
 #include <vector>
 #include <memory>
 #include "docraft/docraft_lib.h"
-#include "docraft/loom/interfaces/docraft_loom_measure_visitor.h"
+#include "docraft/loom/interfaces/docraft_loom_visitor.h"
 
 namespace docraft::loom::nodes {
     /**

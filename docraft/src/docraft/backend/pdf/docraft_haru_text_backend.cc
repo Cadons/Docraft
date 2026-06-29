@@ -35,7 +35,9 @@ namespace docraft::backend::pdf {
 
     void DocraftHaruTextBackend::draw_text(const std::string &text, float x, float y) const {
         auto *provider = state_->ensure_page_provider();
-        HPDF_Page_TextOut(provider->current_page(), x, y, text.c_str());
+        float px, py;
+        provider->compute_coordinate_system(x, y, px, py);
+        HPDF_Page_TextOut(provider->current_page(), px, py, text.c_str());
     }
 
     void DocraftHaruTextBackend::set_text_color(float r, float g, float b) const {
@@ -50,35 +52,41 @@ namespace docraft::backend::pdf {
                                                   float scale_y,
                                                   float translate_x,
                                                   float translate_y) const {
-        auto provider = state_->ensure_page_provider();
+        auto* provider = state_->ensure_page_provider();
+        float px, py;
+        provider->compute_coordinate_system(translate_x, translate_y, px, py);
         HPDF_Page page = provider->current_page();
-        HPDF_Page_SetTextMatrix(
-            page,
-            scale_x,
-            skew_x,
-            skew_y,
-            scale_y,
-            translate_x,
-            translate_y);
+        HPDF_Page_SetTextMatrix(page, scale_x, skew_x, skew_y, scale_y, px, py);
         HPDF_Page_ShowText(page, text.c_str());
+    }
+
+    void DocraftHaruTextBackend::set_font(const std::string& font_name, float font_size) const
+    {
+        HPDF_Font font = resolve_font(font_name);
+        if (font && font_size > 0.0F)
+        {
+            auto* provider = state_->ensure_page_provider();
+            HPDF_Page_SetFontAndSize(provider->current_page(), font, font_size);
+        }
     }
 
     HPDF_Font DocraftHaruTextBackend::resolve_font(const std::string& font_name) const
     {
         if (font_name.empty() || !state_->pdf)
             return nullptr;
-        HPDF_Font font = HPDF_GetFont(state_->pdf, font_name.c_str(), "UTF-8");
-        if (!font || HPDF_GetError(state_->pdf) != HPDF_OK)
+
+        // Try WinAnsiEncoding first: compatible with all Type1 built-in fonts (Helvetica, Times, Courier…).
+        // UTF-8 is only valid for embedded TrueType fonts, and fails with HPDF_FONT_INVALID_WIDTHS_TABLE
+        // when the document encoder is UTF-8 but the font is Type1.
+        static constexpr const char* kEncodings[] = {"WinAnsiEncoding", "UTF-8", nullptr};
+        for (const char* enc : kEncodings)
         {
+            HPDF_Font font = HPDF_GetFont(state_->pdf, font_name.c_str(), enc);
+            if (font && HPDF_GetError(state_->pdf) == HPDF_OK)
+                return font;
             HPDF_ResetError(state_->pdf);
-            font = HPDF_GetFont(state_->pdf, font_name.c_str(), nullptr);
-            if (!font || HPDF_GetError(state_->pdf) != HPDF_OK)
-            {
-                HPDF_ResetError(state_->pdf);
-                return nullptr;
-            }
         }
-        return font;
+        return nullptr;
     }
 
     float DocraftHaruTextBackend::measure_text_width(const std::string& text, const std::string& font_name,
@@ -93,22 +101,17 @@ namespace docraft::backend::pdf {
                                                     static_cast<HPDF_UINT>(text.size()));
             return static_cast<float>(tw.width) * font_size / kEM;
         }
-        auto* provider = state_->ensure_page_provider();
-        return HPDF_Page_TextWidth(provider->current_page(), text.c_str());
     }
 
     float DocraftHaruTextBackend::measure_text_height(const std::string& font_name, float font_size) const
     {
         constexpr float kEM = 1000.0F;
         HPDF_Font font = resolve_font(font_name);
-        if (!font || font_size <= 0.0F)
-        {
-            auto* provider = state_->ensure_page_provider();
-            HPDF_Page page = provider->current_page();
-            font = HPDF_Page_GetCurrentFont(page);
-            font_size = HPDF_Page_GetCurrentFontSize(page);
-        }
-        const float ascent = static_cast<float>(HPDF_Font_GetAscent(font))  * font_size / kEM;
+        if (!font)
+            return font_size > 0.0F ? font_size : 12.0F;
+        if (font_size <= 0.0F)
+            font_size = 12.0F;
+        const float ascent = static_cast<float>(HPDF_Font_GetAscent(font)) * font_size / kEM;
         const float descent = static_cast<float>(HPDF_Font_GetDescent(font)) * font_size / kEM;
         return ascent - descent;
     }

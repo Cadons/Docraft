@@ -20,7 +20,7 @@ namespace docraft::loom::pipeline {
         if (text)
         {
             const char* rn = generic::DocraftFontApplier::get_font_registred_name(text->font_family());
-            const std::string reg_font = rn ? rn : "";
+            const std::string reg_font = rn ? rn : text->font_family();
             const float font_size = text->font_size();
 
             auto& measure_size = text->edit_layout_box().measured_size;

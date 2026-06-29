@@ -77,6 +77,13 @@ namespace docraft::backend {
             float translate_y) const = 0;
 
         /**
+         * @brief Sets the active font and size for subsequent text drawing on the current page.
+         * @param font_name Backend-registered font name (from IDocraftFontBackend).
+         * @param font_size Font size in points.
+         */
+        virtual void set_font(const std::string& font_name, float font_size) const = 0;
+
+        /**
          * @brief Measures the width of the specified text using the given font.
          * @param text The text to be measured.
          * @param font_name Backend-registered font name (from IDocraftFontBackend).

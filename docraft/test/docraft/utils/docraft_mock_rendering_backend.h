@@ -140,6 +140,12 @@ namespace docraft::test::utils {
             draw_text("", 0.0F, 0.0F); // Reuse checks from draw_text.
         }
 
+        void set_font(const std::string& /*font_name*/, float /*font_size*/) const override
+        {
+            MockBackendSharedState::ensure_supported(state_->config.supports_text_backend,
+                                                     "Text backend capability not supported");
+        }
+
         float measure_text_width(const std::string& text, const std::string& /*font_name*/,
                                  float /*font_size*/) const override
         {

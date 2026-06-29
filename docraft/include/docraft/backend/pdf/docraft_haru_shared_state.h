@@ -56,6 +56,16 @@ namespace docraft::backend::pdf {
          * @brief Returns the current page index (0-based).
          */
         virtual std::size_t current_page_index() const = 0;
+
+        /**
+         * @brief Converts (x, y) from engine space (origin top-left, Y down)
+         * to rendering engine coordinate system
+         */
+        void compute_coordinate_system(float x, float y, float& out_x, float& out_y) const
+        {
+            out_x = x;
+            out_y = page_height() - y;
+        }
     };
 
     /**

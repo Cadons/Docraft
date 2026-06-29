@@ -68,6 +68,11 @@ namespace docraft::backend::pdf {
                               float translate_y) const override;
 
         /**
+         * @brief Sets the active font and size for subsequent text drawing on the current page.
+         */
+        void set_font(const std::string& font_name, float font_size) const override;
+
+        /**
          * @brief Measures the width of a text string using the specified font.
          * Stateless: does not modify page state.
          */
