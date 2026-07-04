@@ -204,34 +204,58 @@ set(DOCRAFT_SOURCES
         include/docraft/exception/docraft_exceptions.h
         src/docraft/loom/nodes/docraft_loom_text.cc
         include/docraft/loom/nodes/docraft_loom_text.h
-        src/docraft/loom/nodes/docraft_loom_rectangle.cpp
+        src/docraft/loom/nodes/docraft_loom_rectangle.cc
         include/docraft/loom/nodes/docraft_loom_rectangle.h
+        include/docraft/loom/nodes/docraft_loom_shape_style.h
+        src/docraft/loom/nodes/docraft_loom_shape.cc
+        include/docraft/loom/nodes/docraft_loom_shape.h
+        src/docraft/loom/nodes/docraft_loom_circle.cc
+        include/docraft/loom/nodes/docraft_loom_circle.h
+        src/docraft/loom/nodes/docraft_loom_triangle.cc
+        include/docraft/loom/nodes/docraft_loom_triangle.h
+        src/docraft/loom/nodes/docraft_loom_polygon.cc
+        include/docraft/loom/nodes/docraft_loom_polygon.h
+        src/docraft/loom/nodes/docraft_loom_list.cc
+        include/docraft/loom/nodes/docraft_loom_list.h
+        src/docraft/loom/nodes/docraft_loom_table_cell.cc
+        include/docraft/loom/nodes/docraft_loom_table_cell.h
+        src/docraft/loom/nodes/docraft_loom_table.cc
+        include/docraft/loom/nodes/docraft_loom_table.h
+        src/docraft/loom/nodes/docraft_loom_page_number.cc
+        include/docraft/loom/nodes/docraft_loom_page_number.h
         include/docraft/loom/interfaces/docraft_loom_visitor.h
         include/docraft/loom/nodes/docraft_loom_text.h
-        src/docraft/loom/nodes/docraft_loom_node.cpp
+        src/docraft/loom/nodes/docraft_loom_node.cc
         include/docraft/loom/nodes/docraft_loom_node.h
-        src/docraft/loom/pipeline/docraft_loom_measure_processor.cpp
+        src/docraft/loom/pipeline/docraft_loom_measure_processor.cc
         include/docraft/loom/pipeline/docraft_loom_measure_processor.h
         src/docraft/loom/nodes/docraft_loom_paragraph.cc
         include/docraft/loom/nodes/docraft_loom_paragraph.h
-        src/docraft/loom/nodes/docraft_loom_vstack.cpp
+        src/docraft/loom/nodes/docraft_loom_vstack.cc
         include/docraft/loom/nodes/docraft_loom_vstack.h
-        src/docraft/loom/nodes/docraft_loom_hstack.cpp
+        src/docraft/loom/nodes/docraft_loom_hstack.cc
         include/docraft/loom/nodes/docraft_loom_hstack.h
-        src/docraft/loom/pipeline/docraft_loom_layout_processor.cpp
+        src/docraft/loom/pipeline/docraft_loom_layout_processor.cc
         include/docraft/loom/pipeline/docraft_loom_layout_processor.h
-        src/docraft/loom/pipeline/docraft_loom_pagination_processor.cpp
+        src/docraft/loom/pipeline/docraft_loom_pagination_processor.cc
         include/docraft/loom/pipeline/docraft_loom_pagination_processor.h
-        src/docraft/loom/pipeline/docraft_loom_rendering_processor.cpp
+        src/docraft/loom/pipeline/docraft_loom_rendering_processor.cc
         include/docraft/loom/pipeline/docraft_loom_rendering_processor.h
-        src/docraft/loom/docraft_loom_pdf_creator.cpp
+        src/docraft/loom/docraft_loom_pdf_creator.cc
         include/docraft/loom/docraft_loom_pdf_creator.h
+        src/docraft/loom/nodes/docraft_loom_blank_line.cc
+        include/docraft/loom/nodes/docraft_loom_blank_line.h
+        src/docraft/loom/nodes/docraft_loom_image.cc
+        include/docraft/loom/nodes/docraft_loom_image.h
+        src/docraft/loom/nodes/docraft_loom_line.cc
+        include/docraft/loom/nodes/docraft_loom_line.h
+        include/docraft/loom/docraft_loom_foreach.h
 
 )
 set(DOCRAFT_LIBRARY_TYPE STATIC)
 if (BUILD_SHARED_LIBS)
     set(DOCRAFT_LIBRARY_TYPE SHARED
-            src/docraft/loom/main_loom.cpp
+            src/docraft/loom/main_loom.cc
 
 
     )
@@ -256,7 +280,7 @@ endif ()
 
 generate_docraft_fonts(docraft "${CMAKE_CURRENT_SOURCE_DIR}/fonts.json")
 add_executable(docraft_tool src/docraft/main.cpp)
-add_executable(docraft_loom_tool src/docraft/loom/main_loom.cpp)
+add_executable(docraft_loom_tool src/docraft/loom/main_loom.cc)
 #declare define in the c++ code to export version
 target_compile_definitions(docraft_tool PRIVATE DOCRAFT_VERSION="${DOCRAFT_LIBRARY_VERSION}")
 target_compile_definitions(docraft_loom_tool PRIVATE DOCRAFT_VERSION="${DOCRAFT_LIBRARY_VERSION}")

@@ -264,4 +264,47 @@ namespace docraft::test {
         hstack.set_spacing(8.0F);
         EXPECT_FLOAT_EQ(hstack.spacing(), 8.0F);
     }
+
+    // ── Absolute positioning ─────────────────────────────────────────────────────
+
+    TEST_F(DocraftLoomStackNodesTest, VStack_AbsolutePositionOverridesCursor)
+    {
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(50.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto vstack = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        vstack->set_position_mode(model::DocraftPositionType::kAbsolute);
+        vstack->set_explicit_position({50.0F, 50.0F});
+        vstack->add_child(make_text("a"));
+
+        vstack->accept(*measure_);
+        vstack->accept(*layout_);
+
+        EXPECT_FLOAT_EQ(vstack->layout_box().frame.position.x, 50.0F);
+        EXPECT_FLOAT_EQ(vstack->layout_box().frame.position.y, 50.0F);
+    }
+
+    TEST_F(DocraftLoomStackNodesTest, VStack_AbsolutePositionDoesNotAdvanceCursorForNextSibling)
+    {
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(50.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto absolute_vstack = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        absolute_vstack->set_position_mode(model::DocraftPositionType::kAbsolute);
+        absolute_vstack->set_explicit_position({200.0F, 200.0F});
+        absolute_vstack->add_child(make_text("a"));
+        absolute_vstack->add_child(make_text("b"));
+
+        auto next_sibling = make_text("sibling");
+
+        absolute_vstack->accept(*measure_);
+        absolute_vstack->accept(*layout_);
+        next_sibling->accept(*measure_);
+        next_sibling->accept(*layout_);
+
+        // The absolute subtree must be fully out of flow: the next sibling is placed as if
+        // the absolutely-positioned VStack (and its two children) had never been visited.
+        EXPECT_FLOAT_EQ(next_sibling->layout_box().frame.position.x, 0.0F);
+        EXPECT_FLOAT_EQ(next_sibling->layout_box().frame.position.y, 10.0F);
+    }
 } // namespace docraft::test

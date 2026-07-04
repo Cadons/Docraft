@@ -69,6 +69,16 @@ namespace docraft::loom::pipeline {
         void visit(docraft::loom::nodes::DocraftLoomParagraph*) override;
         void visit(docraft::loom::nodes::DocraftLoomVStack*) override;
         void visit(docraft::loom::nodes::DocraftLoomHStack*) override;
+        void visit(docraft::loom::nodes::DocraftLoomBlankLine*) override;
+        void visit(docraft::loom::nodes::DocraftLoomImage*) override;
+        void visit(docraft::loom::nodes::DocraftLoomLine*) override;
+        void visit(docraft::loom::nodes::DocraftLoomCircle*) override;
+        void visit(docraft::loom::nodes::DocraftLoomTriangle*) override;
+        void visit(docraft::loom::nodes::DocraftLoomPolygon*) override;
+        void visit(docraft::loom::nodes::DocraftLoomList*) override;
+        void visit(docraft::loom::nodes::DocraftLoomTableCell*) override;
+        void visit(docraft::loom::nodes::DocraftLoomTable*) override;
+        void visit(docraft::loom::nodes::DocraftLoomPageNumber*) override;
 
     private:
         std::shared_ptr<docraft::backend::IDocraftTextRenderingBackend> text_backend_;

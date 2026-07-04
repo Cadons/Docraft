@@ -9,6 +9,16 @@ namespace docraft::loom::nodes {
     class DocraftLoomParagraph;
     class DocraftLoomVStack;
     class DocraftLoomHStack;
+    class DocraftLoomBlankLine;
+    class DocraftLoomImage;
+    class DocraftLoomLine;
+    class DocraftLoomCircle;
+    class DocraftLoomTriangle;
+    class DocraftLoomPolygon;
+    class DocraftLoomList;
+    class DocraftLoomTableCell;
+    class DocraftLoomTable;
+    class DocraftLoomPageNumber;
 }
 
 namespace docraft::loom::interfaces {
@@ -24,6 +34,16 @@ namespace docraft::loom::interfaces {
         virtual void visit(docraft::loom::nodes::DocraftLoomParagraph*) = 0;
         virtual void visit(docraft::loom::nodes::DocraftLoomVStack*) = 0;
         virtual void visit(docraft::loom::nodes::DocraftLoomHStack*) = 0;
+        virtual void visit(docraft::loom::nodes::DocraftLoomBlankLine*) = 0;
+        virtual void visit(docraft::loom::nodes::DocraftLoomImage*) = 0;
+        virtual void visit(docraft::loom::nodes::DocraftLoomLine*) = 0;
+        virtual void visit(docraft::loom::nodes::DocraftLoomCircle*) = 0;
+        virtual void visit(docraft::loom::nodes::DocraftLoomTriangle*) = 0;
+        virtual void visit(docraft::loom::nodes::DocraftLoomPolygon*) = 0;
+        virtual void visit(docraft::loom::nodes::DocraftLoomList*) = 0;
+        virtual void visit(docraft::loom::nodes::DocraftLoomTableCell*) = 0;
+        virtual void visit(docraft::loom::nodes::DocraftLoomTable*) = 0;
+        virtual void visit(docraft::loom::nodes::DocraftLoomPageNumber*) = 0;
     };
 
     /**

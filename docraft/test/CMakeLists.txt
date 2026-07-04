@@ -31,8 +31,16 @@ set(TEST_SOURCES
         docraft/utils/docraft_keyword_extractor_test.cc
         docraft/utils/docraft_logger_test.cc
         docraft/utils/docraft_parser_utils.cc
-        docraft/loom/pipeline/docraft_loom_measure_processor_test.cpp
-        docraft/loom/nodes/docraft_loom_stack_nodes_test.cpp
+        docraft/loom/pipeline/docraft_loom_measure_processor_test.cc
+        docraft/loom/nodes/docraft_loom_stack_nodes_test.cc
+        docraft/loom/nodes/docraft_loom_node_test.cc
+        docraft/loom/nodes/docraft_loom_blank_line_test.cc
+        docraft/loom/nodes/docraft_loom_image_test.cc
+        docraft/loom/nodes/docraft_loom_line_test.cc
+        docraft/loom/nodes/docraft_loom_rectangle_test.cc
+        docraft/loom/nodes/docraft_loom_shape_nodes_test.cc
+        docraft/loom/nodes/docraft_loom_list_test.cc
+        docraft/loom/nodes/docraft_loom_table_test.cc
         docraft/backend/docraft_mock_backend.h
 )
 

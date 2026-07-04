@@ -5,6 +5,7 @@
 #include "docraft/loom/nodes/docraft_loom_text.h"
 
 #include "docraft/craft/docraft_craft_language_tokens.h"
+#include "docraft/generic/docraft_font_applier.h"
 
 namespace docraft::loom::nodes {
     DocraftLoomText::DocraftLoomText()
@@ -105,5 +106,24 @@ namespace docraft::loom::nodes {
     void DocraftLoomText::set_alignment(model::TextAlignment alignment)
     {
         alignment_ = alignment;
+    }
+
+    std::string DocraftLoomText::resolved_font_name() const
+    {
+        std::string name = font_family_;
+        if (bold_ && italic_)
+        {
+            name += "-BoldOblique";
+        }
+        else if (bold_)
+        {
+            name += "-Bold";
+        }
+        else if (italic_)
+        {
+            name += "-Oblique";
+        }
+        const char* registered = generic::DocraftFontApplier::get_font_registred_name(name);
+        return registered ? registered : name;
     }
 } // docraft

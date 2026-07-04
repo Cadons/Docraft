@@ -7,6 +7,7 @@
 #include <memory>
 #include "docraft/docraft_lib.h"
 #include "docraft/loom/interfaces/docraft_loom_visitor.h"
+#include "docraft/model/docraft_position.h"
 
 namespace docraft::loom::nodes {
     /**
@@ -75,9 +76,29 @@ namespace docraft::loom::nodes {
         //layout box
         const LayoutBox& layout_box() const;
         LayoutBox& edit_layout_box();
+        //absolute positioning
+        /**
+         * @brief Returns the positioning mode (block flow or absolute).
+         */
+        model::DocraftPositionType position_mode() const;
+        /**
+         * @brief Sets the positioning mode. Absolute nodes are placed at explicit_position()
+         * during layout and do not advance the parent's cursor.
+         */
+        void set_position_mode(model::DocraftPositionType position_mode);
+        /**
+         * @brief Returns the explicit position used when position_mode() is kAbsolute.
+         */
+        const Position& explicit_position() const;
+        /**
+         * @brief Sets the explicit position used when position_mode() is kAbsolute.
+         */
+        void set_explicit_position(const Position& position);
 
     private:
         std::vector<std::shared_ptr<DocraftLoomNode>> children_;
         LayoutBox layout_box_ = {};
+        model::DocraftPositionType position_mode_ = model::DocraftPositionType::kBlock;
+        Position explicit_position_{0.0F, 0.0F};
     };
 } // docraft

@@ -10,16 +10,6 @@ namespace docraft::loom::nodes {
         visitor.visit(this);
     }
 
-    const DocraftColor& DocraftLoomRectangle::color() const
-    {
-        return color_;
-    }
-
-    void DocraftLoomRectangle::set_color(const DocraftColor& color)
-    {
-        color_ = color;
-    }
-
     float DocraftLoomRectangle::width() const
     {
         return width_;
@@ -38,5 +28,15 @@ namespace docraft::loom::nodes {
     void DocraftLoomRectangle::set_height(float height)
     {
         height_ = height;
+    }
+
+    float DocraftLoomRectangle::padding() const
+    {
+        return padding_;
+    }
+
+    void DocraftLoomRectangle::set_padding(float padding)
+    {
+        padding_ = padding;
     }
 } // docraft

@@ -81,4 +81,24 @@ namespace docraft::loom::nodes {
     {
         children_.clear();
     }
+
+    model::DocraftPositionType DocraftLoomNode::position_mode() const
+    {
+        return position_mode_;
+    }
+
+    void DocraftLoomNode::set_position_mode(model::DocraftPositionType position_mode)
+    {
+        position_mode_ = position_mode;
+    }
+
+    const Position& DocraftLoomNode::explicit_position() const
+    {
+        return explicit_position_;
+    }
+
+    void DocraftLoomNode::set_explicit_position(const Position& position)
+    {
+        explicit_position_ = position;
+    }
 } // docraft

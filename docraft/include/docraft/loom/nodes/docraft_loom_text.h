@@ -32,6 +32,13 @@ namespace docraft::loom::nodes {
         model::TextAlignment alignment() const;
         void set_alignment(model::TextAlignment alignment);
 
+        /**
+         * @brief Resolves the backend-registered font name for font_family() + bold() +
+         * italic() (e.g. "Helvetica" + bold -> "Helvetica-Bold"), falling back to the
+         * plain constructed name if it isn't registered with the backend.
+         */
+        std::string resolved_font_name() const;
+
     private:
         std::string text_;
         std::string font_family_ = "Helvetica";
