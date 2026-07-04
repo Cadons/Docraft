@@ -9,6 +9,7 @@
 #include "docraft/generic/docraft_font_applier.h"
 #include "docraft/loom/nodes/docraft_loom_hstack.h"
 #include "docraft/loom/nodes/docraft_loom_paragraph.h"
+#include "docraft/loom/nodes/docraft_loom_rectangle.h"
 #include "docraft/loom/nodes/docraft_loom_text.h"
 #include "docraft/loom/nodes/docraft_loom_vstack.h"
 
@@ -38,6 +39,9 @@ namespace docraft::loom::pipeline {
         if (rectangle)
         {
             // Perform measurement logic for DocraftLoomRectangle node
+            auto& measured_size = rectangle->
+
+
         }
     }
 

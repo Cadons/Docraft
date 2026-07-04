@@ -40,11 +40,11 @@ namespace docraft::loom::pipeline {
     {
         // Implement layout logic for DocraftLoomText node, after measurement this step will place the text in the
         // correct position based on its measured size and any layout rules.
-        auto& layoutBox = node->edit_layout_box();
-        auto& position = layoutBox.frame.position;
+        auto& layout_box = node->edit_layout_box();
+        auto& position = layout_box.frame.position;
         position.x = cursor_.x();
         position.y = cursor_.y();
-        cursor_.move(layoutBox.measured_size.width, 0.0f); // Move cursor to the right after placing the text
+        cursor_.move(layout_box.measured_size.width, 0.0f); // Move cursor to the right after placing the text
     }
 
     void DocraftLoomLayoutProcessor::visit(docraft::loom::nodes::DocraftLoomRectangle*)
@@ -53,8 +53,8 @@ namespace docraft::loom::pipeline {
 
     void DocraftLoomLayoutProcessor::visit(docraft::loom::nodes::DocraftLoomParagraph* node)
     {
-        auto& layoutBox = node->edit_layout_box();
-        auto& position = layoutBox.frame.position;
+        auto& layout_box = node->edit_layout_box();
+        auto& position = layout_box.frame.position;
         position.x = cursor_.x();
         position.y = cursor_.y();
         //layout the children of the paragraph
@@ -63,16 +63,16 @@ namespace docraft::loom::pipeline {
         {
             auto child = node->edit_child(i);
             child->accept(*this);
-            float nextY = position.y + child->layout_box().measured_size.height * node->line_spacing();
-            cursor_.set_position(start_x, cursor_.y() + nextY);
+            float next_y = position.y + child->layout_box().measured_size.height * node->line_spacing();
+            cursor_.set_position(start_x, cursor_.y() + next_y);
         }
     }
 
     void DocraftLoomLayoutProcessor::visit(docraft::loom::nodes::DocraftLoomVStack* node)
     {
         if (!node) return;
-        auto& layoutBox = node->edit_layout_box();
-        layoutBox.frame.position = {cursor_.x(), cursor_.y()};
+        auto& layout_box = node->edit_layout_box();
+        layout_box.frame.position = {cursor_.x(), cursor_.y()};
 
         const float start_x = cursor_.x();
         float current_y = cursor_.y();
@@ -94,8 +94,8 @@ namespace docraft::loom::pipeline {
     void DocraftLoomLayoutProcessor::visit(docraft::loom::nodes::DocraftLoomHStack* node)
     {
         if (!node) return;
-        auto& layoutBox = node->edit_layout_box();
-        layoutBox.frame.position = {cursor_.x(), cursor_.y()};
+        auto& layout_box = node->edit_layout_box();
+        layout_box.frame.position = {cursor_.x(), cursor_.y()};
 
         const float start_y = cursor_.y();
         float current_x = cursor_.x();
