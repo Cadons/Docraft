@@ -334,11 +334,11 @@ TEST(DocraftLoomTreeBuilderTest, ThrowsForUnrecognizedTag)
 TEST(DocraftLoomTreeBuilderTest, LayoutWeightsAttributeAppliesToHStack)
 {
     const char* xml = R"XML(
-<layout orientation="horizontal" weights="1,2,1" spacing="5">
+<Layout orientation="horizontal" weights="1,2,1" spacing="5">
   <Text>A</Text>
   <Text>B</Text>
   <Text>C</Text>
-</layout>
+</Layout>
 )XML";
 
     const auto node = parse_and_build(xml);
@@ -354,10 +354,10 @@ TEST(DocraftLoomTreeBuilderTest, LayoutWeightsAttributeAppliesToHStack)
 TEST(DocraftLoomTreeBuilderTest, PerChildWeightAttributeAppliesToHStack)
 {
     const char* xml = R"XML(
-<layout orientation="horizontal">
+<Layout orientation="horizontal">
   <Text weight="1">A</Text>
   <Text weight="3">B</Text>
-</layout>
+</Layout>
 )XML";
 
     const auto node = parse_and_build(xml);
@@ -371,10 +371,10 @@ TEST(DocraftLoomTreeBuilderTest, PerChildWeightAttributeAppliesToHStack)
 TEST(DocraftLoomTreeBuilderTest, ExplicitLayoutWeightsTakePrecedenceOverPerChildWeight)
 {
     const char* xml = R"XML(
-<layout orientation="horizontal" weights="4,4">
+<Layout orientation="horizontal" weights="4,4">
   <Text weight="1">A</Text>
   <Text weight="3">B</Text>
-</layout>
+</Layout>
 )XML";
 
     const auto node = parse_and_build(xml);
@@ -388,10 +388,10 @@ TEST(DocraftLoomTreeBuilderTest, ExplicitLayoutWeightsTakePrecedenceOverPerChild
 TEST(DocraftLoomTreeBuilderTest, NoWeightsLeavesHStackWeightsEmpty)
 {
     const char* xml = R"XML(
-<layout orientation="horizontal">
+<Layout orientation="horizontal">
   <Text>A</Text>
   <Text>B</Text>
-</layout>
+</Layout>
 )XML";
 
     const auto node = parse_and_build(xml);
@@ -403,10 +403,10 @@ TEST(DocraftLoomTreeBuilderTest, NoWeightsLeavesHStackWeightsEmpty)
 TEST(DocraftLoomTreeBuilderTest, VStackAppliesSpacingButNotWeights)
 {
     const char* xml = R"XML(
-<layout orientation="vertical" spacing="8" weights="1,1">
+<Layout orientation="vertical" spacing="8" weights="1,1">
   <Text>A</Text>
   <Text>B</Text>
-</layout>
+</Layout>
 )XML";
 
     const auto node = parse_and_build(xml);

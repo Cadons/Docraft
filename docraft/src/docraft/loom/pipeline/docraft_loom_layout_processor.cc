@@ -429,7 +429,8 @@ namespace docraft::loom::pipeline {
         for (float w : geometry.natural_widths)
             sum_natural += w;
         const float available_width = page_size_.width > 0.0F
-                                          ? page_size_.width - (2.0F * nodes::DocraftLoomTable::kCellPaddingX)
+                                          ? page_size_.width - (2.0F * nodes::DocraftLoomTable::kCellPaddingX) -
+                                          (2.0F * table.padding())
                                           : sum_natural;
 
         const auto& weights = table.column_weights();
@@ -517,10 +518,10 @@ namespace docraft::loom::pipeline {
         const std::vector<float>& row_heights)
     {
         const auto& table_position = table.layout_box().frame.position;
-        float row_top = table_position.y;
+        float row_top = table_position.y + table.padding();
         for (int r = 0; r < table.row_count(); ++r)
         {
-            float col_left = table_position.x;
+            float col_left = table_position.x + table.padding();
             for (int c = 0; c < table.column_count(); ++c)
             {
                 auto cell = table.cell(r, c);
@@ -562,7 +563,12 @@ namespace docraft::loom::pipeline {
         float total_height = 0.0F;
         for (float h : geometry.row_heights)
             total_height += h;
-        table->edit_layout_box().frame.size = {.width = total_width, .height = total_height};
+        // Mirrors Measure's own +2*padding() inflation, so frame.size (what Pagination
+        // advances by) matches measured_size exactly, same as every other node type.
+        table->edit_layout_box().frame.size = {
+            .width = total_width + (2.0F * table->padding()),
+            .height = total_height + (2.0F * table->padding())
+        };
 
         place_table_cells(*table, resolved_widths, geometry.row_heights);
     }

@@ -7,19 +7,20 @@
 #include "docraft/craft/parser/docraft_parser.h"
 #include "docraft/exception/docraft_exceptions.h"
 
-TEST(DocraftCraftLanguageParserTest, ParsesTitleSubtitleAndTextWithPredefinedDefaults) {
-    const char *xml = R"XML(
-<layout orientation="vertical">
+TEST(DocraftCraftLanguageParserTest, ParsesTitleSubtitleAndTextWithPredefinedDefaults)
+{
+    const char* xml = R"XML(
+<Layout orientation="vertical">
   <Title>Main Heading</Title>
   <Subtitle>Section Heading</Subtitle>
   <Text>Body copy</Text>
-</layout>
+</Layout>
 )XML";
 
     docraft::craft::DocraftCraftLanguageParser parser;
     const auto root = parser.parse(xml);
     ASSERT_TRUE(root);
-    EXPECT_EQ(root->tag_name, "layout");
+    EXPECT_EQ(root->tag_name, "Layout");
     ASSERT_EQ(root->children.size(), 3U);
 
     const auto title = std::any_cast<docraft::craft::parser::ParsedTextData>(root->children[0]->data);
@@ -42,12 +43,13 @@ TEST(DocraftCraftLanguageParserTest, ParsesTitleSubtitleAndTextWithPredefinedDef
     EXPECT_FALSE(text.style.has_value());
 }
 
-TEST(DocraftCraftLanguageParserTest, HeadingAttributesOverridePredefinedDefaults) {
-    const char *xml = R"XML(
-<layout orientation="vertical">
+TEST(DocraftCraftLanguageParserTest, HeadingAttributesOverridePredefinedDefaults)
+{
+    const char* xml = R"XML(
+<Layout orientation="vertical">
   <Title font_size="30" style="italic">Main Heading</Title>
   <Subtitle style="normal">Section Heading</Subtitle>
-</layout>
+</Layout>
 )XML";
 
     docraft::craft::DocraftCraftLanguageParser parser;
@@ -70,7 +72,7 @@ TEST(DocraftCraftLanguageParserTest, HeadingAttributesOverridePredefinedDefaults
 
 TEST(DocraftCraftLanguageParserTest, ParsesCommonAttributesGenerically)
 {
-    const char *xml = R"XML(
+    const char* xml = R"XML(
 <Rectangle name="box" width="100" height="50" padding="4" z_index="2" x="5" y="7" />
 )XML";
 
@@ -93,8 +95,9 @@ TEST(DocraftCraftLanguageParserTest, ParsesCommonAttributesGenerically)
     EXPECT_EQ(*root->common.position_mode, docraft::craft::PositionMode::kAbsolute);
 }
 
-TEST(DocraftCraftLanguageParserTest, RejectsNestedTextInText) {
-    const char *xml = R"XML(
+TEST(DocraftCraftLanguageParserTest, RejectsNestedTextInText)
+{
+    const char* xml = R"XML(
 <Text>
   <Text>Nested text</Text>
 </Text>
@@ -104,8 +107,9 @@ TEST(DocraftCraftLanguageParserTest, RejectsNestedTextInText) {
     EXPECT_THROW(parser.parse(xml), docraft::exception::InvalidInputException);
 }
 
-TEST(DocraftCraftLanguageParserTest, RejectsTitleInText) {
-    const char *xml = R"XML(
+TEST(DocraftCraftLanguageParserTest, RejectsTitleInText)
+{
+    const char* xml = R"XML(
 <Text>
   <Title>Nested title</Title>
 </Text>
@@ -115,8 +119,9 @@ TEST(DocraftCraftLanguageParserTest, RejectsTitleInText) {
     EXPECT_THROW(parser.parse(xml), docraft::exception::InvalidInputException);
 }
 
-TEST(DocraftCraftLanguageParserTest, RejectsSubtitleInText) {
-    const char *xml = R"XML(
+TEST(DocraftCraftLanguageParserTest, RejectsSubtitleInText)
+{
+    const char* xml = R"XML(
 <Text>
   <Subtitle>Nested subtitle</Subtitle>
 </Text>
@@ -126,8 +131,9 @@ TEST(DocraftCraftLanguageParserTest, RejectsSubtitleInText) {
     EXPECT_THROW(parser.parse(xml), docraft::exception::InvalidInputException);
 }
 
-TEST(DocraftCraftLanguageParserTest, RejectsPageNumberInText) {
-    const char *xml = R"XML(
+TEST(DocraftCraftLanguageParserTest, RejectsPageNumberInText)
+{
+    const char* xml = R"XML(
 <Text>
   Page: <PageNumber />
 </Text>
@@ -139,11 +145,11 @@ TEST(DocraftCraftLanguageParserTest, RejectsPageNumberInText) {
 
 TEST(DocraftCraftLanguageParserTest, AllowsLayoutWithMultipleText)
 {
-    const char *xml = R"XML(
-<layout orientation="vertical">
+    const char* xml = R"XML(
+<Layout orientation="vertical">
   <Text>First line</Text>
   <Text>Second line</Text>
-</layout>
+</Layout>
 )XML";
 
     docraft::craft::DocraftCraftLanguageParser parser;
@@ -158,7 +164,7 @@ TEST(DocraftCraftLanguageParserTest, AllowsLayoutWithMultipleText)
 
 TEST(DocraftCraftLanguageParserTest, RejectsNonTextChildInList)
 {
-    const char *xml = R"XML(
+    const char* xml = R"XML(
 <List>
   <Image src="logo.png" />
 </List>

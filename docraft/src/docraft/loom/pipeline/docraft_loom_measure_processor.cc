@@ -477,8 +477,11 @@ namespace docraft::loom::pipeline {
             total_height += h;
 
         auto& measured_size = table->edit_layout_box().measured_size;
-        measured_size.width = total_width;
-        measured_size.height = total_height;
+        // padding() inflates the table's own measured_size around the grid, same as
+        // Rectangle's padding_ does around its children -- so containers laying the
+        // table out (VStack/Pagination) reserve the extra breathing room too.
+        measured_size.width = total_width + (2.0F * table->padding());
+        measured_size.height = total_height + (2.0F * table->padding());
     }
 
     void DocraftLoomMeasureProcessor::visit(docraft::loom::nodes::DocraftLoomPageNumber* node)

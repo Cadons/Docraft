@@ -126,6 +126,16 @@ namespace docraft::loom::nodes {
         baseline_offset_ = baseline_offset;
     }
 
+    float DocraftLoomTable::padding() const
+    {
+        return padding_;
+    }
+
+    void DocraftLoomTable::set_padding(float padding)
+    {
+        padding_ = padding;
+    }
+
     std::shared_ptr<DocraftLoomTable> DocraftLoomTable::split_after_row(int row_index, bool repeat_header_rows)
     {
         if (row_index <= 0 || row_index >= row_count())
@@ -137,6 +147,7 @@ namespace docraft::loom::nodes {
         remainder->column_weights_ = column_weights_;
         remainder->default_cell_background_ = default_cell_background_;
         remainder->baseline_offset_ = baseline_offset_;
+        remainder->padding_ = padding_;
 
         if (repeat_header_rows)
         {

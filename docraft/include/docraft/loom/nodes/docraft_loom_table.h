@@ -51,6 +51,17 @@ namespace docraft::loom::nodes {
         void set_baseline_offset(float baseline_offset);
 
         /**
+         * @brief Outer spacing around the whole table (all four sides), mirroring how
+         * DocraftLoomRectangle's own padding() insets its children from its border --
+         * here there's no border to speak of, so it simply keeps the grid from sitting
+         * flush against whatever precedes/follows the table (or the page edge). Wired to
+         * the common `padding` craft-language attribute like any other node that exposes
+         * a setter (see DocraftLoomTreeBuilder::apply_common_attributes).
+         */
+        float padding() const;
+        void set_padding(float padding);
+
+        /**
          * @brief Splits off rows [row_index, row_count()) into a new table (mirrors
          * legacy's DocraftTable::split_after_row), for use when a table doesn't fit on
          * one page. Column weights/default background/baseline offset are copied onto
@@ -67,5 +78,8 @@ namespace docraft::loom::nodes {
         std::vector<float> column_weights_;
         std::optional<DocraftColor> default_cell_background_;
         float baseline_offset_ = 0.25F;
+        // Light default so a Table never sits flush against surrounding content out of
+        // the box; still fully overridable via the `padding` attribute.
+        float padding_ = 6.0F;
     };
 } // docraft

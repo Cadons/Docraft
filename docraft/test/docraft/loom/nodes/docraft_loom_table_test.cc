@@ -44,6 +44,7 @@ namespace docraft::test {
         EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
 
         auto table = std::make_shared<loom::nodes::DocraftLoomTable>();
+        table->set_padding(0.0F); // isolate column-width math from the table's own outer padding
         table->add_row({make_cell("a", true), make_cell("b", true)});
         table->accept(*measure_);
 
@@ -61,6 +62,7 @@ namespace docraft::test {
         EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
 
         auto table = std::make_shared<loom::nodes::DocraftLoomTable>();
+        table->set_padding(0.0F); // isolate column-width math from the table's own outer padding
         auto c0 = make_cell("a", true);
         c0->set_explicit_width(40.0F);
         table->add_row({c0, make_cell("b", true)});
@@ -91,6 +93,7 @@ namespace docraft::test {
         EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
 
         auto table = std::make_shared<loom::nodes::DocraftLoomTable>();
+        table->set_padding(0.0F); // isolate column-width math from the table's own outer padding
         table->add_row({make_cell("a", true), make_cell("b", true)});
         table->accept(*measure_);
 
@@ -118,6 +121,7 @@ namespace docraft::test {
         EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
 
         auto table = std::make_shared<loom::nodes::DocraftLoomTable>();
+        table->set_padding(0.0F); // isolate column-width math from the table's own outer padding
         table->add_row({make_cell("very long title text", true), make_cell("b", true)});
         table->accept(*measure_);
 
