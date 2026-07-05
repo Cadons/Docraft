@@ -4,11 +4,13 @@
 
 #pragma once
 #include <memory>
+#include <string>
 
 #include "docraft/backend/docraft_rendering_backend.h"
 #include "docraft/backend/pdf/docraft_haru_shared_state.h"
 #include "docraft/loom/interfaces/docraft_loom_visitor.h"
 #include "docraft/loom/nodes/docraft_loom_node.h"
+#include "docraft/model/docraft_text.h"
 
 namespace docraft::loom::pipeline {
     class DocraftLoomRenderingProcessor : public interfaces::DocraftLoomIVisitor
@@ -45,6 +47,28 @@ namespace docraft::loom::pipeline {
         void draw_table_default_backgrounds(nodes::DocraftLoomTable& table);
         void draw_table_borders_and_dividers(nodes::DocraftLoomTable& table);
         void draw_table_content(nodes::DocraftLoomTable& table);
+
+        /**
+         * @brief Style shared by every wrapped line of a single DocraftLoomText -- the
+         * per-line position (line text, x, y) is passed separately to draw_aligned_line
+         * since it varies each call, while this stays constant across a text block's lines.
+         */
+        struct TextLineStyle
+        {
+            float box_width;
+            model::TextAlignment alignment;
+            std::string font_name;
+            float font_size;
+        };
+
+        /**
+         * @brief Draws one already-positioned line of text at (x, y), honoring
+         * style.alignment within style.box_width -- kJustified distributes the gap
+         * between the line's actual width and style.box_width evenly across its
+         * inter-word spaces (falling back to kLeft if there are no spaces, or the line
+         * already fills style.box_width).
+         */
+        void draw_aligned_line(const std::string& line, float x, float y, const TextLineStyle& style);
 
         /**
          * @brief Whether a node should be drawn during the current page's render pass:

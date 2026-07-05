@@ -13,6 +13,8 @@
 #pragma once
 
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "docraft/backend/docraft_backend_providers_factory.h"
 #include "docraft/loom/interfaces/docraft_loom_visitor.h"
@@ -30,6 +32,14 @@ namespace docraft::loom::pipeline {
          * @brief Constructor for the DocraftLoomMeasureProcessor class.
          */
         DocraftLoomMeasureProcessor(const std::shared_ptr<backend::IDocraftTextRenderingBackend>& text_backend);
+
+        /**
+         * @brief Sets the width available to block-flow content for the region about to
+         * be measured (mirrors DocraftLoomLayoutProcessor::set_content_width) -- needed
+         * so a weighted DocraftLoomHStack can resolve each column's width and push it
+         * down to Text descendants as their wrap width, all before Layout ever runs.
+         */
+        void set_content_width(float width);
 
         /**
          * @brief Destructor for the DocraftLoomMeasureProcessor class.
@@ -81,6 +91,22 @@ namespace docraft::loom::pipeline {
         void visit(docraft::loom::nodes::DocraftLoomPageNumber*) override;
 
     private:
+        /**
+         * @brief Greedily word-wraps text into lines that each fit within max_width,
+         * falling back to a character-level split for a single word wider than
+         * max_width on its own. Splits on explicit '\n' first, then wraps each resulting
+         * paragraph by words.
+         */
+        std::vector<std::string> wrap_text(const std::string& text, float max_width, const std::string& font_name,
+                                           float font_size) const;
+
         std::shared_ptr<docraft::backend::IDocraftTextRenderingBackend> text_backend_;
+        float content_width_ = 0.0F;
+
+        // Pushed by a weighted HStack onto the child it's about to measure (its
+        // resolved column width), consumed by the next DocraftLoomText that measures
+        // without its own explicit wrap_width -- Paragraph passes it through unchanged
+        // to each of its own children in turn. Zero means "no inherited constraint".
+        float inherited_wrap_width_ = 0.0F;
     };
 } // namespace docraft::loom::pipeline

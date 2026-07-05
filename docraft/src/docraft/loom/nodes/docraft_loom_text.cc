@@ -108,6 +108,26 @@ namespace docraft::loom::nodes {
         alignment_ = alignment;
     }
 
+    float DocraftLoomText::wrap_width() const
+    {
+        return wrap_width_;
+    }
+
+    void DocraftLoomText::set_wrap_width(float wrap_width)
+    {
+        wrap_width_ = wrap_width;
+    }
+
+    const std::vector<std::string>& DocraftLoomText::wrapped_lines() const
+    {
+        return wrapped_lines_;
+    }
+
+    void DocraftLoomText::set_wrapped_lines(std::vector<std::string> lines)
+    {
+        wrapped_lines_ = std::move(lines);
+    }
+
     std::string DocraftLoomText::resolved_font_name() const
     {
         std::string name = font_family_;

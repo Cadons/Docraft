@@ -23,6 +23,17 @@ namespace docraft::loom {
     class DocraftLoomPdfCreator
     {
     public:
+        /**
+         * @brief Margins (points) inset from a section's (header/body/footer) own edges.
+         */
+        struct Margins
+        {
+            float top = 10.0F;
+            float bottom = 10.0F;
+            float left = 10.0F;
+            float right = 10.0F;
+        };
+
         explicit DocraftLoomPdfCreator(std::shared_ptr<interfaces::DocraftLoomIVisitorNode> root_node);
         ~DocraftLoomPdfCreator() = default;
 
@@ -43,34 +54,24 @@ namespace docraft::loom {
         void set_section_ratios(float header_ratio, float body_ratio, float footer_ratio);
 
         /**
-         * @brief Sets the header's margins (points), inset from the header region's own
-         * top/bottom/left/right edges. Defaults to 0 on every side (today's behavior).
+         * @brief Sets the header's margins, inset from the header region's own edges.
          */
-        void set_header_margins(float top, float bottom, float left, float right);
+        void set_header_margins(const Margins& margins);
         /**
-         * @brief Sets the body's margins (points). The body's paginated flow starts
-         * margin_top below the header and its per-page usable height shrinks by
-         * margin_top + margin_bottom; margin_left/right inset every top-level child.
+         * @brief Sets the body's margins. The body's paginated flow starts margin.top
+         * below the header and its per-page usable height shrinks by
+         * margin.top + margin.bottom; margin.left/right inset every top-level child.
          */
-        void set_body_margins(float top, float bottom, float left, float right);
+        void set_body_margins(const Margins& margins);
         /**
-         * @brief Sets the footer's margins (points), inset from the footer region's own
-         * top/bottom/left/right edges. Defaults to 0 on every side (today's behavior).
+         * @brief Sets the footer's margins, inset from the footer region's own edges.
          */
-        void set_footer_margins(float top, float bottom, float left, float right);
+        void set_footer_margins(const Margins& margins);
 
         void create();
         void render(const std::filesystem::path& output_path);
 
     private:
-        struct Margins
-        {
-            float top = 10.0F;
-            float bottom = 10.0F;
-            float left = 10.0F;
-            float right = 10.0F;
-        };
-
         std::shared_ptr<interfaces::DocraftLoomIVisitorNode> root_node_; //taken as input, the body
         std::shared_ptr<nodes::DocraftLoomNode> header_;
         std::shared_ptr<nodes::DocraftLoomNode> footer_;

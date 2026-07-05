@@ -4,7 +4,9 @@
 
 #include "docraft/loom/pipeline/docraft_loom_rendering_processor.h"
 
+#include <algorithm>
 #include <memory>
+#include <sstream>
 
 #include "docraft/backend/pdf/docraft_haru_text_backend.h"
 #include "docraft/exception/docraft_input_exceptions.h"
@@ -132,19 +134,92 @@ namespace docraft::loom::pipeline {
         return page_index < 0 || page_index == current_page_index_;
     }
 
+    void DocraftLoomRenderingProcessor::draw_aligned_line(const std::string& line, float x, float y,
+                                                          const TextLineStyle& style)
+    {
+        const float actual_width = text_backend_->measure_text_width(line, style.font_name, style.font_size);
+        if (style.alignment == model::TextAlignment::kJustified)
+        {
+            const auto spaces = std::count(line.begin(), line.end(), ' ');
+            if (spaces == 0 || style.box_width <= actual_width)
+            {
+                text_backend_->draw_text(line, x, y);
+                return;
+            }
+            const float extra_space = (style.box_width - actual_width) / static_cast<float>(spaces);
+            const float space_width = text_backend_->measure_text_width(" ", style.font_name, style.font_size);
+            float word_x = x;
+            std::istringstream iss(line);
+            std::string word;
+            bool first = true;
+            while (iss >> word)
+            {
+                if (!first)
+                {
+                    word_x += space_width + extra_space;
+                }
+                text_backend_->draw_text(word, word_x, y);
+                word_x += text_backend_->measure_text_width(word, style.font_name, style.font_size);
+                first = false;
+            }
+            return;
+        }
+
+        float draw_x = x;
+        if (style.alignment == model::TextAlignment::kCenter)
+        {
+            draw_x = x + (style.box_width - actual_width) / 2.0F;
+        }
+        else if (style.alignment == model::TextAlignment::kRight)
+        {
+            draw_x = x + (style.box_width - actual_width);
+        }
+        text_backend_->draw_text(line, draw_x, y);
+    }
+
     void DocraftLoomRenderingProcessor::visit(docraft::loom::nodes::DocraftLoomText* text)
     {
         if (!text || !should_render(*text))
             return;
         text_backend_->set_font(text->resolved_font_name(), text->font_size());
-        text_backend_->begin_text();
+        const auto& lines = text->wrapped_lines();
+
         // draw_text's y is the baseline, but frame.position.y is the top of the text's
         // own line box (as measured by measure_text_height) -- shift down by the full
         // line height so the glyph sits inside [position.y, position.y + height]
         // instead of poking above it.
-        text_backend_->draw_text(text->text(), text->layout_box().frame.position.x,
-                                 text->layout_box().frame.position.y + text->layout_box().measured_size.height);
-        text_backend_->end_text();
+        if (lines.empty())
+        {
+            text_backend_->begin_text();
+            text_backend_->draw_text(text->text(), text->layout_box().frame.position.x,
+                                     text->layout_box().frame.position.y + text->layout_box().measured_size.height);
+            text_backend_->end_text();
+            return;
+        }
+
+        const float line_height = text->layout_box().measured_size.height / static_cast<float>(lines.size());
+        const float box_x = text->layout_box().frame.position.x;
+        const float box_top = text->layout_box().frame.position.y;
+        TextLineStyle style{
+            .box_width = text->wrap_width(),
+            .alignment = text->alignment(),
+            .font_name = text->resolved_font_name(),
+            .font_size = text->font_size()
+        };
+        for (std::size_t i = 0; i < lines.size(); ++i)
+        {
+            const bool is_last_line = (i + 1 == lines.size());
+            // Justified text stretches every line except the last, matching the
+            // conventional look (a fully-justified last line reads as stretched-looking
+            // gappy text instead of a natural paragraph end).
+            style.alignment = (text->alignment() == model::TextAlignment::kJustified && is_last_line)
+                                  ? model::TextAlignment::kLeft
+                                  : text->alignment();
+            const float y = box_top + line_height * static_cast<float>(i + 1);
+            text_backend_->begin_text();
+            draw_aligned_line(lines[i], box_x, y, style);
+            text_backend_->end_text();
+        }
     }
 
     void DocraftLoomRenderingProcessor::visit(docraft::loom::nodes::DocraftLoomRectangle* node)

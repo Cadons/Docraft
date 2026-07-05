@@ -36,19 +36,19 @@ namespace docraft::loom {
         footer_ratio_ = footer_ratio;
     }
 
-    void DocraftLoomPdfCreator::set_header_margins(float top, float bottom, float left, float right)
+    void DocraftLoomPdfCreator::set_header_margins(const Margins& margins)
     {
-        header_margins_ = {.top = top, .bottom = bottom, .left = left, .right = right};
+        header_margins_ = margins;
     }
 
-    void DocraftLoomPdfCreator::set_body_margins(float top, float bottom, float left, float right)
+    void DocraftLoomPdfCreator::set_body_margins(const Margins& margins)
     {
-        body_margins_ = {.top = top, .bottom = bottom, .left = left, .right = right};
+        body_margins_ = margins;
     }
 
-    void DocraftLoomPdfCreator::set_footer_margins(float top, float bottom, float left, float right)
+    void DocraftLoomPdfCreator::set_footer_margins(const Margins& margins)
     {
-        footer_margins_ = {.top = top, .bottom = bottom, .left = left, .right = right};
+        footer_margins_ = margins;
     }
 
     void DocraftLoomPdfCreator::create()
@@ -72,6 +72,7 @@ namespace docraft::loom {
         // real per-page split only applies to the body.
         if (header_)
         {
+            measure_processor.set_content_width(page_width - header_margins_.left - header_margins_.right);
             header_->accept(measure_processor);
             layout_processor.set_content_width(page_width - header_margins_.left - header_margins_.right);
             layout_processor.reset_cursor(header_margins_.left, header_margins_.top);
@@ -80,6 +81,7 @@ namespace docraft::loom {
         }
         if (footer_)
         {
+            measure_processor.set_content_width(page_width - footer_margins_.left - footer_margins_.right);
             footer_->accept(measure_processor);
             layout_processor.set_content_width(page_width - footer_margins_.left - footer_margins_.right);
             layout_processor.reset_cursor(footer_margins_.left,
@@ -88,6 +90,7 @@ namespace docraft::loom {
             pipeline::DocraftLoomPaginationProcessor::assign_page_index_recursive(*footer_, -1);
         }
 
+        measure_processor.set_content_width(page_width - body_margins_.left - body_margins_.right);
         root_node_->accept(measure_processor);
         layout_processor.set_content_width(page_width - body_margins_.left - body_margins_.right);
         layout_processor.reset_cursor(body_margins_.left, body_top_y_);

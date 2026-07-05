@@ -238,26 +238,80 @@ namespace {
         return table;
     }
 
-    // Two paragraphs side by side, each given weight 1 -- HStack::set_weights() divides
-    // the available content width homogeneously between them (half the page each)
-    // instead of each paragraph just shrinking to its own text width.
+    // One column of the three-column demo below: a bold heading plus a single body
+    // Text. Neither sets its own wrap_width -- the enclosing HStack's set_weights()
+    // resolves each column's share of the available width during Measure and pushes
+    // it down as an automatic wrap constraint (DocraftLoomMeasureProcessor's
+    // inherited_wrap_width_), so DocraftLoomText word-wraps to fit its column with no
+    // hardcoded width here. Alignment (left/center/justified) is then applied per
+    // wrapped line at render time.
+    std::shared_ptr<DocraftLoomParagraph> make_wrapping_column_demo(const std::string& title,
+                                                                    const std::string& body,
+                                                                    docraft::model::TextAlignment alignment)
+    {
+        auto para = std::make_shared<DocraftLoomParagraph>();
+        para->set_line_spacing(1.2F);
+        para->set_space_before(5.0F);
+        para->set_space_after(5.0F);
+
+        auto heading = std::make_shared<DocraftLoomText>(title);
+        heading->set_font_family("Helvetica");
+        heading->set_font_size(13.0F);
+        heading->set_bold(true);
+        para->add_child(heading);
+
+        auto text = std::make_shared<DocraftLoomText>(body);
+        text->set_font_family("Helvetica");
+        text->set_font_size(10.0F);
+        text->set_alignment(alignment);
+        para->add_child(text);
+
+        return para;
+    }
+
+    // Three paragraphs side by side, each given weight 1 -- HStack::set_weights()
+    // divides the available content width homogeneously between them (a third of the
+    // page each) instead of each paragraph just shrinking to its own text width. Each
+    // column's body text demonstrates a different wrap alignment: left (plain
+    // wrapping), center, and justified.
     std::shared_ptr<DocraftLoomHStack> make_side_by_side_paragraphs_demo()
     {
         auto row = std::make_shared<DocraftLoomHStack>();
         row->set_spacing(12.0F);
-        row->set_weights({1.0F, 1.0F});
+        row->set_weights({1.0F, 1.0F, 1.0F});
 
-        row->add_child(make_paragraph("Roadmap", {
-                                          "Next quarter focuses on richer text layout:",
-                                          "wrapping, weighted rows and columns, and",
-                                          "nested constraint-based sizing.",
-                                      }));
-        row->add_child(make_paragraph("Risks", {
-                                          "Pagination edge cases for deeply nested",
-                                          "containers still need broader test coverage",
-                                          "before the legacy pipeline is retired.",
-                                      }));
+        row->add_child(make_wrapping_column_demo(
+            "Roadmap",
+            "Next quarter focuses on richer text layout: automatic wrapping, "
+            "weighted rows and columns, and nested constraint-based sizing.",
+            docraft::model::TextAlignment::kLeft));
+        row->add_child(make_wrapping_column_demo(
+            "Risks",
+            "Pagination edge cases for deeply nested containers still need "
+            "broader test coverage before the legacy pipeline is retired.",
+            docraft::model::TextAlignment::kCenter));
+        row->add_child(make_wrapping_column_demo(
+            "Notes",
+            "Justified text stretches every wrapped line except the last to "
+            "fill the column width evenly between words.",
+            docraft::model::TextAlignment::kJustified));
         return row;
+    }
+
+    std::shared_ptr<DocraftLoomImage> make_large_image_demo()
+    {
+        // Reuses the tiny synthetic checker pattern from make_image_demo, just scaled
+        // up to a large rendered size -- the point here is exercising a big image in
+        // the flow (and the page break it forces), not the pixel content.
+        auto image = std::make_shared<DocraftLoomImage>();
+        const std::vector<unsigned char> pixels = {
+            255, 0, 0, 0, 0, 255, // row 0: red, blue
+            0, 0, 255, 255, 0, 0, // row 1: blue, red
+        };
+        image->set_raw_data(pixels, 2, 2);
+        image->set_width(300.0F);
+        image->set_height(200.0F);
+        return image;
     }
 
     std::shared_ptr<DocraftLoomRectangle> make_absolute_position_demo()
@@ -313,6 +367,8 @@ int main()
     body->add_child(std::make_shared<docraft::loom::nodes::DocraftLoomBlankLine>());
 
     body->add_child(make_side_by_side_paragraphs_demo());
+    body->add_child(std::make_shared<docraft::loom::nodes::DocraftLoomBlankLine>());
+    body->add_child(make_large_image_demo());
 
     body->add_child(make_absolute_position_demo());
 

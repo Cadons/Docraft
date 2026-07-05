@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cmath>
 #include <memory>
+#include <sstream>
 
 #include "docraft/exception/docraft_input_exceptions.h"
 #include "docraft/generic/docraft_font_applier.h"
@@ -32,16 +33,141 @@ namespace docraft::loom::pipeline {
     {
     }
 
+    void DocraftLoomMeasureProcessor::set_content_width(float width)
+    {
+        content_width_ = width;
+    }
+
+    std::vector<std::string> DocraftLoomMeasureProcessor::wrap_text(const std::string& text, float max_width,
+                                                                    const std::string& font_name,
+                                                                    float font_size) const
+    {
+        std::vector<std::string> lines;
+
+        auto add_char_split_word = [&](const std::string& word)
+        {
+            if (word.empty())
+            {
+                return;
+            }
+            std::size_t start = 0;
+            while (start < word.length())
+            {
+                std::size_t probe_end = start + 1;
+                std::size_t last_fit_end = start;
+                while (probe_end <= word.length())
+                {
+                    const std::string candidate = word.substr(start, probe_end - start);
+                    if (text_backend_->measure_text_width(candidate, font_name, font_size) > max_width)
+                    {
+                        break;
+                    }
+                    last_fit_end = probe_end;
+                    ++probe_end;
+                }
+                if (last_fit_end == start)
+                {
+                    // Not even one character fits -- take one anyway to guarantee progress.
+                    last_fit_end = std::min(start + 1, word.length());
+                }
+                lines.push_back(word.substr(start, last_fit_end - start));
+                start = last_fit_end;
+            }
+        };
+
+        auto wrap_paragraph = [&](const std::string& paragraph)
+        {
+            std::istringstream iss(paragraph);
+            std::string word;
+            std::string current_line;
+            while (iss >> word)
+            {
+                if (current_line.empty())
+                {
+                    if (text_backend_->measure_text_width(word, font_name, font_size) <= max_width)
+                    {
+                        current_line = word;
+                    }
+                    else
+                    {
+                        add_char_split_word(word);
+                    }
+                    continue;
+                }
+                const std::string candidate = current_line + " " + word;
+                if (text_backend_->measure_text_width(candidate, font_name, font_size) <= max_width)
+                {
+                    current_line = candidate;
+                }
+                else
+                {
+                    lines.push_back(current_line);
+                    current_line.clear();
+                    if (text_backend_->measure_text_width(word, font_name, font_size) <= max_width)
+                    {
+                        current_line = word;
+                    }
+                    else
+                    {
+                        add_char_split_word(word);
+                    }
+                }
+            }
+            if (!current_line.empty())
+            {
+                lines.push_back(current_line);
+            }
+        };
+
+        // Split on explicit newlines first, then word-wrap each paragraph.
+        for (std::size_t start = 0; start < text.length();)
+        {
+            std::size_t end = text.find('\n', start);
+            if (end == std::string::npos)
+            {
+                end = text.length();
+            }
+            wrap_paragraph(text.substr(start, end - start));
+            start = end + 1;
+        }
+        if (lines.empty())
+        {
+            lines.emplace_back();
+        }
+        return lines;
+    }
+
     void DocraftLoomMeasureProcessor::visit(docraft::loom::nodes::DocraftLoomText* text)
     {
-        if (text)
+        if (!text)
         {
-            const std::string reg_font = text->resolved_font_name();
-            const float font_size = text->font_size();
+            return;
+        }
+        const std::string reg_font = text->resolved_font_name();
+        const float font_size = text->font_size();
+        auto& measure_size = text->edit_layout_box().measured_size;
 
-            auto& measure_size = text->edit_layout_box().measured_size;
+        // An explicit wrap_width() always wins; otherwise fall back to whatever width a
+        // weighted ancestor (HStack column, ...) pushed down for this text to
+        // auto-wrap into, consumed here so it doesn't leak to whatever gets measured
+        // next.
+        const float effective_wrap_width = text->wrap_width() > 0.0F ? text->wrap_width() : inherited_wrap_width_;
+        inherited_wrap_width_ = 0.0F;
+
+        if (effective_wrap_width > 0.0F)
+        {
+            auto lines = wrap_text(text->text(), effective_wrap_width, reg_font, font_size);
+            const float line_height = text_backend_->measure_text_height(reg_font, font_size);
+            measure_size.width = effective_wrap_width;
+            measure_size.height = line_height * static_cast<float>(lines.size());
+            text->set_wrap_width(effective_wrap_width); // so Rendering knows the box width too
+            text->set_wrapped_lines(std::move(lines));
+        }
+        else
+        {
             measure_size.width = text_backend_->measure_text_width(text->text(), reg_font, font_size);
             measure_size.height = text_backend_->measure_text_height(reg_font, font_size);
+            text->set_wrapped_lines({});
         }
     }
 
@@ -76,8 +202,14 @@ namespace docraft::loom::pipeline {
         float total_height = paragraph->space_before() + paragraph->space_after(); // Start with space before and after
         float max_width = 0.0f;
 
+        // A width pushed down by a weighted ancestor applies to every child of this
+        // paragraph in turn -- each DocraftLoomText consumes (clears) it for itself, so
+        // it must be re-armed here before every child, not just the first.
+        const float incoming_wrap_width = inherited_wrap_width_;
+
         for (int i = 0; i < paragraph->children_count(); ++i)
         {
+            inherited_wrap_width_ = incoming_wrap_width;
             auto child = paragraph->edit_child(i);
             child->accept(*this);
             const auto& child_size = child->layout_box().measured_size;
@@ -121,8 +253,43 @@ namespace docraft::loom::pipeline {
         float total_width = 0.0F;
         float max_height = 0.0F;
         const int n = node->children_count();
+        const auto& weights = node->weights();
+
+        // Opt-in, mirrors DocraftLoomLayoutProcessor's weighted branch: resolve each
+        // column's width from weights alone (no natural-width floor here, unlike
+        // Layout's) and push it down as a wrap constraint before measuring that child,
+        // so e.g. a Paragraph's Text auto-wraps to fit its column instead of the column
+        // having to grow to fit unwrapped text. Layout's own floor becomes a no-op once
+        // that child's natural width already equals its resolved share.
+        std::vector<float> resolved_widths;
+        if (!weights.empty() && n > 0 && content_width_ > 0.0F)
+        {
+            float total_weight = 0.0F;
+            std::vector<float> effective_weights(static_cast<std::size_t>(n));
+            for (int i = 0; i < n; ++i)
+            {
+                const float w = i < static_cast<int>(weights.size()) && weights[static_cast<std::size_t>(i)] > 0.0F
+                                    ? weights[static_cast<std::size_t>(i)]
+                                    : 1.0F;
+                effective_weights[static_cast<std::size_t>(i)] = w;
+                total_weight += w;
+            }
+            const float spacing_total = n > 1 ? node->spacing() * static_cast<float>(n - 1) : 0.0F;
+            const float available_width = content_width_ - spacing_total;
+            resolved_widths.resize(static_cast<std::size_t>(n));
+            for (int i = 0; i < n; ++i)
+            {
+                resolved_widths[static_cast<std::size_t>(i)] =
+                    available_width * effective_weights[static_cast<std::size_t>(i)] / total_weight;
+            }
+        }
+
         for (int i = 0; i < n; ++i)
         {
+            if (!resolved_widths.empty())
+            {
+                inherited_wrap_width_ = resolved_widths[static_cast<std::size_t>(i)];
+            }
             auto child = node->edit_child(i);
             child->accept(*this);
             const auto& sz = child->layout_box().measured_size;
