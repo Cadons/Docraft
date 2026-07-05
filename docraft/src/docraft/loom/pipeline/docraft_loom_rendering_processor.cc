@@ -192,6 +192,7 @@ namespace docraft::loom::pipeline {
         if (lines.empty())
         {
             text_backend_->begin_text();
+            text_backend_->set_text_color(text->color().toRGB().r, text->color().toRGB().g, text->color().toRGB().b);
             text_backend_->draw_text(text->text(), text->layout_box().frame.position.x,
                                      text->layout_box().frame.position.y + text->layout_box().measured_size.height);
             text_backend_->end_text();
