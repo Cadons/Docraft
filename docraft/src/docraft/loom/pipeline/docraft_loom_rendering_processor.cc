@@ -473,8 +473,20 @@ namespace docraft::loom::pipeline {
     // see the class docs on DocraftLoomTable for why.
     void DocraftLoomRenderingProcessor::draw_table_borders_and_dividers(nodes::DocraftLoomTable& table)
     {
-        const auto& table_pos = table.layout_box().frame.position;
-        const auto& table_size = table.layout_box().frame.size;
+        // Derived from the cells' own resolved frames -- not table.layout_box() directly
+        // -- because that frame's position/size describe the outer padding() footprint
+        // (see LayoutProcessor::visit(DocraftLoomTable*)), while the border must wrap
+        // only the actual grid, inset by that padding from the footprint's edges.
+        const auto table_pos = table.cell(0, 0)->layout_box().frame.position;
+        nodes::Size table_size{};
+        for (int c = 0; c < table.column_count(); ++c)
+        {
+            table_size.width += table.cell(0, c)->layout_box().frame.size.width;
+        }
+        for (int r = 0; r < table.row_count(); ++r)
+        {
+            table_size.height += table.cell(r, 0)->layout_box().frame.size.height;
+        }
         shape_backend_->save_state();
         line_backend_->set_stroke_color(0.0F, 0.0F, 0.0F);
         line_backend_->set_line_width(1.0F);

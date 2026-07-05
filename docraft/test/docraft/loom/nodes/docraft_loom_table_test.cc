@@ -172,6 +172,42 @@ namespace docraft::test {
         EXPECT_FLOAT_EQ(col1_right, table->cell(0, 2)->layout_box().frame.position.x);
     }
 
+    TEST_F(DocraftLoomTableTest, PaddingPushesTheWholeGridAwayFromTheTableOrigin)
+    {
+        // padding() must move the entire visible grid (and therefore the border drawn
+        // around it, see DocraftLoomRenderingProcessor::draw_table_borders_and_dividers)
+        // away from wherever the parent positioned this table -- not just inset cell
+        // content within an unmoved border, which would leave the table sitting flush
+        // against whatever precedes it.
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(10.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto table = std::make_shared<loom::nodes::DocraftLoomTable>();
+        table->set_padding(6.0F);
+        table->add_row({make_cell("a"), make_cell("b")});
+        table->accept(*measure_);
+
+        loom::pipeline::DocraftLoomLayoutProcessor layout(200.0F);
+        layout.reset_cursor(10.0F, 20.0F);
+        table->accept(layout);
+
+        const auto& table_origin = table->layout_box().frame.position;
+        EXPECT_FLOAT_EQ(table_origin.x, 10.0F);
+        EXPECT_FLOAT_EQ(table_origin.y, 20.0F);
+
+        const auto& first_cell_pos = table->cell(0, 0)->layout_box().frame.position;
+        EXPECT_FLOAT_EQ(first_cell_pos.x, table_origin.x + 6.0F);
+        EXPECT_FLOAT_EQ(first_cell_pos.y, table_origin.y + 6.0F);
+
+        // measured_size (what a parent VStack advances its cursor by) reserves the
+        // padding band on the trailing side too, so the next sibling doesn't sit flush
+        // against the table's bottom/right edge either.
+        const auto& measured = table->layout_box().measured_size;
+        const auto& last_cell = table->cell(0, 1)->layout_box();
+        EXPECT_FLOAT_EQ(table_origin.y + measured.height,
+                        first_cell_pos.y + last_cell.frame.size.height + 6.0F);
+    }
+
     TEST_F(DocraftLoomTableTest, TitleCellBoldByDefaultIsCallerResponsibility)
     {
         auto cell = make_cell("Header", true);
