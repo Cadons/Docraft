@@ -60,6 +60,14 @@ namespace docraft::loom::pipeline {
          */
         void reset_cursor(float x, float y);
 
+        /**
+         * @brief Sets the width available to block-flow content in the region about to be
+         * laid out (blank lines stretching to fill it, table column resolution). Callers
+         * reusing the same processor across header/body/footer regions with different
+         * margins call this alongside reset_cursor() before each region's layout pass.
+         */
+        void set_content_width(float width);
+
         void visit(docraft::loom::nodes::DocraftLoomText*) override;
         void visit(docraft::loom::nodes::DocraftLoomRectangle*) override;
         void visit(docraft::loom::nodes::DocraftLoomParagraph*) override;

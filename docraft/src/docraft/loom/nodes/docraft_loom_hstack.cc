@@ -15,4 +15,14 @@ namespace docraft::loom::nodes {
     {
         spacing_ = spacing;
     }
+
+    void DocraftLoomHStack::set_weights(std::vector<float> weights)
+    {
+        weights_ = std::move(weights);
+    }
+
+    const std::vector<float>& DocraftLoomHStack::weights() const
+    {
+        return weights_;
+    }
 } // namespace docraft::loom::nodes

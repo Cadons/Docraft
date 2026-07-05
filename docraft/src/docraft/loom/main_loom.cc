@@ -238,6 +238,28 @@ namespace {
         return table;
     }
 
+    // Two paragraphs side by side, each given weight 1 -- HStack::set_weights() divides
+    // the available content width homogeneously between them (half the page each)
+    // instead of each paragraph just shrinking to its own text width.
+    std::shared_ptr<DocraftLoomHStack> make_side_by_side_paragraphs_demo()
+    {
+        auto row = std::make_shared<DocraftLoomHStack>();
+        row->set_spacing(12.0F);
+        row->set_weights({1.0F, 1.0F});
+
+        row->add_child(make_paragraph("Roadmap", {
+                                          "Next quarter focuses on richer text layout:",
+                                          "wrapping, weighted rows and columns, and",
+                                          "nested constraint-based sizing.",
+                                      }));
+        row->add_child(make_paragraph("Risks", {
+                                          "Pagination edge cases for deeply nested",
+                                          "containers still need broader test coverage",
+                                          "before the legacy pipeline is retired.",
+                                      }));
+        return row;
+    }
+
     std::shared_ptr<DocraftLoomRectangle> make_absolute_position_demo()
     {
         auto rect = std::make_shared<DocraftLoomRectangle>();
@@ -288,6 +310,9 @@ int main()
                                        "automatically at the top of every continuation page.",
                                    }));
     body->add_child(make_team_roster_table_demo());
+    body->add_child(std::make_shared<docraft::loom::nodes::DocraftLoomBlankLine>());
+
+    body->add_child(make_side_by_side_paragraphs_demo());
 
     body->add_child(make_absolute_position_demo());
 

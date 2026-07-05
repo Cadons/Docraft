@@ -42,10 +42,35 @@ namespace docraft::loom {
          */
         void set_section_ratios(float header_ratio, float body_ratio, float footer_ratio);
 
+        /**
+         * @brief Sets the header's margins (points), inset from the header region's own
+         * top/bottom/left/right edges. Defaults to 0 on every side (today's behavior).
+         */
+        void set_header_margins(float top, float bottom, float left, float right);
+        /**
+         * @brief Sets the body's margins (points). The body's paginated flow starts
+         * margin_top below the header and its per-page usable height shrinks by
+         * margin_top + margin_bottom; margin_left/right inset every top-level child.
+         */
+        void set_body_margins(float top, float bottom, float left, float right);
+        /**
+         * @brief Sets the footer's margins (points), inset from the footer region's own
+         * top/bottom/left/right edges. Defaults to 0 on every side (today's behavior).
+         */
+        void set_footer_margins(float top, float bottom, float left, float right);
+
         void create();
         void render(const std::filesystem::path& output_path);
 
     private:
+        struct Margins
+        {
+            float top = 10.0F;
+            float bottom = 10.0F;
+            float left = 10.0F;
+            float right = 10.0F;
+        };
+
         std::shared_ptr<interfaces::DocraftLoomIVisitorNode> root_node_; //taken as input, the body
         std::shared_ptr<nodes::DocraftLoomNode> header_;
         std::shared_ptr<nodes::DocraftLoomNode> footer_;
@@ -55,6 +80,9 @@ namespace docraft::loom {
         float header_ratio_ = 0.06F;
         float body_ratio_ = 0.88F;
         float footer_ratio_ = 0.06F;
+        Margins header_margins_;
+        Margins body_margins_;
+        Margins footer_margins_;
         float body_top_y_ = 0.0F;
         float body_height_ = 0.0F;
         int total_page_count_ = 1;

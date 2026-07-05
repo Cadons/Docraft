@@ -101,6 +101,7 @@ namespace docraft::backend::pdf {
                                                     static_cast<HPDF_UINT>(text.size()));
             return static_cast<float>(tw.width) * font_size / kEM;
         }
+        return 0.0F;
     }
 
     float DocraftHaruTextBackend::measure_text_height(const std::string& font_name, float font_size) const

@@ -345,12 +345,8 @@ namespace docraft::loom::pipeline {
             const auto& frame = child->layout_box().frame;
             const float bottom = frame.position.y + frame.size.height;
             const bool fits = bottom <= page_bottom_y + 0.01F;
-            // A child that already starts exactly at the page's body top and still
-            // doesn't fit is simply too tall for one page -- accept it as an overflow
-            // rather than looping forever creating empty pages for it.
-            const bool oversized_escape = std::abs(frame.position.y - body_top_y) < 0.01F;
 
-            if (fits || oversized_escape)
+            if (fits)
             {
                 assign_page_index_recursive(*child, current_page);
                 next_y = bottom;
@@ -358,7 +354,12 @@ namespace docraft::loom::pipeline {
                 continue;
             }
 
-            // Doesn't fit as a whole -- try splitting it if it's a table.
+            // Doesn't fit as a whole -- try splitting it if it's a table. This must be
+            // attempted before the oversized-escape check below: a table's remainder is
+            // always re-stacked to start exactly at body_top_y (see try_split_table), so
+            // it would otherwise satisfy "starts at body top and still doesn't fit" and
+            // get accepted whole as unsplittable overflow instead of being split again
+            // across as many further pages as it needs.
             if (auto* table = dynamic_cast<nodes::DocraftLoomTable*>(child.get()))
             {
                 if (auto remainder = try_split_table(*table, page_bottom_y, body_top_y))
@@ -378,6 +379,19 @@ namespace docraft::loom::pipeline {
                     ++i;
                     continue;
                 }
+            }
+
+            // A child that already starts exactly at the page's body top and still
+            // doesn't fit -- and, if it's a table, couldn't be split further (e.g. down
+            // to a single row) -- is simply too tall for one page -- accept it as an
+            // overflow rather than looping forever creating empty pages for it.
+            const bool oversized_escape = std::abs(frame.position.y - body_top_y) < 0.01F;
+            if (oversized_escape)
+            {
+                assign_page_index_recursive(*child, current_page);
+                next_y = bottom;
+                ++i;
+                continue;
             }
 
             // Whole-node move to a fresh page: retry this same child next iteration,

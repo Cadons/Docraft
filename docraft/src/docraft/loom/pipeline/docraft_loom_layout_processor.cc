@@ -56,6 +56,11 @@ namespace docraft::loom::pipeline {
         cursor_.set_position(x, y);
     }
 
+    void DocraftLoomLayoutProcessor::set_content_width(float width)
+    {
+        page_size_.width = width;
+    }
+
     nodes::Position DocraftLoomLayoutProcessor::resolve_position(const nodes::DocraftLoomNode& node) const
     {
         if (node.position_mode() == model::DocraftPositionType::kAbsolute)
@@ -142,7 +147,12 @@ namespace docraft::loom::pipeline {
     {
         if (!node) return;
         PositionScope scope(*this, *node);
-        const auto& position = node->layout_box().frame.position;
+        auto& layout_box = node->edit_layout_box();
+        const auto& position = layout_box.frame.position;
+        // Mirrors Rectangle/List/Table: frame.size must reflect measured_size so that
+        // Pagination's next_y bookkeeping (frame.position.y + frame.size.height) sees
+        // this container's real footprint instead of a zero-initialized default.
+        layout_box.frame.size = layout_box.measured_size;
 
         const float start_x = position.x;
         float current_y = position.y;
@@ -165,23 +175,71 @@ namespace docraft::loom::pipeline {
     {
         if (!node) return;
         PositionScope scope(*this, *node);
-        const auto& position = node->layout_box().frame.position;
+        auto& layout_box = node->edit_layout_box();
+        const auto& position = layout_box.frame.position;
+        // See the matching comment in visit(DocraftLoomVStack*).
+        layout_box.frame.size = layout_box.measured_size;
 
         const float start_y = position.y;
-        float current_x = position.x;
         const int n = node->children_count();
+        const auto& weights = node->weights();
+
+        // Opt-in: only engaged when weights() is non-empty, so plain HStacks (headers,
+        // footers, shape rows, ...) keep today's shrink-to-fit behavior untouched. When
+        // engaged, the available content width is divided among children by weight
+        // (missing/non-positive entries default to 1.0, i.e. homogeneous division),
+        // mirroring DocraftLoomTable's column_weights -- each child is never squeezed
+        // narrower than its own natural width, though.
+        std::vector<float> resolved_widths;
+        if (!weights.empty() && n > 0)
+        {
+            std::vector<float> effective_weights(static_cast<std::size_t>(n));
+            float total_weight = 0.0F;
+            for (int i = 0; i < n; ++i)
+            {
+                const float w = i < static_cast<int>(weights.size()) && weights[static_cast<std::size_t>(i)] > 0.0F
+                                    ? weights[static_cast<std::size_t>(i)]
+                                    : 1.0F;
+                effective_weights[static_cast<std::size_t>(i)] = w;
+                total_weight += w;
+            }
+
+            const float spacing_total = n > 1 ? node->spacing() * static_cast<float>(n - 1) : 0.0F;
+            const float available_width = (page_size_.width > 0.0F ? page_size_.width : layout_box.frame.size.width)
+                - spacing_total;
+
+            resolved_widths.resize(static_cast<std::size_t>(n));
+            for (int i = 0; i < n; ++i)
+            {
+                const float natural_width = node->child(i)->layout_box().measured_size.width;
+                resolved_widths[static_cast<std::size_t>(i)] = std::max(
+                    natural_width, available_width * effective_weights[static_cast<std::size_t>(i)] / total_weight);
+            }
+        }
+
+        float current_x = position.x;
         for (int i = 0; i < n; ++i)
         {
             cursor_.set_position(current_x, start_y);
             auto child = node->edit_child(i);
             child->accept(*this);
-            current_x += child->layout_box().measured_size.width;
+            float advance = child->layout_box().measured_size.width;
+            if (!resolved_widths.empty())
+            {
+                advance = resolved_widths[static_cast<std::size_t>(i)];
+                child->edit_layout_box().frame.size.width = advance;
+            }
+            current_x += advance;
             if (i < n - 1)
             {
                 current_x += node->spacing();
             }
         }
         cursor_.set_position(current_x, start_y);
+        if (!resolved_widths.empty())
+        {
+            layout_box.frame.size.width = current_x - position.x;
+        }
     }
 
     void DocraftLoomLayoutProcessor::visit(docraft::loom::nodes::DocraftLoomBlankLine* node)

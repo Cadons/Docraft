@@ -46,6 +46,12 @@ namespace docraft::loom::nodes {
                 clone->set_explicit_width(*source.explicit_width());
             }
             clone->set_is_title(source.is_title());
+            // Clone must clone also the layout box
+            clone->edit_layout_box() = source.layout_box();
+            if (auto content = clone->content())
+            {
+                content->edit_layout_box() = source.content()->layout_box();
+            }
             return clone;
         }
     }

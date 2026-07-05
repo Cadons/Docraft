@@ -36,6 +36,21 @@ namespace docraft::loom {
         footer_ratio_ = footer_ratio;
     }
 
+    void DocraftLoomPdfCreator::set_header_margins(float top, float bottom, float left, float right)
+    {
+        header_margins_ = {.top = top, .bottom = bottom, .left = left, .right = right};
+    }
+
+    void DocraftLoomPdfCreator::set_body_margins(float top, float bottom, float left, float right)
+    {
+        body_margins_ = {.top = top, .bottom = bottom, .left = left, .right = right};
+    }
+
+    void DocraftLoomPdfCreator::set_footer_margins(float top, float bottom, float left, float right)
+    {
+        footer_margins_ = {.top = top, .bottom = bottom, .left = left, .right = right};
+    }
+
     void DocraftLoomPdfCreator::create()
     {
         //run the pipeline
@@ -47,8 +62,8 @@ namespace docraft::loom {
 
         const float header_height = page_height * header_ratio_;
         const float footer_height = page_height * footer_ratio_;
-        body_top_y_ = header_height;
-        body_height_ = page_height - header_height - footer_height;
+        body_top_y_ = header_height + body_margins_.top;
+        body_height_ = page_height - header_height - footer_height - body_margins_.top - body_margins_.bottom;
 
         auto measure_processor = pipeline::DocraftLoomMeasureProcessor(text_backend);
         auto layout_processor = pipeline::DocraftLoomLayoutProcessor(page_width);
@@ -58,20 +73,24 @@ namespace docraft::loom {
         if (header_)
         {
             header_->accept(measure_processor);
-            layout_processor.reset_cursor(0.0F, 0.0F);
+            layout_processor.set_content_width(page_width - header_margins_.left - header_margins_.right);
+            layout_processor.reset_cursor(header_margins_.left, header_margins_.top);
             header_->accept(layout_processor);
             pipeline::DocraftLoomPaginationProcessor::assign_page_index_recursive(*header_, -1);
         }
         if (footer_)
         {
             footer_->accept(measure_processor);
-            layout_processor.reset_cursor(0.0F, page_height - footer_height);
+            layout_processor.set_content_width(page_width - footer_margins_.left - footer_margins_.right);
+            layout_processor.reset_cursor(footer_margins_.left,
+                                          page_height - footer_height + footer_margins_.top);
             footer_->accept(layout_processor);
             pipeline::DocraftLoomPaginationProcessor::assign_page_index_recursive(*footer_, -1);
         }
 
         root_node_->accept(measure_processor);
-        layout_processor.reset_cursor(0.0F, body_top_y_);
+        layout_processor.set_content_width(page_width - body_margins_.left - body_margins_.right);
+        layout_processor.reset_cursor(body_margins_.left, body_top_y_);
         root_node_->accept(layout_processor);
 
         auto* body_node = dynamic_cast<nodes::DocraftLoomNode*>(root_node_.get());
