@@ -10,6 +10,7 @@
 #include "docraft/loom/nodes/docraft_loom_image.h"
 #include "docraft/loom/nodes/docraft_loom_line.h"
 #include "docraft/loom/nodes/docraft_loom_list.h"
+#include "docraft/loom/nodes/docraft_loom_new_page.h"
 #include "docraft/loom/nodes/docraft_loom_polygon.h"
 #include "docraft/loom/nodes/docraft_loom_triangle.h"
 #include "docraft/loom/nodes/docraft_loom_page_number.h"
@@ -89,9 +90,17 @@ namespace docraft::loom::pipeline {
     void DocraftLoomLayoutProcessor::visit(docraft::loom::nodes::DocraftLoomText* node)
     {
         PositionScope scope(*this, *node);
+        auto& layout_box = node->edit_layout_box();
+        // Mirrors every other node type (Rectangle/Paragraph/VStack/HStack/List/...):
+        // frame.size must be set from measured_size, since Pagination's own bookkeeping
+        // (paginate_body) advances its next_y using frame.position.y + frame.size.height
+        // for each top-level child -- leaving this at its zero-initialized default causes
+        // Pagination to treat a bare Text/Title/Subtitle as zero-height and pull the
+        // following sibling back on top of it.
+        layout_box.frame.size = layout_box.measured_size;
         // Move cursor to the right after placing the text; harmless if this node is
         // absolutely positioned, since the scope above restores the cursor on exit.
-        cursor_.move(node->layout_box().measured_size.width, 0.0F);
+        cursor_.move(layout_box.measured_size.width, 0.0F);
     }
 
     void DocraftLoomLayoutProcessor::visit(docraft::loom::nodes::DocraftLoomRectangle* node)
@@ -562,5 +571,12 @@ namespace docraft::loom::pipeline {
     {
         // Positioned exactly like ordinary text -- see visit(DocraftLoomText*).
         visit(static_cast<docraft::loom::nodes::DocraftLoomText*>(node));
+    }
+
+    void DocraftLoomLayoutProcessor::visit(docraft::loom::nodes::DocraftLoomNewPage* node)
+    {
+        if (!node) return;
+        PositionScope scope(*this, *node);
+        node->edit_layout_box().frame.size = {.width = 0.0F, .height = 0.0F};
     }
 } // pipeline
