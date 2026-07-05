@@ -200,7 +200,7 @@ namespace {
 
     // Built with foreach_item: table rows aren't appended via add_child (Table keeps its
     // own grid_), so each iteration calls add_row() directly instead -- shows Foreach
-    // used for the "index-aware side-effecting loop" case. 30 rows comfortably overflow
+    // used for the "index-aware side-effecting loop" case. 100 rows comfortably overflow
     // a single page's body region, exercising DocraftLoomPaginationProcessor's table
     // splitting (the title row repeats on the continuation page).
     std::shared_ptr<DocraftLoomTable> make_team_roster_table_demo()
@@ -212,7 +212,7 @@ namespace {
         const std::vector<std::string> roles = {"Engineer", "Designer", "Product Manager", "QA Analyst"};
         const std::vector<std::string> teams = {"Platform", "Growth", "Infrastructure", "Design Systems"};
 
-        std::vector<int> employee_slots(30);
+        std::vector<int> employee_slots(100);
         docraft::loom::foreach_item(employee_slots, [&](int, int index)
         {
             const std::string name = "Employee " + std::to_string(index + 1);

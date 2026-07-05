@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <memory>
 
+#include "docraft/exception/docraft_input_exceptions.h"
 #include "docraft/loom/nodes/docraft_loom_blank_line.h"
 #include "docraft/loom/nodes/docraft_loom_circle.h"
 #include "docraft/loom/nodes/docraft_loom_hstack.h"
@@ -115,16 +116,26 @@ namespace docraft::loom::pipeline {
     void DocraftLoomLayoutProcessor::visit(docraft::loom::nodes::DocraftLoomParagraph* node)
     {
         PositionScope scope(*this, *node);
-        const auto& position = node->layout_box().frame.position;
+        auto& layout_box = node->edit_layout_box();
+        const auto& position = layout_box.frame.position;
+        // Mirrors every other container node (Rectangle/List/Table): frame.size must be
+        // set from measured_size, since Pagination's own bookkeeping (paginate_body)
+        // advances its next_y using frame.position.y + frame.size.height for each
+        // top-level child -- leaving this at its zero-initialized default causes
+        // Pagination to treat the paragraph as zero-height and pull the following
+        // sibling back on top of it.
+        layout_box.frame.size = layout_box.measured_size;
         //layout the children of the paragraph
         const float start_x = position.x;
+        float current_y = position.y + node->space_before();
         for (int i = 0; i < node->children_count(); ++i)
         {
+            cursor_.set_position(start_x, current_y);
             auto child = node->edit_child(i);
             child->accept(*this);
-            float next_y = position.y + (child->layout_box().measured_size.height * node->line_spacing());
-            cursor_.set_position(start_x, cursor_.y() + next_y);
+            current_y += child->layout_box().measured_size.height * node->line_spacing();
         }
+        cursor_.set_position(start_x, current_y + node->space_after());
     }
 
     void DocraftLoomLayoutProcessor::visit(docraft::loom::nodes::DocraftLoomVStack* node)
@@ -270,6 +281,11 @@ namespace docraft::loom::pipeline {
     {
         if (!cell)
             return;
+        //cells cannot be in absolute position mode, they are always positioned by the table's own grid layout
+        if (cell->position_mode() == model::DocraftPositionType::kAbsolute)
+        {
+            throw exception::InvalidInputException("Table cells cannot be in absolute position mode");
+        }
         PositionScope scope(*this, *cell);
         auto& layout_box = cell->edit_layout_box();
         layout_box.frame.size = layout_box.measured_size;
