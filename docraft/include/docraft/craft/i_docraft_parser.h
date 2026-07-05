@@ -16,28 +16,34 @@
 
 #pragma once
 
+#include <any>
+
 #include "docraft/docraft_lib.h"
 #include <pugixml.hpp>
 
-#include "docraft/model/docraft_node.h"
-
 namespace docraft::craft {
+    /**
+     * @brief Interface for Craft language tag parsers.
+     *
+     * @details Implementations translate a single XML element into a tag-specific, plain
+     * data-transfer struct (e.g. `ParsedRectangleData`), returned type-erased via
+     * `std::any`. This interface has no dependency on any rendering/layout engine --
+     * common attributes (x/y/width/height/...) and child recursion are handled once,
+     * generically, by `DocraftCraftLanguageParser` itself, not by individual parsers.
+     */
+    class DOCRAFT_LIB IDocraftParser
+    {
+    public:
         /**
-         * @brief Interface for Craft language node parsers.
-         *
-         * Implementations translate a single XML node into a Docraft model node.
+         * @brief Virtual destructor.
          */
-        class DOCRAFT_LIB IDocraftParser {
-        public:
-                /**
-                 * @brief Virtual destructor.
-                 */
-                virtual ~IDocraftParser() = default;
-                /**
-                 * @brief Parses an XML node into a Docraft node.
-                 * @param craft_language_source XML node to parse.
-                 * @return Parsed Docraft node.
-                 */
-                virtual std::shared_ptr<model::DocraftNode> parse(const pugi::xml_node &craft_language_source) = 0;
-        };
-} // docraft
+        virtual ~IDocraftParser() = default;
+
+        /**
+         * @brief Parses an XML element into its tag-specific payload.
+         * @param craft_language_source XML node to parse.
+         * @return Type-erased `Parsed<Tag>Data` struct.
+         */
+        virtual std::any parse(const pugi::xml_node& craft_language_source) = 0;
+    };
+} // namespace docraft::craft

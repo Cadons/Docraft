@@ -23,8 +23,9 @@
 #include "docraft/exception/docraft_exceptions.h"
 
 namespace docraft::craft::parser::detail {
-    std::vector<model::DocraftPoint> parse_points_attribute(const pugi::xml_node &node, const char *attr_name) {
-        std::vector<model::DocraftPoint> points;
+    std::vector<docraft::Position> parse_points_attribute(const pugi::xml_node& node, const char* attr_name)
+    {
+        std::vector<docraft::Position> points;
         if (!attr_name) {
             return points;
         }

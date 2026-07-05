@@ -228,6 +228,7 @@ namespace docraft::craft {
             constexpr string kBackgroundColor = "background_color";
             constexpr string kBorderColor = "border_color";
             constexpr string kBorderWidth = "border_width";
+            constexpr string kRadius = "radius";
         }
         namespace triangle::attribute {
             constexpr string kBackgroundColor = "background_color";

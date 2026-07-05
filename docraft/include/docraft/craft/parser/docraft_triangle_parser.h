@@ -16,11 +16,27 @@
 
 #pragma once
 
+#include <optional>
+#include <vector>
+
+#include "docraft/docraft_color.h"
 #include "docraft/docraft_lib.h"
+#include "docraft/docraft_position.h"
 
 #include "docraft/craft/i_docraft_parser.h"
 
 namespace docraft::craft::parser {
+    /**
+     * @brief Tag-specific payload parsed from a `<Triangle>` element.
+     */
+    struct ParsedTriangleData
+    {
+        std::optional<DocraftColor> background_color;
+        std::optional<DocraftColor> border_color;
+        std::optional<float> border_width;
+        std::vector<docraft::Position> points; // exactly 3 when present
+    };
+
     /**
      * @brief Parser for triangle nodes.
      */
@@ -29,8 +45,10 @@ namespace docraft::craft::parser {
         /**
          * @brief Parses a triangle XML node.
          * @param craft_language_source XML node.
-         * @return Parsed triangle node.
+         * @return `ParsedTriangleData`.
+         * @throws docraft::exception::InvalidInputException if `points` is present but
+         * does not have exactly 3 entries.
          */
-        std::shared_ptr<model::DocraftNode> parse(const pugi::xml_node &craft_language_source) override;
+        std::any parse(const pugi::xml_node& craft_language_source) override;
     };
-} // docraft::craft::parser
+} // namespace docraft::craft::parser

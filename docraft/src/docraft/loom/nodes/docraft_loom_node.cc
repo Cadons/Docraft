@@ -101,4 +101,24 @@ namespace docraft::loom::nodes {
     {
         explicit_position_ = position;
     }
+
+    int DocraftLoomNode::z_index() const
+    {
+        return z_index_;
+    }
+
+    void DocraftLoomNode::set_z_index(int z_index)
+    {
+        z_index_ = z_index;
+    }
+
+    const std::string& DocraftLoomNode::name() const
+    {
+        return name_;
+    }
+
+    void DocraftLoomNode::set_name(const std::string& name)
+    {
+        name_ = name;
+    }
 } // docraft

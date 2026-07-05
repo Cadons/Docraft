@@ -19,10 +19,8 @@
 #include <pugixml.hpp>
 
 #include "docraft/craft/docraft_craft_language_tokens.h"
+#include "docraft/craft/docraft_craft_parsed_element.h"
 #include "docraft/docraft_color.h"
-#include "docraft/model/docraft_node.h"
-#include "docraft/model/docraft_section.h"
-#include "docraft/model/docraft_settings.h"
 
 namespace docraft::craft::parser::detail {
     /**
@@ -35,7 +33,9 @@ namespace docraft::craft::parser::detail {
 
     /**
      * @brief Parses a color attribute value into a DocraftColor object.
-     * Supports hex colors (e.g., \#RRGGBB or \#RRGGBBAA) and named colors (e.g., "red", "blue").
+     * Supports hex colors (e.g., \#RRGGBB or \#RRGGBBAA), named colors (e.g., "red",
+     * "blue") and template expressions (e.g. "${variable}"), which `DocraftColor` itself
+     * stores verbatim for a later templating pass to resolve.
      * @param color_attr XML attribute containing the color value.
      * @return A DocraftColor object representing the parsed color.
      * @throws docraft::exception::InvalidInputException if the color string is not in a valid format or is an unsupported named color.
@@ -43,31 +43,12 @@ namespace docraft::craft::parser::detail {
     DocraftColor get_docraft_color(const pugi::xml_attribute &color_attr);
 
     /**
-     * @brief Adds external fonts defined in the XML node to the DocraftFont object.
-     * Expects child nodes with the specified name containing font information.
-     * @param font_node XML node containing external font definitions.
-     * @param child_name Name of the child nodes that define external fonts.
-     * @param docraft_font DocraftFont object to which the external fonts will be added.
+     * @brief Parses the universal attributes (name/x/y/width/height/padding/weight/
+     * z_index/visible/position) shared by every Craft-language tag into a
+     * `DocraftCommonAttributes`. Generic and tag-agnostic -- called once per element by
+     * `DocraftCraftLanguageParser`, not by individual `IDocraftParser` implementations.
+     * @param craft_language_source The XML node to read attributes from.
+     * @return The parsed common attributes.
      */
-    void add_external_fonts_from_node(const pugi::xml_node &font_node,
-                                      const char *child_name,
-                                      model::setting::DocraftFont &docraft_font);
-
-    /**
-     * @brief Configures common attributes for a DocraftNode based on the XML node.
-     * This includes attributes like id, visibility, and any other common properties.
-     * @param node The DocraftNode to configure.
-     * @param craft_language_source The XML node containing the attributes to apply.
-     */
-    void configure_docraft_node_attributes(const std::shared_ptr<model::DocraftNode> &node,
-                                           const pugi::xml_node &craft_language_source);
-
-    /**
-     * @brief Configures section-specific attributes for a DocraftSection based on the XML node.
-     * This includes attributes like ratio, background color, and any other section-specific properties.
-     * @param node The DocraftSection to configure.
-     * @param craft_language_source The XML node containing the attributes to apply.
-     */
-    void configure_section_attributes(const std::shared_ptr<model::DocraftSection> &node,
-                                      const pugi::xml_node &craft_language_source);
-}
+    DocraftCommonAttributes parse_common_node_attributes(const pugi::xml_node& craft_language_source);
+} // namespace docraft::craft::parser::detail

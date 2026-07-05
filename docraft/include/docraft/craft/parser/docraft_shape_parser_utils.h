@@ -21,8 +21,12 @@
 
 #include <pugixml.hpp>
 
-#include "docraft/model/docraft_position.h"
+#include "docraft/docraft_position.h"
 
 namespace docraft::craft::parser::detail {
-    std::vector<model::DocraftPoint> parse_points_attribute(const pugi::xml_node &node, const char *attr_name);
+    /**
+     * @brief Parses a "x,y x,y ..." points attribute (the convention shared by Triangle
+     * and Polygon) into a list of points.
+     */
+    std::vector<docraft::Position> parse_points_attribute(const pugi::xml_node& node, const char* attr_name);
 }

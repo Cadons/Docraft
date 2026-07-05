@@ -14,705 +14,126 @@
  * limitations under the License.
  */
 
-// cpp
 #include "docraft/craft/docraft_craft_language_parser.h"
 
-#include <algorithm>
-#include <charconv>
-#include <cctype>
-#include <iostream>
-#include <memory>
-#include <optional>
-#include <string>
-#include <string_view>
-#include <unordered_set>
-#include <utility>
-#include <vector>
-
 #include "docraft/craft/docraft_craft_language_tokens.h"
+#include "docraft/craft/parser/docraft_circle_parser.h"
+#include "docraft/craft/parser/docraft_line_parser.h"
 #include "docraft/craft/parser/docraft_parser.h"
+#include "docraft/craft/parser/docraft_parser_helpers.h"
+#include "docraft/craft/parser/docraft_polygon_parser.h"
+#include "docraft/craft/parser/docraft_triangle_parser.h"
 #include "docraft/exception/docraft_exceptions.h"
-#include "docraft/model/docraft_header.h"
-#include "docraft/model/docraft_body.h"
-#include "docraft/model/docraft_footer.h"
-#include "docraft/model/docraft_children_container_node.h"
-#include "docraft/model/docraft_foreach.h"
-#include "docraft/model/docraft_list.h"
-#include "docraft/model/docraft_new_page.h"
-#include "docraft/model/docraft_text.h"
-#include "docraft/utils/docraft_keyword_extractor.h"
-#include "docraft/utils/docraft_logger.h"
-
-namespace {
-    struct DocraftAutoKeywordConfig {
-        bool enabled = false;
-        std::size_t max_keywords = 10;
-        std::size_t min_length = 4;
-        std::vector<std::string> stop_word_languages = {"it", "en", "fr", "de", "es"};
-    };
-
-    struct DocraftMetadataParseOutcome {
-        docraft::DocraftDocumentMetadata metadata;
-        DocraftAutoKeywordConfig auto_keyword_config;
-        bool has_metadata = false;
-    };
-
-    std::string trim_copy(std::string_view source) {
-        std::size_t start = 0;
-        std::size_t end = source.size();
-        while (start < end && std::isspace(static_cast<unsigned char>(source[start]))) {
-            ++start;
-        }
-        while (end > start && std::isspace(static_cast<unsigned char>(source[end - 1]))) {
-            --end;
-        }
-        return std::string(source.substr(start, end - start));
-    }
-
-    std::string normalize_tag_name(const std::string &tag_name) {
-        if (tag_name.empty()) {
-            return tag_name;
-        }
-        bool has_upper = false;
-        for (const char c: tag_name) {
-            if (std::isupper(static_cast<unsigned char>(c))) {
-                has_upper = true;
-                break;
-            }
-        }
-        if (has_upper) {
-            return tag_name;
-        }
-        std::string normalized = tag_name;
-        for (char &c: normalized) {
-            c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-        }
-        normalized[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(normalized[0])));
-        return normalized;
-    }
-
-    std::optional<std::string> read_child_text(const pugi::xml_node &parent, const std::string &child_tag_name) {
-        if (!parent) {
-            return std::nullopt;
-        }
-        if (const pugi::xml_node child = parent.child(child_tag_name.c_str())) {
-            const std::string value = trim_copy(child.child_value());
-            if (!value.empty()) {
-                return value;
-            }
-        }
-        return std::nullopt;
-    }
-
-    std::optional<std::string> read_attr_or_child_text(
-        const pugi::xml_node &parent,
-        const std::string &attribute_name,
-        const std::string &child_tag_name) {
-        if (!parent) {
-            return std::nullopt;
-        }
-        if (const pugi::xml_attribute attr = parent.attribute(attribute_name.c_str())) {
-            const std::string value = trim_copy(attr.as_string());
-            if (!value.empty()) {
-                return value;
-            }
-        }
-        return read_child_text(parent, child_tag_name);
-    }
-
-    bool parse_bool_string(const std::string &raw_value, const std::string &error_context) {
-        std::string value = raw_value;
-        for (char &ch: value) {
-            ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
-        }
-        if (value == "true" || value == "1" || value == "yes" || value == "on") {
-            return true;
-        }
-        if (value == "false" || value == "0" || value == "no" || value == "off") {
-            return false;
-        }
-        throw docraft::exception::InvalidInputException(
-            "Invalid boolean value '" + raw_value + "' for " + error_context);
-    }
-
-    int parse_int_in_range(const std::optional<std::string> &value,
-                           const std::string &field_name,
-                           int min_value,
-                           int max_value,
-                           bool required,
-                           int default_value = 0) {
-        if (!value) {
-            if (required) {
-                throw docraft::exception::InvalidInputException(
-                    "Missing required metadata date field '" + field_name + "'");
-            }
-            return default_value;
-        }
-        int parsed = 0;
-        const char *begin = value->data();
-        const char *end = value->data() + value->size();
-        const auto [ptr, ec] = std::from_chars(begin, end, parsed);
-        if (ec != std::errc() || ptr != end) {
-            throw docraft::exception::InvalidInputException(
-                "Invalid integer metadata date field '" + field_name + "': " + *value);
-        }
-        if (parsed < min_value || parsed > max_value) {
-            throw docraft::exception::InvalidInputException("Metadata date field '" + field_name + "' out of range");
-        }
-        return parsed;
-    }
-
-    docraft::DocraftDocumentMetadata::DateTime parse_metadata_date(const pugi::xml_node &date_node,
-                                                                   const std::string &tag_name) {
-        if (!date_node) {
-            throw docraft::exception::InvalidInputException("Missing metadata date node '" + tag_name + "'");
-        }
-
-        const std::optional<std::string> year_value = read_attr_or_child_text(
-            date_node,
-            std::string{docraft::craft::elements::metadata::date::attribute::kYear},
-            std::string{docraft::craft::elements::metadata::date_component::kYear});
-        const std::optional<std::string> month_value = read_attr_or_child_text(
-            date_node,
-            std::string{docraft::craft::elements::metadata::date::attribute::kMonth},
-            std::string{docraft::craft::elements::metadata::date_component::kMonth});
-        const std::optional<std::string> day_value = read_attr_or_child_text(
-            date_node,
-            std::string{docraft::craft::elements::metadata::date::attribute::kDay},
-            std::string{docraft::craft::elements::metadata::date_component::kDay});
-        const std::optional<std::string> hour_value = read_attr_or_child_text(
-            date_node,
-            std::string{docraft::craft::elements::metadata::date::attribute::kHour},
-            std::string{docraft::craft::elements::metadata::date_component::kHour});
-        const std::optional<std::string> minutes_value = read_attr_or_child_text(
-            date_node,
-            std::string{docraft::craft::elements::metadata::date::attribute::kMinutes},
-            std::string{docraft::craft::elements::metadata::date_component::kMinutes});
-        const std::optional<std::string> seconds_value = read_attr_or_child_text(
-            date_node,
-            std::string{docraft::craft::elements::metadata::date::attribute::kSeconds},
-            std::string{docraft::craft::elements::metadata::date_component::kSeconds});
-        const std::optional<std::string> ind_value = read_attr_or_child_text(
-            date_node,
-            std::string{docraft::craft::elements::metadata::date::attribute::kInd},
-            std::string{docraft::craft::elements::metadata::date_component::kInd});
-        const std::optional<std::string> off_hour_value = read_attr_or_child_text(
-            date_node,
-            std::string{docraft::craft::elements::metadata::date::attribute::kOffHour},
-            std::string{docraft::craft::elements::metadata::date_component::kOffHour});
-        const std::optional<std::string> off_minutes_value = read_attr_or_child_text(
-            date_node,
-            std::string{docraft::craft::elements::metadata::date::attribute::kOffMinutes},
-            std::string{docraft::craft::elements::metadata::date_component::kOffMinutes});
-
-        docraft::DocraftDocumentMetadata::DateTime date_time{};
-        date_time.year = parse_int_in_range(year_value, tag_name + ".year", 1, 9999, true);
-        date_time.month = parse_int_in_range(month_value, tag_name + ".month", 1, 12, true);
-        date_time.day = parse_int_in_range(day_value, tag_name + ".day", 1, 31, true);
-        date_time.hour = parse_int_in_range(hour_value, tag_name + ".hour", 0, 23, false, 0);
-        date_time.minutes = parse_int_in_range(minutes_value, tag_name + ".minutes", 0, 59, false, 0);
-        date_time.seconds = parse_int_in_range(seconds_value, tag_name + ".seconds", 0, 59, false, 0);
-
-        char timezone_indicator = '+';
-        if (ind_value) {
-            if (ind_value->size() != 1U) {
-                throw docraft::exception::InvalidInputException(
-                    "Metadata date field '" + tag_name + ".ind' must be a single character");
-            }
-            timezone_indicator = (*ind_value)[0];
-        }
-
-        if (timezone_indicator == 'Z' || timezone_indicator == 'z') {
-            date_time.ind = '+';
-            date_time.off_hour = 0;
-            date_time.off_minutes = 0;
-            return date_time;
-        }
-        if (timezone_indicator != '+' && timezone_indicator != '-') {
-            throw docraft::exception::InvalidInputException(
-                "Metadata date field '" + tag_name + ".ind' must be '+' or '-'");
-        }
-        date_time.ind = timezone_indicator;
-        date_time.off_hour = parse_int_in_range(off_hour_value, tag_name + ".off_hour", 0, 23, false, 0);
-        date_time.off_minutes = parse_int_in_range(off_minutes_value, tag_name + ".off_minutes", 0, 59, false, 0);
-
-        return date_time;
-    }
-
-    std::vector<std::string> split_keywords(const std::string &value) {
-        std::vector<std::string> keywords;
-        std::string current;
-        for (const char ch: value) {
-            if (ch == ',' || ch == ';') {
-                const std::string candidate = trim_copy(current);
-                if (!candidate.empty()) {
-                    keywords.push_back(candidate);
-                }
-                current.clear();
-            } else {
-                current.push_back(ch);
-            }
-        }
-        const std::string candidate = trim_copy(current);
-        if (!candidate.empty()) {
-            keywords.push_back(candidate);
-        }
-        return keywords;
-    }
-
-    std::string normalize_token(const std::string &token) {
-        std::string normalized = trim_copy(token);
-        for (char &ch: normalized) {
-            ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
-        }
-        return normalized;
-    }
-
-    std::string merge_keywords(const std::optional<std::string> &existing_keywords,
-                               const std::vector<std::string> &generated_keywords) {
-        std::vector<std::string> merged;
-        std::unordered_set<std::string> seen;
-
-        if (existing_keywords && !existing_keywords->empty()) {
-            for (const std::string &candidate: split_keywords(*existing_keywords)) {
-                const std::string normalized = normalize_token(candidate);
-                if (normalized.empty()) {
-                    continue;
-                }
-                if (seen.insert(normalized).second) {
-                    merged.push_back(candidate);
-                }
-            }
-        }
-
-        for (const std::string &generated: generated_keywords) {
-            const std::string normalized = normalize_token(generated);
-            if (normalized.empty()) {
-                continue;
-            }
-            if (seen.insert(normalized).second) {
-                merged.push_back(generated);
-            }
-        }
-
-        std::string result;
-        for (std::size_t i = 0; i < merged.size(); ++i) {
-            if (i > 0) {
-                result += ", ";
-            }
-            result += merged[i];
-        }
-        return result;
-    }
-
-    std::vector<std::string> split_languages(const std::string &value) {
-        std::vector<std::string> languages;
-        std::string token;
-        for (const char ch: value) {
-            if (ch == ',' || ch == ';' || std::isspace(static_cast<unsigned char>(ch))) {
-                const std::string trimmed = trim_copy(token);
-                if (!trimmed.empty()) {
-                    languages.push_back(trimmed);
-                }
-                token.clear();
-            } else {
-                token.push_back(ch);
-            }
-        }
-        const std::string trimmed = trim_copy(token);
-        if (!trimmed.empty()) {
-            languages.push_back(trimmed);
-        }
-        return languages;
-    }
-
-    bool is_supported_stopword_language(const std::string &language) {
-        static const std::unordered_set<std::string> supported_languages = {"it", "en", "fr", "de", "es"};
-        std::string normalized = language;
-        for (char &ch: normalized) {
-            ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
-        }
-        return supported_languages.find(normalized) != supported_languages.end();
-    }
-
-    void parse_metadata_text_fields(const pugi::xml_node &metadata_node,
-                                    docraft::DocraftDocumentMetadata &metadata) {
-        const std::string title_tag = normalize_tag_name(std::string{docraft::craft::elements::metadata::kDocumentTitle});
-        const std::string author_tag = normalize_tag_name(std::string{docraft::craft::elements::metadata::kAuthor});
-        const std::string creator_tag = normalize_tag_name(std::string{docraft::craft::elements::metadata::kCreator});
-        const std::string producer_tag = normalize_tag_name(std::string{docraft::craft::elements::metadata::kProducer});
-        const std::string subject_tag = normalize_tag_name(std::string{docraft::craft::elements::metadata::kSubject});
-        const std::string keywords_tag = normalize_tag_name(std::string{docraft::craft::elements::metadata::kKeywords});
-        const std::string trapped_tag = normalize_tag_name(std::string{docraft::craft::elements::metadata::kTrapped});
-        const std::string gts_pdfx_tag = normalize_tag_name(std::string{docraft::craft::elements::metadata::kGtsPdfx});
-
-        if (const auto value = read_child_text(metadata_node, title_tag)) {
-            metadata.set_title(*value);
-        }
-        if (const auto value = read_child_text(metadata_node, author_tag)) {
-            metadata.set_author(*value);
-        }
-        if (const auto value = read_child_text(metadata_node, creator_tag)) {
-            metadata.set_creator(*value);
-        }
-        if (const auto value = read_child_text(metadata_node, producer_tag)) {
-            metadata.set_producer(*value);
-        }
-        if (const auto value = read_child_text(metadata_node, subject_tag)) {
-            metadata.set_subject(*value);
-        }
-        if (const auto value = read_child_text(metadata_node, keywords_tag)) {
-            metadata.set_keywords(*value);
-        }
-        if (const auto value = read_child_text(metadata_node, trapped_tag)) {
-            metadata.set_trapped(*value);
-        }
-        if (const auto value = read_child_text(metadata_node, gts_pdfx_tag)) {
-            metadata.set_gts_pdfx(*value);
-        }
-    }
-
-    void parse_metadata_date_fields(const pugi::xml_node &metadata_node,
-                                    docraft::DocraftDocumentMetadata &metadata) {
-        const std::string creation_date_tag = normalize_tag_name(
-            std::string{docraft::craft::elements::metadata::kCreationDate});
-        const std::string modification_date_tag = normalize_tag_name(
-            std::string{docraft::craft::elements::metadata::kModificationDate});
-
-        if (const pugi::xml_node creation_date_node = metadata_node.child(creation_date_tag.c_str())) {
-            metadata.set_creation_date(parse_metadata_date(creation_date_node, creation_date_tag));
-        }
-        if (const pugi::xml_node modification_date_node = metadata_node.child(modification_date_tag.c_str())) {
-            metadata.set_modification_date(parse_metadata_date(modification_date_node, modification_date_tag));
-        }
-    }
-
-    std::vector<std::string> parse_validated_auto_keyword_languages(const pugi::xml_attribute &language_attr) {
-        const auto parsed_languages = split_languages(language_attr.as_string());
-        if (parsed_languages.empty()) {
-            throw docraft::exception::InvalidInputException("Metadata AutoKeywords language cannot be empty");
-        }
-
-        std::vector<std::string> validated_languages;
-        validated_languages.reserve(parsed_languages.size());
-        for (const auto &language: parsed_languages) {
-            std::string normalized = language;
-            for (char &ch: normalized) {
-                ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
-            }
-            if (!is_supported_stopword_language(normalized)) {
-                throw docraft::exception::InvalidInputException(
-                    "Unsupported AutoKeywords language '" + language + "'. Supported: it,en,fr,de,es");
-            }
-            validated_languages.push_back(normalized);
-        }
-        return validated_languages;
-    }
-
-    void parse_auto_keyword_numeric_limits(const pugi::xml_node &auto_keywords_node,
-                                           DocraftAutoKeywordConfig &config) {
-        if (const pugi::xml_attribute max_keywords_attr = auto_keywords_node.attribute(
-            std::string{docraft::craft::elements::metadata::auto_keywords::attribute::kMaxKeywords}.c_str())) {
-            const int max_keywords = max_keywords_attr.as_int();
-            if (max_keywords <= 0) {
-                throw docraft::exception::InvalidInputException(
-                    "Metadata AutoKeywords max_keywords must be greater than 0");
-            }
-            config.max_keywords = static_cast<std::size_t>(max_keywords);
-        }
-
-        if (const pugi::xml_attribute min_length_attr = auto_keywords_node.attribute(
-            std::string{docraft::craft::elements::metadata::auto_keywords::attribute::kMinLength}.c_str())) {
-            const int min_length = min_length_attr.as_int();
-            if (min_length <= 0) {
-                throw docraft::exception::InvalidInputException(
-                    "Metadata AutoKeywords min_length must be greater than 0");
-            }
-            config.min_length = static_cast<std::size_t>(min_length);
-        }
-    }
-
-    void parse_auto_keyword_enabled_flag(const pugi::xml_node &auto_keywords_node,
-                                         const std::string &auto_keywords_tag,
-                                         DocraftAutoKeywordConfig &config) {
-        config.enabled = true;
-        if (const pugi::xml_attribute enabled_attr = auto_keywords_node.attribute(
-            std::string{docraft::craft::elements::metadata::auto_keywords::attribute::kEnabled}.c_str())) {
-            config.enabled = parse_bool_string(enabled_attr.as_string(), auto_keywords_tag + ".enabled");
-            return;
-        }
-
-        const std::string node_value = trim_copy(auto_keywords_node.child_value());
-        if (!node_value.empty()) {
-            config.enabled = parse_bool_string(node_value, auto_keywords_tag + " body value");
-        }
-    }
-
-    void parse_auto_keyword_config(const pugi::xml_node &metadata_node,
-                                   const std::string &auto_keywords_tag,
-                                   DocraftAutoKeywordConfig &config) {
-        const pugi::xml_node auto_keywords_node = metadata_node.child(auto_keywords_tag.c_str());
-        if (!auto_keywords_node) {
-            return;
-        }
-
-        parse_auto_keyword_enabled_flag(auto_keywords_node, auto_keywords_tag, config);
-        parse_auto_keyword_numeric_limits(auto_keywords_node, config);
-
-        if (const pugi::xml_attribute language_attr = auto_keywords_node.attribute(
-            std::string{docraft::craft::elements::metadata::auto_keywords::attribute::kLanguage}.c_str())) {
-            config.stop_word_languages = parse_validated_auto_keyword_languages(language_attr);
-        }
-    }
-
-    DocraftMetadataParseOutcome parse_metadata_node(const pugi::xml_node &document_node) {
-        DocraftMetadataParseOutcome outcome;
-        const std::string metadata_tag = normalize_tag_name(std::string{docraft::craft::section::kMetadata});
-        const pugi::xml_node metadata_node = document_node.child(metadata_tag.c_str());
-        if (!metadata_node) {
-            return outcome;
-        }
-        outcome.has_metadata = true;
-        const std::string auto_keywords_tag = normalize_tag_name(
-            std::string{docraft::craft::elements::metadata::kAutoKeywords});
-
-        parse_metadata_text_fields(metadata_node, outcome.metadata);
-        parse_metadata_date_fields(metadata_node, outcome.metadata);
-        parse_auto_keyword_config(metadata_node, auto_keywords_tag, outcome.auto_keyword_config);
-
-        return outcome;
-    }
-} // namespace
 
 namespace docraft::craft {
 
 DocraftCraftLanguageParser::DocraftCraftLanguageParser() {
-    // Register parsers for different node types
-    parsers_[tag_formatter(elements::kSettings.data())] = std::make_unique<parser::DocraftSettingsParser>(); // settings should be parsed before any other node, so it is registered first
-    parsers_[tag_formatter(elements::templating::kForeach.data())] = std::make_unique<parser::DocraftForeachParser>(this);
-    parsers_[tag_formatter(section::kHeader.data())] = std::make_unique<parser::DocraftHeaderParser>();
-    parsers_[tag_formatter(section::kBody.data())] = std::make_unique<parser::DocraftBodyParser>();
-    parsers_[tag_formatter(section::kFooter.data())] = std::make_unique<parser::DocraftFooterParser>();
-    parsers_[tag_formatter(elements::kText.data())] = std::make_unique<parser::DocraftTextParser>();
-    parsers_[tag_formatter(elements::kTitle.data())] = std::make_unique<parser::DocraftTextParser>();
-    parsers_[tag_formatter(elements::kSubtitle.data())] = std::make_unique<parser::DocraftTextParser>();
-    parsers_[tag_formatter(elements::kPageNumber.data())] = std::make_unique<parser::DocraftPageNumberParser>();
-    parsers_[tag_formatter(elements::kImage.data())] = std::make_unique<parser::DocraftImageParser>();
-    parsers_[tag_formatter(elements::kTable.data())] = std::make_unique<parser::DocraftTableParser>();
-    parsers_[tag_formatter(elements::kList.data())] = std::make_unique<parser::DocraftListParser>();
-    parsers_[tag_formatter(elements::kUList.data())] = std::make_unique<parser::DocraftUListParser>();
-    parsers_[tag_formatter(elements::kLayout.data())] = std::make_unique<parser::DocraftLayoutParser>();
-    parsers_[tag_formatter(elements::kBlankLine.data())] = std::make_unique<parser::DocraftBlackLineParser>();
-    parsers_[tag_formatter(elements::kNewPage.data())] = std::make_unique<parser::DocraftNewPageParser>();
-    parsers_[tag_formatter(elements::kRectangle.data())] = std::make_unique<parser::DocraftRectangleParser>();
-    parsers_[tag_formatter(elements::kCircle.data())] = std::make_unique<parser::DocraftCircleParser>();
-    parsers_[tag_formatter(elements::kTriangle.data())] = std::make_unique<parser::DocraftTriangleParser>();
-    parsers_[tag_formatter(elements::kLine.data())] = std::make_unique<parser::DocraftLineParser>();
-    parsers_[tag_formatter(elements::kPolygon.data())] = std::make_unique<parser::DocraftPolygonParser>();
-    // Add more parsers as needed
+    parsers_[std::string{elements::kRectangle}] = std::make_unique<parser::DocraftRectangleParser>();
+    parsers_[std::string{elements::kCircle}] = std::make_unique<parser::DocraftCircleParser>();
+    parsers_[std::string{elements::kTriangle}] = std::make_unique<parser::DocraftTriangleParser>();
+    parsers_[std::string{elements::kLine}] = std::make_unique<parser::DocraftLineParser>();
+    parsers_[std::string{elements::kPolygon}] = std::make_unique<parser::DocraftPolygonParser>();
+    parsers_[std::string{elements::kText}] = std::make_unique<parser::DocraftTextParser>();
+    parsers_[std::string{elements::kTitle}] = std::make_unique<parser::DocraftTextParser>();
+    parsers_[std::string{elements::kSubtitle}] = std::make_unique<parser::DocraftTextParser>();
+    parsers_[std::string{elements::kPageNumber}] = std::make_unique<parser::DocraftPageNumberParser>();
+    parsers_[std::string{elements::kImage}] = std::make_unique<parser::DocraftImageParser>();
+    parsers_[std::string{elements::kTable}] = std::make_unique<parser::DocraftTableParser>();
+    parsers_[std::string{elements::kList}] = std::make_unique<parser::DocraftListParser>();
+    parsers_[std::string{elements::kUList}] = std::make_unique<parser::DocraftUListParser>();
+    parsers_[std::string{elements::kBlankLine}] = std::make_unique<parser::DocraftBlackLineParser>();
+    parsers_[std::string{elements::kLayout}] = std::make_unique<parser::DocraftLayoutParser>();
+    // Header/Body/Footer/Settings/Foreach/NewPage are not registered here -- they are
+    // document-orchestration/templating concerns handled by a later phase (see the plan
+    // file), not per-tag content parsers.
 }
 
-void DocraftCraftLanguageParser::parse(const std::string &craft_language_source) {
+std::shared_ptr<DocraftParsedElement> DocraftCraftLanguageParser::parse(const std::string& craft_language_source)
+{
     xml_doc_ = pugi::xml_document();
-    pugi::xml_parse_result result = xml_doc_.load_string(craft_language_source.c_str());
+    const pugi::xml_parse_result result = xml_doc_.load_string(craft_language_source.c_str());
     if (!result) {
         throw docraft::exception::DataFormatException(
             "Error parsing .craft content: " + std::string(result.description()));
     }
-    load_document();
+    const pugi::xml_node root = xml_doc_.first_child();
+    if (!root)
+    {
+        throw docraft::exception::DataFormatException("Invalid .craft content: no root element");
+    }
+    return parse_node(root);
 }
 
-void DocraftCraftLanguageParser::load_from_file(const std::string &file_path) {
+std::shared_ptr<DocraftParsedElement> DocraftCraftLanguageParser::load_from_file(const std::string& file_path)
+{
     xml_doc_ = pugi::xml_document();
-    pugi::xml_parse_result result = xml_doc_.load_file(file_path.c_str());
+    const pugi::xml_parse_result result = xml_doc_.load_file(file_path.c_str());
     if (!result) {
         throw docraft::exception::DataFormatException(
             "Error loading .craft file: " + std::string(result.description()));
     }
-    load_document();
+    const pugi::xml_node root = xml_doc_.first_child();
+    if (!root)
+    {
+        throw docraft::exception::DataFormatException("Invalid .craft file: no root element");
+    }
+    return parse_node(root);
 }
 
-std::shared_ptr<const DocraftDocument> DocraftCraftLanguageParser::get_document() const {
-    return document_;
-}
-
-std::shared_ptr<DocraftDocument> DocraftCraftLanguageParser::edit_document() {
-    return document_;
-}
-
-void DocraftCraftLanguageParser::print_xml_tree(const pugi::xml_node &node, int /*indent*/) {
-    node.print(std::cout);
-}
-
-void DocraftCraftLanguageParser::debug_node(const pugi::xml_node &node, int indent) {
-    for (int i = 0; i < indent; ++i) {
-        std::cout << "  ";
-    }
-    std::cout << "<" << node.name();
-    for (pugi::xml_attribute attr: node.attributes()) {
-        std::cout << " " << attr.name() << "=\"" << attr.value() << "\"";
-    }
-    std::cout << ">" << std::endl;
-    for (pugi::xml_node child: node.children()) {
-        debug_node(child, indent + 1);
-    }
-}
-
-std::string DocraftCraftLanguageParser::tag_formatter(const std::string &tag_name) {
-    // document -> Document, header -> Header, body -> Body, footer -> Footer
-    if (tag_name.empty()) {
-        return tag_name;
-    }
-    bool has_upper = false;
-    for (char c : tag_name) {
-        if (std::isupper(static_cast<unsigned char>(c))) {
-            has_upper = true;
-            break;
-        }
-    }
-    if (has_upper) {
-        return tag_name;
-    }
-    std::string formatted_tag = tag_name;
-    // make all lowercase, then uppercase first letter — avoid UB by casting to unsigned char
-    for (char &c: formatted_tag) {
-        c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-    }
-    formatted_tag[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(formatted_tag[0])));
-    return formatted_tag;
-}
-
-std::shared_ptr<model::DocraftNode> DocraftCraftLanguageParser::parse_node(const pugi::xml_node &xml_node) {
-    std::string node_name = xml_node.name();
-    auto it = parsers_.find(node_name);
+std::shared_ptr<DocraftParsedElement> DocraftCraftLanguageParser::parse_node(const pugi::xml_node& xml_node)
+{
+    const std::string node_name = xml_node.name();
+    const auto it = parsers_.find(node_name);
     if (it == parsers_.end()) {
         throw docraft::exception::DataFormatException("No parser registered for node: " + node_name);
     }
 
-    auto result = it->second->parse(xml_node);
-    if (std::dynamic_pointer_cast<model::DocraftForeach>(result)) {
-        // Foreach parser already captures template nodes; don't add them as children.
-        return result;
+    auto element = std::make_shared<DocraftParsedElement>();
+    element->tag_name = node_name;
+    element->common = parser::detail::parse_common_node_attributes(xml_node);
+    element->data = it->second->parse(xml_node);
+
+    // Table owns its row/cell structure internally (see ParsedTableData) -- it is not
+    // recursed into generically.
+    if (node_name == std::string{elements::kTable})
+    {
+        return element;
     }
-    if (auto parent = std::dynamic_pointer_cast<model::DocraftChildrenContainerNode>(result)) {
-        // if the node can have children parse them
-        for (pugi::xml_node child: xml_node.children()) {
-            if (child.type() != pugi::node_element) {
-                continue; // Skip non-element nodes
-            }
-            if (auto list_node = std::dynamic_pointer_cast<model::DocraftList>(result)) {
-                if (child.name() != std::string{elements::kText}) {
-                    throw docraft::exception::InvalidInputException(
-                        std::string(child.name()) + " cannot be placed in a list");
-                }
-            }
 
-            // Validate that Text nodes cannot contain Text-like child nodes
-            if (std::dynamic_pointer_cast<model::DocraftText>(result)) {
-                const std::string child_name = child.name();
-                if (child_name == std::string{elements::kText} ||
-                    child_name == std::string{elements::kTitle} ||
-                    child_name == std::string{elements::kSubtitle} ||
-                    child_name == std::string{elements::kPageNumber}) {
-                    throw docraft::exception::InvalidInputException(
-                        "Text nodes cannot contain child <" + child_name + "> nodes. " +
-                        "Text is a leaf node and only accepts text content. " +
-                        "Use <Layout> as a container for multiple text elements instead.");
-                }
-            }
-
-            parent->add_child(parse_node(child));
+    for (pugi::xml_node child : xml_node.children())
+    {
+        if (child.type() != pugi::node_element)
+        {
+            continue;
         }
-    }
-    return result;
-}
+        const std::string child_name = child.name();
 
-void DocraftCraftLanguageParser::load_document() {
-    document_ = std::make_shared<DocraftDocument>();
-
-    // root
-    const std::string root_tag = tag_formatter(section::kDocument.data());
-    pugi::xml_node root = xml_doc_.child(root_tag.c_str());
-    if (!root) {
-        throw docraft::exception::DataFormatException("Invalid .craft file: missing <Document> root element");
-    }
-    pugi::xml_node document = root;
-    if (const pugi::xml_attribute path_attr = document.attribute(section::attribute::kPath.data())) {
-        const std::string output_path = trim_copy(path_attr.as_string());
-        if (!output_path.empty()) {
-            document_->edit_config().set_document_path(output_path);
-        }
-    }
-
-    const DocraftMetadataParseOutcome metadata_parse_outcome = parse_metadata_node(document);
-    if (metadata_parse_outcome.has_metadata) {
-        document_->edit_config().set_document_metadata(metadata_parse_outcome.metadata);
-    }
-
-    //Settings
-    const std::string settings_tag = tag_formatter(elements::kSettings.data());
-    if (pugi::xml_node settings_node = document.child(settings_tag.c_str())) {
-       LOG_DEBUG("Settings found.");
-        auto it = parsers_.find(settings_tag);
-        if (it != parsers_.end()) {
-            if (auto settings = std::dynamic_pointer_cast<model::DocraftSettings>(it->second->parse(settings_node))) {
-                document_->edit_config().set_settings(settings);
+        if (node_name == std::string{elements::kList} || node_name == std::string{elements::kUList})
+        {
+            if (child_name != std::string{elements::kText})
+            {
+                throw docraft::exception::InvalidInputException(child_name + " cannot be placed in a list");
             }
         }
-    }
-    // Header (optional)
-    const std::string header_tag = tag_formatter(section::kHeader.data());
-    if (pugi::xml_node header_node = document.child(header_tag.c_str())) {
-        LOG_DEBUG("Header found.");
-        auto it = parsers_.find(header_tag);
-        if (it != parsers_.end()) {
-            if (auto header = std::dynamic_pointer_cast<model::DocraftHeader>(it->second->parse(header_node))) {
-                document_->add_node(parse_node(header_node));
+
+        // Text/Title/Subtitle/PageNumber are leaf nodes: they cannot contain other
+        // Text-like children.
+        if (node_name == std::string{elements::kText} || node_name == std::string{elements::kTitle} ||
+            node_name == std::string{elements::kSubtitle} || node_name == std::string{elements::kPageNumber})
+        {
+            if (child_name == std::string{elements::kText} || child_name == std::string{elements::kTitle} ||
+                child_name == std::string{elements::kSubtitle} || child_name == std::string{elements::kPageNumber})
+            {
+                throw docraft::exception::InvalidInputException(
+                    "Text nodes cannot contain child <" + child_name + "> nodes. " +
+                    "Text is a leaf node and only accepts text content. " +
+                    "Use <layout> as a container for multiple text elements instead.");
             }
         }
-    }
 
-    // Body (required)
-    const std::string body_tag = tag_formatter(section::kBody.data());
-    if (pugi::xml_node body_node = document.child(body_tag.c_str())) {
-        LOG_DEBUG("Body found.");
-        auto it = parsers_.find(body_tag);
-        if (it != parsers_.end()) {
-            if (auto body = std::dynamic_pointer_cast<model::DocraftBody>(it->second->parse(body_node))) {
-                document_->add_node(parse_node(body_node));
-            }
-        }
-    } else {
-        throw docraft::exception::DataFormatException("Invalid .craft file: missing <body> element");
+        element->children.push_back(parse_node(child));
     }
-
-    // Footer (optional)
-    const std::string footer_tag = tag_formatter(section::kFooter.data());
-    if (pugi::xml_node footer_node = document.child(footer_tag.c_str())) {
-        LOG_DEBUG("Footer found.");
-        auto it = parsers_.find(footer_tag);
-        if (it != parsers_.end()) {
-            if (auto footer = std::dynamic_pointer_cast<model::DocraftFooter>(it->second->parse(footer_node))) {
-                document_->add_node(parse_node(footer_node));
-            }
-        }
-    }
-
-    if (metadata_parse_outcome.auto_keyword_config.enabled) {
-        DocraftDocumentMetadata metadata = document_->config().document_metadata();
-        utils::DocraftKeywordExtractor extractor({
-            .max_keywords = metadata_parse_outcome.auto_keyword_config.max_keywords,
-            .min_length = metadata_parse_outcome.auto_keyword_config.min_length,
-            .stop_word_languages = metadata_parse_outcome.auto_keyword_config.stop_word_languages
-        });
-        const std::vector<std::string> extracted_keywords = extractor.extract(*document_);
-        if (!extracted_keywords.empty()) {
-            metadata.set_keywords(merge_keywords(metadata.keywords(), extracted_keywords));
-            document_->edit_config().set_document_metadata(metadata);
-        }
-    }
-
-    LOG_INFO("Document loaded successfully with title: " + document_->config().document_title());
+    return element;
 }
 
 } // namespace docraft::craft

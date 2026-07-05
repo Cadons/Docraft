@@ -1,0 +1,615 @@
+/*
+ * Copyright 2026 Matteo Cadoni (https://github.com/cadons)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "docraft/loom/craft/docraft_loom_tree_builder.h"
+
+#include <any>
+
+#include "docraft/craft/docraft_craft_language_tokens.h"
+#include "docraft/craft/parser/docraft_circle_parser.h"
+#include "docraft/craft/parser/docraft_line_parser.h"
+#include "docraft/craft/parser/docraft_parser.h"
+#include "docraft/craft/parser/docraft_polygon_parser.h"
+#include "docraft/craft/parser/docraft_triangle_parser.h"
+#include "docraft/exception/docraft_exceptions.h"
+#include "docraft/loom/nodes/docraft_loom_hstack.h"
+#include "docraft/loom/nodes/docraft_loom_table_cell.h"
+#include "docraft/loom/nodes/docraft_loom_vstack.h"
+
+namespace docraft::loom::craft {
+    namespace tokens = docraft::craft;
+    namespace parser = docraft::craft::parser;
+
+    namespace {
+        void apply_style(nodes::DocraftLoomText& node, parser::ParsedTextStyle style)
+        {
+            switch (style)
+            {
+            case parser::ParsedTextStyle::kBold:
+                node.set_bold(true);
+                node.set_italic(false);
+                break;
+            case parser::ParsedTextStyle::kItalic:
+                node.set_bold(false);
+                node.set_italic(true);
+                break;
+            case parser::ParsedTextStyle::kBoldItalic:
+                node.set_bold(true);
+                node.set_italic(true);
+                break;
+            case parser::ParsedTextStyle::kNormal:
+            default:
+                node.set_bold(false);
+                node.set_italic(false);
+                break;
+            }
+        }
+
+        nodes::TextAlignment to_loom_alignment(parser::ParsedTextAlignment alignment)
+        {
+            switch (alignment)
+            {
+            case parser::ParsedTextAlignment::kLeft:
+                return nodes::TextAlignment::kLeft;
+            case parser::ParsedTextAlignment::kRight:
+                return nodes::TextAlignment::kRight;
+            case parser::ParsedTextAlignment::kJustified:
+                return nodes::TextAlignment::kJustified;
+            case parser::ParsedTextAlignment::kCenter:
+            default:
+                return nodes::TextAlignment::kCenter;
+            }
+        }
+
+        void fill_text_node(nodes::DocraftLoomText& node, const parser::ParsedTextData& data)
+        {
+            node.set_text(data.text);
+            if (data.font_size)
+            {
+                node.set_font_size(*data.font_size);
+            }
+            if (data.font_name)
+            {
+                node.set_font_family(*data.font_name);
+            }
+            if (data.color)
+            {
+                node.set_color(*data.color);
+            }
+            if (data.style)
+            {
+                apply_style(node, *data.style);
+            }
+            if (data.alignment)
+            {
+                node.set_alignment(to_loom_alignment(*data.alignment));
+            }
+            if (data.underline)
+            {
+                node.set_underline(*data.underline);
+            }
+        }
+
+        void fill_page_number_node(nodes::DocraftLoomPageNumber& node, const parser::ParsedPageNumberData& data)
+        {
+            if (data.font_size)
+            {
+                node.set_font_size(*data.font_size);
+            }
+            if (data.font_name)
+            {
+                node.set_font_family(*data.font_name);
+            }
+            if (data.color)
+            {
+                node.set_color(*data.color);
+            }
+            if (data.style)
+            {
+                apply_style(node, *data.style);
+            }
+            if (data.alignment)
+            {
+                node.set_alignment(to_loom_alignment(*data.alignment));
+            }
+            if (data.underline)
+            {
+                node.set_underline(*data.underline);
+            }
+        }
+
+        void fill_image_node(nodes::DocraftLoomImage& node, const parser::ParsedImageData& data)
+        {
+            if (data.raw_data && data.raw_pixel_width && data.raw_pixel_height)
+            {
+                node.set_raw_data(*data.raw_data, *data.raw_pixel_width, *data.raw_pixel_height);
+            }
+            else if (data.path)
+            {
+                node.set_path(*data.path);
+            }
+        }
+
+        std::shared_ptr<nodes::DocraftLoomTableCell> build_title_cell(const parser::ParsedTableTitleData& title)
+        {
+            auto text = std::make_shared<nodes::DocraftLoomText>(title.text);
+            text->set_alignment(to_loom_alignment(title.alignment));
+            apply_style(*text, title.style);
+            if (title.color)
+            {
+                text->set_color(*title.color);
+            }
+            auto cell = std::make_shared<nodes::DocraftLoomTableCell>();
+            cell->set_content(text);
+            cell->set_is_title(true);
+            if (title.background)
+            {
+                cell->set_background(*title.background);
+            }
+            return cell;
+        }
+
+        std::shared_ptr<nodes::DocraftLoomTableCell> build_content_cell(const parser::ParsedTableCellData& cell_data)
+        {
+            std::shared_ptr<nodes::DocraftLoomNode> content;
+            if (cell_data.content_tag_name == std::string{tokens::elements::kText})
+            {
+                auto text_node = std::make_shared<nodes::DocraftLoomText>();
+                fill_text_node(*text_node, std::any_cast<const parser::ParsedTextData&>(cell_data.content));
+                content = text_node;
+            }
+            else
+            {
+                auto image_node = std::make_shared<nodes::DocraftLoomImage>();
+                fill_image_node(*image_node, std::any_cast<const parser::ParsedImageData&>(cell_data.content));
+                content = image_node;
+            }
+
+            auto cell = std::make_shared<nodes::DocraftLoomTableCell>();
+            cell->set_content(content);
+            if (cell_data.background)
+            {
+                cell->set_background(*cell_data.background);
+            }
+            if (cell_data.width)
+            {
+                cell->set_explicit_width(*cell_data.width);
+            }
+            return cell;
+        }
+    } // namespace
+
+    std::shared_ptr<nodes::DocraftLoomNode> DocraftLoomTreeBuilder::build(
+        const std::shared_ptr<docraft::craft::DocraftParsedElement>& element)
+    {
+        if (!element)
+        {
+            return nullptr;
+        }
+        // "visible" is resolved here, not by the (engine-agnostic) craft parser: an
+        // explicitly-invisible element's subtree simply isn't constructed.
+        if (element->common.visible.has_value() && !*element->common.visible)
+        {
+            return nullptr;
+        }
+
+        const std::string& tag = element->tag_name;
+        if (tag == std::string{tokens::elements::kRectangle})
+        {
+            return build_rectangle(*element);
+        }
+        if (tag == std::string{tokens::elements::kCircle})
+        {
+            return build_circle(*element);
+        }
+        if (tag == std::string{tokens::elements::kTriangle})
+        {
+            return build_triangle(*element);
+        }
+        if (tag == std::string{tokens::elements::kPolygon})
+        {
+            return build_polygon(*element);
+        }
+        if (tag == std::string{tokens::elements::kLine})
+        {
+            return build_line(*element);
+        }
+        if (tag == std::string{tokens::elements::kText} || tag == std::string{tokens::elements::kTitle} ||
+            tag == std::string{tokens::elements::kSubtitle})
+        {
+            return build_text(*element);
+        }
+        if (tag == std::string{tokens::elements::kPageNumber})
+        {
+            return build_page_number(*element);
+        }
+        if (tag == std::string{tokens::elements::kImage})
+        {
+            return build_image(*element);
+        }
+        if (tag == std::string{tokens::elements::kBlankLine})
+        {
+            return build_blank_line(*element);
+        }
+        if (tag == std::string{tokens::elements::kList} || tag == std::string{tokens::elements::kUList})
+        {
+            return build_list(*element);
+        }
+        if (tag == std::string{tokens::elements::kTable})
+        {
+            return build_table(*element);
+        }
+        if (tag == std::string{tokens::elements::kLayout})
+        {
+            return build_layout(*element);
+        }
+
+        throw docraft::exception::DataFormatException("DocraftLoomTreeBuilder: unrecognized tag '" + tag + "'");
+    }
+
+    void DocraftLoomTreeBuilder::add_children(const std::shared_ptr<nodes::DocraftLoomNode>& parent,
+                                              const std::vector<std::shared_ptr<ParsedElement>>& children)
+    {
+        for (const auto& child : children)
+        {
+            if (auto built = build(child))
+            {
+                parent->add_child(built);
+            }
+        }
+    }
+
+    template <typename NodeT>
+    void DocraftLoomTreeBuilder::apply_common_attributes(NodeT& node,
+                                                         const docraft::craft::DocraftCommonAttributes& common)
+    {
+        // name/z_index/position mode/explicit position live on DocraftLoomNode itself,
+        // so every node type has them -- no gating needed.
+        if (common.name)
+        {
+            node.set_name(*common.name);
+        }
+        if (common.z_index)
+        {
+            node.set_z_index(*common.z_index);
+        }
+
+        // width/height/padding/weight vary per node type -- skip silently when NodeT has
+        // no matching setter, rather than failing to compile or throwing.
+        if constexpr (requires(NodeT& n, float v) { n.set_width(v); })
+        {
+            if (common.width)
+            {
+                node.set_width(*common.width);
+            }
+        }
+        if constexpr (requires(NodeT& n, float v) { n.set_height(v); })
+        {
+            if (common.height)
+            {
+                node.set_height(*common.height);
+            }
+        }
+        if constexpr (requires(NodeT& n, float v) { n.set_padding(v); })
+        {
+            if (common.padding)
+            {
+                node.set_padding(*common.padding);
+            }
+        }
+        if constexpr (requires(NodeT& n, float v) { n.set_weight(v); })
+        {
+            if (common.weight)
+            {
+                node.set_weight(*common.weight);
+            }
+        }
+
+        if (common.position_mode)
+        {
+            node.set_position_mode(*common.position_mode == docraft::craft::PositionMode::kAbsolute
+                                       ? nodes::DocraftPositionType::kAbsolute
+                                       : nodes::DocraftPositionType::kBlock);
+        }
+        if (common.x || common.y)
+        {
+            nodes::Position pos = node.explicit_position();
+            if (common.x)
+            {
+                pos.x = *common.x;
+            }
+            if (common.y)
+            {
+                pos.y = *common.y;
+            }
+            node.set_explicit_position(pos);
+        }
+    }
+
+    std::shared_ptr<nodes::DocraftLoomRectangle> DocraftLoomTreeBuilder::build_rectangle(const ParsedElement& element)
+    {
+        const auto& data = std::any_cast<const parser::ParsedRectangleData&>(element.data);
+        auto node = std::make_shared<nodes::DocraftLoomRectangle>();
+        if (data.background_color)
+        {
+            node->edit_style().background_color = *data.background_color;
+        }
+        if (data.border_color)
+        {
+            node->edit_style().border_color = *data.border_color;
+        }
+        if (data.border_width)
+        {
+            node->edit_style().border_width = *data.border_width;
+        }
+        apply_common_attributes(*node, element.common);
+        add_children(node, element.children);
+        return node;
+    }
+
+    std::shared_ptr<nodes::DocraftLoomCircle> DocraftLoomTreeBuilder::build_circle(const ParsedElement& element)
+    {
+        const auto& data = std::any_cast<const parser::ParsedCircleData&>(element.data);
+        auto node = std::make_shared<nodes::DocraftLoomCircle>();
+        if (data.background_color)
+        {
+            node->edit_style().background_color = *data.background_color;
+        }
+        if (data.border_color)
+        {
+            node->edit_style().border_color = *data.border_color;
+        }
+        if (data.border_width)
+        {
+            node->edit_style().border_width = *data.border_width;
+        }
+        if (data.radius)
+        {
+            node->set_radius(*data.radius);
+        }
+        // Note: common.width/common.height are deliberately not consulted here -- Circle
+        // has its own `radius` attribute instead, and DocraftLoomCircle has no
+        // set_width()/set_height() for apply_common_attributes to gate on either.
+        apply_common_attributes(*node, element.common);
+        return node;
+    }
+
+    std::shared_ptr<nodes::DocraftLoomTriangle> DocraftLoomTreeBuilder::build_triangle(const ParsedElement& element)
+    {
+        const auto& data = std::any_cast<const parser::ParsedTriangleData&>(element.data);
+        auto node = std::make_shared<nodes::DocraftLoomTriangle>();
+        if (data.background_color)
+        {
+            node->edit_style().background_color = *data.background_color;
+        }
+        if (data.border_color)
+        {
+            node->edit_style().border_color = *data.border_color;
+        }
+        if (data.border_width)
+        {
+            node->edit_style().border_width = *data.border_width;
+        }
+        if (!data.points.empty())
+        {
+            node->set_points(data.points);
+        }
+        apply_common_attributes(*node, element.common);
+        return node;
+    }
+
+    std::shared_ptr<nodes::DocraftLoomPolygon> DocraftLoomTreeBuilder::build_polygon(const ParsedElement& element)
+    {
+        const auto& data = std::any_cast<const parser::ParsedPolygonData&>(element.data);
+        auto node = std::make_shared<nodes::DocraftLoomPolygon>();
+        if (data.background_color)
+        {
+            node->edit_style().background_color = *data.background_color;
+        }
+        if (data.border_color)
+        {
+            node->edit_style().border_color = *data.border_color;
+        }
+        if (data.border_width)
+        {
+            node->edit_style().border_width = *data.border_width;
+        }
+        if (!data.points.empty())
+        {
+            node->set_points(data.points);
+        }
+        apply_common_attributes(*node, element.common);
+        return node;
+    }
+
+    std::shared_ptr<nodes::DocraftLoomLine> DocraftLoomTreeBuilder::build_line(const ParsedElement& element)
+    {
+        const auto& data = std::any_cast<const parser::ParsedLineData&>(element.data);
+        auto node = std::make_shared<nodes::DocraftLoomLine>();
+        nodes::Position start = node->start();
+        nodes::Position end = node->end();
+        if (data.x1)
+        {
+            start.x = *data.x1;
+        }
+        if (data.y1)
+        {
+            start.y = *data.y1;
+        }
+        if (data.x2)
+        {
+            end.x = *data.x2;
+        }
+        if (data.y2)
+        {
+            end.y = *data.y2;
+        }
+        node->set_start(start);
+        node->set_end(end);
+        if (data.border_color)
+        {
+            node->set_border_color(*data.border_color);
+        }
+        if (data.border_width)
+        {
+            node->set_border_width(*data.border_width);
+        }
+        apply_common_attributes(*node, element.common);
+        return node;
+    }
+
+    std::shared_ptr<nodes::DocraftLoomText> DocraftLoomTreeBuilder::build_text(const ParsedElement& element)
+    {
+        const auto& data = std::any_cast<const parser::ParsedTextData&>(element.data);
+        auto node = std::make_shared<nodes::DocraftLoomText>();
+        fill_text_node(*node, data);
+        apply_common_attributes(*node, element.common);
+        return node;
+    }
+
+    std::shared_ptr<nodes::DocraftLoomPageNumber> DocraftLoomTreeBuilder::build_page_number(
+        const ParsedElement& element)
+    {
+        const auto& data = std::any_cast<const parser::ParsedPageNumberData&>(element.data);
+        auto node = std::make_shared<nodes::DocraftLoomPageNumber>();
+        fill_page_number_node(*node, data);
+        apply_common_attributes(*node, element.common);
+        return node;
+    }
+
+    std::shared_ptr<nodes::DocraftLoomImage> DocraftLoomTreeBuilder::build_image(const ParsedElement& element)
+    {
+        const auto& data = std::any_cast<const parser::ParsedImageData&>(element.data);
+        auto node = std::make_shared<nodes::DocraftLoomImage>();
+        fill_image_node(*node, data);
+        apply_common_attributes(*node, element.common);
+        return node;
+    }
+
+    std::shared_ptr<nodes::DocraftLoomBlankLine> DocraftLoomTreeBuilder::build_blank_line(const ParsedElement& element)
+    {
+        auto node = std::make_shared<nodes::DocraftLoomBlankLine>();
+        apply_common_attributes(*node, element.common);
+        return node;
+    }
+
+    std::shared_ptr<nodes::DocraftLoomList> DocraftLoomTreeBuilder::build_list(const ParsedElement& element)
+    {
+        const auto& data = std::any_cast<const parser::ParsedListData&>(element.data);
+        auto node = std::make_shared<nodes::DocraftLoomList>();
+        node->set_kind(data.kind == parser::ParsedListKind::kOrdered
+                           ? nodes::ListKind::kOrdered
+                           : nodes::ListKind::kUnordered);
+        if (data.ordered_style)
+        {
+            node->set_ordered_style(*data.ordered_style == parser::ParsedOrderedListStyle::kNumber
+                                        ? nodes::OrderedListStyle::kNumber
+                                        : nodes::OrderedListStyle::kRoman);
+        }
+        if (data.unordered_dot)
+        {
+            nodes::UnorderedListDot dot = nodes::UnorderedListDot::kCircle;
+            switch (*data.unordered_dot)
+            {
+            case parser::ParsedUnorderedListDot::kDash:
+                dot = nodes::UnorderedListDot::kDash;
+                break;
+            case parser::ParsedUnorderedListDot::kStar:
+                dot = nodes::UnorderedListDot::kStar;
+                break;
+            case parser::ParsedUnorderedListDot::kBox:
+                dot = nodes::UnorderedListDot::kBox;
+                break;
+            case parser::ParsedUnorderedListDot::kCircle:
+            default:
+                dot = nodes::UnorderedListDot::kCircle;
+                break;
+            }
+            node->set_unordered_dot(dot);
+        }
+        apply_common_attributes(*node, element.common);
+        add_children(node, element.children);
+        return node;
+    }
+
+    std::shared_ptr<nodes::DocraftLoomTable> DocraftLoomTreeBuilder::build_table(const ParsedElement& element)
+    {
+        const auto& data = std::any_cast<const parser::ParsedTableData&>(element.data);
+        auto table = std::make_shared<nodes::DocraftLoomTable>();
+        if (data.baseline_offset)
+        {
+            table->set_baseline_offset(*data.baseline_offset);
+        }
+        if (data.default_cell_background)
+        {
+            table->set_default_cell_background(*data.default_cell_background);
+        }
+
+        const bool is_vertical = data.orientation == parser::ParsedTableOrientation::kVertical;
+
+        if (!data.header_titles.empty())
+        {
+            std::vector<std::shared_ptr<nodes::DocraftLoomTableCell>> header_row;
+            if (is_vertical)
+            {
+                // The label column has no header of its own -- pad with a blank title
+                // cell so the header row aligns under the row-title column.
+                auto corner = std::make_shared<nodes::DocraftLoomTableCell>();
+                corner->set_content(std::make_shared<nodes::DocraftLoomText>(""));
+                corner->set_is_title(true);
+                header_row.push_back(corner);
+            }
+            for (const auto& title : data.header_titles)
+            {
+                header_row.push_back(build_title_cell(title));
+            }
+            table->add_row(header_row);
+        }
+
+        for (const auto& row_data : data.rows)
+        {
+            std::vector<std::shared_ptr<nodes::DocraftLoomTableCell>> row;
+            if (is_vertical && row_data.row_title)
+            {
+                row.push_back(build_title_cell(*row_data.row_title));
+            }
+            for (const auto& cell_data : row_data.cells)
+            {
+                row.push_back(build_content_cell(cell_data));
+            }
+            table->add_row(row);
+        }
+
+        apply_common_attributes(*table, element.common);
+        return table;
+    }
+
+    std::shared_ptr<nodes::DocraftLoomNode> DocraftLoomTreeBuilder::build_layout(const ParsedElement& element)
+    {
+        const auto& data = std::any_cast<const parser::ParsedLayoutData&>(element.data);
+        if (data.orientation == parser::ParsedLayoutOrientation::kHorizontal)
+        {
+            auto node = std::make_shared<nodes::DocraftLoomHStack>();
+            apply_common_attributes(*node, element.common);
+            add_children(node, element.children);
+            return node;
+        }
+        auto node = std::make_shared<nodes::DocraftLoomVStack>();
+        apply_common_attributes(*node, element.common);
+        add_children(node, element.children);
+        return node;
+    }
+} // namespace docraft::loom::craft

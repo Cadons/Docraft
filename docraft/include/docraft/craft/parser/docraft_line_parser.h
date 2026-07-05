@@ -16,11 +16,27 @@
 
 #pragma once
 
+#include <optional>
+
+#include "docraft/docraft_color.h"
 #include "docraft/docraft_lib.h"
 
 #include "docraft/craft/i_docraft_parser.h"
 
 namespace docraft::craft::parser {
+    /**
+     * @brief Tag-specific payload parsed from a `<Line>` element.
+     */
+    struct ParsedLineData
+    {
+        std::optional<float> x1;
+        std::optional<float> y1;
+        std::optional<float> x2;
+        std::optional<float> y2;
+        std::optional<DocraftColor> border_color;
+        std::optional<float> border_width;
+    };
+
     /**
      * @brief Parser for line nodes.
      */
@@ -29,8 +45,8 @@ namespace docraft::craft::parser {
         /**
          * @brief Parses a line XML node.
          * @param craft_language_source XML node.
-         * @return Parsed line node.
+         * @return `ParsedLineData`.
          */
-        std::shared_ptr<model::DocraftNode> parse(const pugi::xml_node &craft_language_source) override;
+        std::any parse(const pugi::xml_node& craft_language_source) override;
     };
-} // docraft::craft::parser
+} // namespace docraft::craft::parser

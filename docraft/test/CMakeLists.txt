@@ -21,11 +21,18 @@ set(TEST_SOURCES
         docraft/loom/nodes/docraft_loom_list_test.cc
         docraft/loom/nodes/docraft_loom_table_test.cc
         docraft/backend/docraft_mock_backend.h
+        docraft/craft/docraft_shape_parser_test.cc
+        docraft/craft/docraft_image_parser_test.cc
+        docraft/craft/docraft_table_parser_test.cc
+        docraft/craft/docraft_craft_language_parser_test.cc
+        docraft/loom/craft/docraft_loom_tree_builder_test.cc
 )
-# NOTE: docraft/craft/*_test.cc and docraft/templating/docraft_template_engine_test.cc are
-# temporarily excluded while the craft parser (Phase 2/3) and loom templating (Phase 7) are
-# being rewritten -- re-add as each is rewritten to target loom instead of the deleted
-# legacy model tree.
+# NOTE: docraft/craft/docraft_settings_parser_test.cc and
+# docraft/templating/docraft_template_engine_test.cc remain excluded -- Settings parsing
+# (Phase 4) and loom templating (Phase 7) haven't been rewritten yet. The rest of
+# docraft/craft/*_test.cc has been ported to target the generic DocraftParsedElement/
+# std::any parser output (and, where a DocraftLoomTreeBuilder path exists, actual loom
+# node output) instead of the deleted legacy model tree.
 
 add_executable(docraft_test
         ${TEST_SOURCES}

@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include <string>
 #include <vector>
 #include <memory>
 #include "docraft/docraft_lib.h"
@@ -102,10 +103,26 @@ namespace docraft::loom::nodes {
          */
         void set_explicit_position(const Position& position);
 
+        /**
+         * @brief Returns the paint-order index. Higher values paint later (on top);
+         * default 0 makes every existing node a no-op for z-index sorting.
+         */
+        int z_index() const;
+        void set_z_index(int z_index);
+
+        /**
+         * @brief Returns the node's optional name (empty by default), settable from
+         * Craft-language's `name` attribute for later lookup/debugging.
+         */
+        const std::string& name() const;
+        void set_name(const std::string& name);
+
     private:
         std::vector<std::shared_ptr<DocraftLoomNode>> children_;
         LayoutBox layout_box_ = {};
         DocraftPositionType position_mode_ = DocraftPositionType::kBlock;
         Position explicit_position_{0.0F, 0.0F};
+        int z_index_ = 0;
+        std::string name_;
     };
 } // docraft

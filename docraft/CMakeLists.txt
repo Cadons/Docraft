@@ -104,6 +104,38 @@ set(DOCRAFT_SOURCES
         include/docraft/loom/nodes/docraft_loom_line.h
         include/docraft/loom/docraft_loom_foreach.h
 
+        # Craft-language parser: generic, zero dependency on docraft/loom (Phase 2).
+        include/docraft/craft/docraft_craft_parsed_element.h
+        include/docraft/craft/docraft_craft_language_tokens.h
+        include/docraft/craft/i_docraft_parser.h
+        src/docraft/craft/docraft_craft_language_parser.cc
+        include/docraft/craft/docraft_craft_language_parser.h
+        src/docraft/craft/parser/docraft_parser_helpers.cc
+        include/docraft/craft/parser/docraft_parser_helpers.h
+        src/docraft/craft/parser/docraft_shape_parser_utils.cc
+        include/docraft/craft/parser/docraft_shape_parser_utils.h
+        include/docraft/craft/parser/docraft_parser.h
+        src/docraft/craft/parser/docraft_rectangle_parser.cc
+        src/docraft/craft/parser/docraft_text_parser.cc
+        src/docraft/craft/parser/docraft_page_number_parser.cc
+        src/docraft/craft/parser/docraft_image_parser.cc
+        src/docraft/craft/parser/docraft_blank_line_parser.cc
+        src/docraft/craft/parser/docraft_list_parser.cc
+        src/docraft/craft/parser/docraft_layout_parser.cc
+        src/docraft/craft/parser/docraft_table_parser.cc
+        include/docraft/craft/parser/docraft_circle_parser.h
+        src/docraft/craft/parser/docraft_circle_parser.cc
+        include/docraft/craft/parser/docraft_triangle_parser.h
+        src/docraft/craft/parser/docraft_triangle_parser.cc
+        include/docraft/craft/parser/docraft_polygon_parser.h
+        src/docraft/craft/parser/docraft_polygon_parser.cc
+        include/docraft/craft/parser/docraft_line_parser.h
+        src/docraft/craft/parser/docraft_line_parser.cc
+
+        # Loom-side tree builder: the only component depending on both docraft/craft and
+        # docraft/loom (translates DocraftParsedElement trees into loom nodes).
+        include/docraft/loom/craft/docraft_loom_tree_builder.h
+        src/docraft/loom/craft/docraft_loom_tree_builder.cc
 )
 set(DOCRAFT_LIBRARY_TYPE STATIC)
 if (BUILD_SHARED_LIBS)
