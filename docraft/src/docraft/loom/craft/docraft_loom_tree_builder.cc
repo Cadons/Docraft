@@ -282,6 +282,104 @@ namespace docraft::loom::craft {
             }
             return cell;
         }
+
+        std::shared_ptr<nodes::DocraftLoomTableCell> build_matrix_cell(const std::string& text)
+        {
+            auto cell = std::make_shared<nodes::DocraftLoomTableCell>();
+            cell->set_content(std::make_shared<nodes::DocraftLoomText>(text));
+            return cell;
+        }
+
+        // Resolves a `<Table model="...">` attribute (already known not to be the
+        // "horizontal"/"vertical" keyword) into a rectangular, string-only matrix:
+        // `${...}`/`${data(...)}` substitution (no foreach item -- Table isn't nested in a
+        // Foreach), then the same single-quote-JSON normalization Foreach's model uses,
+        // then JSON-parse.
+        std::vector<std::vector<std::string>> resolve_table_model_matrix(
+            const std::string& raw, const docraft::templating::DocraftTemplateEngine& engine)
+        {
+            const std::string normalized = normalize_single_quoted_json(engine.render_template_string(raw));
+
+            nlohmann::json parsed;
+            try
+            {
+                parsed = nlohmann::json::parse(normalized);
+            }
+            catch (const nlohmann::json::exception& e)
+            {
+                throw docraft::exception::DataFormatException(
+                    std::string{"<Table> 'model' is not valid JSON: "} + e.what());
+            }
+            if (!parsed.is_array() || parsed.empty())
+            {
+                throw docraft::exception::DataFormatException("<Table> 'model' must resolve to a non-empty JSON array");
+            }
+
+            std::vector<std::vector<std::string>> matrix;
+            matrix.reserve(parsed.size());
+            for (const auto& row : parsed)
+            {
+                if (!row.is_array() || row.empty())
+                {
+                    throw docraft::exception::DataFormatException(
+                        "<Table> 'model' rows must be non-empty JSON arrays");
+                }
+                if (!matrix.empty() && row.size() != matrix.front().size())
+                {
+                    throw docraft::exception::DataFormatException(
+                        "<Table> 'model' rows must all have the same length");
+                }
+                std::vector<std::string> parsed_row;
+                parsed_row.reserve(row.size());
+                for (const auto& cell : row)
+                {
+                    if (!cell.is_string())
+                    {
+                        throw docraft::exception::DataFormatException("<Table> 'model' cells must be strings");
+                    }
+                    parsed_row.push_back(cell.get<std::string>());
+                }
+                matrix.push_back(std::move(parsed_row));
+            }
+            return matrix;
+        }
+
+        // Resolves a `<Table header="...">` attribute into a non-empty, string-only array,
+        // using the same `${...}` substitution + single-quote-JSON normalization as the
+        // model matrix above.
+        std::vector<std::string> resolve_table_header(
+            const std::string& raw, const docraft::templating::DocraftTemplateEngine& engine)
+        {
+            const std::string normalized = normalize_single_quoted_json(engine.render_template_string(raw));
+
+            nlohmann::json parsed;
+            try
+            {
+                parsed = nlohmann::json::parse(normalized);
+            }
+            catch (const nlohmann::json::exception& e)
+            {
+                throw docraft::exception::DataFormatException(
+                    std::string{"<Table> 'header' is not valid JSON: "} + e.what());
+            }
+            if (!parsed.is_array() || parsed.empty())
+            {
+                throw docraft::exception::DataFormatException(
+                    "<Table> 'header' must resolve to a non-empty JSON array");
+            }
+
+            std::vector<std::string> header;
+            header.reserve(parsed.size());
+            for (const auto& item : parsed)
+            {
+                if (!item.is_string())
+                {
+                    throw docraft::exception::DataFormatException("<Table> 'header' items must be strings");
+                }
+                header.push_back(item.get<std::string>());
+            }
+            return header;
+        }
     } // namespace
 
     std::shared_ptr<nodes::DocraftLoomNode> DocraftLoomTreeBuilder::build(
@@ -724,6 +822,65 @@ namespace docraft::loom::craft {
         }
 
         const bool is_vertical = data.orientation == parser::ParsedTableOrientation::kVertical;
+
+        if (data.model_data_template)
+        {
+            const std::vector<std::vector<std::string>> matrix =
+                resolve_table_model_matrix(*data.model_data_template, *template_engine_);
+
+            if (data.header_data_template)
+            {
+                const std::vector<std::string> header =
+                    resolve_table_header(*data.header_data_template, *template_engine_);
+                if (header.size() != matrix.front().size())
+                {
+                    throw docraft::exception::DataFormatException(
+                        "<Table> 'header' size must match 'model' column count");
+                }
+                std::vector<std::shared_ptr<nodes::DocraftLoomTableCell>> header_row;
+                header_row.reserve(header.size());
+                for (const auto& title : header)
+                {
+                    parser::ParsedTableTitleData title_data;
+                    title_data.text = title;
+                    header_row.push_back(build_title_cell(title_data, *template_engine_));
+                }
+                table->add_row(header_row);
+            }
+            else if (!data.header_titles.empty())
+            {
+                // An explicit <THead> can be used instead of the `header` attribute
+                // alongside a JSON/template `model` -- the parser doesn't reject that
+                // combination (only `header` + <THead> together is rejected), so it must
+                // be honored here too, not just the header_data_template path above.
+                if (data.header_titles.size() != matrix.front().size())
+                {
+                    throw docraft::exception::DataFormatException(
+                        "<Table> THead column count must match 'model' column count");
+                }
+                std::vector<std::shared_ptr<nodes::DocraftLoomTableCell>> header_row;
+                header_row.reserve(data.header_titles.size());
+                for (const auto& title : data.header_titles)
+                {
+                    header_row.push_back(build_title_cell(title, *template_engine_));
+                }
+                table->add_row(header_row);
+            }
+
+            for (const auto& matrix_row : matrix)
+            {
+                std::vector<std::shared_ptr<nodes::DocraftLoomTableCell>> row;
+                row.reserve(matrix_row.size());
+                for (const auto& cell_text : matrix_row)
+                {
+                    row.push_back(build_matrix_cell(cell_text));
+                }
+                table->add_row(row);
+            }
+
+            apply_common_attributes(*table, element.common);
+            return table;
+        }
 
         if (!data.header_titles.empty())
         {

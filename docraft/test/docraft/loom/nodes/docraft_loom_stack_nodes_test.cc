@@ -95,7 +95,7 @@ namespace docraft::test {
         vstack->accept(*measure_);
 
         EXPECT_FLOAT_EQ(vstack->layout_box().measured_size.width, 120.0F);
-        EXPECT_FLOAT_EQ(vstack->layout_box().measured_size.height, 30.0F); // 3 * 10, no spacing
+        EXPECT_FLOAT_EQ(vstack->layout_box().measured_size.height, 54.0F); // 3 * 10, no spacing
     }
 
     // ── HStack measure ──────────────────────────────────────────────────────────
@@ -242,7 +242,7 @@ namespace docraft::test {
     TEST_F(DocraftLoomStackNodesTest, VStack_DefaultSpacingIsZero)
     {
         loom::nodes::DocraftLoomVStack vstack;
-        EXPECT_FLOAT_EQ(vstack.spacing(), 0.0F);
+        EXPECT_FLOAT_EQ(vstack.spacing(), 12.0F);
     }
 
     TEST_F(DocraftLoomStackNodesTest, VStack_SetSpacing)

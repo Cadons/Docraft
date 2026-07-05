@@ -205,11 +205,13 @@ namespace docraft::craft::parser {
     /**
      * @brief Tag-specific payload parsed from a `<Table>` element.
      *
-     * This is a deliberately simplified structural port: it covers explicit `<THead>`/
-     * `<TBody>` markup (both orientations) but not the legacy JSON-model-matrix/template
-     * `model`/`header` attributes or data-bound rows -- those are data-binding/templating
-     * concerns for a later phase. Loom's own `DocraftLoomTable` is a plain grid with no
-     * separate header/title bookkeeping, so unlike the legacy struct this carries no
+     * Covers explicit `<THead>`/`<TBody>` markup (both orientations) as well as the
+     * JSON-matrix/template form of `model`/`header` (horizontal only): when `model` isn't
+     * the literal `horizontal`/`vertical` keyword, it is stored verbatim in
+     * `model_data_template` for the loom builder to resolve (`${...}` substitution, then
+     * JSON-parse as a rectangular string matrix) at build time, mirroring how `<Foreach
+     * model="...">` defers resolution. Loom's own `DocraftLoomTable` is a plain grid with
+     * no separate header/title bookkeeping, so unlike the legacy struct this carries no
      * `cols`/`content_cols` counters -- the builder derives geometry from the grid itself.
      */
     struct ParsedTableData
@@ -219,6 +221,8 @@ namespace docraft::craft::parser {
         std::optional<DocraftColor> default_cell_background;
         std::vector<ParsedTableTitleData> header_titles; // <THead><HTitle>
         std::vector<ParsedTableRowData> rows; // <TBody><Row>
+        std::optional<std::string> model_data_template; // `model`, when a JSON matrix/`${...}` rather than a keyword
+        std::optional<std::string> header_data_template; // `header`, JSON string array/`${...}`
     };
 
     /**

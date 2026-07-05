@@ -140,10 +140,10 @@ TEST(DocraftLoomTreeBuilderTest, BuildsListWithTextChildren)
 TEST(DocraftLoomTreeBuilderTest, BuildsHorizontalLayoutAsHStack)
 {
     const char* xml = R"XML(
-<layout orientation="horizontal">
+<Layout orientation="horizontal">
   <Text>A</Text>
   <Text>B</Text>
-</layout>
+</Layout>
 )XML";
 
     const auto node = parse_and_build(xml);
@@ -155,9 +155,9 @@ TEST(DocraftLoomTreeBuilderTest, BuildsHorizontalLayoutAsHStack)
 TEST(DocraftLoomTreeBuilderTest, BuildsVerticalLayoutAsVStack)
 {
     const char* xml = R"XML(
-<layout orientation="vertical">
+<Layout orientation="vertical">
   <Text>A</Text>
-</layout>
+</Layout>
 )XML";
 
     const auto node = parse_and_build(xml);
@@ -199,6 +199,117 @@ TEST(DocraftLoomTreeBuilderTest, BuildsHorizontalTableGrid)
     const auto body_text = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomText>(body_cell->content());
     ASSERT_TRUE(body_text);
     EXPECT_EQ(body_text->text(), "v1");
+}
+
+TEST(DocraftLoomTreeBuilderTest, BuildsTableFromJsonMatrixModelAndHeader)
+{
+    const char* xml = R"XML(
+<Table model='[["v1","v2"],["v3","v4"]]' header='["H1","H2"]' />
+)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto table = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomTable>(node);
+    ASSERT_TRUE(table);
+    EXPECT_EQ(table->row_count(), 3); // header row + 2 data rows
+    EXPECT_EQ(table->column_count(), 2);
+
+    const auto header_cell = table->cell(0, 0);
+    ASSERT_TRUE(header_cell);
+    EXPECT_TRUE(header_cell->is_title());
+    const auto header_text = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomText>(header_cell->content());
+    ASSERT_TRUE(header_text);
+    EXPECT_EQ(header_text->text(), "H1");
+
+    const auto body_cell = table->cell(1, 1);
+    ASSERT_TRUE(body_cell);
+    EXPECT_FALSE(body_cell->is_title());
+    const auto body_text = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomText>(body_cell->content());
+    ASSERT_TRUE(body_text);
+    EXPECT_EQ(body_text->text(), "v2");
+
+    const auto last_cell = table->cell(2, 0);
+    ASSERT_TRUE(last_cell);
+    const auto last_text = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomText>(last_cell->content());
+    ASSERT_TRUE(last_text);
+    EXPECT_EQ(last_text->text(), "v3");
+}
+
+TEST(DocraftLoomTreeBuilderTest, BuildsTableFromJsonMatrixModelWithoutHeader)
+{
+    const char* xml = R"XML(<Table model='[["v1","v2"]]' />)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto table = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomTable>(node);
+    ASSERT_TRUE(table);
+    EXPECT_EQ(table->row_count(), 1);
+    EXPECT_EQ(table->column_count(), 2);
+    EXPECT_FALSE(table->cell(0, 0)->is_title());
+}
+
+TEST(DocraftLoomTreeBuilderTest, TableModelResolvesFromGlobalVariable)
+{
+    const char* xml = R"XML(<Table model='${summary_rows}' header='${summary_header}' />)XML";
+
+    auto engine = std::make_shared<docraft::templating::DocraftTemplateEngine>();
+    engine->add_template_variable("summary_rows", R"([["Alpha","1"],["Beta","2"]])");
+    engine->add_template_variable("summary_header", R"(["Name","Count"])");
+
+    const auto node = parse_and_build_with_engine(xml, engine);
+    const auto table = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomTable>(node);
+    ASSERT_TRUE(table);
+    EXPECT_EQ(table->row_count(), 3);
+    EXPECT_EQ(table->column_count(), 2);
+
+    const auto header_text = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomText>(
+        table->cell(0, 1)->content());
+    ASSERT_TRUE(header_text);
+    EXPECT_EQ(header_text->text(), "Count");
+
+    const auto body_text = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomText>(
+        table->cell(2, 0)->content());
+    ASSERT_TRUE(body_text);
+    EXPECT_EQ(body_text->text(), "Beta");
+}
+
+TEST(DocraftLoomTreeBuilderTest, TableJsonModelHonorsExplicitTHeadInsteadOfHeaderAttribute)
+{
+    const char* xml = R"XML(
+<Table model='[["v1","v2"],["v3","v4"]]'>
+  <THead>
+    <HTitle>ColA</HTitle>
+    <HTitle>ColB</HTitle>
+  </THead>
+</Table>
+)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto table = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomTable>(node);
+    ASSERT_TRUE(table);
+    EXPECT_EQ(table->row_count(), 3); // header row + 2 data rows
+    EXPECT_EQ(table->column_count(), 2);
+
+    const auto header_cell = table->cell(0, 0);
+    ASSERT_TRUE(header_cell);
+    EXPECT_TRUE(header_cell->is_title());
+    const auto header_text = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomText>(header_cell->content());
+    ASSERT_TRUE(header_text);
+    EXPECT_EQ(header_text->text(), "ColA");
+
+    const auto body_cell = table->cell(1, 0);
+    ASSERT_TRUE(body_cell);
+    EXPECT_FALSE(body_cell->is_title());
+}
+
+TEST(DocraftLoomTreeBuilderTest, TableHeaderColumnCountMismatchThrows)
+{
+    const char* xml = R"XML(<Table model='[["v1","v2"]]' header='["OnlyOne"]' />)XML";
+    EXPECT_THROW(parse_and_build(xml), docraft::exception::DataFormatException);
+}
+
+TEST(DocraftLoomTreeBuilderTest, TableJsonModelRejectsRaggedRows)
+{
+    const char* xml = R"XML(<Table model='[["v1","v2"],["v3"]]' />)XML";
+    EXPECT_THROW(parse_and_build(xml), docraft::exception::DataFormatException);
 }
 
 TEST(DocraftLoomTreeBuilderTest, InvisibleElementIsNotBuilt)

@@ -193,3 +193,81 @@ TEST(DocraftTableParserTest, MissingTHeadIsMandatoryForHorizontalTables)
     docraft::craft::parser::DocraftTableParser parser;
     EXPECT_THROW(parser.parse(doc.child("Table")), docraft::exception::InvalidInputException);
 }
+
+TEST(DocraftTableParserTest, ParsesJsonMatrixModelAndHeaderAsDeferredTemplates)
+{
+    const char* xml = R"XML(
+<Table model='[["v1","v2"],["v3","v4"]]' header='["H1","H2"]' />
+)XML";
+
+    pugi::xml_document doc;
+    ASSERT_TRUE(doc.load_string(xml));
+
+    docraft::craft::parser::DocraftTableParser parser;
+    const auto data = std::any_cast<docraft::craft::parser::ParsedTableData>(parser.parse(doc.child("Table")));
+
+    EXPECT_EQ(data.orientation, docraft::craft::parser::ParsedTableOrientation::kHorizontal);
+    ASSERT_TRUE(data.model_data_template.has_value());
+    EXPECT_EQ(*data.model_data_template, R"([["v1","v2"],["v3","v4"]])");
+    ASSERT_TRUE(data.header_data_template.has_value());
+    EXPECT_EQ(*data.header_data_template, R"(["H1","H2"])");
+    EXPECT_TRUE(data.header_titles.empty());
+    EXPECT_TRUE(data.rows.empty());
+}
+
+TEST(DocraftTableParserTest, RejectsJsonModelCombinedWithExplicitTBody)
+{
+    const char* xml = R"XML(
+<Table model='[["v1","v2"]]'>
+  <TBody>
+    <Row>
+      <Cell><Text>v1</Text></Cell>
+    </Row>
+  </TBody>
+</Table>
+)XML";
+
+    pugi::xml_document doc;
+    ASSERT_TRUE(doc.load_string(xml));
+
+    docraft::craft::parser::DocraftTableParser parser;
+    EXPECT_THROW(parser.parse(doc.child("Table")), docraft::exception::InvalidInputException);
+}
+
+TEST(DocraftTableParserTest, RejectsHeaderAttributeCombinedWithExplicitTHead)
+{
+    const char* xml = R"XML(
+<Table header='["H1","H2"]'>
+  <THead>
+    <HTitle>ColA</HTitle>
+    <HTitle>ColB</HTitle>
+  </THead>
+  <TBody>
+    <Row>
+      <Cell><Text>v1</Text></Cell>
+      <Cell><Text>v2</Text></Cell>
+    </Row>
+  </TBody>
+</Table>
+)XML";
+
+    pugi::xml_document doc;
+    ASSERT_TRUE(doc.load_string(xml));
+
+    docraft::craft::parser::DocraftTableParser parser;
+    EXPECT_THROW(parser.parse(doc.child("Table")), docraft::exception::InvalidInputException);
+}
+
+TEST(DocraftTableParserTest, RejectsJsonModelCombinedWithVerticalOrientation)
+{
+    const char* xml = R"XML(<Table model="vertical" />)XML";
+    pugi::xml_document doc;
+    ASSERT_TRUE(doc.load_string(xml));
+
+    // "vertical" is the orientation keyword, not a JSON model -- this should parse fine
+    // with no model_data_template, distinguishing keyword handling from JSON detection.
+    docraft::craft::parser::DocraftTableParser parser;
+    const auto data = std::any_cast<docraft::craft::parser::ParsedTableData>(parser.parse(doc.child("Table")));
+    EXPECT_EQ(data.orientation, docraft::craft::parser::ParsedTableOrientation::kVertical);
+    EXPECT_FALSE(data.model_data_template.has_value());
+}

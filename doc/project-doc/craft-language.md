@@ -710,7 +710,7 @@ Rules:
 - `Foreach` cannot appear inside a `<Table>` -- table structure is parsed specially (see
   §11) and does not recurse into arbitrary children. `Table` has its own separate
   JSON-model-matrix mechanism (`Table model`/`header`) for populating rows/columns from
-  data, not yet implemented for loom.
+  data (§11.3).
 
 ## 15. Validation Summary
 

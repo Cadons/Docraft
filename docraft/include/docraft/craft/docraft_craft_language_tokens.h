@@ -200,6 +200,7 @@ namespace docraft::craft {
         }
         namespace table::attribute {
             constexpr string kModel = "model";
+            constexpr string kHeader = "header";
             constexpr string kBaselineOffset = "baseline_offset";
             constexpr string kTableTile = "TableTile";
         }

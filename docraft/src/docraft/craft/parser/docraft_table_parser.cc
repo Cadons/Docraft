@@ -213,9 +213,10 @@ namespace docraft::craft::parser {
             data.baseline_offset = baseline_attr.as_float();
         }
 
-        // Only the plain "horizontal"/"vertical" keyword form of `model` is supported at
-        // this phase -- the JSON-model-matrix/template forms are a data-binding/templating
-        // concern for a later phase and are intentionally not parsed here.
+        // "horizontal"/"vertical" set orientation directly; any other value is a JSON
+        // matrix literal or a `${...}` expression resolving to one -- stored verbatim and
+        // resolved by the loom builder (${...} substitution, then JSON-parse), mirroring
+        // how `<Foreach model="...">` defers resolution.
         if (auto model_attr = craft_language_source.attribute(elements::table::attribute::kModel.data()))
         {
             const std::string model_str = model_attr.as_string();
@@ -227,6 +228,15 @@ namespace docraft::craft::parser {
             {
                 data.orientation = ParsedTableOrientation::kHorizontal;
             }
+            else
+            {
+                data.model_data_template = model_str;
+            }
+        }
+
+        if (auto header_attr = craft_language_source.attribute(elements::table::attribute::kHeader.data()))
+        {
+            data.header_data_template = header_attr.as_string();
         }
 
         if (auto tile_attr = craft_language_source.attribute(elements::table::attribute::kTableTile.data()))
@@ -235,11 +245,24 @@ namespace docraft::craft::parser {
         }
 
         const bool is_vertical = data.orientation == ParsedTableOrientation::kVertical;
+        const bool has_json_model = data.model_data_template.has_value();
+
+        if (has_json_model && is_vertical)
+        {
+            throw docraft::exception::InvalidInputException(
+                "Table 'model' JSON/template data is not supported with vertical orientation");
+        }
+
         if (auto thead = craft_language_source.child(elements::kTHead.data()))
         {
+            if (data.header_data_template)
+            {
+                throw docraft::exception::InvalidInputException(
+                    "Table 'header' attribute cannot be combined with an explicit THead");
+            }
             parse_thead(thead, data);
         }
-        else if (!is_vertical)
+        else if (!is_vertical && !has_json_model)
         {
             throw docraft::exception::InvalidInputException(
                 std::string(elements::kTHead) + " tag not found, it is mandatory");
@@ -247,6 +270,11 @@ namespace docraft::craft::parser {
 
         if (auto tbody = craft_language_source.child(elements::kTBody.data()))
         {
+            if (has_json_model)
+            {
+                throw docraft::exception::InvalidInputException(
+                    "Table 'model' JSON/template data cannot be combined with an explicit TBody");
+            }
             parse_tbody(tbody, data, is_vertical);
         }
 

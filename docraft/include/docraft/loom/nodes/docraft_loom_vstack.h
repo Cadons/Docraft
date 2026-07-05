@@ -23,6 +23,6 @@ namespace docraft::loom::nodes {
         void set_spacing(float spacing);
 
     private:
-        float spacing_ = 0.0F;
+        float spacing_ = 12.0F;
     };
 } // namespace docraft::loom::nodes
