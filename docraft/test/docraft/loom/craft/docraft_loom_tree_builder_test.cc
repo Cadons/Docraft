@@ -9,6 +9,7 @@
 #include "docraft/loom/nodes/docraft_loom_image.h"
 #include "docraft/loom/nodes/docraft_loom_list.h"
 #include "docraft/loom/nodes/docraft_loom_page_number.h"
+#include "docraft/loom/nodes/docraft_loom_paragraph.h"
 #include "docraft/loom/nodes/docraft_loom_rectangle.h"
 #include "docraft/loom/nodes/docraft_loom_table.h"
 #include "docraft/loom/nodes/docraft_loom_table_cell.h"
@@ -206,4 +207,151 @@ TEST(DocraftLoomTreeBuilderTest, ThrowsForUnrecognizedTag)
 
     docraft::loom::craft::DocraftLoomTreeBuilder builder;
     EXPECT_THROW(builder.build(element), docraft::exception::DataFormatException);
+}
+
+TEST(DocraftLoomTreeBuilderTest, LayoutWeightsAttributeAppliesToHStack)
+{
+    const char* xml = R"XML(
+<layout orientation="horizontal" weights="1,2,1" spacing="5">
+  <Text>A</Text>
+  <Text>B</Text>
+  <Text>C</Text>
+</layout>
+)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto hstack = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomHStack>(node);
+    ASSERT_TRUE(hstack);
+    EXPECT_FLOAT_EQ(hstack->spacing(), 5.0F);
+    ASSERT_EQ(hstack->weights().size(), 3U);
+    EXPECT_FLOAT_EQ(hstack->weights()[0], 1.0F);
+    EXPECT_FLOAT_EQ(hstack->weights()[1], 2.0F);
+    EXPECT_FLOAT_EQ(hstack->weights()[2], 1.0F);
+}
+
+TEST(DocraftLoomTreeBuilderTest, PerChildWeightAttributeAppliesToHStack)
+{
+    const char* xml = R"XML(
+<layout orientation="horizontal">
+  <Text weight="1">A</Text>
+  <Text weight="3">B</Text>
+</layout>
+)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto hstack = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomHStack>(node);
+    ASSERT_TRUE(hstack);
+    ASSERT_EQ(hstack->weights().size(), 2U);
+    EXPECT_FLOAT_EQ(hstack->weights()[0], 1.0F);
+    EXPECT_FLOAT_EQ(hstack->weights()[1], 3.0F);
+}
+
+TEST(DocraftLoomTreeBuilderTest, ExplicitLayoutWeightsTakePrecedenceOverPerChildWeight)
+{
+    const char* xml = R"XML(
+<layout orientation="horizontal" weights="4,4">
+  <Text weight="1">A</Text>
+  <Text weight="3">B</Text>
+</layout>
+)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto hstack = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomHStack>(node);
+    ASSERT_TRUE(hstack);
+    ASSERT_EQ(hstack->weights().size(), 2U);
+    EXPECT_FLOAT_EQ(hstack->weights()[0], 4.0F);
+    EXPECT_FLOAT_EQ(hstack->weights()[1], 4.0F);
+}
+
+TEST(DocraftLoomTreeBuilderTest, NoWeightsLeavesHStackWeightsEmpty)
+{
+    const char* xml = R"XML(
+<layout orientation="horizontal">
+  <Text>A</Text>
+  <Text>B</Text>
+</layout>
+)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto hstack = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomHStack>(node);
+    ASSERT_TRUE(hstack);
+    EXPECT_TRUE(hstack->weights().empty());
+}
+
+TEST(DocraftLoomTreeBuilderTest, VStackAppliesSpacingButNotWeights)
+{
+    const char* xml = R"XML(
+<layout orientation="vertical" spacing="8" weights="1,1">
+  <Text>A</Text>
+  <Text>B</Text>
+</layout>
+)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto vstack = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomVStack>(node);
+    ASSERT_TRUE(vstack);
+    EXPECT_FLOAT_EQ(vstack->spacing(), 8.0F);
+}
+
+TEST(DocraftLoomTreeBuilderTest, BuildsParagraphWithTypographicAttributesAndChildren)
+{
+    const char* xml = R"XML(
+<Paragraph line_spacing="1.5" space_before="4" space_after="6" alignment="center">
+  <Text>First</Text>
+  <Text>Second</Text>
+</Paragraph>
+)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto paragraph = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomParagraph>(node);
+    ASSERT_TRUE(paragraph);
+    EXPECT_FLOAT_EQ(paragraph->line_spacing(), 1.5F);
+    EXPECT_FLOAT_EQ(paragraph->space_before(), 4.0F);
+    EXPECT_FLOAT_EQ(paragraph->space_after(), 6.0F);
+    EXPECT_EQ(paragraph->alignment(), docraft::loom::nodes::TextAlignment::kCenter);
+    ASSERT_EQ(paragraph->children_count(), 2);
+}
+
+TEST(DocraftLoomTreeBuilderTest, BuildsHeaderAsRectangleWithStyleAndChildren)
+{
+    const char* xml = R"XML(
+<Header background_color="#00FF00" border_width="1.5" margin_top="3">
+  <Text>Header text</Text>
+</Header>
+)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto rectangle = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomRectangle>(node);
+    ASSERT_TRUE(rectangle);
+    EXPECT_FLOAT_EQ(rectangle->style().border_width, 1.5F);
+    EXPECT_FLOAT_EQ(rectangle->style().background_color.toRGB().g, 1.0F);
+    ASSERT_EQ(rectangle->children_count(), 1);
+}
+
+TEST(DocraftLoomTreeBuilderTest, BuildsBodyAsRectangle)
+{
+    const char* xml = R"XML(
+<Body margin_left="20">
+  <Text>Body text</Text>
+</Body>
+)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto rectangle = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomRectangle>(node);
+    ASSERT_TRUE(rectangle);
+    ASSERT_EQ(rectangle->children_count(), 1);
+}
+
+TEST(DocraftLoomTreeBuilderTest, BuildsFooterAsRectangle)
+{
+    const char* xml = R"XML(
+<Footer margin_right="15">
+  <PageNumber />
+</Footer>
+)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto rectangle = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomRectangle>(node);
+    ASSERT_TRUE(rectangle);
+    ASSERT_EQ(rectangle->children_count(), 1);
 }

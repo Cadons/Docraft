@@ -131,11 +131,20 @@ set(DOCRAFT_SOURCES
         src/docraft/craft/parser/docraft_polygon_parser.cc
         include/docraft/craft/parser/docraft_line_parser.h
         src/docraft/craft/parser/docraft_line_parser.cc
+        include/docraft/craft/parser/docraft_paragraph_parser.h
+        src/docraft/craft/parser/docraft_paragraph_parser.cc
+        include/docraft/craft/parser/docraft_section_parsers.h
+        src/docraft/craft/parser/docraft_section_parsers.cc
 
         # Loom-side tree builder: the only component depending on both docraft/craft and
         # docraft/loom (translates DocraftParsedElement trees into loom nodes).
         include/docraft/loom/craft/docraft_loom_tree_builder.h
         src/docraft/loom/craft/docraft_loom_tree_builder.cc
+
+        # Top-level driver (Phase 3): walks a full <Document> and builds a fully-wired
+        # DocraftLoomPdfCreator from its Header/Body/Footer children.
+        include/docraft/craft/docraft_loom_craft_language_parser.h
+        src/docraft/craft/docraft_loom_craft_language_parser.cc
 )
 set(DOCRAFT_LIBRARY_TYPE STATIC)
 if (BUILD_SHARED_LIBS)

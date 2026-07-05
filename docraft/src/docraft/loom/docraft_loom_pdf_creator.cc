@@ -51,6 +51,36 @@ namespace docraft::loom {
         footer_margins_ = margins;
     }
 
+    const std::shared_ptr<interfaces::DocraftLoomIVisitorNode>& DocraftLoomPdfCreator::root_node() const
+    {
+        return root_node_;
+    }
+
+    const std::shared_ptr<nodes::DocraftLoomNode>& DocraftLoomPdfCreator::header() const
+    {
+        return header_;
+    }
+
+    const std::shared_ptr<nodes::DocraftLoomNode>& DocraftLoomPdfCreator::footer() const
+    {
+        return footer_;
+    }
+
+    const DocraftLoomPdfCreator::Margins& DocraftLoomPdfCreator::header_margins() const
+    {
+        return header_margins_;
+    }
+
+    const DocraftLoomPdfCreator::Margins& DocraftLoomPdfCreator::body_margins() const
+    {
+        return body_margins_;
+    }
+
+    const DocraftLoomPdfCreator::Margins& DocraftLoomPdfCreator::footer_margins() const
+    {
+        return footer_margins_;
+    }
+
     void DocraftLoomPdfCreator::create()
     {
         //run the pipeline

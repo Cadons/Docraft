@@ -19,9 +19,11 @@
 #include "docraft/craft/docraft_craft_language_tokens.h"
 #include "docraft/craft/parser/docraft_circle_parser.h"
 #include "docraft/craft/parser/docraft_line_parser.h"
+#include "docraft/craft/parser/docraft_paragraph_parser.h"
 #include "docraft/craft/parser/docraft_parser.h"
 #include "docraft/craft/parser/docraft_parser_helpers.h"
 #include "docraft/craft/parser/docraft_polygon_parser.h"
+#include "docraft/craft/parser/docraft_section_parsers.h"
 #include "docraft/craft/parser/docraft_triangle_parser.h"
 #include "docraft/exception/docraft_exceptions.h"
 
@@ -43,9 +45,15 @@ DocraftCraftLanguageParser::DocraftCraftLanguageParser() {
     parsers_[std::string{elements::kUList}] = std::make_unique<parser::DocraftUListParser>();
     parsers_[std::string{elements::kBlankLine}] = std::make_unique<parser::DocraftBlackLineParser>();
     parsers_[std::string{elements::kLayout}] = std::make_unique<parser::DocraftLayoutParser>();
-    // Header/Body/Footer/Settings/Foreach/NewPage are not registered here -- they are
-    // document-orchestration/templating concerns handled by a later phase (see the plan
-    // file), not per-tag content parsers.
+    parsers_[std::string{elements::kParagraph}] = std::make_unique<parser::DocraftParagraphParser>();
+    parsers_[std::string{section::kHeader}] = std::make_unique<parser::DocraftSectionParser>();
+    parsers_[std::string{section::kBody}] = std::make_unique<parser::DocraftSectionParser>();
+    parsers_[std::string{section::kFooter}] = std::make_unique<parser::DocraftSectionParser>();
+    // Settings/Metadata/Foreach/NewPage/Document itself are not registered here --
+    // Settings is Phase 4, Foreach is Phase 7, NewPage has no revival plan yet, and
+    // Document is walked directly (via pugixml, not through this per-tag registry) by
+    // docraft::craft::DocraftLoomCraftLanguageParser, which picks out only its
+    // Header/Body/Footer children and ignores everything else at that top level.
 }
 
 std::shared_ptr<DocraftParsedElement> DocraftCraftLanguageParser::parse(const std::string& craft_language_source)

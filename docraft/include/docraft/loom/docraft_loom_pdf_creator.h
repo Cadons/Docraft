@@ -71,6 +71,24 @@ namespace docraft::loom {
         void create();
         void render(const std::filesystem::path& output_path);
 
+        /**
+         * @brief Returns the body root node passed to the constructor (test/inspection
+         * accessor -- mirrors DocraftLoomNode::edit_layout_box()'s non-const-getter
+         * convention).
+         */
+        const std::shared_ptr<interfaces::DocraftLoomIVisitorNode>& root_node() const;
+        /**
+         * @brief Returns the header node, or nullptr if none was set.
+         */
+        const std::shared_ptr<nodes::DocraftLoomNode>& header() const;
+        /**
+         * @brief Returns the footer node, or nullptr if none was set.
+         */
+        const std::shared_ptr<nodes::DocraftLoomNode>& footer() const;
+        const Margins& header_margins() const;
+        const Margins& body_margins() const;
+        const Margins& footer_margins() const;
+
     private:
         std::shared_ptr<interfaces::DocraftLoomIVisitorNode> root_node_; //taken as input, the body
         std::shared_ptr<nodes::DocraftLoomNode> header_;

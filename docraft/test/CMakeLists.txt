@@ -25,6 +25,9 @@ set(TEST_SOURCES
         docraft/craft/docraft_image_parser_test.cc
         docraft/craft/docraft_table_parser_test.cc
         docraft/craft/docraft_craft_language_parser_test.cc
+        docraft/craft/docraft_paragraph_parser_test.cc
+        docraft/craft/docraft_section_parser_test.cc
+        docraft/craft/docraft_loom_craft_language_parser_test.cc
         docraft/loom/craft/docraft_loom_tree_builder_test.cc
 )
 # NOTE: docraft/craft/docraft_settings_parser_test.cc and

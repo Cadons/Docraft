@@ -60,4 +60,27 @@ namespace docraft::craft::parser::detail {
         }
         return points;
     }
+
+    std::optional<std::vector<float>> parse_float_list_attribute(const pugi::xml_node& node, const char* attr_name)
+    {
+        auto attr = node.attribute(attr_name);
+        if (!attr)
+        {
+            return std::nullopt;
+        }
+
+        std::string value = attr.as_string();
+        std::vector<float> values;
+        std::stringstream ss(value);
+        std::string token;
+        while (std::getline(ss, token, ','))
+        {
+            if (token.empty())
+            {
+                throw docraft::exception::InvalidInputException("Invalid float list token in: " + value);
+            }
+            values.push_back(std::stof(token));
+        }
+        return values;
+    }
 } // namespace docraft::craft::parser::detail

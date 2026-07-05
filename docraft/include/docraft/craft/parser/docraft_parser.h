@@ -325,13 +325,19 @@ namespace docraft::craft::parser {
     };
 
     /**
-     * @brief Tag-specific payload parsed from a `<layout>` element. Only orientation is
-     * carried at this phase -- `spacing`/`weights`/per-child weight collection are a
-     * structural-mapping concern for a later phase (see the plan's Phase 3).
+     * @brief Tag-specific payload parsed from a `<layout>` element.
+     *
+     * `weights` carries the single comma-separated `weights="1,2,1"` attribute on
+     * `<layout>` itself, if present. Per-child `weight` attributes (already parsed
+     * generically into each child's `DocraftCommonAttributes::weight`) are collected by
+     * `DocraftLoomTreeBuilder` at build time instead, not here -- this struct only owns
+     * what is specific to the `<layout>` tag itself.
      */
     struct ParsedLayoutData
     {
         ParsedLayoutOrientation orientation = ParsedLayoutOrientation::kVertical;
+        std::optional<float> spacing;
+        std::optional<std::vector<float>> weights;
     };
 
     /**

@@ -48,11 +48,11 @@ namespace docraft::craft {
      * @brief Section-level tags and attributes.
      */
     namespace section {
-        constexpr string kDocument = "document";
-        constexpr string kHeader = "header";
-        constexpr string kBody = "body";
-        constexpr string kFooter = "footer";
-        constexpr string kMetadata = "metadata";
+        constexpr string kDocument = "Document";
+        constexpr string kHeader = "Header";
+        constexpr string kBody = "Body";
+        constexpr string kFooter = "Footer";
+        constexpr string kMetadata = "Metadata";
 
         namespace attribute {
             constexpr string kMarginTop = "margin_top";
@@ -90,6 +90,8 @@ namespace docraft::craft {
         constexpr string kSettings = "Settings";
         constexpr string kList = "List";
         constexpr string kUList = "UList";
+        constexpr string kParagraph = "Paragraph";
+
         namespace metadata {
             constexpr string kDocumentTitle = "DocumentTitle";
             constexpr string kAuthor = "Author";
@@ -217,6 +219,14 @@ namespace docraft::craft {
         }
         namespace layout::attribute {
             constexpr string kOrientation = "orientation";
+            constexpr string kSpacing = "spacing";
+            constexpr string kWeights = "weights";
+        }
+
+        namespace paragraph::attribute {
+            constexpr string kLineSpacing = "line_spacing";
+            constexpr string kSpaceBefore = "space_before";
+            constexpr string kSpaceAfter = "space_after";
         }
         namespace rectangle::attribute {
             constexpr string kBackgroundColor = "background_color";

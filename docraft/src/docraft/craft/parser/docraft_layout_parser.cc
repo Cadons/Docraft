@@ -17,6 +17,7 @@
 #include "docraft/craft/parser/docraft_parser.h"
 
 #include "docraft/craft/parser/docraft_parser_helpers.h"
+#include "docraft/craft/parser/docraft_shape_parser_utils.h"
 #include "docraft/exception/docraft_exceptions.h"
 
 namespace docraft::craft::parser {
@@ -33,6 +34,12 @@ namespace docraft::craft::parser {
                 throw docraft::exception::InvalidInputException("Invalid layout orientation: " + orientation_str);
             }
         }
+        if (auto spacing_attr = craft_language_source.attribute(elements::layout::attribute::kSpacing.data()))
+        {
+            data.spacing = spacing_attr.as_float();
+        }
+        data.weights = detail::parse_float_list_attribute(craft_language_source,
+                                                          elements::layout::attribute::kWeights.data());
         return data;
     }
 } // namespace docraft::craft::parser

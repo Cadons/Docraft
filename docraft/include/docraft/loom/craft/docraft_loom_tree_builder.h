@@ -29,6 +29,7 @@
 #include "docraft/loom/nodes/docraft_loom_list.h"
 #include "docraft/loom/nodes/docraft_loom_node.h"
 #include "docraft/loom/nodes/docraft_loom_page_number.h"
+#include "docraft/loom/nodes/docraft_loom_paragraph.h"
 #include "docraft/loom/nodes/docraft_loom_polygon.h"
 #include "docraft/loom/nodes/docraft_loom_rectangle.h"
 #include "docraft/loom/nodes/docraft_loom_table.h"
@@ -75,6 +76,8 @@ namespace docraft::loom::craft {
         std::shared_ptr<nodes::DocraftLoomList> build_list(const ParsedElement& element);
         std::shared_ptr<nodes::DocraftLoomTable> build_table(const ParsedElement& element);
         std::shared_ptr<nodes::DocraftLoomNode> build_layout(const ParsedElement& element);
+        std::shared_ptr<nodes::DocraftLoomParagraph> build_paragraph(const ParsedElement& element);
+        std::shared_ptr<nodes::DocraftLoomRectangle> build_section(const ParsedElement& element);
 
         /**
          * @brief Recursively builds each of `children` and appends the non-null results

@@ -16,13 +16,16 @@
 
 #include "docraft/loom/craft/docraft_loom_tree_builder.h"
 
+#include <algorithm>
 #include <any>
 
 #include "docraft/craft/docraft_craft_language_tokens.h"
 #include "docraft/craft/parser/docraft_circle_parser.h"
 #include "docraft/craft/parser/docraft_line_parser.h"
+#include "docraft/craft/parser/docraft_paragraph_parser.h"
 #include "docraft/craft/parser/docraft_parser.h"
 #include "docraft/craft/parser/docraft_polygon_parser.h"
+#include "docraft/craft/parser/docraft_section_parsers.h"
 #include "docraft/craft/parser/docraft_triangle_parser.h"
 #include "docraft/exception/docraft_exceptions.h"
 #include "docraft/loom/nodes/docraft_loom_hstack.h"
@@ -255,6 +258,15 @@ namespace docraft::loom::craft {
         if (tag == std::string{tokens::elements::kLayout})
         {
             return build_layout(*element);
+        }
+        if (tag == std::string{tokens::elements::kParagraph})
+        {
+            return build_paragraph(*element);
+        }
+        if (tag == std::string{tokens::section::kHeader} || tag == std::string{tokens::section::kBody} ||
+            tag == std::string{tokens::section::kFooter})
+        {
+            return build_section(*element);
         }
 
         throw docraft::exception::DataFormatException("DocraftLoomTreeBuilder: unrecognized tag '" + tag + "'");
@@ -600,14 +612,101 @@ namespace docraft::loom::craft {
     std::shared_ptr<nodes::DocraftLoomNode> DocraftLoomTreeBuilder::build_layout(const ParsedElement& element)
     {
         const auto& data = std::any_cast<const parser::ParsedLayoutData&>(element.data);
+
+        // Precedence: an explicit `<layout weights="...">` attribute wins over per-child
+        // `weight` attributes; if neither is present, the weights vector stays empty so
+        // today's default homogeneous-shrink-to-fit behavior is preserved.
+        std::vector<float> weights;
+        if (data.weights)
+        {
+            weights = *data.weights;
+        }
+        else
+        {
+            const bool any_child_weight = std::any_of(
+                element.children.begin(), element.children.end(),
+                [](const auto& child) { return child->common.weight.has_value(); });
+            if (any_child_weight)
+            {
+                weights.reserve(element.children.size());
+                for (const auto& child : element.children)
+                {
+                    weights.push_back(child->common.weight.value_or(1.0F));
+                }
+            }
+        }
+
         if (data.orientation == parser::ParsedLayoutOrientation::kHorizontal)
         {
             auto node = std::make_shared<nodes::DocraftLoomHStack>();
+            if (data.spacing)
+            {
+                node->set_spacing(*data.spacing);
+            }
+            if (!weights.empty())
+            {
+                node->set_weights(weights);
+            }
             apply_common_attributes(*node, element.common);
             add_children(node, element.children);
             return node;
         }
         auto node = std::make_shared<nodes::DocraftLoomVStack>();
+        if (data.spacing)
+        {
+            node->set_spacing(*data.spacing);
+        }
+        // VStack has no set_weights() yet (Phase 6) -- any collected weights are
+        // deliberately not applied here.
+        apply_common_attributes(*node, element.common);
+        add_children(node, element.children);
+        return node;
+    }
+
+    std::shared_ptr<nodes::DocraftLoomParagraph> DocraftLoomTreeBuilder::build_paragraph(const ParsedElement& element)
+    {
+        const auto& data = std::any_cast<const parser::ParsedParagraphData&>(element.data);
+        auto node = std::make_shared<nodes::DocraftLoomParagraph>();
+        if (data.line_spacing)
+        {
+            node->set_line_spacing(*data.line_spacing);
+        }
+        if (data.space_before)
+        {
+            node->set_space_before(*data.space_before);
+        }
+        if (data.space_after)
+        {
+            node->set_space_after(*data.space_after);
+        }
+        if (data.alignment)
+        {
+            node->set_alignment(to_loom_alignment(*data.alignment));
+        }
+        apply_common_attributes(*node, element.common);
+        add_children(node, element.children);
+        return node;
+    }
+
+    std::shared_ptr<nodes::DocraftLoomRectangle> DocraftLoomTreeBuilder::build_section(const ParsedElement& element)
+    {
+        const auto& data = std::any_cast<const parser::ParsedSectionData&>(element.data);
+        auto node = std::make_shared<nodes::DocraftLoomRectangle>();
+        if (data.background_color)
+        {
+            node->edit_style().background_color = *data.background_color;
+        }
+        if (data.border_color)
+        {
+            node->edit_style().border_color = *data.border_color;
+        }
+        if (data.border_width)
+        {
+            node->edit_style().border_width = *data.border_width;
+        }
+        // Margins (margin_top/bottom/left/right) are not a rectangle concept -- they are
+        // consumed directly from ParsedSectionData by DocraftLoomCraftLanguageParser to
+        // build a DocraftLoomPdfCreator::Margins, not applied here.
         apply_common_attributes(*node, element.common);
         add_children(node, element.children);
         return node;
