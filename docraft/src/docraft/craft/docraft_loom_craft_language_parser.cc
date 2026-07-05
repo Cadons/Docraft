@@ -186,6 +186,44 @@ namespace docraft::craft {
             }
         }
 
+        // Applies a <Metadata> element's simple string subtags to the creator. Only the
+        // plain text fields are wired -- CreationDate/ModificationDate/Trapped/GtsPdfx/
+        // AutoKeywords are left unrecognized (silently skipped) for now.
+        void apply_metadata(const pugi::xml_node& metadata_node, loom::DocraftLoomPdfCreator& creator)
+        {
+            DocraftDocumentMetadata metadata;
+            for (const pugi::xml_node child : metadata_node.children())
+            {
+                const std::string tag = child.name();
+                const std::string value = child.child_value();
+                if (tag == std::string{elements::metadata::kDocumentTitle})
+                {
+                    metadata.set_title(value);
+                }
+                else if (tag == std::string{elements::metadata::kAuthor})
+                {
+                    metadata.set_author(value);
+                }
+                else if (tag == std::string{elements::metadata::kCreator})
+                {
+                    metadata.set_creator(value);
+                }
+                else if (tag == std::string{elements::metadata::kProducer})
+                {
+                    metadata.set_producer(value);
+                }
+                else if (tag == std::string{elements::metadata::kSubject})
+                {
+                    metadata.set_subject(value);
+                }
+                else if (tag == std::string{elements::metadata::kKeywords})
+                {
+                    metadata.set_keywords(value);
+                }
+            }
+            creator.set_metadata(metadata);
+        }
+
         // Applies a <Settings> element's <Page>/<SectionRatios>/<Fonts> children (if
         // present) to the creator.
         void apply_settings(const pugi::xml_node& settings_node, loom::DocraftLoomPdfCreator& creator)
@@ -289,11 +327,12 @@ namespace docraft::craft {
         std::shared_ptr<DocraftParsedElement> body_element;
         std::shared_ptr<DocraftParsedElement> footer_element;
         pugi::xml_node settings_node;
+        pugi::xml_node metadata_node;
 
-        // Only Header/Body/Footer/Settings are recognized at this top level --
-        // Settings<Fonts>/Metadata/Foreach/NewPage/anything else are deliberately skipped
-        // rather than parsed (they have no registered per-tag parser and are out of scope
-        // for this phase; see the class-level doc comment).
+        // Only Header/Body/Footer/Settings/Metadata are recognized at this top level --
+        // anything else is deliberately skipped rather than parsed (out of scope for this
+        // phase; see the class-level doc comment). Foreach/NewPage are recognized inside
+        // Header/Body/Footer's subtree (registered per-tag parsers), not here.
         for (pugi::xml_node child : document_node.children())
         {
             if (child.type() != pugi::node_element)
@@ -316,6 +355,10 @@ namespace docraft::craft {
             else if (tag == std::string{elements::kSettings})
             {
                 settings_node = child;
+            }
+            else if (tag == std::string{section::kMetadata})
+            {
+                metadata_node = child;
             }
         }
 
@@ -346,6 +389,10 @@ namespace docraft::craft {
         if (settings_node)
         {
             apply_settings(settings_node, *creator_);
+        }
+        if (metadata_node)
+        {
+            apply_metadata(metadata_node, *creator_);
         }
     }
 } // namespace docraft::craft

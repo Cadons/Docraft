@@ -43,7 +43,11 @@ namespace docraft::craft {
      * `DocraftCraftLanguageParser::parse_node`), and applies a `<Settings>` sibling's
      * `<Page>`/`<SectionRatios>`/`<Fonts>` sub-tags (if present) to the resulting creator
      * (each `<Fonts><Font>` variant is registered via `DocraftLoomPdfCreator::
-     * register_font()`). `<Metadata>` is still ignored. `${variable}`/`${data(...)}` templating
+     * register_font()`). A `<Metadata>` sibling's simple string subtags (`DocumentTitle`/
+     * `Author`/`Creator`/`Producer`/`Subject`/`Keywords`) are applied via
+     * `DocraftLoomPdfCreator::set_metadata()`; `CreationDate`/`ModificationDate`/
+     * `Trapped`/`GtsPdfx`/`AutoKeywords` are still unrecognized (silently skipped).
+     * `${variable}`/`${data(...)}` templating
      * (Text/Title/Subtitle content, Image src, `<Foreach>`'s own `model`) is resolved by
      * the `docraft::loom::craft::DocraftLoomTreeBuilder` this class drives internally,
      * using whatever engine was given via set_template_engine().

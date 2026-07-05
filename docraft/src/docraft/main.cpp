@@ -18,19 +18,26 @@
 #include <chrono>
 #include <cstdlib>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <optional>
+#include <sstream>
 #include <string>
 #include <vector>
+
+#include <nlohmann/json.hpp>
 
 #include "docraft/craft/docraft_loom_craft_language_parser.h"
 #include "docraft/exception/docraft_exceptions.h"
 #include "docraft/loom/docraft_loom_pdf_creator.h"
+#include "docraft/templating/docraft_template_engine.h"
 #include "docraft/utils/docraft_logger.h"
 
 namespace {
     struct CliOptions {
         std::filesystem::path craft_file; //input file
         std::filesystem::path output_file; //output filename
+        std::optional<std::filesystem::path> data_file; //optional --data JSON file
     };
 
     /**
@@ -52,8 +59,13 @@ namespace {
      * @param program_name Name of the program (typically argv[0]).
      */
     void print_usage(std::ostream &output, const char *program_name) {
-        output << "Usage: " << program_name << " <file.craft> <output.pdf>\n";
+        output << "Usage: " << program_name << " <file.craft> <output.pdf> [--data <data.json>]\n";
         output << "Options:\n";
+        output << "  --data <data.json> Registers each top-level JSON field as a template\n";
+        output << "                     variable ${field}, resolved in the .craft file's\n";
+        output << "                     Text/Title/Subtitle content, Image src, and Foreach\n";
+        output << "                     model attributes. Arrays/objects are passed through\n";
+        output << "                     as their JSON text (for Foreach's model).\n";
         output << "  -h, --help         Show this help message.\n";
         output << "  -v, --version      Show version information.\n";
     }
@@ -80,6 +92,16 @@ namespace {
             if (arg == "-h" || arg == "--help") {
                 print_usage(std::cout, argv[0]);
                 std::exit(0);
+            }
+
+            if (arg == "--data")
+            {
+                if (i + 1 >= argc)
+                {
+                    throw docraft::exception::ConfigurationException("--data requires a <data.json> argument");
+                }
+                options.data_file = argv[++i];
+                continue;
             }
 
             if (!arg.empty() && arg.front() == '-') {
@@ -118,6 +140,51 @@ namespace {
 
         return options;
     }
+
+    /**
+     * @brief Loads a JSON file and registers each top-level field as a template
+     * variable: strings are registered as-is, other values (numbers/bools/arrays/
+     * objects) as their compact JSON text -- e.g. an array field becomes a JSON array
+     * string usable directly as a `<Foreach model="${field}">` attribute.
+     * @param data_file Path to the JSON file.
+     * @return Template engine with every top-level field registered.
+     * @throws docraft::exception::ConfigurationException if the file can't be read or
+     * parsed, or isn't a JSON object at the top level.
+     */
+    std::shared_ptr<docraft::templating::DocraftTemplateEngine> build_template_engine_from_json(
+        const std::filesystem::path& data_file)
+    {
+        std::ifstream file(data_file);
+        if (!file)
+        {
+            throw docraft::exception::ConfigurationException("Could not open --data file: " + data_file.string());
+        }
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+
+        nlohmann::json root;
+        try
+        {
+            root = nlohmann::json::parse(buffer.str());
+        }
+        catch (const nlohmann::json::exception& ex)
+        {
+            throw docraft::exception::ConfigurationException(
+                "Invalid JSON in --data file " + data_file.string() + ": " + ex.what());
+        }
+        if (!root.is_object())
+        {
+            throw docraft::exception::ConfigurationException(
+                "--data file must contain a JSON object at the top level: " + data_file.string());
+        }
+
+        auto engine = std::make_shared<docraft::templating::DocraftTemplateEngine>();
+        for (const auto& [key, value] : root.items())
+        {
+            engine->add_template_variable(key, value.is_string() ? value.get<std::string>() : value.dump());
+        }
+        return engine;
+    }
 } // namespace
 
 int main(int argc, char *argv[]) {
@@ -136,6 +203,15 @@ int main(int argc, char *argv[]) {
         }
 
         docraft::craft::DocraftLoomCraftLanguageParser parser;
+        if (options.data_file)
+        {
+            if (!std::filesystem::exists(*options.data_file))
+            {
+                throw docraft::exception::FileNotFoundException(
+                    "--data file not found: " + options.data_file->string());
+            }
+            parser.set_template_engine(build_template_engine_from_json(*options.data_file));
+        }
         parser.load_from_file(options.craft_file);
 
         auto creator = parser.edit_creator();

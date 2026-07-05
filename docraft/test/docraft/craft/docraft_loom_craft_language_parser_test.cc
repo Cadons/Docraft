@@ -74,7 +74,7 @@ TEST(DocraftLoomCraftLanguageParserTest, AppliesSettingsPageAndRatios)
     <Fonts />
   </Settings>
   <Metadata>
-    <DocumentTitle>Ignored For Now</DocumentTitle>
+    <DocumentTitle>Quarterly Report</DocumentTitle>
   </Metadata>
   <Body>
     <Text>Body</Text>
@@ -90,6 +90,35 @@ TEST(DocraftLoomCraftLanguageParserTest, AppliesSettingsPageAndRatios)
   EXPECT_FLOAT_EQ(creator->header_ratio(), 0.1F);
   EXPECT_FLOAT_EQ(creator->body_ratio(), 0.8F);
   EXPECT_FLOAT_EQ(creator->footer_ratio(), 0.1F);
+}
+
+TEST(DocraftLoomCraftLanguageParserTest, AppliesMetadataAndRenders)
+{
+  const char* xml = R"XML(
+<Document>
+  <Metadata>
+    <DocumentTitle>Quarterly Report</DocumentTitle>
+    <Author>Mario Rossi</Author>
+    <Keywords>report, q1</Keywords>
+  </Metadata>
+  <Body>
+    <Text>Body</Text>
+  </Body>
+</Document>
+)XML";
+
+  docraft::craft::DocraftLoomCraftLanguageParser parser;
+  EXPECT_NO_THROW(parser.parse(xml));
+
+  const auto creator = parser.edit_creator();
+  ASSERT_TRUE(creator);
+  EXPECT_NO_THROW(creator->create());
+
+  const auto output_path = std::filesystem::temp_directory_path() / "docraft_metadata_test_output.pdf";
+  EXPECT_NO_THROW(creator->render(output_path));
+  ASSERT_TRUE(std::filesystem::exists(output_path));
+  EXPECT_GT(std::filesystem::file_size(output_path), 0U);
+  std::filesystem::remove(output_path);
 }
 
 TEST(DocraftLoomCraftLanguageParserTest, ThrowsOnInvalidPageSize)

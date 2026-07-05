@@ -11,6 +11,7 @@
 #include "docraft/backend/docraft_page_format.h"
 #include "docraft/backend/pdf/docraft_haru_backend.h"
 #include "docraft/backend/pdf/docraft_haru_shared_state.h"
+#include "docraft/docraft_document_metadata.h"
 #include "docraft/loom/nodes/docraft_loom_node.h"
 #include "interfaces/docraft_loom_visitor.h"
 
@@ -92,6 +93,12 @@ namespace docraft::loom {
                            const std::optional<std::string>& bold_path = std::nullopt,
                            const std::optional<std::string>& italic_path = std::nullopt,
                            const std::optional<std::string>& bold_italic_path = std::nullopt);
+
+        /**
+         * @brief Applies document info-dict metadata (title/author/etc.) to the backend.
+         * Applies immediately; a later call overwrites what was set before.
+         */
+        void set_metadata(const DocraftDocumentMetadata& metadata);
 
         /**
          * @brief Sets the header's margins, inset from the header region's own edges.

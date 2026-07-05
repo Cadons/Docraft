@@ -86,6 +86,11 @@ namespace docraft::loom {
         register_variant(bold_italic_path, "-BoldItalic");
     }
 
+    void DocraftLoomPdfCreator::set_metadata(const DocraftDocumentMetadata& metadata)
+    {
+        backend_->edit_metadata_backend()->set_document_metadata(metadata);
+    }
+
     void DocraftLoomPdfCreator::set_header_margins(const Margins& margins)
     {
         header_margins_ = margins;
