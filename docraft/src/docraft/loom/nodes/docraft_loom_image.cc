@@ -19,19 +19,19 @@ namespace docraft::loom::nodes {
         {
         case 'p':
         case 'P':
-            format_ = model::ImageFormat::kPng;
+            format_ = ImageFormat::kPng;
             break;
         case 'j':
         case 'J':
-            format_ = model::ImageFormat::kJpeg;
+            format_ = ImageFormat::kJpeg;
             break;
         default:
-            format_ = model::ImageFormat::kRaw;
+            format_ = ImageFormat::kRaw;
             break;
         }
     }
 
-    model::ImageFormat DocraftLoomImage::format() const
+    ImageFormat DocraftLoomImage::format() const
     {
         return format_;
     }
@@ -61,7 +61,7 @@ namespace docraft::loom::nodes {
         raw_data_ = data;
         raw_pixel_width_ = pixel_width;
         raw_pixel_height_ = pixel_height;
-        format_ = model::ImageFormat::kRaw;
+        format_ = ImageFormat::kRaw;
         has_raw_data_ = true;
     }
 

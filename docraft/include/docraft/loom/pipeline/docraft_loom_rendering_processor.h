@@ -10,7 +10,7 @@
 #include "docraft/backend/pdf/docraft_haru_shared_state.h"
 #include "docraft/loom/interfaces/docraft_loom_visitor.h"
 #include "docraft/loom/nodes/docraft_loom_node.h"
-#include "docraft/model/docraft_text.h"
+#include "docraft/loom/nodes/docraft_loom_text.h"
 
 namespace docraft::loom::pipeline {
     class DocraftLoomRenderingProcessor : public interfaces::DocraftLoomIVisitor
@@ -56,7 +56,7 @@ namespace docraft::loom::pipeline {
         struct TextLineStyle
         {
             float box_width;
-            model::TextAlignment alignment;
+            nodes::TextAlignment alignment;
             std::string font_name;
             float font_size;
         };

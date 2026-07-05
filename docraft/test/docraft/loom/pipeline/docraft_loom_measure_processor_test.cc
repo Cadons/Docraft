@@ -1,6 +1,5 @@
 #include "docraft/loom/pipeline/docraft_loom_measure_processor.h"
 
-#include "docraft/docraft_document_context.h"
 #include "docraft/loom/nodes/docraft_loom_text.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>

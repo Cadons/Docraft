@@ -4,8 +4,8 @@
 
 #include "docraft/loom/nodes/docraft_loom_text.h"
 
-#include "docraft/craft/docraft_craft_language_tokens.h"
-#include "docraft/generic/docraft_font_applier.h"
+#include "docraft/utils/docraft_font_registry.h"
+#include "docraft/utils/docraft_font_resolver.h"
 
 namespace docraft::loom::nodes {
     DocraftLoomText::DocraftLoomText()
@@ -14,7 +14,7 @@ namespace docraft::loom::nodes {
           italic_(false),
           underline_(false),
           color_(DocraftColor::fromRGB(0.0F, 0.0F, 0.0F, 1.0F)), // default to black
-          alignment_(model::TextAlignment::kLeft)
+          alignment_(TextAlignment::kLeft)
     {
     }
 
@@ -98,12 +98,12 @@ namespace docraft::loom::nodes {
         color_ = color;
     }
 
-    model::TextAlignment DocraftLoomText::alignment() const
+    TextAlignment DocraftLoomText::alignment() const
     {
         return alignment_;
     }
 
-    void DocraftLoomText::set_alignment(model::TextAlignment alignment)
+    void DocraftLoomText::set_alignment(TextAlignment alignment)
     {
         alignment_ = alignment;
     }
@@ -130,20 +130,17 @@ namespace docraft::loom::nodes {
 
     std::string DocraftLoomText::resolved_font_name() const
     {
-        std::string name = font_family_;
-        if (bold_ && italic_)
-        {
-            name += "-BoldOblique";
-        }
-        else if (bold_)
-        {
-            name += "-Bold";
-        }
-        else if (italic_)
-        {
-            name += "-Oblique";
-        }
-        const char* registered = generic::DocraftFontApplier::get_font_registred_name(name);
-        return registered ? registered : name;
+        const auto style = bold_ && italic_
+                               ? utils::TextStyle::kBoldItalic
+                               : bold_
+                               ? utils::TextStyle::kBold
+                               : italic_
+                               ? utils::TextStyle::kItalic
+                               : utils::TextStyle::kNormal;
+        utils::DocraftFontResolver resolver;
+        resolver.rebuild_index(utils::DocraftFontResolver::builtin_font_names(),
+                               utils::DocraftFontRegistry::instance().registered_font_names());
+        const std::string resolved = resolver.resolve(font_family_, style);
+        return resolved.empty() ? font_family_ : resolved;
     }
 } // docraft

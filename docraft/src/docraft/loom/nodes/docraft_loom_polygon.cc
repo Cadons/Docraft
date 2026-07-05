@@ -6,12 +6,12 @@ namespace docraft::loom::nodes {
         visitor.visit(this);
     }
 
-    const std::vector<model::DocraftPoint>& DocraftLoomPolygon::points() const
+    const std::vector<nodes::Position>& DocraftLoomPolygon::points() const
     {
         return points_;
     }
 
-    void DocraftLoomPolygon::set_points(const std::vector<model::DocraftPoint>& points)
+    void DocraftLoomPolygon::set_points(const std::vector<nodes::Position>& points)
     {
         points_ = points;
     }

@@ -1,7 +1,7 @@
 #pragma once
 #include "docraft/docraft_color.h"
 #include "docraft/loom/nodes/docraft_loom_node.h"
-#include "docraft/model/docraft_position.h"
+#include "docraft/loom/nodes/docraft_loom_node.h"
 
 namespace docraft::loom::nodes {
     class DOCRAFT_LIB DocraftLoomLine : public DocraftLoomNode
@@ -11,18 +11,18 @@ namespace docraft::loom::nodes {
         ~DocraftLoomLine() override = default;
         void accept(loom::interfaces::DocraftLoomIVisitor& visitor) override;
 
-        const model::DocraftPoint& start() const;
-        void set_start(const model::DocraftPoint& start);
-        const model::DocraftPoint& end() const;
-        void set_end(const model::DocraftPoint& end);
+        const Position& start() const;
+        void set_start(const Position& start);
+        const Position& end() const;
+        void set_end(const Position& end);
         const DocraftColor& border_color() const;
         void set_border_color(const DocraftColor& color);
         float border_width() const;
         void set_border_width(float width);
 
     private:
-        model::DocraftPoint start_{.x = 0.0F, .y = 0.0F};
-        model::DocraftPoint end_{.x = 100.0F, .y = 0.0F};
+        Position start_{.x = 0.0F, .y = 0.0F};
+        Position end_{.x = 100.0F, .y = 0.0F};
         DocraftColor border_color_;
         float border_width_ = 1.0F;
     };

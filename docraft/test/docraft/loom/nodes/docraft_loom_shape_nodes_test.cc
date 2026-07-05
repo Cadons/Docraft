@@ -127,7 +127,7 @@ namespace docraft::test {
     TEST_F(DocraftLoomShapeNodesTest, CircleAbsolutePositionOverridesCursor)
     {
         loom::nodes::DocraftLoomCircle circle;
-        circle.set_position_mode(model::DocraftPositionType::kAbsolute);
+        circle.set_position_mode(loom::nodes::DocraftPositionType::kAbsolute);
         circle.set_explicit_position({33.0F, 44.0F});
         circle.set_radius(5.0F);
         circle.accept(*measure_);

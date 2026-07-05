@@ -176,7 +176,7 @@ namespace docraft::test::utils {
         void set_stroke_alpha(float) const override { require(); }
         void draw_rectangle(float, float, float, float) const override { require(); }
         void draw_circle(float, float, float) const override { require(); }
-        void draw_polygon(const std::vector<model::DocraftPoint> &) const override { require(); }
+        void draw_polygon(const std::vector<docraft::Position>&) const override { require(); }
         void fill() const override { require(); }
         void stroke() const override { require(); }
         void fill_stroke() const override { require(); }
@@ -285,7 +285,8 @@ namespace docraft::test::utils {
             state_->current_page = state_->pages - 1;
         }
 
-        void set_page_format(model::DocraftPageSize, model::DocraftPageOrientation) override {
+        void set_page_format(docraft::backend::DocraftPageSize, docraft::backend::DocraftPageOrientation) override
+        {
             MockBackendSharedState::ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
         }
 

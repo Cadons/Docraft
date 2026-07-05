@@ -247,7 +247,7 @@ namespace {
     // wrapped line at render time.
     std::shared_ptr<DocraftLoomParagraph> make_wrapping_column_demo(const std::string& title,
                                                                     const std::string& body,
-                                                                    docraft::model::TextAlignment alignment)
+                                                                    docraft::loom::nodes::TextAlignment alignment)
     {
         auto para = std::make_shared<DocraftLoomParagraph>();
         para->set_line_spacing(1.2F);
@@ -284,17 +284,17 @@ namespace {
             "Roadmap",
             "Next quarter focuses on richer text layout: automatic wrapping, "
             "weighted rows and columns, and nested constraint-based sizing.",
-            docraft::model::TextAlignment::kLeft));
+            docraft::loom::nodes::TextAlignment::kLeft));
         row->add_child(make_wrapping_column_demo(
             "Risks",
             "Pagination edge cases for deeply nested containers still need "
             "broader test coverage before the legacy pipeline is retired.",
-            docraft::model::TextAlignment::kCenter));
+            docraft::loom::nodes::TextAlignment::kCenter));
         row->add_child(make_wrapping_column_demo(
             "Notes",
             "Justified text stretches every wrapped line except the last to "
             "fill the column width evenly between words.",
-            docraft::model::TextAlignment::kJustified));
+            docraft::loom::nodes::TextAlignment::kJustified));
         return row;
     }
 
@@ -320,7 +320,7 @@ namespace {
         rect->set_width(70.0F);
         rect->set_height(25.0F);
         rect->edit_style().background_color = docraft::DocraftColor::fromRGB(1.0F, 0.4F, 0.4F, 1.0F);
-        rect->set_position_mode(docraft::model::DocraftPositionType::kAbsolute);
+        rect->set_position_mode(docraft::loom::nodes::DocraftPositionType::kAbsolute);
         // Placed away from the flowed content above so the demo clearly shows it
         // escaping the normal document flow rather than colliding with it.
         rect->set_explicit_position({.x = 420.0F, .y = 15.0F});

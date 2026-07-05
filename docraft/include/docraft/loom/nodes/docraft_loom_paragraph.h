@@ -1,7 +1,7 @@
 #pragma once
 
 #include "docraft/loom/nodes/docraft_loom_node.h"
-#include "docraft/model/docraft_text.h"
+#include "docraft/loom/nodes/docraft_loom_text.h"
 
 namespace docraft::loom::nodes {
     /**
@@ -76,7 +76,7 @@ namespace docraft::loom::nodes {
          * @brief Returns the default text alignment for this paragraph's content.
          * @return Text alignment enum value.
          */
-        model::TextAlignment alignment() const;
+        TextAlignment alignment() const;
 
         /**
          * @brief Sets the default text alignment for this paragraph's content.
@@ -84,12 +84,12 @@ namespace docraft::loom::nodes {
          * Individual `DocraftLoomText` children may override this with their own alignment.
          * @param alignment Text alignment to apply.
          */
-        void set_alignment(model::TextAlignment alignment);
+        void set_alignment(TextAlignment alignment);
 
     private:
         float line_spacing_;
         float space_before_;
         float space_after_;
-        model::TextAlignment alignment_;
+        TextAlignment alignment_;
     };
 } // docraft::loom::nodes

@@ -14,18 +14,27 @@
  * limitations under the License.
  */
 
-#include "docraft/model/docraft_body.h"
+#pragma once
 
-#include "docraft/model/docraft_clone_utils.h"
+#include "docraft/docraft_lib.h"
+#include <string>
 
-namespace docraft::model{
+namespace docraft {
+    /**
+     * @brief 2D point/position in document space (origin top-left, y grows downward).
+     *
+     * Shared across the cursor, backend rendering interfaces, and the loom node tree
+     * (loom's own `loom::nodes::Position` is an alias to this type).
+     */
+    struct DOCRAFT_LIB Position
+    {
+        float x = 0.0F;
+        float y = 0.0F;
 
-    std::shared_ptr<DocraftNode> DocraftBody::clone() const {
-        auto copy = std::make_shared<DocraftBody>(*this);
-        copy->clear_children();
-        for (const auto &child : children()) {
-            copy->add_child(clone_node(child));
-        }
-        return copy;
-    }
+        /**
+         * @brief Returns a string representation of the point.
+         * @return String in a human-readable format.
+         */
+        std::string to_string() const;
+    };
 } // docraft

@@ -82,7 +82,7 @@ namespace docraft::backend::pdf {
         /**
          * @brief Appends a closed polygon path from the provided points.
          */
-        void draw_polygon(const std::vector<model::DocraftPoint> &points) const override;
+        void draw_polygon(const std::vector<Position>& points) const override;
 
         /**
          * @brief Fills the current path.

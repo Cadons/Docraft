@@ -2,7 +2,7 @@
 
 #include "docraft/docraft_cursor.h"
 
-namespace docraft::test::layout {
+namespace docraft::test {
     class DocraftCursorTest : public ::testing::Test {
     protected:
         void SetUp() override {

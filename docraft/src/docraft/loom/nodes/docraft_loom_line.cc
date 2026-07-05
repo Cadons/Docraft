@@ -11,22 +11,22 @@ namespace docraft::loom::nodes {
         visitor.visit(this);
     }
 
-    const model::DocraftPoint& DocraftLoomLine::start() const
+    const nodes::Position& DocraftLoomLine::start() const
     {
         return start_;
     }
 
-    void DocraftLoomLine::set_start(const model::DocraftPoint& start)
+    void DocraftLoomLine::set_start(const nodes::Position& start)
     {
         start_ = start;
     }
 
-    const model::DocraftPoint& DocraftLoomLine::end() const
+    const nodes::Position& DocraftLoomLine::end() const
     {
         return end_;
     }
 
-    void DocraftLoomLine::set_end(const model::DocraftPoint& end)
+    void DocraftLoomLine::set_end(const nodes::Position& end)
     {
         end_ = end;
     }

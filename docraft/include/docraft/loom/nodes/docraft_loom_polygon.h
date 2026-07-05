@@ -2,7 +2,7 @@
 #include <vector>
 
 #include "docraft/loom/nodes/docraft_loom_shape.h"
-#include "docraft/model/docraft_position.h"
+#include "docraft/loom/nodes/docraft_loom_node.h"
 
 namespace docraft::loom::nodes {
     /**
@@ -17,10 +17,10 @@ namespace docraft::loom::nodes {
         ~DocraftLoomPolygon() override = default;
         void accept(loom::interfaces::DocraftLoomIVisitor& visitor) override;
 
-        const std::vector<model::DocraftPoint>& points() const;
-        void set_points(const std::vector<model::DocraftPoint>& points);
+        const std::vector<Position>& points() const;
+        void set_points(const std::vector<Position>& points);
 
     private:
-        std::vector<model::DocraftPoint> points_;
+        std::vector<Position> points_;
     };
 } // docraft

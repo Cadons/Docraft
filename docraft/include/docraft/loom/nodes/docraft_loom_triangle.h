@@ -2,7 +2,7 @@
 #include <vector>
 
 #include "docraft/loom/nodes/docraft_loom_shape.h"
-#include "docraft/model/docraft_position.h"
+#include "docraft/loom/nodes/docraft_loom_node.h"
 
 namespace docraft::loom::nodes {
     /**
@@ -17,14 +17,14 @@ namespace docraft::loom::nodes {
         ~DocraftLoomTriangle() override = default;
         void accept(loom::interfaces::DocraftLoomIVisitor& visitor) override;
 
-        const std::vector<model::DocraftPoint>& points() const;
+        const std::vector<Position>& points() const;
         /**
          * @brief Sets the triangle's 3 points.
          * @throws exception::InvalidInputException if points.size() != 3.
          */
-        void set_points(const std::vector<model::DocraftPoint>& points);
+        void set_points(const std::vector<Position>& points);
 
     private:
-        std::vector<model::DocraftPoint> points_;
+        std::vector<Position> points_;
     };
 } // docraft

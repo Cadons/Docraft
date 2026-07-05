@@ -96,7 +96,7 @@ namespace docraft::test {
     TEST_F(DocraftLoomRectangleTest, AbsolutePositionOverridesCursor)
     {
         loom::nodes::DocraftLoomRectangle rect;
-        rect.set_position_mode(model::DocraftPositionType::kAbsolute);
+        rect.set_position_mode(loom::nodes::DocraftPositionType::kAbsolute);
         rect.set_explicit_position({80.0F, 90.0F});
         rect.set_width(10.0F);
         rect.set_height(10.0F);

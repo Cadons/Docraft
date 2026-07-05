@@ -273,7 +273,7 @@ namespace docraft::test {
         EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
 
         auto vstack = std::make_shared<loom::nodes::DocraftLoomVStack>();
-        vstack->set_position_mode(model::DocraftPositionType::kAbsolute);
+        vstack->set_position_mode(loom::nodes::DocraftPositionType::kAbsolute);
         vstack->set_explicit_position({50.0F, 50.0F});
         vstack->add_child(make_text("a"));
 
@@ -290,7 +290,7 @@ namespace docraft::test {
         EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
 
         auto absolute_vstack = std::make_shared<loom::nodes::DocraftLoomVStack>();
-        absolute_vstack->set_position_mode(model::DocraftPositionType::kAbsolute);
+        absolute_vstack->set_position_mode(loom::nodes::DocraftPositionType::kAbsolute);
         absolute_vstack->set_explicit_position({200.0F, 200.0F});
         absolute_vstack->add_child(make_text("a"));
         absolute_vstack->add_child(make_text("b"));

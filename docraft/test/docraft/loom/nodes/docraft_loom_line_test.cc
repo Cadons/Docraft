@@ -76,7 +76,7 @@ namespace docraft::test {
     {
         loom::pipeline::DocraftLoomLayoutProcessor layout;
         auto line = std::make_shared<loom::nodes::DocraftLoomLine>();
-        line->set_position_mode(model::DocraftPositionType::kAbsolute);
+        line->set_position_mode(loom::nodes::DocraftPositionType::kAbsolute);
         line->set_explicit_position({30.0F, 40.0F});
         line->accept(*measure_);
         line->accept(layout);

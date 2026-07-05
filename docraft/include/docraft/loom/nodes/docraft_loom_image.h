@@ -3,9 +3,18 @@
 #include <vector>
 
 #include "docraft/loom/nodes/docraft_loom_node.h"
-#include "docraft/model/docraft_image.h"
 
 namespace docraft::loom::nodes {
+    /**
+     * @brief Raster image formats loom can draw.
+     */
+    enum class ImageFormat
+    {
+        kPng,
+        kJpeg,
+        kRaw
+    };
+
     class DOCRAFT_LIB DocraftLoomImage : public DocraftLoomNode
     {
     public:
@@ -21,7 +30,7 @@ namespace docraft::loom::nodes {
          */
         void set_path(const std::string& path);
 
-        model::ImageFormat format() const;
+        ImageFormat format() const;
 
         const std::vector<unsigned char>& raw_data() const;
         int raw_pixel_width() const;
@@ -36,7 +45,7 @@ namespace docraft::loom::nodes {
 
     private:
         std::string path_;
-        model::ImageFormat format_ = model::ImageFormat::kPng;
+        ImageFormat format_ = ImageFormat::kPng;
         std::vector<unsigned char> raw_data_;
         int raw_pixel_width_ = 0;
         int raw_pixel_height_ = 0;

@@ -82,12 +82,12 @@ namespace docraft::loom::nodes {
         children_.clear();
     }
 
-    model::DocraftPositionType DocraftLoomNode::position_mode() const
+    DocraftPositionType DocraftLoomNode::position_mode() const
     {
         return position_mode_;
     }
 
-    void DocraftLoomNode::set_position_mode(model::DocraftPositionType position_mode)
+    void DocraftLoomNode::set_position_mode(DocraftPositionType position_mode)
     {
         position_mode_ = position_mode;
     }

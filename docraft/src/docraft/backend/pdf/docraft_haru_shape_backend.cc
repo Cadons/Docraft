@@ -62,7 +62,8 @@ namespace docraft::backend::pdf {
         HPDF_Page_Circle(provider->current_page(), px, py, radius);
     }
 
-    void DocraftHaruShapeBackend::draw_polygon(const std::vector<model::DocraftPoint> &points) const {
+    void DocraftHaruShapeBackend::draw_polygon(const std::vector<Position>& points) const
+    {
         if (points.size() < 2U) {
             return;
         }

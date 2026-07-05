@@ -23,24 +23,19 @@
 #include <vector>
 #include <nlohmann/json.hpp>
 
-namespace docraft::model {
-    class DocraftNode;
-}
-
 namespace docraft::templating {
         /**
-         * @brief The DocraftTemplateEngine class is responsible for processing templates
-         * and generating the final document output. It takes a parsed document tree
-         * and applies template logic to produce the rendered output.
+         * @brief The DocraftTemplateEngine class stores template variables/image data and
+         * resolves `${...}` expressions against them.
+         *
+         * @note Tree-walking (substituting `${...}` across a whole document tree and
+         * expanding `<Foreach>`) is not implemented yet for the loom pipeline -- this is
+         * tracked as follow-up work. Only the variable/image-data storage and
+         * string-resolution primitives are available right now.
          */
         class DOCRAFT_LIB DocraftTemplateEngine {
         public:
                 DocraftTemplateEngine() = default;
-                /**
-                 * @brief Renders the document using the provided template variables.
-                 * @return Rendered document as a string.
-                 */
-                void template_nodes(const std::vector<std::shared_ptr<model::DocraftNode>> &nodes);
                 /**
                  * @brief Adds a template variable.
                  * @param name Variable name (case-insensitive).
@@ -116,8 +111,6 @@ namespace docraft::templating {
 
         private:
                 static std::string normalize_name(const std::string &name);
-                void template_node(const std::shared_ptr<model::DocraftNode> &node,
-                                   const nlohmann::json *foreach_item = nullptr);
                 /**
                  * @brief Renders a template string by replacing template variables with their values.
                  * @note input data = ${data("field_name")), json cannot have multiple levels of nested,

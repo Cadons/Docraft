@@ -73,7 +73,7 @@ namespace docraft::test {
     {
         loom::pipeline::DocraftLoomLayoutProcessor layout(200.0F);
         auto blank_line = std::make_shared<loom::nodes::DocraftLoomBlankLine>();
-        blank_line->set_position_mode(model::DocraftPositionType::kAbsolute);
+        blank_line->set_position_mode(loom::nodes::DocraftPositionType::kAbsolute);
         blank_line->set_explicit_position({42.0F, 42.0F});
         blank_line->accept(*measure_);
         blank_line->accept(layout);

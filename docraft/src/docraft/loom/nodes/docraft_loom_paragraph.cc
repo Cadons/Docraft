@@ -5,7 +5,7 @@ namespace docraft::loom::nodes {
         : line_spacing_(1.2f),
           space_before_(0.0f),
           space_after_(0.0f),
-          alignment_(model::TextAlignment::kLeft)
+          alignment_(TextAlignment::kLeft)
     {
     }
 
@@ -23,6 +23,6 @@ namespace docraft::loom::nodes {
     float DocraftLoomParagraph::space_after() const { return space_after_; }
     void DocraftLoomParagraph::set_space_after(float space_after) { space_after_ = space_after; }
 
-    model::TextAlignment DocraftLoomParagraph::alignment() const { return alignment_; }
-    void DocraftLoomParagraph::set_alignment(model::TextAlignment alignment) { alignment_ = alignment; }
+    TextAlignment DocraftLoomParagraph::alignment() const { return alignment_; }
+    void DocraftLoomParagraph::set_alignment(TextAlignment alignment) { alignment_ = alignment; }
 } // docraft::loom::nodes

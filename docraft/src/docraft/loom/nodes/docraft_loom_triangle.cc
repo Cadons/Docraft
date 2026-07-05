@@ -8,12 +8,12 @@ namespace docraft::loom::nodes {
         visitor.visit(this);
     }
 
-    const std::vector<model::DocraftPoint>& DocraftLoomTriangle::points() const
+    const std::vector<nodes::Position>& DocraftLoomTriangle::points() const
     {
         return points_;
     }
 
-    void DocraftLoomTriangle::set_points(const std::vector<model::DocraftPoint>& points)
+    void DocraftLoomTriangle::set_points(const std::vector<nodes::Position>& points)
     {
         if (points.size() != 3)
         {

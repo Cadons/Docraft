@@ -16,24 +16,23 @@
 
 #pragma once
 
-#include "docraft/docraft_lib.h"
-#include "docraft/model/docraft_section.h"
-
-namespace docraft::model {
+namespace docraft::backend {
     /**
-     * @brief Header section of the document.
+     * @brief Supported page sizes.
      */
-    class DOCRAFT_LIB DocraftHeader : public DocraftSection {
-    public:
-        /**
-         * @brief Creates a header section with default margins.
-         */
-        DocraftHeader();
-        ~DocraftHeader() override = default;
-        /**
-         * @brief Clones the header node and its children.
-         * @return Shared pointer to the cloned node.
-         */
-        std::shared_ptr<DocraftNode> clone() const override;
+    enum class DocraftPageSize {
+        kA3,
+        kA4,
+        kA5,
+        kLetter,
+        kLegal
     };
-}
+
+    /**
+     * @brief Page orientation.
+     */
+    enum class DocraftPageOrientation {
+        kPortrait,
+        kLandscape
+    };
+} // docraft::backend

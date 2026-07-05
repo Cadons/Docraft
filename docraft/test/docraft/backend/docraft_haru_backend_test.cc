@@ -8,7 +8,7 @@
 
 #include "docraft/docraft_document_metadata.h"
 #include "docraft/exception/docraft_exceptions.h"
-#include "docraft/model/docraft_page_format.h"
+#include "docraft/backend/docraft_page_format.h"
 
 namespace docraft::test::backend {
 
@@ -122,8 +122,8 @@ TEST_F(DocraftHaruBackendTest, ThrowsOnPreviousAtFirstPage) {
 }
 
 TEST_F(DocraftHaruBackendTest, SetsPageFormat) {
-    EXPECT_NO_THROW(edit_page_backend().set_page_format(model::DocraftPageSize::kA3,
-                                                        model::DocraftPageOrientation::kLandscape));
+    EXPECT_NO_THROW(edit_page_backend().set_page_format(docraft::backend::DocraftPageSize::kA3,
+                                                        docraft::backend::DocraftPageOrientation::kLandscape));
     EXPECT_GT(page_backend().page_width(), 0.0F);
     EXPECT_GT(page_backend().page_height(), 0.0F);
 }

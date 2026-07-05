@@ -63,7 +63,7 @@ namespace docraft::loom::pipeline {
 
     nodes::Position DocraftLoomLayoutProcessor::resolve_position(const nodes::DocraftLoomNode& node) const
     {
-        if (node.position_mode() == model::DocraftPositionType::kAbsolute)
+        if (node.position_mode() == nodes::DocraftPositionType::kAbsolute)
         {
             return node.explicit_position();
         }
@@ -73,7 +73,7 @@ namespace docraft::loom::pipeline {
     DocraftLoomLayoutProcessor::PositionScope::PositionScope(DocraftLoomLayoutProcessor& processor,
                                                              nodes::DocraftLoomNode& node)
         : processor_(processor), entry_cursor_(processor.cursor_),
-          restore_on_exit_(node.position_mode() == model::DocraftPositionType::kAbsolute)
+          restore_on_exit_(node.position_mode() == nodes::DocraftPositionType::kAbsolute)
     {
         node.edit_layout_box().frame.position = processor.resolve_position(node);
     }
@@ -340,7 +340,7 @@ namespace docraft::loom::pipeline {
         if (!cell)
             return;
         //cells cannot be in absolute position mode, they are always positioned by the table's own grid layout
-        if (cell->position_mode() == model::DocraftPositionType::kAbsolute)
+        if (cell->position_mode() == nodes::DocraftPositionType::kAbsolute)
         {
             throw exception::InvalidInputException("Table cells cannot be in absolute position mode");
         }
@@ -484,12 +484,12 @@ namespace docraft::loom::pipeline {
         }
         switch (text->alignment())
         {
-        case model::TextAlignment::kCenter:
+        case nodes::TextAlignment::kCenter:
             return extra_width / 2.0F;
-        case model::TextAlignment::kRight:
+        case nodes::TextAlignment::kRight:
             return extra_width;
-        case model::TextAlignment::kLeft:
-        case model::TextAlignment::kJustified:
+        case nodes::TextAlignment::kLeft:
+        case nodes::TextAlignment::kJustified:
         default:
             return 0.0F;
         }

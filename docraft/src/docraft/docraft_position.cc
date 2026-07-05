@@ -14,17 +14,11 @@
  * limitations under the License.
  */
 
-#include "docraft/services/docraft_navigation_service.h"
+#include "docraft/docraft_position.h"
 
-namespace docraft::services {
-    management::DocraftDocumentSectionManager &NavigationService::section_manager() {
-        return *this;
+namespace docraft {
+    std::string Position::to_string() const
+    {
+        return "(" + std::to_string(x) + ", " + std::to_string(y) + ")";
     }
-
-    const management::DocraftDocumentSectionManager &NavigationService::section_manager() const {
-        return *this;
-    }
-} // namespace docraft::services
-
-
-
+} // docraft

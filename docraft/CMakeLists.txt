@@ -1,168 +1,36 @@
 include(${CMAKE_CURRENT_LIST_DIR}/../.cmake/generate_fonts.cmake)
 
 set(DOCRAFT_SOURCES
-        src/docraft/model/docraft_node.cc
-        include/docraft/model/docraft_node.h
-        src/docraft/model/docraft_clone_utils.cc
-        include/docraft/model/docraft_clone_utils.h
-        include/docraft/model/i_docraft_clonable.h
-        src/docraft/model/docraft_section.cc
-        include/docraft/model/docraft_section.h
-        src/docraft/model/docraft_body.cc
-        include/docraft/model/docraft_body.h
-        src/docraft/model/docraft_text.cc
-        include/docraft/model/docraft_text.h
-        src/docraft/model/docraft_page_number.cc
-        include/docraft/model/docraft_page_number.h
-        src/docraft/model/docraft_new_page.cc
-        include/docraft/model/docraft_new_page.h
-        src/docraft/docraft_document.cc
-        include/docraft/docraft_document.h
-        src/docraft/docraft_document_metadata.cc
-        include/docraft/docraft_document_metadata.h
-        src/docraft/docraft_document_context.cc
-        include/docraft/docraft_document_context.h
-        src/docraft/services/docraft_rendering_service.cc
-        include/docraft/services/docraft_rendering_service.h
-        src/docraft/services/docraft_layout_service.cc
-        include/docraft/services/docraft_layout_service.h
-        src/docraft/services/docraft_typography_service.cc
-        include/docraft/services/docraft_typography_service.h
-        src/docraft/services/docraft_navigation_service.cc
-        include/docraft/services/docraft_navigation_service.h
+        src/docraft/docraft_position.cc
+        include/docraft/docraft_position.h
         src/docraft/docraft_cursor.cc
         include/docraft/docraft_cursor.h
         src/docraft/docraft_color.cc
         include/docraft/docraft_color.h
-        include/docraft/renderer/docraft_renderer.h
-        src/docraft/renderer/docraft_pdf_renderer.cc
-        include/docraft/renderer/docraft_pdf_renderer.h
-        src/docraft/renderer/painter/docraft_text_painter.cc
-        include/docraft/renderer/painter/docraft_text_painter.h
-        include/docraft/renderer/painter/i_painter.h
-        src/docraft/layout/docraft_layout_engine.cc
-        src/docraft/layout/docraft_layout_engine_impl.cc
-        src/docraft/layout/docraft_layout_engine_impl.h
-        include/docraft/layout/docraft_layout_engine.h
-        src/docraft/layout/handler/docraft_layout_text_handler.cc
-        include/docraft/layout/handler/docraft_layout_text_handler.h
-        include/docraft/generic/chain_of_responsibility_handler.h
-        include/docraft/layout/handler/abstract_docraft_layout_handler.h
-        src/docraft/generic/docraft_font_applier.cc
-        include/docraft/generic/docraft_font_applier.h
-        src/docraft/model/docraft_header.cc
-        include/docraft/model/docraft_header.h
-        src/docraft/model/docraft_paragraph.cc
-        include/docraft/model/docraft_paragraph.h
-        src/docraft/model/docraft_layout.cc
-        include/docraft/model/docraft_layout.h
-        src/docraft/model/docraft_list.cc
-        include/docraft/model/docraft_list.h
-        src/docraft/layout/handler/docraft_layout_handler.cc
-        include/docraft/layout/handler/docraft_layout_handler.h
-        src/docraft/layout/handler/docraft_layout_list_handler.cc
-        include/docraft/layout/handler/docraft_layout_list_handler.h
-        src/docraft/model/docraft_children_container_node.cc
-        include/docraft/model/docraft_children_container_node.h
+        src/docraft/docraft_document_metadata.cc
+        include/docraft/docraft_document_metadata.h
         include/docraft/backend/docraft_pdf_backend.h
         include/docraft/backend/docraft_text_rendering_backend.h
         include/docraft/backend/docraft_line_rendering_backend.h
         include/docraft/backend/docraft_shape_rendering_backend.h
         include/docraft/backend/docraft_image_rendering_backend.h
         include/docraft/backend/docraft_page_rendering_backend.h
+        include/docraft/backend/docraft_page_format.h
         include/docraft/backend/docraft_backend_providers_factory.h
         include/docraft/backend/docraft_rendering_backend.h
         include/docraft/backend/docraft_output_backend.h
         include/docraft/backend/docraft_font_backend.h
         include/docraft/backend/docraft_metadata_backend.h
-        src/docraft/model/docraft_image.cc
-        include/docraft/model/docraft_image.h
-        src/docraft/renderer/painter/docraft_image_painter.cc
-        include/docraft/renderer/painter/docraft_image_painter.h
-        src/docraft/layout/handler/docraft_basic_layout_handler.cc
-        include/docraft/layout/handler/docraft_basic_layout_handler.h
-        src/docraft/model/docraft_footer.cc
-        include/docraft/model/docraft_footer.h
-        src/docraft/model/docraft_table.cc
-        include/docraft/model/docraft_table.h
-        src/docraft/renderer/painter/docraft_table_painter.cc
-        include/docraft/renderer/painter/docraft_table_painter.h
-        src/docraft/layout/handler/docraft_layout_table_handler.cc
-        include/docraft/layout/handler/docraft_layout_table_handler.h
-        src/docraft/layout/handler/docraft_layout_horizontal_table_handler.cc
-        include/docraft/layout/handler/docraft_layout_horizontal_table_handler.h
-        src/docraft/layout/handler/docraft_layout_vertical_table_handler.cc
-        include/docraft/layout/handler/docraft_layout_vertical_table_handler.h
         include/docraft/utils/docraft_font_registry.h
-        src/docraft/model/docraft_rectangle.cc
-        include/docraft/model/docraft_rectangle.h
-        src/docraft/model/docraft_circle.cc
-        include/docraft/model/docraft_circle.h
-        src/docraft/model/docraft_triangle.cc
-        include/docraft/model/docraft_triangle.h
-        src/docraft/model/docraft_line.cc
-        include/docraft/model/docraft_line.h
-        src/docraft/model/docraft_polygon.cc
-        include/docraft/model/docraft_polygon.h
-        src/docraft/renderer/painter/docraft_rectangle_painter.cc
-        include/docraft/renderer/painter/docraft_rectangle_painter.h
-        src/docraft/renderer/painter/docraft_circle_painter.cc
-        include/docraft/renderer/painter/docraft_circle_painter.h
-        src/docraft/renderer/painter/docraft_polygonal_shape_painter_base.cc
-        include/docraft/renderer/painter/docraft_polygonal_shape_painter_base.h
-        src/docraft/renderer/painter/docraft_triangle_painter.cc
-        include/docraft/renderer/painter/docraft_triangle_painter.h
-        src/docraft/renderer/painter/docraft_line_painter.cc
-        include/docraft/renderer/painter/docraft_line_painter.h
-        src/docraft/renderer/painter/docraft_polygon_painter.cc
-        include/docraft/renderer/painter/docraft_polygon_painter.h
-        src/docraft/model/docraft_blank_line.cc
-        include/docraft/model/docraft_blank_line.h
-        src/docraft/layout/handler/docraft_layout_blank_line.cc
-        include/docraft/layout/handler/docraft_layout_blank_line.h
-        src/docraft/layout/handler/docraft_layout_line_handler.cc
-        include/docraft/layout/handler/docraft_layout_line_handler.h
-        src/docraft/renderer/painter/docraft_blank_line_painter.cc
-        include/docraft/renderer/painter/docraft_blank_line_painter.h
-        src/docraft/craft/docraft_craft_language_parser.cc
-        include/docraft/craft/docraft_craft_language_parser.h
-        include/docraft/craft/i_docraft_parser.h
-        src/docraft/craft/parser/docraft_parser_helpers.cc
-        src/docraft/craft/parser/docraft_rectangle_parser.cc
-        src/docraft/craft/parser/docraft_section_parsers.cc
-        src/docraft/craft/parser/docraft_text_parser.cc
-        src/docraft/craft/parser/docraft_page_number_parser.cc
-        src/docraft/craft/parser/docraft_image_parser.cc
-        src/docraft/craft/parser/docraft_table_parser.cc
-        src/docraft/craft/parser/docraft_layout_parser.cc
-        src/docraft/craft/parser/docraft_list_parser.cc
-        src/docraft/craft/parser/docraft_blank_line_parser.cc
-        src/docraft/craft/parser/docraft_new_page_parser.cc
-        src/docraft/craft/parser/docraft_circle_parser.cc
-        src/docraft/craft/parser/docraft_triangle_parser.cc
-        src/docraft/craft/parser/docraft_line_parser.cc
-        src/docraft/craft/parser/docraft_polygon_parser.cc
-        src/docraft/craft/parser/docraft_shape_parser_utils.cc
-        src/docraft/craft/parser/docraft_settings_parser.cc
-        include/docraft/craft/parser/docraft_parser.h
-        include/docraft/craft/parser/docraft_circle_parser.h
-        include/docraft/craft/parser/docraft_triangle_parser.h
-        include/docraft/craft/parser/docraft_line_parser.h
-        include/docraft/craft/parser/docraft_polygon_parser.h
-        include/docraft/craft/parser/docraft_shape_parser_utils.h
-        include/docraft/craft/docraft_craft_language_tokens.h
         src/docraft/utils/docraft_logger.cc
         src/docraft/utils/docraft_base64.cc
         src/docraft/utils/docraft_font_resolver.cc
-        src/docraft/utils/docraft_keyword_extractor.cc
         src/docraft/utils/docraft_font_registry.cc
         src/docraft/utils/docraft_parser_utilis.cc
         include/docraft/utils/docraft_logger.h
         include/docraft/utils/docraft_base64.h
-        include/docraft/utils/docraft_keyword_extractor.h
+        include/docraft/utils/docraft_font_resolver.h
         include/docraft/utils/docraft_parser_utilis.h
-        include/docraft/model/docraft_position.h
-        src/docraft/model/docraft_position.cc
         src/docraft/backend/pdf/docraft_haru_backend.cc
         include/docraft/backend/pdf/docraft_haru_backend.h
         src/docraft/backend/pdf/docraft_haru_backend_providers_factory.cc
@@ -184,23 +52,8 @@ set(DOCRAFT_SOURCES
         src/docraft/backend/pdf/docraft_haru_page_backend.cc
         include/docraft/backend/pdf/docraft_haru_page_backend.h
         include/docraft/backend/pdf/docraft_haru_shared_state.h
-        src/docraft/model/docraft_settings.cc
-        include/docraft/model/docraft_settings.h
-        include/docraft/model/docraft_page_format.h
         src/docraft/templating/docraft_template_engine.cc
         include/docraft/templating/docraft_template_engine.h
-        src/docraft/model/docraft_foreach.cc
-        include/docraft/model/docraft_foreach.h
-        src/docraft/craft/parser/docraft_foreach_parser.cc
-        src/docraft/management/docraft_document_section_manager.cc
-        include/docraft/management/docraft_document_section_manager.h
-        src/docraft/management/docraft_backend_cache.cc
-        include/docraft/management/docraft_backend_cache.h
-        src/docraft/management/docraft_document_query.cc
-        include/docraft/management/docraft_document_query.h
-        include/docraft/management/docraft_document_query.hpp
-        src/docraft/management/docraft_document_config.cc
-        include/docraft/management/docraft_document_config.h
         include/docraft/exception/docraft_exceptions.h
         src/docraft/loom/nodes/docraft_loom_text.cc
         include/docraft/loom/nodes/docraft_loom_text.h
@@ -254,11 +107,7 @@ set(DOCRAFT_SOURCES
 )
 set(DOCRAFT_LIBRARY_TYPE STATIC)
 if (BUILD_SHARED_LIBS)
-    set(DOCRAFT_LIBRARY_TYPE SHARED
-            src/docraft/loom/main_loom.cc
-
-
-    )
+    set(DOCRAFT_LIBRARY_TYPE SHARED)
 endif ()
 add_library(docraft ${DOCRAFT_LIBRARY_TYPE}
         ${DOCRAFT_SOURCES}
@@ -279,12 +128,9 @@ if (BUILD_SHARED_LIBS)
 endif ()
 
 generate_docraft_fonts(docraft "${CMAKE_CURRENT_SOURCE_DIR}/fonts.json")
-add_executable(docraft_tool src/docraft/main.cpp)
 add_executable(docraft_loom_tool src/docraft/loom/main_loom.cc)
 #declare define in the c++ code to export version
-target_compile_definitions(docraft_tool PRIVATE DOCRAFT_VERSION="${DOCRAFT_LIBRARY_VERSION}")
 target_compile_definitions(docraft_loom_tool PRIVATE DOCRAFT_VERSION="${DOCRAFT_LIBRARY_VERSION}")
-configure_artifact_version(docraft_tool ${PROJECT_VERSION})
 configure_artifact_version(docraft_loom_tool ${PROJECT_VERSION})
 if (TARGET pugixml::static)
     set(PUGIXML_TARGET pugixml::static)
@@ -295,7 +141,6 @@ else ()
 endif ()
 
 target_link_libraries(docraft PUBLIC ${PUGIXML_TARGET} nlohmann_json::nlohmann_json ${LIBHARU_TARGET} fmt::fmt)
-target_link_libraries(docraft_tool PRIVATE docraft)
 target_link_libraries(docraft_loom_tool PRIVATE docraft)
 
 target_include_directories(docraft
@@ -313,7 +158,7 @@ install(TARGETS docraft
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
-install(TARGETS docraft_tool
+install(TARGETS docraft_loom_tool
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

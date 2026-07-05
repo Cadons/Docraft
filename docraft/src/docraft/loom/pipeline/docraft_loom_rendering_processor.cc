@@ -85,7 +85,7 @@ namespace docraft::loom::pipeline {
         void draw_shape_polygon(backend::IDocraftShapeRenderingBackend* shape_backend,
                                 backend::IDocraftLineRenderingBackend* line_backend,
                                 const nodes::DocraftLoomShapeStyle& style,
-                                const nodes::Position& origin, const std::vector<model::DocraftPoint>& points)
+                                const nodes::Position& origin, const std::vector<nodes::Position>& points)
         {
             if (points.size() < 3)
             {
@@ -98,7 +98,7 @@ namespace docraft::loom::pipeline {
             }
             // Points are stored Y-down relative to origin, matching loom's coordinate
             // convention throughout -- no sign flip here (see coordinate note).
-            std::vector<model::DocraftPoint> transformed;
+            std::vector<nodes::Position> transformed;
             transformed.reserve(points.size());
             for (const auto& pt : points)
             {
@@ -138,7 +138,7 @@ namespace docraft::loom::pipeline {
                                                           const TextLineStyle& style)
     {
         const float actual_width = text_backend_->measure_text_width(line, style.font_name, style.font_size);
-        if (style.alignment == model::TextAlignment::kJustified)
+        if (style.alignment == nodes::TextAlignment::kJustified)
         {
             const auto spaces = std::count(line.begin(), line.end(), ' ');
             if (spaces == 0 || style.box_width <= actual_width)
@@ -166,11 +166,11 @@ namespace docraft::loom::pipeline {
         }
 
         float draw_x = x;
-        if (style.alignment == model::TextAlignment::kCenter)
+        if (style.alignment == nodes::TextAlignment::kCenter)
         {
             draw_x = x + (style.box_width - actual_width) / 2.0F;
         }
-        else if (style.alignment == model::TextAlignment::kRight)
+        else if (style.alignment == nodes::TextAlignment::kRight)
         {
             draw_x = x + (style.box_width - actual_width);
         }
@@ -212,8 +212,8 @@ namespace docraft::loom::pipeline {
             // Justified text stretches every line except the last, matching the
             // conventional look (a fully-justified last line reads as stretched-looking
             // gappy text instead of a natural paragraph end).
-            style.alignment = (text->alignment() == model::TextAlignment::kJustified && is_last_line)
-                                  ? model::TextAlignment::kLeft
+            style.alignment = (text->alignment() == nodes::TextAlignment::kJustified && is_last_line)
+                                  ? nodes::TextAlignment::kLeft
                                   : text->alignment();
             const float y = box_top + line_height * static_cast<float>(i + 1);
             text_backend_->begin_text();
@@ -284,13 +284,13 @@ namespace docraft::loom::pipeline {
         const auto& size = image->layout_box().frame.size;
         switch (image->format())
         {
-        case model::ImageFormat::kPng:
+        case nodes::ImageFormat::kPng:
             image_backend_->draw_png_image(image->path(), pos.x, pos.y, size.width, size.height);
             break;
-        case model::ImageFormat::kJpeg:
+        case nodes::ImageFormat::kJpeg:
             image_backend_->draw_jpeg_image(image->path(), pos.x, pos.y, size.width, size.height);
             break;
-        case model::ImageFormat::kRaw:
+        case nodes::ImageFormat::kRaw:
             if (image->raw_data().empty())
             {
                 throw exception::InvalidInputException("Raw image data is empty");

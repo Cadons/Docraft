@@ -10,7 +10,6 @@
 #include <sstream>
 
 #include "docraft/exception/docraft_input_exceptions.h"
-#include "docraft/generic/docraft_font_applier.h"
 #include "docraft/loom/nodes/docraft_loom_blank_line.h"
 #include "docraft/loom/nodes/docraft_loom_hstack.h"
 #include "docraft/loom/nodes/docraft_loom_circle.h"
@@ -343,7 +342,7 @@ namespace docraft::loom::pipeline {
     }
 
     namespace {
-        void measure_points_bounding_box(const std::vector<model::DocraftPoint>& points, nodes::Size& measured_size)
+        void measure_points_bounding_box(const std::vector<nodes::Position>& points, nodes::Size& measured_size)
         {
             if (points.size() < 2)
             {

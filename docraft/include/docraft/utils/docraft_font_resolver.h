@@ -21,9 +21,18 @@
 #include <unordered_map>
 #include <vector>
 
-#include "docraft/model/docraft_text.h"
-
 namespace docraft::utils {
+    /**
+     * @brief Text styles used when resolving a font variant.
+     */
+    enum class TextStyle
+    {
+        kNormal,
+        kBold,
+        kItalic,
+        kBoldItalic
+    };
+
     /**
      * @brief Resolves a font family + style into an available font name.
      *
@@ -38,6 +47,12 @@ namespace docraft::utils {
          */
         DocraftFontResolver() = default;
         /**
+         * @brief Returns libharu's 14 built-in base font names (Courier/Helvetica/Times
+         * variants, Symbol, ZapfDingbats) -- these resolve by name with no registration
+         * needed, unlike a custom TTF registered via DocraftFontRegistry.
+         */
+        static std::vector<std::string> builtin_font_names();
+        /**
          * @brief Rebuilds the internal index from the provided font name lists.
          * @param builtin_fonts Built-in font names.
          * @param registered_fonts Fonts registered at runtime.
@@ -51,7 +66,8 @@ namespace docraft::utils {
          * @return Resolved font name (may be empty).
          */
         std::string resolve(const std::string &requested,
-                            docraft::model::TextStyle style) const;
+                            TextStyle style) const;
+
     private:
         /**
          * @brief Per-family font variant mapping.

@@ -4,9 +4,19 @@
 
 #include "docraft/loom/nodes/docraft_loom_node.h"
 #include "docraft/docraft_color.h"
-#include "docraft/model/docraft_text.h"
 
 namespace docraft::loom::nodes {
+    /**
+     * @brief Text alignment options.
+     */
+    enum class TextAlignment
+    {
+        kLeft,
+        kCenter,
+        kRight,
+        kJustified
+    };
+
     class DOCRAFT_LIB DocraftLoomText : public DocraftLoomNode
     {
     public:
@@ -30,8 +40,8 @@ namespace docraft::loom::nodes {
         void set_underline(bool underline);
         const DocraftColor& color() const;
         void set_color(const DocraftColor& color);
-        model::TextAlignment alignment() const;
-        void set_alignment(model::TextAlignment alignment);
+        TextAlignment alignment() const;
+        void set_alignment(TextAlignment alignment);
 
         /**
          * @brief Resolves the backend-registered font name for font_family() + bold() +
@@ -66,7 +76,7 @@ namespace docraft::loom::nodes {
         bool italic_;
         bool underline_;
         DocraftColor color_;
-        model::TextAlignment alignment_;
+        TextAlignment alignment_;
         float wrap_width_ = 0.0F;
         std::vector<std::string> wrapped_lines_;
     };

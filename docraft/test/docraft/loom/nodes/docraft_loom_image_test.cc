@@ -22,21 +22,21 @@ namespace docraft::test {
     {
         loom::nodes::DocraftLoomImage image;
         image.set_path("photo.png");
-        EXPECT_EQ(image.format(), model::ImageFormat::kPng);
+        EXPECT_EQ(image.format(), loom::nodes::ImageFormat::kPng);
     }
 
     TEST_F(DocraftLoomImageTest, SetPathDerivesJpegFormat)
     {
         loom::nodes::DocraftLoomImage image;
         image.set_path("photo.jpg");
-        EXPECT_EQ(image.format(), model::ImageFormat::kJpeg);
+        EXPECT_EQ(image.format(), loom::nodes::ImageFormat::kJpeg);
     }
 
     TEST_F(DocraftLoomImageTest, SetPathDerivesRawFormatForUnknownExtension)
     {
         loom::nodes::DocraftLoomImage image;
         image.set_path("photo.bin");
-        EXPECT_EQ(image.format(), model::ImageFormat::kRaw);
+        EXPECT_EQ(image.format(), loom::nodes::ImageFormat::kRaw);
     }
 
     TEST_F(DocraftLoomImageTest, SetRawDataPopulatesHasRawData)
@@ -45,7 +45,7 @@ namespace docraft::test {
         const std::vector<unsigned char> data = {1, 2, 3};
         image.set_raw_data(data, 1, 1);
         EXPECT_TRUE(image.has_raw_data());
-        EXPECT_EQ(image.format(), model::ImageFormat::kRaw);
+        EXPECT_EQ(image.format(), loom::nodes::ImageFormat::kRaw);
         EXPECT_EQ(image.raw_pixel_width(), 1);
         EXPECT_EQ(image.raw_pixel_height(), 1);
     }
@@ -83,7 +83,7 @@ namespace docraft::test {
     {
         loom::pipeline::DocraftLoomLayoutProcessor layout;
         auto image = std::make_shared<loom::nodes::DocraftLoomImage>();
-        image->set_position_mode(model::DocraftPositionType::kAbsolute);
+        image->set_position_mode(loom::nodes::DocraftPositionType::kAbsolute);
         image->set_explicit_position({15.0F, 25.0F});
         image->accept(*measure_);
         image->accept(layout);

@@ -6,8 +6,8 @@
 #include <vector>
 #include <memory>
 #include "docraft/docraft_lib.h"
+#include "docraft/docraft_position.h"
 #include "docraft/loom/interfaces/docraft_loom_visitor.h"
-#include "docraft/model/docraft_position.h"
 
 namespace docraft::loom::nodes {
     /**
@@ -20,13 +20,11 @@ namespace docraft::loom::nodes {
     };
 
     /**
-     * @brief Struct representing a position with x and y coordinates.
+     * @brief A position with x and y coordinates -- an alias for the shared
+     * `docraft::Position`, so loom nodes, the cursor, and backend rendering
+     * interfaces all share one point type.
      */
-    struct Position
-    {
-        float x;
-        float y;
-    };
+    using Position = docraft::Position;
 
     /**
      * @brief Struct representing a rectangle with a position and size.
@@ -35,6 +33,15 @@ namespace docraft::loom::nodes {
     {
         Position position;
         Size size;
+    };
+
+    /**
+     * @brief Positioning modes for loom layout.
+     */
+    enum class DocraftPositionType
+    {
+        kBlock,
+        kAbsolute
     };
 
     /**
@@ -80,12 +87,12 @@ namespace docraft::loom::nodes {
         /**
          * @brief Returns the positioning mode (block flow or absolute).
          */
-        model::DocraftPositionType position_mode() const;
+        DocraftPositionType position_mode() const;
         /**
          * @brief Sets the positioning mode. Absolute nodes are placed at explicit_position()
          * during layout and do not advance the parent's cursor.
          */
-        void set_position_mode(model::DocraftPositionType position_mode);
+        void set_position_mode(DocraftPositionType position_mode);
         /**
          * @brief Returns the explicit position used when position_mode() is kAbsolute.
          */
@@ -98,7 +105,7 @@ namespace docraft::loom::nodes {
     private:
         std::vector<std::shared_ptr<DocraftLoomNode>> children_;
         LayoutBox layout_box_ = {};
-        model::DocraftPositionType position_mode_ = model::DocraftPositionType::kBlock;
+        DocraftPositionType position_mode_ = DocraftPositionType::kBlock;
         Position explicit_position_{0.0F, 0.0F};
     };
 } // docraft
