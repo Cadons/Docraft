@@ -7,6 +7,8 @@ These templates are designed for application users of the Docraft library.
 - `hello-world.craft`: minimal working example.
 - `basic-report.craft`: multi-section report with header/footer/page number.
 - `invoice-foreach.craft`: invoice layout using template variables and `Foreach`.
+- `invoice-static.craft`: full invoice layout with literal mock data, no template
+  variables — runnable as-is.
 - `table-json.craft`: table populated from JSON template variables.
 
 ## Required variables for `invoice-foreach.craft`
