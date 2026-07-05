@@ -208,6 +208,46 @@ namespace docraft::test {
                         first_cell_pos.y + last_cell.frame.size.height + 6.0F);
     }
 
+    TEST_F(DocraftLoomTableTest, LongCellTextWrapsInsteadOfOverflowingItsColumn)
+    {
+        // Natural (unwrapped) text width (50, the mock's default) is deliberately wider
+        // than the column budget estimated from a narrow content_width_, so the cell's
+        // Text must wrap instead of silently overflowing the resolved column.
+        measure_->set_content_width(20.0F);
+
+        auto table = std::make_shared<loom::nodes::DocraftLoomTable>();
+        table->set_padding(0.0F);
+        table->add_row({make_cell("a long piece of cell text")});
+        table->accept(*measure_);
+
+        auto text = std::dynamic_pointer_cast<loom::nodes::DocraftLoomText>(table->cell(0, 0)->content());
+        ASSERT_TRUE(text);
+        // available_width = 20 - 2*2.5 = 15; single column -> budget = 15 - 2*2.5 = 10.
+        EXPECT_FLOAT_EQ(text->wrap_width(), 10.0F);
+        EXPECT_GT(text->wrapped_lines().size(), 1U);
+        EXPECT_FLOAT_EQ(text->layout_box().measured_size.width, 10.0F);
+    }
+
+    TEST_F(DocraftLoomTableTest, ShortCellTextKeepsNaturalWidthEvenWithAColumnBudget)
+    {
+        // A column budget being known doesn't mean every cell stretches to fill it (that
+        // would break the natural-width-floor column sizing) -- a cell only wraps (and
+        // its measured width only changes) if its natural width actually overflows the
+        // budget.
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(5.0F));
+        measure_->set_content_width(200.0F);
+
+        auto table = std::make_shared<loom::nodes::DocraftLoomTable>();
+        table->set_padding(0.0F);
+        table->add_row({make_cell("ok")});
+        table->accept(*measure_);
+
+        auto text = std::dynamic_pointer_cast<loom::nodes::DocraftLoomText>(table->cell(0, 0)->content());
+        ASSERT_TRUE(text);
+        EXPECT_TRUE(text->wrapped_lines().empty());
+        EXPECT_FLOAT_EQ(text->layout_box().measured_size.width, 5.0F);
+    }
+
     TEST_F(DocraftLoomTableTest, TitleCellBoldByDefaultIsCallerResponsibility)
     {
         auto cell = make_cell("Header", true);

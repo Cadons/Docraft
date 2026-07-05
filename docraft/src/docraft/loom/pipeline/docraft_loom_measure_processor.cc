@@ -428,10 +428,35 @@ namespace docraft::loom::pipeline {
     {
         if (!cell)
             return;
+        const float wrap_budget = pending_cell_wrap_budget_;
+        pending_cell_wrap_budget_ = 0.0F;
+
         auto& measured_size = cell->edit_layout_box().measured_size;
         if (auto content = cell->content())
         {
             content->accept(*this);
+
+            // Only Text can overflow a column and needs wrapping; unlike a weighted
+            // HStack child (which always stretches to inherited_wrap_width_), this only
+            // kicks in when the cell's natural width actually exceeds the budget, so
+            // short content keeps its normal shrink-to-fit natural width.
+            if (auto text = std::dynamic_pointer_cast<nodes::DocraftLoomText>(content))
+            {
+                const auto& natural_size = text->layout_box().measured_size;
+                if (wrap_budget > 0.0F && natural_size.width > wrap_budget)
+                {
+                    const std::string reg_font = text->resolved_font_name();
+                    const float font_size = text->font_size();
+                    auto lines = wrap_text(text->text(), wrap_budget, reg_font, font_size);
+                    const float line_height = text_backend_->measure_text_height(reg_font, font_size);
+                    auto& text_measured = text->edit_layout_box().measured_size;
+                    text_measured.width = wrap_budget;
+                    text_measured.height = line_height * static_cast<float>(lines.size());
+                    text->set_wrap_width(wrap_budget);
+                    text->set_wrapped_lines(std::move(lines));
+                }
+            }
+
             // Cell size includes a small automatic inset around content, so text never
             // sits flush against the cell's own border -- mirrors how Rectangle's own
             // padding_ inflates its measured_size around its children.
@@ -452,6 +477,42 @@ namespace docraft::loom::pipeline {
         const int rows = table->row_count();
         const int cols = table->column_count();
 
+        // Best-effort per-column wrap ceiling, computed the same way Layout will later
+        // resolve column widths (explicit_width(), else a weight-based share, else an
+        // even split) -- see DocraftLoomLayoutProcessor::resolve_table_column_widths for
+        // the authoritative post-Measure version. This is only an upfront estimate so
+        // over-long cell text wraps instead of silently overflowing its column; it isn't
+        // pushed unconditionally (see visit(DocraftLoomTableCell*)), so it never disturbs
+        // the natural-width-floor sizing of cells that already fit.
+        std::vector<float> column_wrap_budget(static_cast<std::size_t>(cols), 0.0F);
+        if (cols > 0 && content_width_ > 0.0F)
+        {
+            const float available_width =
+                content_width_ - (2.0F * nodes::DocraftLoomTable::kCellPaddingX) - (2.0F * table->padding());
+            if (available_width > 0.0F)
+            {
+                const auto& weights = table->column_weights();
+                float total_weight = 0.0F;
+                for (int c = 0; c < cols; ++c)
+                {
+                    total_weight += (c < static_cast<int>(weights.size()) && weights[static_cast<std::size_t>(c)] >
+                                        0.0F)
+                                        ? weights[static_cast<std::size_t>(c)]
+                                        : 1.0F;
+                }
+                for (int c = 0; c < cols; ++c)
+                {
+                    const float weight =
+                        (c < static_cast<int>(weights.size()) && weights[static_cast<std::size_t>(c)] > 0.0F)
+                            ? weights[static_cast<std::size_t>(c)]
+                            : 1.0F;
+                    column_wrap_budget[static_cast<std::size_t>(c)] =
+                        std::max(0.0F, (available_width * weight / total_weight) -
+                                 (2.0F * nodes::DocraftLoomTable::kCellPaddingX));
+                }
+            }
+        }
+
         std::vector<float> col_widths(static_cast<std::size_t>(cols), 0.0F);
         std::vector<float> row_heights(static_cast<std::size_t>(rows), 0.0F);
         for (int r = 0; r < rows; ++r)
@@ -459,6 +520,12 @@ namespace docraft::loom::pipeline {
             for (int c = 0; c < cols; ++c)
             {
                 auto cell = table->cell(r, c);
+                // An explicit per-cell width is a harder, more specific constraint than
+                // the column estimate above -- prefer it when set.
+                pending_cell_wrap_budget_ =
+                    cell->explicit_width()
+                        ? std::max(0.0F, *cell->explicit_width() - (2.0F * nodes::DocraftLoomTable::kCellPaddingX))
+                        : column_wrap_budget[static_cast<std::size_t>(c)];
                 cell->accept(*this);
                 // Cell's own measured_size already folds in its padding inset (see
                 // DocraftLoomTableCell's own Measure visit above) -- no extra term here.

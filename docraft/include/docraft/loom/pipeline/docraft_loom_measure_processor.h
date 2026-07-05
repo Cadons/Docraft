@@ -109,5 +109,15 @@ namespace docraft::loom::pipeline {
         // without its own explicit wrap_width -- Paragraph passes it through unchanged
         // to each of its own children in turn. Zero means "no inherited constraint".
         float inherited_wrap_width_ = 0.0F;
+
+        // Pushed by DocraftLoomTable onto the cell it's about to measure: a best-effort
+        // estimate of that column's final width (explicit_width(), a weight-based share,
+        // or an even split of content_width_), consumed by visit(DocraftLoomTableCell*).
+        // Unlike inherited_wrap_width_ (which unconditionally stretches a weighted
+        // HStack child to fill its column), this is only a wrap *ceiling*: a cell whose
+        // natural text width already fits keeps its natural (shrink-to-fit) width, so
+        // Table's existing natural-width-floor column sizing isn't disturbed for the
+        // common case of short cell content. Zero means "no budget known yet".
+        float pending_cell_wrap_budget_ = 0.0F;
     };
 } // namespace docraft::loom::pipeline

@@ -62,6 +62,20 @@ namespace docraft::craft::parser {
             }
             throw docraft::exception::InvalidInputException("Invalid text alignment: " + alignment_str);
         }
+
+        std::string trim_whitespace(const std::string& text)
+        {
+            constexpr auto whitespace = " \t\n\r\f\v";
+
+            const auto first = text.find_first_not_of(whitespace);
+            if (first == std::string::npos)
+            {
+                return {};
+            }
+
+            const auto last = text.find_last_not_of(whitespace);
+            return text.substr(first, last - first + 1);
+        }
     } // namespace
 
     std::any DocraftTextParser::parse(const pugi::xml_node& craft_language_source)
@@ -83,7 +97,7 @@ namespace docraft::craft::parser {
         }
 
         data.text = craft_language_source.child_value();
-
+        data.text = trim_whitespace(data.text);
         if (auto font_size_attr = craft_language_source.attribute(elements::text::attribute::kFontSize.data())) {
             data.font_size = font_size_attr.as_float();
         }
