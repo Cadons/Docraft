@@ -79,7 +79,7 @@ namespace docraft::craft {
         constexpr string kSubtitle = "Subtitle";
         constexpr string kHTitle = "HTitle";
         constexpr string kVTitle = "VTitle";
-        constexpr string kLayout = "layout";
+        constexpr string kLayout = "Layout";
         constexpr string kBlankLine = "Blank";
         constexpr string kRectangle = "Rectangle";
         constexpr string kCircle = "Circle";
@@ -134,9 +134,11 @@ namespace docraft::craft {
             }
         }
         namespace templating {
-            constexpr string kForeach = "foreach";
+            constexpr string kForeach = "Foreach";
+
             namespace foreach::attribute {
                 constexpr string kModel = "model";
+                constexpr string kN = "n";
             }
         }
         namespace list {
@@ -160,10 +162,16 @@ namespace docraft::craft {
             }
         }
         namespace settings {
+            constexpr string kPage = "Page";
+            constexpr string kSectionRatios = "SectionRatios";
             constexpr string kFonts = "Fonts";
-            namespace attribute {
-                constexpr string kPageSize = "page_size";
-                constexpr string kPageOrientation = "page_orientation";
+
+            namespace page::attribute {
+                constexpr string kSize = "size";
+                constexpr string kOrientation = "orientation";
+            }
+
+            namespace section_ratios::attribute {
                 constexpr string kHeaderRatio = "header_ratio";
                 constexpr string kBodyRatio = "body_ratio";
                 constexpr string kFooterRatio = "footer_ratio";

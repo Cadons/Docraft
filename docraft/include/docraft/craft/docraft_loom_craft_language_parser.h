@@ -23,6 +23,7 @@
 #include "docraft/docraft_lib.h"
 
 #include "docraft/loom/docraft_loom_pdf_creator.h"
+#include "docraft/templating/docraft_template_engine.h"
 
 namespace pugi {
     class xml_node;
@@ -39,14 +40,27 @@ namespace docraft::craft {
      * `Document`/`Settings`/`Metadata`/`Foreach`/`NewPage`, so this class walks the
      * `<Document>` element directly via pugixml, picks out its `Header`/`Body`/`Footer`
      * children (each parsed generically from that point on via
-     * `DocraftCraftLanguageParser::parse_node`), and ignores every other top-level child
-     * (in particular `<Settings>`, whose wiring is Phase 4 -- out of scope here).
+     * `DocraftCraftLanguageParser::parse_node`), and applies a `<Settings>` sibling's
+     * `<Page>`/`<SectionRatios>`/`<Fonts>` sub-tags (if present) to the resulting creator
+     * (each `<Fonts><Font>` variant is registered via `DocraftLoomPdfCreator::
+     * register_font()`). `<Metadata>` is still ignored. `${variable}`/`${data(...)}` templating
+     * (Text/Title/Subtitle content, Image src, `<Foreach>`'s own `model`) is resolved by
+     * the `docraft::loom::craft::DocraftLoomTreeBuilder` this class drives internally,
+     * using whatever engine was given via set_template_engine().
      */
     class DOCRAFT_LIB DocraftLoomCraftLanguageParser
     {
     public:
         DocraftLoomCraftLanguageParser() = default;
         ~DocraftLoomCraftLanguageParser() = default;
+
+        /**
+         * @brief Sets the template engine used to resolve `${variable}`/`${data(...)}`
+         * expressions during the next parse()/load_from_file() call. If never called, an
+         * empty engine is used (no registered variables -- `${...}` expressions pass
+         * through unresolved).
+         */
+        void set_template_engine(std::shared_ptr<docraft::templating::DocraftTemplateEngine> template_engine);
 
         /**
          * @brief Parses a full Craft-language document from a string and builds/stores
@@ -75,5 +89,6 @@ namespace docraft::craft {
         void build_from_document(const pugi::xml_node& document_node);
 
         std::shared_ptr<loom::DocraftLoomPdfCreator> creator_;
+        std::shared_ptr<docraft::templating::DocraftTemplateEngine> template_engine_;
     };
 } // namespace docraft::craft

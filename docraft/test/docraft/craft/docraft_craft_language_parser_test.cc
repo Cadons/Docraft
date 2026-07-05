@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 
 #include "docraft/craft/docraft_craft_language_parser.h"
+#include "docraft/craft/parser/docraft_foreach_parser.h"
 #include "docraft/craft/parser/docraft_parser.h"
 #include "docraft/exception/docraft_exceptions.h"
 
@@ -170,9 +171,82 @@ TEST(DocraftCraftLanguageParserTest, RejectsNonTextChildInList)
 TEST(DocraftCraftLanguageParserTest, ThrowsForUnregisteredTag)
 {
     const char* xml = R"XML(
-<Foreach model="${items}" />
+<Bogus />
 )XML";
 
     docraft::craft::DocraftCraftLanguageParser parser;
     EXPECT_THROW(parser.parse(xml), docraft::exception::DataFormatException);
+}
+
+TEST(DocraftCraftLanguageParserTest, ParsesNewPageWithNoAttributes)
+{
+    const char* xml = R"XML(<NewPage />)XML";
+
+    docraft::craft::DocraftCraftLanguageParser parser;
+    const auto root = parser.parse(xml);
+    ASSERT_TRUE(root);
+    EXPECT_EQ(root->tag_name, "NewPage");
+    EXPECT_NO_THROW(std::any_cast<docraft::craft::parser::ParsedNewPageData>(root->data));
+}
+
+TEST(DocraftCraftLanguageParserTest, ParsesForeachWithModel)
+{
+    const char* xml = R"XML(
+<Foreach model="[{'name':'Alice'}]">
+  <Text>${data("name")}</Text>
+</Foreach>
+)XML";
+
+    docraft::craft::DocraftCraftLanguageParser parser;
+    const auto root = parser.parse(xml);
+    ASSERT_TRUE(root);
+    ASSERT_EQ(root->children.size(), 1U);
+    const auto data = std::any_cast<docraft::craft::parser::ParsedForeachData>(root->data);
+    ASSERT_TRUE(data.model.has_value());
+    EXPECT_FALSE(data.count.has_value());
+    // Stored verbatim -- single-quote normalization and ${...} resolution are deferred to
+    // DocraftLoomTreeBuilder::expand_foreach() at build time (see
+    // ForeachModel* tests in docraft_loom_tree_builder_test.cc).
+    EXPECT_EQ(*data.model, R"([{'name':'Alice'}])");
+}
+
+TEST(DocraftCraftLanguageParserTest, ParsesForeachWithN)
+{
+    const char* xml = R"XML(
+<Foreach n="4">
+  <Text>Row</Text>
+</Foreach>
+)XML";
+
+    docraft::craft::DocraftCraftLanguageParser parser;
+    const auto root = parser.parse(xml);
+    ASSERT_TRUE(root);
+    const auto data = std::any_cast<docraft::craft::parser::ParsedForeachData>(root->data);
+    EXPECT_FALSE(data.model.has_value());
+    ASSERT_TRUE(data.count.has_value());
+    EXPECT_EQ(*data.count, 4);
+}
+
+TEST(DocraftCraftLanguageParserTest, ThrowsWhenForeachHasBothModelAndN)
+{
+    const char* xml = R"XML(<Foreach model="[]" n="2" />)XML";
+
+    docraft::craft::DocraftCraftLanguageParser parser;
+    EXPECT_THROW(parser.parse(xml), docraft::exception::InvalidInputException);
+}
+
+TEST(DocraftCraftLanguageParserTest, ThrowsWhenForeachHasNeitherModelNorN)
+{
+    const char* xml = R"XML(<Foreach />)XML";
+
+    docraft::craft::DocraftCraftLanguageParser parser;
+    EXPECT_THROW(parser.parse(xml), docraft::exception::InvalidInputException);
+}
+
+TEST(DocraftCraftLanguageParserTest, ThrowsWhenForeachNIsNegative)
+{
+    const char* xml = R"XML(<Foreach n="-1" />)XML";
+
+    docraft::craft::DocraftCraftLanguageParser parser;
+    EXPECT_THROW(parser.parse(xml), docraft::exception::InvalidInputException);
 }

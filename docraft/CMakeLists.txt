@@ -102,6 +102,8 @@ set(DOCRAFT_SOURCES
         include/docraft/loom/nodes/docraft_loom_image.h
         src/docraft/loom/nodes/docraft_loom_line.cc
         include/docraft/loom/nodes/docraft_loom_line.h
+        src/docraft/loom/nodes/docraft_loom_new_page.cc
+        include/docraft/loom/nodes/docraft_loom_new_page.h
         include/docraft/loom/docraft_loom_foreach.h
 
         # Craft-language parser: generic, zero dependency on docraft/loom (Phase 2).
@@ -135,6 +137,9 @@ set(DOCRAFT_SOURCES
         src/docraft/craft/parser/docraft_paragraph_parser.cc
         include/docraft/craft/parser/docraft_section_parsers.h
         src/docraft/craft/parser/docraft_section_parsers.cc
+        src/docraft/craft/parser/docraft_new_page_parser.cc
+        include/docraft/craft/parser/docraft_foreach_parser.h
+        src/docraft/craft/parser/docraft_foreach_parser.cc
 
         # Loom-side tree builder: the only component depending on both docraft/craft and
         # docraft/loom (translates DocraftParsedElement trees into loom nodes).

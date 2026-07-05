@@ -19,14 +19,18 @@
 #include <memory>
 #include <vector>
 
+#include <nlohmann/json_fwd.hpp>
+
 #include "docraft/docraft_lib.h"
 
 #include "docraft/craft/docraft_craft_parsed_element.h"
+#include "docraft/templating/docraft_template_engine.h"
 #include "docraft/loom/nodes/docraft_loom_blank_line.h"
 #include "docraft/loom/nodes/docraft_loom_circle.h"
 #include "docraft/loom/nodes/docraft_loom_image.h"
 #include "docraft/loom/nodes/docraft_loom_line.h"
 #include "docraft/loom/nodes/docraft_loom_list.h"
+#include "docraft/loom/nodes/docraft_loom_new_page.h"
 #include "docraft/loom/nodes/docraft_loom_node.h"
 #include "docraft/loom/nodes/docraft_loom_page_number.h"
 #include "docraft/loom/nodes/docraft_loom_paragraph.h"
@@ -49,6 +53,17 @@ namespace docraft::loom::craft {
     class DOCRAFT_LIB DocraftLoomTreeBuilder
     {
     public:
+        /**
+         * @brief Constructs the builder.
+         * @param template_engine Resolves `${variable}`/`${data("field")}` in Text/Title/
+         * Subtitle content, Image src, and `<Foreach>`'s own `model` attribute. Defaults to
+         * a fresh, empty engine (no variables registered) if not given, so `${...}`
+         * expressions simply pass through unresolved rather than requiring a caller to
+         * always supply one.
+         */
+        explicit DocraftLoomTreeBuilder(
+            std::shared_ptr<docraft::templating::DocraftTemplateEngine> template_engine = nullptr);
+
         /**
          * @brief Builds a loom node (and, recursively, its subtree) from a parsed element.
          * @param element The parsed element to translate. May be null (returns nullptr).
@@ -78,13 +93,37 @@ namespace docraft::loom::craft {
         std::shared_ptr<nodes::DocraftLoomNode> build_layout(const ParsedElement& element);
         std::shared_ptr<nodes::DocraftLoomParagraph> build_paragraph(const ParsedElement& element);
         std::shared_ptr<nodes::DocraftLoomRectangle> build_section(const ParsedElement& element);
+        std::shared_ptr<nodes::DocraftLoomNewPage> build_new_page(const ParsedElement& element);
 
         /**
          * @brief Recursively builds each of `children` and appends the non-null results
-         * to `parent`.
+         * to `parent`. A `<Foreach>`-tagged child is not itself a node: it is expanded in
+         * place via expand_foreach() instead, so its own children (the repeat template)
+         * end up as direct siblings of the surrounding content in `parent`.
          */
         void add_children(const std::shared_ptr<nodes::DocraftLoomNode>& parent,
                           const std::vector<std::shared_ptr<ParsedElement>>& children);
+
+        /**
+         * @brief Expands a `<Foreach>` element's children (its repeat template) into
+         * `parent`, either once per item of its JSON array `model` (with `${data("field")}`
+         * substituted into any Text-bearing descendant's text, via current_foreach_item_)
+         * or, if no model was given, `n` times verbatim with no substitution.
+         * @throws docraft::exception::DataFormatException if `model` isn't valid JSON or
+         * doesn't resolve to a JSON array.
+         */
+        void expand_foreach(const std::shared_ptr<nodes::DocraftLoomNode>& parent,
+                            const ParsedElement& foreach_element);
+
+        /**
+         * @brief The JSON item of the `<Foreach model="...">` iteration currently being
+         * expanded, consulted by fill_text_node() to resolve `${data("field")}` in text
+         * content; nullptr outside of a model-based Foreach expansion (including inside an
+         * `n`-based one, unless nested within an outer model-based Foreach).
+         */
+        const nlohmann::json* current_foreach_item_ = nullptr;
+
+        std::shared_ptr<docraft::templating::DocraftTemplateEngine> template_engine_;
 
         /**
          * @brief Applies the generic `DocraftCommonAttributes` (name/x/y/width/height/

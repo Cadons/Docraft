@@ -15,6 +15,7 @@
 #include "docraft/loom/nodes/docraft_loom_image.h"
 #include "docraft/loom/nodes/docraft_loom_line.h"
 #include "docraft/loom/nodes/docraft_loom_list.h"
+#include "docraft/loom/nodes/docraft_loom_new_page.h"
 #include "docraft/loom/nodes/docraft_loom_page_number.h"
 #include "docraft/loom/nodes/docraft_loom_paragraph.h"
 #include "docraft/loom/nodes/docraft_loom_polygon.h"
@@ -540,5 +541,11 @@ namespace docraft::loom::pipeline {
         text_backend_->draw_text(display, node->layout_box().frame.position.x,
                                  node->layout_box().frame.position.y + node->layout_box().measured_size.height);
         text_backend_->end_text();
+    }
+
+    void DocraftLoomRenderingProcessor::visit(docraft::loom::nodes::DocraftLoomNewPage*)
+    {
+        // A forced page break carries no visible content -- see
+        // DocraftLoomPaginationProcessor::paginate_body() for the actual break logic.
     }
 } // docraft

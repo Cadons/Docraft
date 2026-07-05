@@ -19,6 +19,7 @@ namespace docraft::loom::nodes {
     class DocraftLoomTableCell;
     class DocraftLoomTable;
     class DocraftLoomPageNumber;
+    class DocraftLoomNewPage;
 }
 
 namespace docraft::loom::interfaces {
@@ -44,6 +45,7 @@ namespace docraft::loom::interfaces {
         virtual void visit(docraft::loom::nodes::DocraftLoomTableCell*) = 0;
         virtual void visit(docraft::loom::nodes::DocraftLoomTable*) = 0;
         virtual void visit(docraft::loom::nodes::DocraftLoomPageNumber*) = 0;
+        virtual void visit(docraft::loom::nodes::DocraftLoomNewPage*) = 0;
     };
 
     /**

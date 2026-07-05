@@ -16,6 +16,7 @@
 #include "docraft/loom/nodes/docraft_loom_image.h"
 #include "docraft/loom/nodes/docraft_loom_line.h"
 #include "docraft/loom/nodes/docraft_loom_list.h"
+#include "docraft/loom/nodes/docraft_loom_new_page.h"
 #include "docraft/loom/nodes/docraft_loom_paragraph.h"
 #include "docraft/loom/nodes/docraft_loom_polygon.h"
 #include "docraft/loom/nodes/docraft_loom_triangle.h"
@@ -485,5 +486,13 @@ namespace docraft::loom::pipeline {
         // Measured exactly like ordinary text, using its placeholder string -- the real
         // page number is substituted later, at render time, once pagination is known.
         visit(static_cast<docraft::loom::nodes::DocraftLoomText*>(node));
+    }
+
+    void DocraftLoomMeasureProcessor::visit(docraft::loom::nodes::DocraftLoomNewPage* node)
+    {
+        if (!node) return;
+        auto& measured_size = node->edit_layout_box().measured_size;
+        measured_size.width = 0.0F;
+        measured_size.height = 0.0F;
     }
 } // docraft

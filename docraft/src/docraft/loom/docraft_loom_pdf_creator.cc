@@ -7,10 +7,12 @@
 #include <cstddef>
 
 #include "docraft/backend/pdf/docraft_haru_backend.h"
+#include "docraft/exception/docraft_exceptions.h"
 #include "docraft/loom/pipeline/docraft_loom_layout_processor.h"
 #include "docraft/loom/pipeline/docraft_loom_measure_processor.h"
 #include "docraft/loom/pipeline/docraft_loom_pagination_processor.h"
 #include "docraft/loom/pipeline/docraft_loom_rendering_processor.h"
+#include "docraft/utils/docraft_font_registry.h"
 
 namespace docraft::loom {
     DocraftLoomPdfCreator::DocraftLoomPdfCreator(std::shared_ptr<interfaces::DocraftLoomIVisitorNode> root_node)
@@ -34,6 +36,54 @@ namespace docraft::loom {
         header_ratio_ = header_ratio;
         body_ratio_ = body_ratio;
         footer_ratio_ = footer_ratio;
+    }
+
+    float DocraftLoomPdfCreator::header_ratio() const
+    {
+        return header_ratio_;
+    }
+
+    float DocraftLoomPdfCreator::body_ratio() const
+    {
+        return body_ratio_;
+    }
+
+    float DocraftLoomPdfCreator::footer_ratio() const
+    {
+        return footer_ratio_;
+    }
+
+    void DocraftLoomPdfCreator::set_page_format(docraft::backend::DocraftPageSize size,
+                                                docraft::backend::DocraftPageOrientation orientation)
+    {
+        backend_->edit_page_rendering()->set_page_format(size, orientation);
+    }
+
+    void DocraftLoomPdfCreator::register_font(const std::string& family_name,
+                                              const std::optional<std::string>& normal_path,
+                                              const std::optional<std::string>& bold_path,
+                                              const std::optional<std::string>& italic_path,
+                                              const std::optional<std::string>& bold_italic_path)
+    {
+        auto* font_backend = backend_->edit_font_backend();
+        auto register_variant = [&](const std::optional<std::string>& path, const std::string& alias_suffix)
+        {
+            if (!path)
+            {
+                return;
+            }
+            const char* internal_name = font_backend->register_ttf_font_from_file(*path, /*embed=*/true);
+            if (!internal_name)
+            {
+                throw docraft::exception::BackendStateException("Failed to load font file: " + *path);
+            }
+            docraft::utils::DocraftFontRegistry::instance().register_font_alias(family_name + alias_suffix,
+                internal_name);
+        };
+        register_variant(normal_path, "");
+        register_variant(bold_path, "-Bold");
+        register_variant(italic_path, "-Italic");
+        register_variant(bold_italic_path, "-BoldItalic");
     }
 
     void DocraftLoomPdfCreator::set_header_margins(const Margins& margins)

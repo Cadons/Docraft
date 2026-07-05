@@ -8,6 +8,7 @@
 #include "docraft/loom/nodes/docraft_loom_hstack.h"
 #include "docraft/loom/nodes/docraft_loom_image.h"
 #include "docraft/loom/nodes/docraft_loom_list.h"
+#include "docraft/loom/nodes/docraft_loom_new_page.h"
 #include "docraft/loom/nodes/docraft_loom_page_number.h"
 #include "docraft/loom/nodes/docraft_loom_paragraph.h"
 #include "docraft/loom/nodes/docraft_loom_rectangle.h"
@@ -15,6 +16,7 @@
 #include "docraft/loom/nodes/docraft_loom_table_cell.h"
 #include "docraft/loom/nodes/docraft_loom_text.h"
 #include "docraft/loom/nodes/docraft_loom_vstack.h"
+#include "docraft/templating/docraft_template_engine.h"
 
 namespace {
     std::shared_ptr<docraft::loom::nodes::DocraftLoomNode> parse_and_build(const char* xml)
@@ -22,6 +24,15 @@ namespace {
         docraft::craft::DocraftCraftLanguageParser parser;
         const auto element = parser.parse(xml);
         docraft::loom::craft::DocraftLoomTreeBuilder builder;
+        return builder.build(element);
+    }
+
+    std::shared_ptr<docraft::loom::nodes::DocraftLoomNode> parse_and_build_with_engine(
+        const char* xml, std::shared_ptr<docraft::templating::DocraftTemplateEngine> engine)
+    {
+        docraft::craft::DocraftCraftLanguageParser parser;
+        const auto element = parser.parse(xml);
+        docraft::loom::craft::DocraftLoomTreeBuilder builder(std::move(engine));
         return builder.build(element);
     }
 } // namespace
@@ -354,4 +365,203 @@ TEST(DocraftLoomTreeBuilderTest, BuildsFooterAsRectangle)
     const auto rectangle = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomRectangle>(node);
     ASSERT_TRUE(rectangle);
     ASSERT_EQ(rectangle->children_count(), 1);
+}
+
+TEST(DocraftLoomTreeBuilderTest, BuildsNewPageMarker)
+{
+    const char* xml = R"XML(<NewPage />)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto new_page = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomNewPage>(node);
+    ASSERT_TRUE(new_page);
+}
+
+TEST(DocraftLoomTreeBuilderTest, ForeachWithNRepeatsChildrenVerbatim)
+{
+    const char* xml = R"XML(
+<Layout orientation="vertical">
+  <Foreach n="3">
+    <Text>Row</Text>
+  </Foreach>
+</Layout>
+)XML";
+
+    const auto node = parse_and_build(xml);
+    ASSERT_TRUE(node);
+    ASSERT_EQ(node->children_count(), 3);
+    for (int i = 0; i < 3; ++i)
+    {
+        const auto text = std::dynamic_pointer_cast<const docraft::loom::nodes::DocraftLoomText>(node->child(i));
+        ASSERT_TRUE(text);
+        EXPECT_EQ(text->text(), "Row");
+    }
+}
+
+TEST(DocraftLoomTreeBuilderTest, ForeachWithZeroNProducesNoChildren)
+{
+    const char* xml = R"XML(
+<Layout orientation="vertical">
+  <Foreach n="0">
+    <Text>Row</Text>
+  </Foreach>
+</Layout>
+)XML";
+
+    const auto node = parse_and_build(xml);
+    ASSERT_TRUE(node);
+    EXPECT_EQ(node->children_count(), 0);
+}
+
+TEST(DocraftLoomTreeBuilderTest, ForeachWithModelBindsDataFieldsPerItem)
+{
+    const char* xml = R"XML(
+<Layout orientation="vertical">
+  <Foreach model='[{"name":"Alice"},{"name":"Bob"}]'>
+    <Text>${data("name")}</Text>
+  </Foreach>
+</Layout>
+)XML";
+
+    const auto node = parse_and_build(xml);
+    ASSERT_TRUE(node);
+    ASSERT_EQ(node->children_count(), 2);
+    const auto first = std::dynamic_pointer_cast<const docraft::loom::nodes::DocraftLoomText>(node->child(0));
+    ASSERT_TRUE(first);
+    EXPECT_EQ(first->text(), "Alice");
+    const auto second = std::dynamic_pointer_cast<const docraft::loom::nodes::DocraftLoomText>(node->child(1));
+    ASSERT_TRUE(second);
+    EXPECT_EQ(second->text(), "Bob");
+}
+
+TEST(DocraftLoomTreeBuilderTest, ForeachSurroundingContentIsNotDisturbed)
+{
+    const char* xml = R"XML(
+<Layout orientation="vertical">
+  <Text>Before</Text>
+  <Foreach n="2">
+    <Text>Repeated</Text>
+  </Foreach>
+  <Text>After</Text>
+</Layout>
+)XML";
+
+    const auto node = parse_and_build(xml);
+    ASSERT_TRUE(node);
+    ASSERT_EQ(node->children_count(), 4);
+    const auto before = std::dynamic_pointer_cast<const docraft::loom::nodes::DocraftLoomText>(node->child(0));
+    ASSERT_TRUE(before);
+    EXPECT_EQ(before->text(), "Before");
+    const auto after = std::dynamic_pointer_cast<const docraft::loom::nodes::DocraftLoomText>(node->child(3));
+    ASSERT_TRUE(after);
+    EXPECT_EQ(after->text(), "After");
+}
+
+TEST(DocraftLoomTreeBuilderTest, ResolvesGlobalVariableInTextContent)
+{
+    const char* xml = R"XML(<Text>Hello ${name}</Text>)XML";
+
+    auto engine = std::make_shared<docraft::templating::DocraftTemplateEngine>();
+    engine->add_template_variable("name", "World");
+
+    const auto node = parse_and_build_with_engine(xml, engine);
+    const auto text = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomText>(node);
+    ASSERT_TRUE(text);
+    EXPECT_EQ(text->text(), "Hello World");
+}
+
+TEST(DocraftLoomTreeBuilderTest, ResolvesGlobalVariableInImageSrc)
+{
+    const char* xml = R"XML(<Image src="${logo_path}" />)XML";
+
+    auto engine = std::make_shared<docraft::templating::DocraftTemplateEngine>();
+    engine->add_template_variable("logo_path", "assets/logo.png");
+
+    const auto node = parse_and_build_with_engine(xml, engine);
+    const auto image = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomImage>(node);
+    ASSERT_TRUE(image);
+    EXPECT_EQ(image->path(), "assets/logo.png");
+}
+
+TEST(DocraftLoomTreeBuilderTest, UnknownVariableIsLeftLiteral)
+{
+    const char* xml = R"XML(<Text>Hello ${missing}</Text>)XML";
+
+    auto engine = std::make_shared<docraft::templating::DocraftTemplateEngine>();
+
+    const auto node = parse_and_build_with_engine(xml, engine);
+    const auto text = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomText>(node);
+    ASSERT_TRUE(text);
+    EXPECT_EQ(text->text(), "Hello ${missing}");
+}
+
+TEST(DocraftLoomTreeBuilderTest, ForeachModelResolvesFromGlobalVariable)
+{
+    const char* xml = R"XML(
+<Layout orientation="vertical">
+  <Foreach model="${employees}">
+    <Text>${data("name")}</Text>
+  </Foreach>
+</Layout>
+)XML";
+
+    auto engine = std::make_shared<docraft::templating::DocraftTemplateEngine>();
+    engine->add_template_variable("employees", R"([{"name":"Alice"},{"name":"Bob"}])");
+
+    const auto node = parse_and_build_with_engine(xml, engine);
+    ASSERT_TRUE(node);
+    ASSERT_EQ(node->children_count(), 2);
+    const auto first = std::dynamic_pointer_cast<const docraft::loom::nodes::DocraftLoomText>(node->child(0));
+    ASSERT_TRUE(first);
+    EXPECT_EQ(first->text(), "Alice");
+    const auto second = std::dynamic_pointer_cast<const docraft::loom::nodes::DocraftLoomText>(node->child(1));
+    ASSERT_TRUE(second);
+    EXPECT_EQ(second->text(), "Bob");
+}
+
+TEST(DocraftLoomTreeBuilderTest, ForeachModelResolvesFromGlobalVariableWithSingleQuotedJson)
+{
+    const char* xml = R"XML(
+<Layout orientation="vertical">
+  <Foreach model="${employees}">
+    <Text>${data("name")}</Text>
+  </Foreach>
+</Layout>
+)XML";
+
+    auto engine = std::make_shared<docraft::templating::DocraftTemplateEngine>();
+    engine->add_template_variable("employees", R"([{'name':'Alice'}])");
+
+    const auto node = parse_and_build_with_engine(xml, engine);
+    ASSERT_TRUE(node);
+    ASSERT_EQ(node->children_count(), 1);
+    const auto first = std::dynamic_pointer_cast<const docraft::loom::nodes::DocraftLoomText>(node->child(0));
+    ASSERT_TRUE(first);
+    EXPECT_EQ(first->text(), "Alice");
+}
+
+TEST(DocraftLoomTreeBuilderTest, NestedForeachModelResolvesFromOuterItemData)
+{
+    const char* xml = R"XML(
+<Layout orientation="vertical">
+  <Foreach model='[{"name":"Team A","members":[{"name":"Alice"},{"name":"Bob"}]}]'>
+    <Text>${data("name")}</Text>
+    <Foreach model='${data("members")}'>
+      <Text>${data("name")}</Text>
+    </Foreach>
+  </Foreach>
+</Layout>
+)XML";
+
+    const auto node = parse_and_build(xml);
+    ASSERT_TRUE(node);
+    ASSERT_EQ(node->children_count(), 3);
+    const auto team = std::dynamic_pointer_cast<const docraft::loom::nodes::DocraftLoomText>(node->child(0));
+    ASSERT_TRUE(team);
+    EXPECT_EQ(team->text(), "Team A");
+    const auto member1 = std::dynamic_pointer_cast<const docraft::loom::nodes::DocraftLoomText>(node->child(1));
+    ASSERT_TRUE(member1);
+    EXPECT_EQ(member1->text(), "Alice");
+    const auto member2 = std::dynamic_pointer_cast<const docraft::loom::nodes::DocraftLoomText>(node->child(2));
+    ASSERT_TRUE(member2);
+    EXPECT_EQ(member2->text(), "Bob");
 }

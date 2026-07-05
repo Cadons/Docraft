@@ -97,11 +97,11 @@ namespace docraft::templating {
                     variable_value = find_template_variable(variable_name);
                 } else {
                     LOG_WARNING("Template variable '" + variable_name + "' not found in template engine.");
-                    variable_value = text;
+                    variable_value = variable_expression;
                 }
             } catch (...) {
                 LOG_ERROR("Template variable '" + variable_name + "' not found");
-                variable_value = "";
+                variable_value = variable_expression;
             }
             result.replace(pos, end_pos - pos + 1, variable_value);
             pos += variable_value.length();
@@ -109,7 +109,8 @@ namespace docraft::templating {
         return result;
     }
     std::string DocraftTemplateEngine::render_template_string(const std::string &text,
-                                                              const nlohmann::json *foreach_item) {
+                                                              const nlohmann::json* foreach_item) const
+    {
         if (foreach_item != nullptr) {
             return render_template_string_foreach_item(text, *foreach_item);
         }
@@ -120,6 +121,7 @@ namespace docraft::templating {
             if (end_pos == std::string::npos) {
                 break;
             }
+            std::string variable_expression = result.substr(pos, end_pos - pos + 1);
             std::string variable_name = result.substr(pos + 2, end_pos - pos - 2);
             std::string variable_value;
             try {
@@ -127,11 +129,11 @@ namespace docraft::templating {
                     variable_value = find_template_variable(variable_name);
                 } else {
                     LOG_WARNING("Template variable '" + variable_name + "' not found in template engine.");
-                    variable_value = text;
+                    variable_value = variable_expression;
                 }
             } catch (...) {
                 LOG_ERROR("Template variable '" + variable_name + "' not found");
-                variable_value = "";
+                variable_value = variable_expression;
             }
             result.replace(pos, end_pos - pos + 1, variable_value);
             pos += variable_value.length();

@@ -316,6 +316,28 @@ namespace docraft::craft::parser {
     };
 
     /**
+     * @brief Tag-specific payload parsed from a `<NewPage>` element. Empty: `<NewPage>` is
+     * a pure forced-page-break marker with no attributes of its own.
+     */
+    struct ParsedNewPageData
+    {
+    };
+
+    /**
+     * @brief Parser for forced-page-break nodes.
+     */
+    class DOCRAFT_LIB DocraftNewPageParser : public IDocraftParser
+    {
+    public:
+        /**
+         * @brief Parses a `<NewPage>` XML node.
+         * @param craft_language_source XML node.
+         * @return `ParsedNewPageData`.
+         */
+        std::any parse(const pugi::xml_node& craft_language_source) override;
+    };
+
+    /**
      * @brief Layout orientation, duplicated for the same reason as `ParsedTextStyle`.
      */
     enum class ParsedLayoutOrientation

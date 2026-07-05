@@ -5,7 +5,10 @@
 #pragma once
 #include <filesystem>
 #include <memory>
+#include <optional>
+#include <string>
 
+#include "docraft/backend/docraft_page_format.h"
 #include "docraft/backend/pdf/docraft_haru_backend.h"
 #include "docraft/backend/pdf/docraft_haru_shared_state.h"
 #include "docraft/loom/nodes/docraft_loom_node.h"
@@ -52,6 +55,43 @@ namespace docraft::loom {
          * so it never overlaps the other two regions.
          */
         void set_section_ratios(float header_ratio, float body_ratio, float footer_ratio);
+        /**
+         * @brief Returns the header's fraction of page height (see set_section_ratios()).
+         */
+        float header_ratio() const;
+        /**
+         * @brief Returns the body's fraction of page height (see set_section_ratios()).
+         */
+        float body_ratio() const;
+        /**
+         * @brief Returns the footer's fraction of page height (see set_section_ratios()).
+         */
+        float footer_ratio() const;
+
+        /**
+         * @brief Sets the page size/orientation. Applies immediately to the backend, so
+         * it must be called before create() -- create() reads the backend's page_width()/
+         * page_height() to compute section heights.
+         */
+        void set_page_format(docraft::backend::DocraftPageSize size,
+                             docraft::backend::DocraftPageOrientation orientation);
+
+        /**
+         * @brief Registers a font family from TTF file(s), so `font_name="family_name"`
+         * (or `"family_name-Bold"`/`"-Italic"`/`"-BoldItalic"`) can be used by
+         * `DocraftLoomText`. Each provided variant is loaded via the backend and aliased
+         * in `DocraftFontRegistry` under `family_name` plus the matching suffix; a variant
+         * left as `std::nullopt` is simply not registered (resolving that style falls back
+         * to the closest available variant, or the requested name itself -- see
+         * `DocraftFontResolver::resolve()`).
+         * @throws docraft::exception::BackendStateException if a provided font file fails
+         * to load.
+         */
+        void register_font(const std::string& family_name,
+                           const std::optional<std::string>& normal_path,
+                           const std::optional<std::string>& bold_path = std::nullopt,
+                           const std::optional<std::string>& italic_path = std::nullopt,
+                           const std::optional<std::string>& bold_italic_path = std::nullopt);
 
         /**
          * @brief Sets the header's margins, inset from the header region's own edges.

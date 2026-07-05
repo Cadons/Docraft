@@ -11,6 +11,7 @@
 
 #include "docraft/loom/nodes/docraft_loom_hstack.h"
 #include "docraft/loom/nodes/docraft_loom_list.h"
+#include "docraft/loom/nodes/docraft_loom_new_page.h"
 #include "docraft/loom/nodes/docraft_loom_rectangle.h"
 #include "docraft/loom/nodes/docraft_loom_table.h"
 #include "docraft/loom/nodes/docraft_loom_vstack.h"
@@ -140,6 +141,12 @@ namespace docraft::loom::pipeline {
 
     void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomPageNumber*)
     {
+    }
+
+    void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomNewPage*)
+    {
+        // The actual forced break is handled directly in paginate_body(), which needs to
+        // special-case it before the normal fits-on-this-page check runs.
     }
 
     void DocraftLoomPaginationProcessor::assign_page_index_recursive(nodes::DocraftLoomNode& node, int page_index)
@@ -332,6 +339,23 @@ namespace docraft::loom::pipeline {
             auto& child = children[static_cast<std::size_t>(i)];
             if (!child)
             {
+                ++i;
+                continue;
+            }
+
+            // A forced page break: stamp it on the current page (it draws nothing, so
+            // which page doesn't matter) and unconditionally advance, regardless of how
+            // much room is left on the current page.
+            if (dynamic_cast<nodes::DocraftLoomNewPage*>(child.get()))
+            {
+                assign_page_index_recursive(*child, current_page);
+                if (page_backend)
+                {
+                    page_backend->add_new_page();
+                }
+                ++current_page;
+                page_bottom_y = body_top_y + body_height;
+                next_y = body_top_y;
                 ++i;
                 continue;
             }

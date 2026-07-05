@@ -18,6 +18,8 @@
 
 #include <hpdf.h>
 
+#include "docraft/utils/docraft_font_registry.h"
+
 namespace docraft::backend::pdf {
     DocraftHaruTextBackend::DocraftHaruTextBackend(const std::shared_ptr<DocraftHaruSharedState> &state)
         : state_(state) {
@@ -75,13 +77,21 @@ namespace docraft::backend::pdf {
         if (font_name.empty() || !state_->pdf)
             return nullptr;
 
+        // A craft-language family name (e.g. "OpenSans-Bold") is rarely libharu's own
+        // internal name for the loaded TTF -- resolve it through the alias table
+        // DocraftLoomPdfCreator::register_font() populates. Names with no registered
+        // alias pass through unchanged (built-in base-14 names, or an already-internal
+        // name passed directly).
+        const std::string resolved_name = docraft::utils::DocraftFontRegistry::instance().resolve_font_alias(
+            font_name);
+
         // Try WinAnsiEncoding first: compatible with all Type1 built-in fonts (Helvetica, Times, Courier…).
         // UTF-8 is only valid for embedded TrueType fonts, and fails with HPDF_FONT_INVALID_WIDTHS_TABLE
         // when the document encoder is UTF-8 but the font is Type1.
         static constexpr const char* kEncodings[] = {"WinAnsiEncoding", "UTF-8", nullptr};
         for (const char* enc : kEncodings)
         {
-            HPDF_Font font = HPDF_GetFont(state_->pdf, font_name.c_str(), enc);
+            HPDF_Font font = HPDF_GetFont(state_->pdf, resolved_name.c_str(), enc);
             if (font && HPDF_GetError(state_->pdf) == HPDF_OK)
                 return font;
             HPDF_ResetError(state_->pdf);

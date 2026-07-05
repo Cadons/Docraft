@@ -18,6 +18,7 @@
 
 #include "docraft/craft/docraft_craft_language_tokens.h"
 #include "docraft/craft/parser/docraft_circle_parser.h"
+#include "docraft/craft/parser/docraft_foreach_parser.h"
 #include "docraft/craft/parser/docraft_line_parser.h"
 #include "docraft/craft/parser/docraft_paragraph_parser.h"
 #include "docraft/craft/parser/docraft_parser.h"
@@ -49,9 +50,10 @@ DocraftCraftLanguageParser::DocraftCraftLanguageParser() {
     parsers_[std::string{section::kHeader}] = std::make_unique<parser::DocraftSectionParser>();
     parsers_[std::string{section::kBody}] = std::make_unique<parser::DocraftSectionParser>();
     parsers_[std::string{section::kFooter}] = std::make_unique<parser::DocraftSectionParser>();
-    // Settings/Metadata/Foreach/NewPage/Document itself are not registered here --
-    // Settings is Phase 4, Foreach is Phase 7, NewPage has no revival plan yet, and
-    // Document is walked directly (via pugixml, not through this per-tag registry) by
+    parsers_[std::string{elements::kNewPage}] = std::make_unique<parser::DocraftNewPageParser>();
+    parsers_[std::string{elements::templating::kForeach}] = std::make_unique<parser::DocraftForeachParser>();
+    // Settings/Metadata/Document itself are not registered here -- Settings is Phase 4,
+    // and Document is walked directly (via pugixml, not through this per-tag registry) by
     // docraft::craft::DocraftLoomCraftLanguageParser, which picks out only its
     // Header/Body/Footer children and ignores everything else at that top level.
 }

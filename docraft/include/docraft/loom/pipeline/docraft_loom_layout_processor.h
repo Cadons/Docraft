@@ -83,6 +83,7 @@ namespace docraft::loom::pipeline {
         void visit(docraft::loom::nodes::DocraftLoomTableCell*) override;
         void visit(docraft::loom::nodes::DocraftLoomTable*) override;
         void visit(docraft::loom::nodes::DocraftLoomPageNumber*) override;
+        void visit(docraft::loom::nodes::DocraftLoomNewPage*) override;
 
     private:
         /**

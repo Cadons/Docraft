@@ -10,7 +10,9 @@ set(TEST_SOURCES
         docraft/backend/docraft_haru_backend_test.cc
         docraft/utils/docraft_logger_test.cc
         docraft/utils/docraft_parser_utils.cc
+        docraft/utils/docraft_font_registry_test.cc
         docraft/loom/pipeline/docraft_loom_measure_processor_test.cc
+        docraft/loom/pipeline/docraft_loom_pagination_processor_test.cc
         docraft/loom/nodes/docraft_loom_stack_nodes_test.cc
         docraft/loom/nodes/docraft_loom_node_test.cc
         docraft/loom/nodes/docraft_loom_blank_line_test.cc
@@ -30,18 +32,14 @@ set(TEST_SOURCES
         docraft/craft/docraft_loom_craft_language_parser_test.cc
         docraft/loom/craft/docraft_loom_tree_builder_test.cc
 )
-# NOTE: docraft/craft/docraft_settings_parser_test.cc and
-# docraft/templating/docraft_template_engine_test.cc remain excluded -- Settings parsing
-# (Phase 4) and loom templating (Phase 7) haven't been rewritten yet. The rest of
-# docraft/craft/*_test.cc has been ported to target the generic DocraftParsedElement/
-# std::any parser output (and, where a DocraftLoomTreeBuilder path exists, actual loom
-# node output) instead of the deleted legacy model tree.
 
 add_executable(docraft_test
         ${TEST_SOURCES}
 )
 target_link_libraries(docraft_test PRIVATE docraft GTest::GTest GTest::gmock)
 target_include_directories(docraft_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_definitions(docraft_test PRIVATE
+        DOCRAFT_TEST_FONTS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../resources/fonts")
 gtest_add_tests(TARGET docraft_test
         TEST_LIST DOCRAFT_TESTS
 )

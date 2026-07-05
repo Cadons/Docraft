@@ -18,9 +18,14 @@
 
 #include <algorithm>
 #include <any>
+#include <cctype>
+#include <string_view>
+
+#include <nlohmann/json.hpp>
 
 #include "docraft/craft/docraft_craft_language_tokens.h"
 #include "docraft/craft/parser/docraft_circle_parser.h"
+#include "docraft/craft/parser/docraft_foreach_parser.h"
 #include "docraft/craft/parser/docraft_line_parser.h"
 #include "docraft/craft/parser/docraft_paragraph_parser.h"
 #include "docraft/craft/parser/docraft_parser.h"
@@ -29,14 +34,86 @@
 #include "docraft/craft/parser/docraft_triangle_parser.h"
 #include "docraft/exception/docraft_exceptions.h"
 #include "docraft/loom/nodes/docraft_loom_hstack.h"
+#include "docraft/loom/nodes/docraft_loom_new_page.h"
 #include "docraft/loom/nodes/docraft_loom_table_cell.h"
 #include "docraft/loom/nodes/docraft_loom_vstack.h"
 
 namespace docraft::loom::craft {
+    DocraftLoomTreeBuilder::DocraftLoomTreeBuilder(
+        std::shared_ptr<docraft::templating::DocraftTemplateEngine> template_engine)
+        : template_engine_(template_engine
+                               ? std::move(template_engine)
+                               : std::make_shared<docraft::templating::DocraftTemplateEngine>())
+    {
+    }
+
     namespace tokens = docraft::craft;
     namespace parser = docraft::craft::parser;
 
     namespace {
+        // Normalizes a JSON string that may use single quotes for strings instead of
+        // double quotes (the `.craft` convention for embedding JSON in an XML attribute,
+        // e.g. `model='[{"a":1}]'` vs `model="[{'a':1}]"`), while preserving apostrophes
+        // that are part of a word (e.g. "don't") rather than string delimiters. Applied
+        // after ${variable}/${data(...)} resolution, since a resolved variable's value may
+        // itself use this convention.
+        bool is_word_char(char ch)
+        {
+            const auto uch = static_cast<unsigned char>(ch);
+            return std::isalnum(uch) != 0 || ch == '_';
+        }
+
+        std::string normalize_single_quoted_json(std::string_view input)
+        {
+            std::string output;
+            output.reserve(input.size());
+            bool in_single = false;
+            bool in_double = false;
+            for (std::size_t i = 0; i < input.size(); ++i)
+            {
+                const char ch = input[i];
+                if (ch == '\\')
+                {
+                    if (in_single && (i + 1) < input.size())
+                    {
+                        const char next = input[i + 1];
+                        if (next == '\\' || next == '\'')
+                        {
+                            output.push_back(next);
+                            ++i;
+                            continue;
+                        }
+                    }
+                    output.push_back(ch);
+                    continue;
+                }
+                if (ch == '\'' && !in_double)
+                {
+                    if (in_single)
+                    {
+                        const char prev = (i > 0) ? input[i - 1] : '\0';
+                        const char next = ((i + 1) < input.size()) ? input[i + 1] : '\0';
+                        if (is_word_char(prev) && is_word_char(next))
+                        {
+                            output.push_back('\'');
+                            continue;
+                        }
+                    }
+                    in_single = !in_single;
+                    output.push_back('"');
+                    continue;
+                }
+                if (ch == '"' && !in_single)
+                {
+                    in_double = !in_double;
+                    output.push_back(ch);
+                    continue;
+                }
+                output.push_back(ch);
+            }
+            return output;
+        }
+
         void apply_style(nodes::DocraftLoomText& node, parser::ParsedTextStyle style)
         {
             switch (style)
@@ -77,9 +154,11 @@ namespace docraft::loom::craft {
             }
         }
 
-        void fill_text_node(nodes::DocraftLoomText& node, const parser::ParsedTextData& data)
+        void fill_text_node(nodes::DocraftLoomText& node, const parser::ParsedTextData& data,
+                            const docraft::templating::DocraftTemplateEngine& engine,
+                            const nlohmann::json* foreach_item)
         {
-            node.set_text(data.text);
+            node.set_text(engine.render_template_string(data.text, foreach_item));
             if (data.font_size)
             {
                 node.set_font_size(*data.font_size);
@@ -134,7 +213,9 @@ namespace docraft::loom::craft {
             }
         }
 
-        void fill_image_node(nodes::DocraftLoomImage& node, const parser::ParsedImageData& data)
+        void fill_image_node(nodes::DocraftLoomImage& node, const parser::ParsedImageData& data,
+                             const docraft::templating::DocraftTemplateEngine& engine,
+                             const nlohmann::json* foreach_item)
         {
             if (data.raw_data && data.raw_pixel_width && data.raw_pixel_height)
             {
@@ -142,13 +223,14 @@ namespace docraft::loom::craft {
             }
             else if (data.path)
             {
-                node.set_path(*data.path);
+                node.set_path(engine.render_template_string(*data.path, foreach_item));
             }
         }
 
-        std::shared_ptr<nodes::DocraftLoomTableCell> build_title_cell(const parser::ParsedTableTitleData& title)
+        std::shared_ptr<nodes::DocraftLoomTableCell> build_title_cell(
+            const parser::ParsedTableTitleData& title, const docraft::templating::DocraftTemplateEngine& engine)
         {
-            auto text = std::make_shared<nodes::DocraftLoomText>(title.text);
+            auto text = std::make_shared<nodes::DocraftLoomText>(engine.render_template_string(title.text));
             text->set_alignment(to_loom_alignment(title.alignment));
             apply_style(*text, title.style);
             if (title.color)
@@ -165,19 +247,26 @@ namespace docraft::loom::craft {
             return cell;
         }
 
-        std::shared_ptr<nodes::DocraftLoomTableCell> build_content_cell(const parser::ParsedTableCellData& cell_data)
+        std::shared_ptr<nodes::DocraftLoomTableCell> build_content_cell(
+            const parser::ParsedTableCellData& cell_data, const docraft::templating::DocraftTemplateEngine& engine)
         {
             std::shared_ptr<nodes::DocraftLoomNode> content;
             if (cell_data.content_tag_name == std::string{tokens::elements::kText})
             {
                 auto text_node = std::make_shared<nodes::DocraftLoomText>();
-                fill_text_node(*text_node, std::any_cast<const parser::ParsedTextData&>(cell_data.content));
+                // Table structure is parsed specially (no generic child recursion -- see
+                // DocraftCraftLanguageParser::parse_node's Table early-return), so a
+                // <Foreach> can't appear inside a <Table>; no foreach item to bind here,
+                // but global ${variable} substitution still applies.
+                fill_text_node(*text_node, std::any_cast<const parser::ParsedTextData&>(cell_data.content), engine,
+                               nullptr);
                 content = text_node;
             }
             else
             {
                 auto image_node = std::make_shared<nodes::DocraftLoomImage>();
-                fill_image_node(*image_node, std::any_cast<const parser::ParsedImageData&>(cell_data.content));
+                fill_image_node(*image_node, std::any_cast<const parser::ParsedImageData&>(cell_data.content), engine,
+                                nullptr);
                 content = image_node;
             }
 
@@ -247,6 +336,10 @@ namespace docraft::loom::craft {
         {
             return build_blank_line(*element);
         }
+        if (tag == std::string{tokens::elements::kNewPage})
+        {
+            return build_new_page(*element);
+        }
         if (tag == std::string{tokens::elements::kList} || tag == std::string{tokens::elements::kUList})
         {
             return build_list(*element);
@@ -277,10 +370,63 @@ namespace docraft::loom::craft {
     {
         for (const auto& child : children)
         {
+            if (child->tag_name == std::string{tokens::elements::templating::kForeach})
+            {
+                expand_foreach(parent, *child);
+                continue;
+            }
             if (auto built = build(child))
             {
                 parent->add_child(built);
             }
+        }
+    }
+
+    void DocraftLoomTreeBuilder::expand_foreach(const std::shared_ptr<nodes::DocraftLoomNode>& parent,
+                                                const ParsedElement& foreach_element)
+    {
+        const auto& data = std::any_cast<const parser::ParsedForeachData&>(foreach_element.data);
+
+        if (data.model)
+        {
+            // `model` may itself be (or contain) a `${variable}`/`${data("field")}`
+            // expression -- e.g. model="${employees}", or, nested inside an outer
+            // Foreach, model="${data("subitems")}" -- so it must be resolved against the
+            // *outer* current_foreach_item_ (still in scope at this point) before the
+            // single-quote normalization and JSON parsing below.
+            const std::string resolved_model =
+                template_engine_->render_template_string(*data.model, current_foreach_item_);
+            const std::string normalized_model = normalize_single_quoted_json(resolved_model);
+
+            nlohmann::json items;
+            try
+            {
+                items = nlohmann::json::parse(normalized_model);
+            }
+            catch (const nlohmann::json::exception& e)
+            {
+                throw docraft::exception::DataFormatException(
+                    std::string{"<Foreach> 'model' is not valid JSON: "} + e.what());
+            }
+            if (!items.is_array())
+            {
+                throw docraft::exception::DataFormatException("<Foreach> 'model' must resolve to a JSON array");
+            }
+
+            const nlohmann::json* previous_item = current_foreach_item_;
+            for (const auto& item : items)
+            {
+                current_foreach_item_ = &item;
+                add_children(parent, foreach_element.children);
+            }
+            current_foreach_item_ = previous_item;
+            return;
+        }
+
+        const int count = data.count.value_or(0);
+        for (int i = 0; i < count; ++i)
+        {
+            add_children(parent, foreach_element.children);
         }
     }
 
@@ -487,7 +633,7 @@ namespace docraft::loom::craft {
     {
         const auto& data = std::any_cast<const parser::ParsedTextData&>(element.data);
         auto node = std::make_shared<nodes::DocraftLoomText>();
-        fill_text_node(*node, data);
+        fill_text_node(*node, data, *template_engine_, current_foreach_item_);
         apply_common_attributes(*node, element.common);
         return node;
     }
@@ -506,7 +652,7 @@ namespace docraft::loom::craft {
     {
         const auto& data = std::any_cast<const parser::ParsedImageData&>(element.data);
         auto node = std::make_shared<nodes::DocraftLoomImage>();
-        fill_image_node(*node, data);
+        fill_image_node(*node, data, *template_engine_, current_foreach_item_);
         apply_common_attributes(*node, element.common);
         return node;
     }
@@ -514,6 +660,13 @@ namespace docraft::loom::craft {
     std::shared_ptr<nodes::DocraftLoomBlankLine> DocraftLoomTreeBuilder::build_blank_line(const ParsedElement& element)
     {
         auto node = std::make_shared<nodes::DocraftLoomBlankLine>();
+        apply_common_attributes(*node, element.common);
+        return node;
+    }
+
+    std::shared_ptr<nodes::DocraftLoomNewPage> DocraftLoomTreeBuilder::build_new_page(const ParsedElement& element)
+    {
+        auto node = std::make_shared<nodes::DocraftLoomNewPage>();
         apply_common_attributes(*node, element.common);
         return node;
     }
@@ -586,7 +739,7 @@ namespace docraft::loom::craft {
             }
             for (const auto& title : data.header_titles)
             {
-                header_row.push_back(build_title_cell(title));
+                header_row.push_back(build_title_cell(title, *template_engine_));
             }
             table->add_row(header_row);
         }
@@ -596,11 +749,11 @@ namespace docraft::loom::craft {
             std::vector<std::shared_ptr<nodes::DocraftLoomTableCell>> row;
             if (is_vertical && row_data.row_title)
             {
-                row.push_back(build_title_cell(*row_data.row_title));
+                row.push_back(build_title_cell(*row_data.row_title, *template_engine_));
             }
             for (const auto& cell_data : row_data.cells)
             {
-                row.push_back(build_content_cell(cell_data));
+                row.push_back(build_content_cell(cell_data, *template_engine_));
             }
             table->add_row(row);
         }

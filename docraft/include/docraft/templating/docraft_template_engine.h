@@ -28,10 +28,11 @@ namespace docraft::templating {
          * @brief The DocraftTemplateEngine class stores template variables/image data and
          * resolves `${...}` expressions against them.
          *
-         * @note Tree-walking (substituting `${...}` across a whole document tree and
-         * expanding `<Foreach>`) is not implemented yet for the loom pipeline -- this is
-         * tracked as follow-up work. Only the variable/image-data storage and
-         * string-resolution primitives are available right now.
+         * Used by both pipelines: legacy walks the whole document tree calling
+         * render_template_string() itself before layout/render, while
+         * `docraft::loom::craft::DocraftLoomTreeBuilder` calls it per string as it builds
+         * each node (Text/Title/Subtitle content, Image src, `<Foreach>`'s own `model`
+         * attribute), passing the current Foreach iteration's item where one is in scope.
          */
         class DOCRAFT_LIB DocraftTemplateEngine {
         public:
@@ -109,7 +110,21 @@ namespace docraft::templating {
                  */
                 const RawImageData &get_image_data(const std::string &image_id) const;
 
-        private:
+                /**
+                 * @brief Renders a template string, replacing every `${variable}` with its
+                 * registered value and, if `foreach_item` is given, every `${data("field")}`
+                 * with that field of `foreach_item`. An unresolvable `${...}` expression
+                 * (unknown variable, or `data(...)` with no `foreach_item`) is left in the
+                 * output exactly as written, rather than resolved to anything else.
+                 * @param text Template string to render.
+                 * @param foreach_item JSON object supplying the current Foreach iteration's
+                 * fields, or nullptr outside of a Foreach expansion.
+                 * @return Rendered string with every resolvable expression replaced.
+                 */
+                std::string render_template_string(const std::string& text,
+                                                   const nlohmann::json* foreach_item = nullptr) const;
+
+            private:
                 static std::string normalize_name(const std::string &name);
                 /**
                  * @brief Renders a template string by replacing template variables with their values.
@@ -121,8 +136,6 @@ namespace docraft::templating {
                 std::string render_template_string_foreach_item(const std::string &text,
                                                                 const nlohmann::json &item) const;
 
-                std::string render_template_string(const std::string &text,
-                                                   const nlohmann::json *foreach_item = nullptr);
                 std::unordered_map<std::string, std::string> template_variables_;
                 std::unordered_map<std::string, RawImageData> image_data_;
         };
