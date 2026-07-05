@@ -16,10 +16,10 @@ namespace docraft::test {
         std::unique_ptr<loom::pipeline::DocraftLoomMeasureProcessor> measure_;
     };
 
-    TEST_F(DocraftLoomBlankLineTest, DefaultHeightIsOne)
+    TEST_F(DocraftLoomBlankLineTest, DefaultHeightMatchesDefaultTextLine)
     {
         loom::nodes::DocraftLoomBlankLine blank_line;
-        EXPECT_FLOAT_EQ(blank_line.height(), 1.0F);
+        EXPECT_FLOAT_EQ(blank_line.height(), 12.0F);
     }
 
     TEST_F(DocraftLoomBlankLineTest, SetHeightOverridesDefault)

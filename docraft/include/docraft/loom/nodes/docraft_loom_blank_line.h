@@ -13,6 +13,9 @@ namespace docraft::loom::nodes {
         void set_height(float height);
 
     private:
-        float requested_height_ = 1.0F;
+        // Matches DocraftLoomText's own default font_size(), so a bare <Blank /> (no
+        // explicit height) reads as roughly one blank line of body text instead of an
+        // imperceptible 1pt gap.
+        float requested_height_ = 12.0F;
     };
 } // docraft

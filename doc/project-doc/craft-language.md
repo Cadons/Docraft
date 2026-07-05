@@ -341,7 +341,8 @@ Notes:
 
 ### 8.2 `Blank`
 
-A spacer node, typically used with `height`.
+A spacer node. Defaults to `height="12"` (one default text line) when omitted;
+set `height` explicitly for a different gap.
 
 ```xml
 <Blank height="8" />
