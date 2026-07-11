@@ -1,18 +1,13 @@
 #include "docraft/loom/nodes/docraft_loom_vstack.h"
 
 namespace docraft::loom::nodes {
+    DocraftLoomVStack::DocraftLoomVStack()
+        : DocraftLoomLayoutContainer(12.0F)
+    {
+    }
+
     void DocraftLoomVStack::accept(interfaces::DocraftLoomIVisitor& visitor)
     {
         visitor.visit(this);
-    }
-
-    float DocraftLoomVStack::spacing() const
-    {
-        return spacing_;
-    }
-
-    void DocraftLoomVStack::set_spacing(float spacing)
-    {
-        spacing_ = spacing;
     }
 } // namespace docraft::loom::nodes

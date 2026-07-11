@@ -55,7 +55,7 @@ namespace docraft::test {
         rect->accept(*measure_);
 
         EXPECT_FLOAT_EQ(rect->layout_box().measured_size.width, 80.0F); // 70 + 2*5
-        EXPECT_FLOAT_EQ(rect->layout_box().measured_size.height, 30.0F); // (10+10) + 2*5
+        EXPECT_FLOAT_EQ(rect->layout_box().measured_size.height, 34.0F); // (10+10) + default spacing(4) + 2*5
     }
 
     TEST_F(DocraftLoomRectangleTest, MeasureExplicitWidthOverridesChildDerivedWidth)

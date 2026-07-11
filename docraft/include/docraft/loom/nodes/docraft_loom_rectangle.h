@@ -4,21 +4,23 @@
 
 #pragma once
 #include "docraft_loom_node.h"
-#include "docraft/loom/nodes/docraft_loom_shape.h"
+#include "docraft/loom/nodes/docraft_loom_layout_container.h"
 
 namespace docraft::loom::nodes {
     /**
      * @brief Represents a rectangular node in the Docraft Loom structure.
      *
-     * `DocraftLoomRectangle` is a specific implementation of `DocraftLoomShape` that encapsulates
-     * properties and behavior for a rectangular shape. It supports visitor-based operations,
-     * background/border styling (inherited from DocraftLoomShape), and can hold children
-     * (inherited from DocraftLoomNode) that are laid out inside it, padded by padding().
+     * `DocraftLoomRectangle` is a specific implementation of `DocraftLoomLayoutContainer`
+     * that encapsulates properties and behavior for a rectangular shape. It supports
+     * visitor-based operations, background/border styling and inter-child spacing
+     * (both inherited from DocraftLoomLayoutContainer), and can hold children (inherited
+     * from DocraftLoomNode) that are laid out inside it, padded by padding() (also
+     * inherited from DocraftLoomNode -- every node type has it, not just Rectangle).
      */
-    class DocraftLoomRectangle : public DocraftLoomShape
+    class DocraftLoomRectangle : public DocraftLoomLayoutContainer
     {
     public:
-        DocraftLoomRectangle() = default;
+        DocraftLoomRectangle();
         ~DocraftLoomRectangle() override = default;
 
         void accept(loom::interfaces::DocraftLoomIVisitor& visitor) override;
@@ -29,12 +31,8 @@ namespace docraft::loom::nodes {
         float height() const;
         void set_height(float height);
 
-        float padding() const;
-        void set_padding(float padding);
-
     private:
         float width_ = 0.0F;
         float height_ = 0.0F;
-        float padding_ = 0.0F;
     };
 } // docraft

@@ -121,4 +121,29 @@ namespace docraft::loom::nodes {
     {
         name_ = name;
     }
+
+    float DocraftLoomNode::padding() const
+    {
+        return padding_;
+    }
+
+    void DocraftLoomNode::set_padding(float padding)
+    {
+        padding_ = padding;
+    }
+
+    const DocraftLoomMargin& DocraftLoomNode::margin() const
+    {
+        return margin_;
+    }
+
+    void DocraftLoomNode::set_margin(float margin)
+    {
+        margin_ = {.top = margin, .right = margin, .bottom = margin, .left = margin};
+    }
+
+    void DocraftLoomNode::set_margin(float top, float right, float bottom, float left)
+    {
+        margin_ = {.top = top, .right = right, .bottom = bottom, .left = left};
+    }
 } // docraft

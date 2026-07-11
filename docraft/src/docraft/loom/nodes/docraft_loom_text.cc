@@ -9,7 +9,8 @@
 
 namespace docraft::loom::nodes {
     DocraftLoomText::DocraftLoomText()
-        : font_size_(12.0F),
+        : DocraftLoomNode(),
+    font_size_(12.0F),
           bold_(false),
           italic_(false),
           underline_(false),

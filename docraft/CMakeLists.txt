@@ -62,6 +62,8 @@ set(DOCRAFT_SOURCES
         include/docraft/loom/nodes/docraft_loom_shape_style.h
         src/docraft/loom/nodes/docraft_loom_shape.cc
         include/docraft/loom/nodes/docraft_loom_shape.h
+        src/docraft/loom/nodes/docraft_loom_layout_container.cc
+        include/docraft/loom/nodes/docraft_loom_layout_container.h
         src/docraft/loom/nodes/docraft_loom_circle.cc
         include/docraft/loom/nodes/docraft_loom_circle.h
         src/docraft/loom/nodes/docraft_loom_triangle.cc

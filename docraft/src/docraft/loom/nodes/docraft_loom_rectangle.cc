@@ -5,6 +5,11 @@
 #include "docraft/loom/nodes/docraft_loom_rectangle.h"
 
 namespace docraft::loom::nodes {
+    DocraftLoomRectangle::DocraftLoomRectangle()
+        : DocraftLoomLayoutContainer(4.0F)
+    {
+    }
+
     void DocraftLoomRectangle::accept(loom::interfaces::DocraftLoomIVisitor& visitor)
     {
         visitor.visit(this);
@@ -28,15 +33,5 @@ namespace docraft::loom::nodes {
     void DocraftLoomRectangle::set_height(float height)
     {
         height_ = height;
-    }
-
-    float DocraftLoomRectangle::padding() const
-    {
-        return padding_;
-    }
-
-    void DocraftLoomRectangle::set_padding(float padding)
-    {
-        padding_ = padding;
     }
 } // docraft

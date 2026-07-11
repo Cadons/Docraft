@@ -46,6 +46,17 @@ namespace docraft::loom::nodes {
     };
 
     /**
+     * @brief Per-edge outer spacing (points), CSS-margin-shorthand style.
+     */
+    struct DocraftLoomMargin
+    {
+        float top = 0.0F;
+        float right = 0.0F;
+        float bottom = 0.0F;
+        float left = 0.0F;
+    };
+
+    /**
      * @brief Struct representing a layout box, which encapsulates layout-related data for nodes.
      *
      * The `LayoutBox` struct is used to store the results of key steps in the layout process:
@@ -117,6 +128,32 @@ namespace docraft::loom::nodes {
         const std::string& name() const;
         void set_name(const std::string& name);
 
+        /**
+         * @brief Inset (in points, uniform on every side) between this node's own box
+         * edge and where it lays out its children -- e.g. DocraftLoomRectangle offsets
+         * its children's start position by padding() and grows its own measured size
+         * by 2x padding() around them. A no-op default for node types that don't read
+         * it (leaves like Text/Image/Circle).
+         */
+        float padding() const;
+        void set_padding(float padding);
+
+        /**
+         * @brief Extra space (in points, per edge) this node asks its parent's
+         * stacking layout to reserve around it, on top of whatever gap the parent's
+         * own spacing()/spacing-like property already adds between children (see
+         * DocraftLoomLayoutContainer::spacing()) -- e.g. a `<Title>` can set a larger
+         * margin() than a plain `<Text>`/`<Paragraph>` so it reads as more separated
+         * from what follows it, regardless of which container it's stacked in.
+         * Containers combine the touching edges of two adjacent children via max(),
+         * not sum (mirrors CSS margin collapsing), so two neighbors both asking for
+         * breathing room don't double up -- vertical stacks (Rectangle/VStack) combine
+         * bottom/top, horizontal stacks (HStack) combine right/left.
+         */
+        const DocraftLoomMargin& margin() const;
+        void set_margin(float margin);
+        void set_margin(float top, float right, float bottom, float left);
+
     private:
         std::vector<std::shared_ptr<DocraftLoomNode>> children_;
         LayoutBox layout_box_ = {};
@@ -124,5 +161,7 @@ namespace docraft::loom::nodes {
         Position explicit_position_{0.0F, 0.0F};
         int z_index_ = 0;
         std::string name_;
+        float padding_ = 0.0F;
+        DocraftLoomMargin margin_;
     };
 } // docraft
