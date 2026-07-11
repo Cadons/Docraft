@@ -517,12 +517,12 @@ namespace docraft::loom::pipeline {
         shape_backend_->save_state();
         line_backend_->set_stroke_color(0.0F, 0.0F, 0.0F);
         line_backend_->set_line_width(1.0F);
-        line_backend_->draw_line(table_pos.x, table_pos.y, table_pos.x + table_size.width, table_pos.y);
-        line_backend_->draw_line(table_pos.x, table_pos.y + table_size.height, table_pos.x + table_size.width,
-                                 table_pos.y + table_size.height);
-        line_backend_->draw_line(table_pos.x, table_pos.y, table_pos.x, table_pos.y + table_size.height);
-        line_backend_->draw_line(table_pos.x + table_size.width, table_pos.y, table_pos.x + table_size.width,
-                                 table_pos.y + table_size.height);
+        // Outer border is a single closed rectangle path, not four independent line
+        // segments -- with butt-cap line ends (libharu's default), four disjoint strokes
+        // leave a gap at each corner where the segments only meet at a point rather than
+        // overlapping in the corner square.
+        shape_backend_->draw_rectangle(table_pos.x, table_pos.y, table_size.width, table_size.height);
+        shape_backend_->stroke();
         for (int c = 1; c < table.column_count(); ++c)
         {
             const float x = table.cell(0, c)->layout_box().frame.position.x;
