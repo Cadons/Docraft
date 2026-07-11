@@ -110,6 +110,26 @@ namespace docraft::craft::parser::detail {
         {
             common.padding = padding_attr.as_float();
         }
+        if (auto margin_attr = craft_language_source.attribute(basic::attribute::kMargin.data()))
+        {
+            common.margin = margin_attr.as_float();
+        }
+        if (auto margin_top_attr = craft_language_source.attribute(basic::attribute::kMarginTop.data()))
+        {
+            common.margin_top = margin_top_attr.as_float();
+        }
+        if (auto margin_right_attr = craft_language_source.attribute(basic::attribute::kMarginRight.data()))
+        {
+            common.margin_right = margin_right_attr.as_float();
+        }
+        if (auto margin_bottom_attr = craft_language_source.attribute(basic::attribute::kMarginBottom.data()))
+        {
+            common.margin_bottom = margin_bottom_attr.as_float();
+        }
+        if (auto margin_left_attr = craft_language_source.attribute(basic::attribute::kMarginLeft.data()))
+        {
+            common.margin_left = margin_left_attr.as_float();
+        }
         if (auto position_attr = craft_language_source.attribute(basic::attribute::kPosition.data()))
         {
             const std::string position_str = position_attr.as_string();

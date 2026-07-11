@@ -32,6 +32,11 @@ namespace docraft::craft {
         constexpr string kAutoFillHeight = "auto_fill_height";
         constexpr string kAutoFillWidth = "auto_fill_width";
         constexpr string kPadding = "padding";
+        constexpr string kMargin = "margin";
+        constexpr string kMarginTop = "margin_top";
+        constexpr string kMarginRight = "margin_right";
+        constexpr string kMarginBottom = "margin_bottom";
+        constexpr string kMarginLeft = "margin_left";
         constexpr string kWeight = "weight";
         constexpr string kPosition = "position";
         constexpr string kZIndex = "z_index";
