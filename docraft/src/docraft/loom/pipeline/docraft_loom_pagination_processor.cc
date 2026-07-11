@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <unordered_map>
 #include <vector>
 
 #include "docraft/loom/nodes/docraft_loom_hstack.h"
@@ -337,6 +338,32 @@ namespace docraft::loom::pipeline {
             children.push_back(body_root.remove_child(0));
         }
 
+        // Layout already computed the correct gap between each pair of top-level
+        // siblings (their collapsed margin, or the container's own spacing) while laying
+        // them out on its continuous, infinite-height canvas. paginate_body's job is only
+        // to re-flow that continuous canvas across finite physical pages, not to
+        // re-derive spacing -- so the gap is captured here, from Layout's untouched
+        // positions, before any page-breaking shift mutates them, and simply replayed
+        // below. Keyed by node pointer rather than index because splitting a table
+        // inserts a remainder into the middle of `children`, which would silently
+        // misalign a plain index-based lookup.
+        std::unordered_map<const nodes::DocraftLoomNode*, float> original_gap_after;
+        for (std::size_t k = 0; k + 1 < children.size(); ++k)
+        {
+            if (!children[k] || !children[k + 1])
+            {
+                continue;
+            }
+            const auto& box = children[k]->layout_box();
+            original_gap_after[children[k].get()] =
+                children[k + 1]->layout_box().frame.position.y - (box.frame.position.y + box.frame.size.height);
+        }
+        auto gap_after = [&](const nodes::DocraftLoomNode* node) -> float
+        {
+            const auto it = original_gap_after.find(node);
+            return it != original_gap_after.end() ? it->second : 0.0F;
+        };
+
         int current_page = 0;
         float next_y = body_top_y; // where the next child's top should land on the current page
         float page_bottom_y = body_top_y + body_height;
@@ -381,7 +408,7 @@ namespace docraft::loom::pipeline {
             if (fits)
             {
                 assign_page_index_recursive(*child, current_page);
-                next_y = bottom;
+                next_y = bottom + gap_after(child.get());
                 ++i;
                 continue;
             }
@@ -405,6 +432,14 @@ namespace docraft::loom::pipeline {
                     page_bottom_y = body_top_y + body_height;
                     assign_page_index_recursive(*remainder, current_page);
                     children.insert(children.begin() + static_cast<std::ptrdiff_t>(i) + 1, remainder);
+                    // The remainder stands in for "the rest of the table" from here on,
+                    // so it inherits the original table's trailing gap -- whatever
+                    // followed the table before splitting must still be separated from
+                    // the remainder by that same amount.
+                    if (const auto it = original_gap_after.find(child.get()); it != original_gap_after.end())
+                    {
+                        original_gap_after[remainder.get()] = it->second;
+                    }
                     // The remainder was already re-stacked to start exactly at body_top_y
                     // by try_split_table, so the next iteration's shift for it is a no-op.
                     next_y = body_top_y;
@@ -421,7 +456,7 @@ namespace docraft::loom::pipeline {
             if (oversized_escape)
             {
                 assign_page_index_recursive(*child, current_page);
-                next_y = bottom;
+                next_y = bottom + gap_after(child.get());
                 ++i;
                 continue;
             }
