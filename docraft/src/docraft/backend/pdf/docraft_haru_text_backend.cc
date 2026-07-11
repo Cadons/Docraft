@@ -85,10 +85,12 @@ namespace docraft::backend::pdf {
         const std::string resolved_name = docraft::utils::DocraftFontRegistry::instance().resolve_font_alias(
             font_name);
 
-        // Try WinAnsiEncoding first: compatible with all Type1 built-in fonts (Helvetica, Times, Courier…).
-        // UTF-8 is only valid for embedded TrueType fonts, and fails with HPDF_FONT_INVALID_WIDTHS_TABLE
-        // when the document encoder is UTF-8 but the font is Type1.
-        static constexpr const char* kEncodings[] = {"WinAnsiEncoding", "UTF-8", nullptr};
+        // Try UTF-8 first: register_font() always embeds custom TrueType fonts, and an
+        // embedded TTF accepts UTF-8, which is required for any non-WinAnsi character
+        // (e.g. accented letters) to render correctly instead of being shown byte-by-byte.
+        // UTF-8 fails with HPDF_FONT_INVALID_WIDTHS_TABLE for the Type1 built-in fonts
+        // (Helvetica, Times, Courier…), so those fall back to WinAnsiEncoding below.
+        static constexpr const char* kEncodings[] = {"UTF-8", "WinAnsiEncoding", nullptr};
         for (const char* enc : kEncodings)
         {
             HPDF_Font font = HPDF_GetFont(state_->pdf, resolved_name.c_str(), enc);
