@@ -5,6 +5,8 @@
 
 namespace docraft::loom::nodes {
     class DocraftLoomText;
+    class DocraftLoomTitle;
+    class DocraftLoomSubtitle;
     class DocraftLoomRectangle;
     class DocraftLoomParagraph;
     class DocraftLoomVStack;
@@ -31,6 +33,8 @@ namespace docraft::loom::interfaces {
     public:
         virtual ~DocraftLoomIVisitor() = default;
         virtual void visit(docraft::loom::nodes::DocraftLoomText*) = 0;
+        virtual void visit(docraft::loom::nodes::DocraftLoomTitle*) = 0;
+        virtual void visit(docraft::loom::nodes::DocraftLoomSubtitle*) = 0;
         virtual void visit(docraft::loom::nodes::DocraftLoomRectangle*) = 0;
         virtual void visit(docraft::loom::nodes::DocraftLoomParagraph*) = 0;
         virtual void visit(docraft::loom::nodes::DocraftLoomVStack*) = 0;

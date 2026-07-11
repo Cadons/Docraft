@@ -10,6 +10,7 @@
 #include "docraft/backend/pdf/docraft_haru_shared_state.h"
 #include "docraft/loom/interfaces/docraft_loom_visitor.h"
 #include "docraft/loom/nodes/docraft_loom_node.h"
+#include "docraft/loom/nodes/docraft_loom_shape_style.h"
 #include "docraft/loom/nodes/docraft_loom_text.h"
 
 namespace docraft::loom::pipeline {
@@ -18,6 +19,8 @@ namespace docraft::loom::pipeline {
     public:
         explicit DocraftLoomRenderingProcessor(backend::IDocraftRenderingCapabilityProvider* backend = nullptr);
         void visit(docraft::loom::nodes::DocraftLoomText*) override;
+        void visit(docraft::loom::nodes::DocraftLoomTitle*) override;
+        void visit(docraft::loom::nodes::DocraftLoomSubtitle*) override;
         void visit(docraft::loom::nodes::DocraftLoomRectangle*) override;
         void visit(docraft::loom::nodes::DocraftLoomParagraph*) override;
         void visit(docraft::loom::nodes::DocraftLoomVStack*) override;
@@ -70,6 +73,16 @@ namespace docraft::loom::pipeline {
          * already fills style.box_width).
          */
         void draw_aligned_line(const std::string& line, float x, float y, const TextLineStyle& style);
+
+        /**
+         * @brief Paints style's background fill and/or border stroke as a rectangle at
+         * (position, size), or does nothing if style has neither set. Shared by every
+         * DocraftLoomLayoutContainer subclass's own visit() (Rectangle, VStack, HStack)
+         * so the save_state()/apply paint state/draw/finish/restore_state() sequence
+         * isn't duplicated at each call site.
+         */
+        void draw_container_background(const nodes::DocraftLoomShapeStyle& style, const nodes::Position& position,
+                                       const nodes::Size& size);
 
         /**
          * @brief Whether a node should be drawn during the current page's render pass:

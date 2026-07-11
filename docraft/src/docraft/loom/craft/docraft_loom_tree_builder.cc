@@ -417,10 +417,17 @@ namespace docraft::loom::craft {
         {
             return build_line(*element);
         }
-        if (tag == std::string{tokens::elements::kText} || tag == std::string{tokens::elements::kTitle} ||
-            tag == std::string{tokens::elements::kSubtitle})
+        if (tag == std::string{tokens::elements::kText})
         {
             return build_text(*element);
+        }
+        if (tag == std::string{tokens::elements::kTitle})
+        {
+            return build_title(*element);
+        }
+        if (tag == std::string{tokens::elements::kSubtitle})
+        {
+            return build_subtitle(*element);
         }
         if (tag == std::string{tokens::elements::kPageNumber})
         {
@@ -732,6 +739,34 @@ namespace docraft::loom::craft {
         const auto& data = std::any_cast<const parser::ParsedTextData&>(element.data);
         auto node = std::make_shared<nodes::DocraftLoomText>();
         fill_text_node(*node, data, *template_engine_, current_foreach_item_);
+        apply_common_attributes(*node, element.common);
+        return node;
+    }
+
+    std::shared_ptr<nodes::DocraftLoomTitle> DocraftLoomTreeBuilder::build_title(const ParsedElement& element)
+    {
+        const auto& data = std::any_cast<const parser::ParsedTextData&>(element.data);
+        auto node = std::make_shared<nodes::DocraftLoomTitle>();
+        // fill_text_node only overwrites fields data actually set (see its own
+        // if (data.xxx) checks) -- an explicit font-size attribute still wins,
+        // otherwise DocraftLoomTitle's own constructor default stands.
+        fill_text_node(*node, data, *template_engine_, current_foreach_item_);
+        // Keep margin coherent with whatever font_size ended up being used (constructor
+        // default or an explicit attribute) -- 1em, matching the constructor's own
+        // convention -- so overriding font-size doesn't leave a disproportionate,
+        // fixed-constant gap. An explicit margin attribute below still overrides this.
+        node->set_margin(node->font_size());
+        apply_common_attributes(*node, element.common);
+        return node;
+    }
+
+    std::shared_ptr<nodes::DocraftLoomSubtitle> DocraftLoomTreeBuilder::build_subtitle(const ParsedElement& element)
+    {
+        const auto& data = std::any_cast<const parser::ParsedTextData&>(element.data);
+        auto node = std::make_shared<nodes::DocraftLoomSubtitle>();
+        fill_text_node(*node, data, *template_engine_, current_foreach_item_);
+        // See build_title's identical comment above.
+        node->set_margin(node->font_size());
         apply_common_attributes(*node, element.common);
         return node;
     }

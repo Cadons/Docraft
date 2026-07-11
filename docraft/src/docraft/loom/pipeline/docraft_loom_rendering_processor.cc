@@ -20,8 +20,10 @@
 #include "docraft/loom/nodes/docraft_loom_paragraph.h"
 #include "docraft/loom/nodes/docraft_loom_polygon.h"
 #include "docraft/loom/nodes/docraft_loom_rectangle.h"
+#include "docraft/loom/nodes/docraft_loom_subtitle.h"
 #include "docraft/loom/nodes/docraft_loom_table.h"
 #include "docraft/loom/nodes/docraft_loom_text.h"
+#include "docraft/loom/nodes/docraft_loom_title.h"
 #include "docraft/loom/nodes/docraft_loom_triangle.h"
 #include "docraft/loom/nodes/docraft_loom_vstack.h"
 
@@ -219,26 +221,47 @@ namespace docraft::loom::pipeline {
                                   : text->alignment();
             const float y = box_top + line_height * static_cast<float>(i + 1);
             text_backend_->begin_text();
+            // Unlike the single-line branch above, this loop never went through
+            // set_text_color() -- wrapped text silently kept whatever color the
+            // backend's graphics state last had (e.g. white from a preceding table
+            // header cell), regardless of this node's own color().
+            text_backend_->set_text_color(text->color().toRGB().r, text->color().toRGB().g, text->color().toRGB().b);
             draw_aligned_line(lines[i], box_x, y, style);
             text_backend_->end_text();
         }
+    }
+
+    void DocraftLoomRenderingProcessor::visit(docraft::loom::nodes::DocraftLoomTitle* node)
+    {
+        visit(static_cast<docraft::loom::nodes::DocraftLoomText*>(node));
+    }
+
+    void DocraftLoomRenderingProcessor::visit(docraft::loom::nodes::DocraftLoomSubtitle* node)
+    {
+        visit(static_cast<docraft::loom::nodes::DocraftLoomText*>(node));
+    }
+
+    void DocraftLoomRenderingProcessor::draw_container_background(const nodes::DocraftLoomShapeStyle& style,
+                                                                   const nodes::Position& position,
+                                                                   const nodes::Size& size)
+    {
+        const auto flags = resolve_shape_draw_flags(style);
+        if (!(flags.has_fill || flags.has_stroke))
+        {
+            return;
+        }
+        shape_backend_->save_state();
+        apply_shape_paint_state(shape_backend_, line_backend_, style, flags);
+        shape_backend_->draw_rectangle(position.x, position.y, size.width, size.height);
+        finish_shape_path(shape_backend_, flags);
+        shape_backend_->restore_state();
     }
 
     void DocraftLoomRenderingProcessor::visit(docraft::loom::nodes::DocraftLoomRectangle* node)
     {
         if (!node || !should_render(*node))
             return;
-        const auto flags = resolve_shape_draw_flags(node->style());
-        if (flags.has_fill || flags.has_stroke)
-        {
-            shape_backend_->save_state();
-            apply_shape_paint_state(shape_backend_, line_backend_, node->style(), flags);
-            const auto& pos = node->layout_box().frame.position;
-            const auto& size = node->layout_box().frame.size;
-            shape_backend_->draw_rectangle(pos.x, pos.y, size.width, size.height);
-            finish_shape_path(shape_backend_, flags);
-            shape_backend_->restore_state();
-        }
+        draw_container_background(node->style(), node->layout_box().frame.position, node->layout_box().frame.size);
         for (int i = 0; i < node->children_count(); ++i)
             if (auto child = node->edit_child(i))
                 child->accept(*this);
@@ -258,6 +281,7 @@ namespace docraft::loom::pipeline {
     void DocraftLoomRenderingProcessor::visit(docraft::loom::nodes::DocraftLoomVStack* node)
     {
         if (!node || !should_render(*node)) return;
+        draw_container_background(node->style(), node->layout_box().frame.position, node->layout_box().frame.size);
         for (int i = 0; i < node->children_count(); ++i)
             if (auto child = node->edit_child(i))
                 child->accept(*this);
@@ -266,6 +290,7 @@ namespace docraft::loom::pipeline {
     void DocraftLoomRenderingProcessor::visit(docraft::loom::nodes::DocraftLoomHStack* node)
     {
         if (!node || !should_render(*node)) return;
+        draw_container_background(node->style(), node->layout_box().frame.position, node->layout_box().frame.size);
         for (int i = 0; i < node->children_count(); ++i)
             if (auto child = node->edit_child(i))
                 child->accept(*this);
@@ -391,6 +416,8 @@ namespace docraft::loom::pipeline {
             {
                 text_backend_->set_font(text_child->resolved_font_name(), text_child->font_size());
                 text_backend_->begin_text();
+                const auto marker_rgba = text_child->color().toRGB();
+                text_backend_->set_text_color(marker_rgba.r, marker_rgba.g, marker_rgba.b);
                 // Same baseline adjustment as DocraftLoomText's own visit(): marker.position
                 // is the top of the marker's line box, not the baseline.
                 text_backend_->draw_text(marker.text, marker.position.x,
@@ -551,6 +578,7 @@ namespace docraft::loom::pipeline {
         const std::string display = std::to_string(current_page_index_ + 1);
         text_backend_->set_font(node->resolved_font_name(), node->font_size());
         text_backend_->begin_text();
+        text_backend_->set_text_color(node->color().toRGB().r, node->color().toRGB().g, node->color().toRGB().b);
         text_backend_->draw_text(display, node->layout_box().frame.position.x,
                                  node->layout_box().frame.position.y + node->layout_box().measured_size.height);
         text_backend_->end_text();

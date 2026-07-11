@@ -16,8 +16,10 @@
 #include "docraft/loom/nodes/docraft_loom_page_number.h"
 #include "docraft/loom/nodes/docraft_loom_paragraph.h"
 #include "docraft/loom/nodes/docraft_loom_rectangle.h"
+#include "docraft/loom/nodes/docraft_loom_subtitle.h"
 #include "docraft/loom/nodes/docraft_loom_table.h"
 #include "docraft/loom/nodes/docraft_loom_text.h"
+#include "docraft/loom/nodes/docraft_loom_title.h"
 #include "docraft/loom/nodes/docraft_loom_vstack.h"
 
 namespace docraft::loom::pipeline {
@@ -98,9 +100,20 @@ namespace docraft::loom::pipeline {
         // Pagination to treat a bare Text/Title/Subtitle as zero-height and pull the
         // following sibling back on top of it.
         layout_box.frame.size = layout_box.measured_size;
+
         // Move cursor to the right after placing the text; harmless if this node is
         // absolutely positioned, since the scope above restores the cursor on exit.
         cursor_.move(layout_box.measured_size.width, 0.0F);
+    }
+
+    void DocraftLoomLayoutProcessor::visit(docraft::loom::nodes::DocraftLoomTitle* node)
+    {
+        visit(static_cast<docraft::loom::nodes::DocraftLoomText*>(node));
+    }
+
+    void DocraftLoomLayoutProcessor::visit(docraft::loom::nodes::DocraftLoomSubtitle* node)
+    {
+        visit(static_cast<docraft::loom::nodes::DocraftLoomText*>(node));
     }
 
     void DocraftLoomLayoutProcessor::visit(docraft::loom::nodes::DocraftLoomRectangle* node)
@@ -115,13 +128,22 @@ namespace docraft::loom::pipeline {
         if (n > 0)
         {
             const float start_x = layout_box.frame.position.x + node->padding();
-            float current_y = layout_box.frame.position.y + node->padding();
+            // Mirrors the measure pass: the first child's own top margin is reserved
+            // outright, with no preceding sibling to combine it with.
+            float current_y = layout_box.frame.position.y + node->padding()
+                + node->resolve_outer_margin(*node, /*leading=*/true);
             for (int i = 0; i < n; ++i)
             {
                 cursor_.set_position(start_x, current_y);
                 auto child = node->edit_child(i);
                 child->accept(*this);
                 current_y += child->layout_box().measured_size.height;
+                if (i < n - 1)
+                {
+                    const auto next = node->child(i + 1);
+                    current_y += nodes::DocraftLoomLayoutContainer::resolve_child_gap(
+                        node->spacing(), child->margin().bottom, next->margin().top);
+                }
             }
         }
         cursor_.set_position(layout_box.frame.position.x, layout_box.frame.position.y + layout_box.frame.size.height);
@@ -164,8 +186,10 @@ namespace docraft::loom::pipeline {
         layout_box.frame.size = layout_box.measured_size;
 
         const float start_x = position.x;
-        float current_y = position.y;
         const int n = node->children_count();
+        // Mirrors the measure pass: the first/last child's own margin is reserved
+        // outright, with no sibling on that side to combine it with.
+        float current_y = position.y + node->resolve_outer_margin(*node, /*leading=*/true);
         for (int i = 0; i < n; ++i)
         {
             cursor_.set_position(start_x, current_y);
@@ -174,9 +198,12 @@ namespace docraft::loom::pipeline {
             current_y += child->layout_box().measured_size.height;
             if (i < n - 1)
             {
-                current_y += node->spacing();
+                const auto next = node->child(i + 1);
+                current_y += nodes::DocraftLoomLayoutContainer::resolve_child_gap(
+                    node->spacing(), child->margin().bottom, next->margin().top);
             }
         }
+        current_y += node->resolve_outer_margin(*node, /*leading=*/false);
         cursor_.set_position(start_x, current_y);
     }
 
@@ -192,6 +219,20 @@ namespace docraft::loom::pipeline {
         const float start_y = position.y;
         const int n = node->children_count();
         const auto& weights = node->weights();
+
+        // Precomputed once, upfront (see the matching comment in
+        // DocraftLoomMeasureProcessor::visit(DocraftLoomHStack*)) so the weighted-width
+        // math and the final advance loop agree on the same gaps.
+        const auto gaps = node->resolve_horizontal_child_gaps(*node, node->spacing());
+        float total_gap = 0.0F;
+        for (const float gap : gaps)
+        {
+            total_gap += gap;
+        }
+
+        // See the matching comment in DocraftLoomMeasureProcessor::visit(DocraftLoomHStack*).
+        const float leading_margin = node->resolve_outer_margin(*node, /*leading=*/true);
+        const float trailing_margin = node->resolve_outer_margin(*node, /*leading=*/false);
 
         // Opt-in: only engaged when weights() is non-empty, so plain HStacks (headers,
         // footers, shape rows, ...) keep today's shrink-to-fit behavior untouched. When
@@ -213,9 +254,8 @@ namespace docraft::loom::pipeline {
                 total_weight += w;
             }
 
-            const float spacing_total = n > 1 ? node->spacing() * static_cast<float>(n - 1) : 0.0F;
             const float available_width = (page_size_.width > 0.0F ? page_size_.width : layout_box.frame.size.width)
-                - spacing_total;
+                - total_gap - leading_margin - trailing_margin;
 
             resolved_widths.resize(static_cast<std::size_t>(n));
             for (int i = 0; i < n; ++i)
@@ -226,7 +266,7 @@ namespace docraft::loom::pipeline {
             }
         }
 
-        float current_x = position.x;
+        float current_x = position.x + leading_margin;
         for (int i = 0; i < n; ++i)
         {
             cursor_.set_position(current_x, start_y);
@@ -241,7 +281,11 @@ namespace docraft::loom::pipeline {
             current_x += advance;
             if (i < n - 1)
             {
-                current_x += node->spacing();
+                current_x += gaps[static_cast<std::size_t>(i)];
+            }
+            else
+            {
+                current_x += trailing_margin;
             }
         }
         cursor_.set_position(current_x, start_y);

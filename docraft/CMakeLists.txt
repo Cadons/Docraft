@@ -57,6 +57,10 @@ set(DOCRAFT_SOURCES
         include/docraft/exception/docraft_exceptions.h
         src/docraft/loom/nodes/docraft_loom_text.cc
         include/docraft/loom/nodes/docraft_loom_text.h
+        src/docraft/loom/nodes/docraft_loom_title.cc
+        include/docraft/loom/nodes/docraft_loom_title.h
+        src/docraft/loom/nodes/docraft_loom_subtitle.cc
+        include/docraft/loom/nodes/docraft_loom_subtitle.h
         src/docraft/loom/nodes/docraft_loom_rectangle.cc
         include/docraft/loom/nodes/docraft_loom_rectangle.h
         include/docraft/loom/nodes/docraft_loom_shape_style.h

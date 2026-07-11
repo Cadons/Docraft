@@ -22,11 +22,22 @@
 #include "docraft/loom/nodes/docraft_loom_triangle.h"
 #include "docraft/loom/nodes/docraft_loom_page_number.h"
 #include "docraft/loom/nodes/docraft_loom_rectangle.h"
+#include "docraft/loom/nodes/docraft_loom_subtitle.h"
 #include "docraft/loom/nodes/docraft_loom_table.h"
 #include "docraft/loom/nodes/docraft_loom_text.h"
+#include "docraft/loom/nodes/docraft_loom_title.h"
 #include "docraft/loom/nodes/docraft_loom_vstack.h"
 
 namespace docraft::loom::pipeline {
+    namespace {
+        // Standard typographic leading: measure_text_height() alone is just the raw
+        // font-metric glyph height, with no gap between consecutive lines -- applied
+        // only to wrapped multi-line text (see visit(DocraftLoomText*) and
+        // visit(DocraftLoomTableCell*)), never to a single natural-width line, whose
+        // own height feeds into inter-node spacing/margin instead (a separate concern).
+        constexpr float kWrappedLineHeightMultiplier = 1.2F;
+    }
+
     DocraftLoomMeasureProcessor::DocraftLoomMeasureProcessor(
         const std::shared_ptr<backend::IDocraftTextRenderingBackend>& text_backend)
         : text_backend_(text_backend)
@@ -157,7 +168,8 @@ namespace docraft::loom::pipeline {
         if (effective_wrap_width > 0.0F)
         {
             auto lines = wrap_text(text->text(), effective_wrap_width, reg_font, font_size);
-            const float line_height = text_backend_->measure_text_height(reg_font, font_size);
+            const float line_height = text_backend_->measure_text_height(reg_font, font_size) *
+                                       kWrappedLineHeightMultiplier;
             measure_size.width = effective_wrap_width;
             measure_size.height = line_height * static_cast<float>(lines.size());
             text->set_wrap_width(effective_wrap_width); // so Rendering knows the box width too
@@ -171,21 +183,51 @@ namespace docraft::loom::pipeline {
         }
     }
 
+    void DocraftLoomMeasureProcessor::visit(docraft::loom::nodes::DocraftLoomTitle* node)
+    {
+        visit(static_cast<docraft::loom::nodes::DocraftLoomText*>(node));
+    }
+
+    void DocraftLoomMeasureProcessor::visit(docraft::loom::nodes::DocraftLoomSubtitle* node)
+    {
+        visit(static_cast<docraft::loom::nodes::DocraftLoomText*>(node));
+    }
+
     void DocraftLoomMeasureProcessor::visit(docraft::loom::nodes::DocraftLoomRectangle* node)
     {
         if (!node)
             return;
+
+        // A width pushed down by an ancestor (or, at the root -- Body/Header/Footer --
+        // the region's own content_width_) constrains this rectangle's children the
+        // same way a weighted HStack column or Table cell already does for Text, so
+        // plain block content (Text, Paragraph, VStack, ...) wraps to the page/section
+        // width instead of measuring at its unbounded natural width.
+        const float incoming_width = inherited_wrap_width_ > 0.0F ? inherited_wrap_width_ : content_width_;
+        inherited_wrap_width_ = 0.0F;
+        const float own_width = node->width() > 0.0F ? node->width() : incoming_width;
+        const float children_wrap_width =
+            own_width > 0.0F ? std::max(0.0F, own_width - (2.0F * node->padding())) : 0.0F;
+
         float child_width = 0.0F;
-        float child_height = 0.0F;
+        float child_height = node->resolve_outer_margin(*node, /*leading=*/true);
         const int n = node->children_count();
         for (int i = 0; i < n; ++i)
         {
+            inherited_wrap_width_ = children_wrap_width;
             auto child = node->edit_child(i);
             child->accept(*this);
             const auto& sz = child->layout_box().measured_size;
             child_height += sz.height;
+            if (i < n - 1)
+            {
+                const auto next = node->child(i + 1);
+                child_height += nodes::DocraftLoomLayoutContainer::resolve_child_gap(
+                    node->spacing(), child->margin().bottom, next->margin().top);
+            }
             child_width = std::max(child_width, sz.width);
         }
+        child_height += node->resolve_outer_margin(*node, /*leading=*/false);
         const bool has_children = n > 0;
         auto& measured_size = node->edit_layout_box().measured_size;
         measured_size.height = has_children ? (child_height + (2.0F * node->padding())) : node->height();
@@ -227,21 +269,32 @@ namespace docraft::loom::pipeline {
     void DocraftLoomMeasureProcessor::visit(docraft::loom::nodes::DocraftLoomVStack* node)
     {
         if (!node) return;
-        float total_height = 0.0F;
+
+        // A VStack has no width/padding of its own, so it neither narrows nor owns the
+        // constraint -- it just relays whatever width is available straight through to
+        // each child, mirroring DocraftLoomRectangle.
+        const float incoming_width = inherited_wrap_width_ > 0.0F ? inherited_wrap_width_ : content_width_;
+        inherited_wrap_width_ = 0.0F;
+
+        float total_height = node->resolve_outer_margin(*node, /*leading=*/true);
         float max_width = 0.0F;
         const int n = node->children_count();
         for (int i = 0; i < n; ++i)
         {
+            inherited_wrap_width_ = incoming_width;
             auto child = node->edit_child(i);
             child->accept(*this);
             const auto& sz = child->layout_box().measured_size;
             total_height += sz.height;
             if (i < n - 1)
             {
-                total_height += node->spacing();
+                const auto next = node->child(i + 1);
+                total_height += nodes::DocraftLoomLayoutContainer::resolve_child_gap(
+                    node->spacing(), child->margin().bottom, next->margin().top);
             }
             max_width = std::max(max_width, sz.width);
         }
+        total_height += node->resolve_outer_margin(*node, /*leading=*/false);
         auto& ms = node->edit_layout_box().measured_size;
         ms.width = max_width;
         ms.height = total_height;
@@ -254,6 +307,30 @@ namespace docraft::loom::pipeline {
         float max_height = 0.0F;
         const int n = node->children_count();
         const auto& weights = node->weights();
+
+        // Clear any width pushed down by an ancestor (Rectangle/VStack now always arm
+        // one) before deciding whether to push our own: without weights, HStack's
+        // contract is shrink-to-fit (each child gets its own natural width, see class
+        // doc), so a stale inherited value must not leak into the first child.
+        inherited_wrap_width_ = 0.0F;
+
+        // Precomputed once, upfront: margin() is a static per-child property (doesn't
+        // depend on measurement), so every gap can be resolved before either the
+        // weighted-width math below or the final accumulation loop need it -- both
+        // must agree on the same gaps, or resolved column widths wouldn't actually sum
+        // back to content_width_.
+        const auto gaps = node->resolve_horizontal_child_gaps(*node, node->spacing());
+        float total_gap = 0.0F;
+        for (const float gap : gaps)
+        {
+            total_gap += gap;
+        }
+
+        // Like the inter-child gaps above, the first/last child's own left/right margin
+        // has no sibling to combine with -- it's reserved outright between the
+        // container's content edge and that child.
+        const float leading_margin = node->resolve_outer_margin(*node, /*leading=*/true);
+        const float trailing_margin = node->resolve_outer_margin(*node, /*leading=*/false);
 
         // Opt-in, mirrors DocraftLoomLayoutProcessor's weighted branch: resolve each
         // column's width from weights alone (no natural-width floor here, unlike
@@ -274,8 +351,7 @@ namespace docraft::loom::pipeline {
                 effective_weights[static_cast<std::size_t>(i)] = w;
                 total_weight += w;
             }
-            const float spacing_total = n > 1 ? node->spacing() * static_cast<float>(n - 1) : 0.0F;
-            const float available_width = content_width_ - spacing_total;
+            const float available_width = content_width_ - total_gap - leading_margin - trailing_margin;
             resolved_widths.resize(static_cast<std::size_t>(n));
             for (int i = 0; i < n; ++i)
             {
@@ -296,12 +372,12 @@ namespace docraft::loom::pipeline {
             total_width += sz.width;
             if (i < n - 1)
             {
-                total_width += node->spacing();
+                total_width += gaps[static_cast<std::size_t>(i)];
             }
             max_height = std::max(max_height, sz.height);
         }
         auto& ms = node->edit_layout_box().measured_size;
-        ms.width = total_width;
+        ms.width = total_width + leading_margin + trailing_margin;
         ms.height = max_height;
     }
 
@@ -386,6 +462,14 @@ namespace docraft::loom::pipeline {
         auto& markers = node->edit_markers();
         markers.resize(static_cast<std::size_t>(n));
 
+        // A width pushed down by an ancestor (or content_width_ at the root) applies to
+        // every item's Text in turn, minus that item's own marker prefix -- captured
+        // once here and re-armed before each item below, mirroring
+        // DocraftLoomParagraph's relay (a single accept() call per item would otherwise
+        // only let the first item consume it, leaving the rest unwrapped).
+        const float incoming_width = inherited_wrap_width_ > 0.0F ? inherited_wrap_width_ : content_width_;
+        inherited_wrap_width_ = 0.0F;
+
         float max_width = 0.0F;
         float total_height = 0.0F;
         for (int i = 0; i < n; ++i)
@@ -395,7 +479,6 @@ namespace docraft::loom::pipeline {
             {
                 throw exception::InvalidInputException("List items must be Text nodes");
             }
-            text_child->accept(*this);
 
             auto& marker = markers[static_cast<std::size_t>(i)];
             marker.text = node->marker_text_for_index(i);
@@ -412,8 +495,14 @@ namespace docraft::loom::pipeline {
                                    ? 0.0F
                                    : text_backend_->measure_text_width(marker.text, reg_font, text_child->font_size());
             }
-
             const float gap = marker.width > 0.0F ? node->marker_gap() : 0.0F;
+
+            if (incoming_width > 0.0F)
+            {
+                inherited_wrap_width_ = std::max(0.0F, incoming_width - marker.width - gap);
+            }
+            text_child->accept(*this);
+
             const auto& child_size = text_child->layout_box().measured_size;
             max_width = std::max(max_width, marker.width + gap + child_size.width);
             total_height += child_size.height;
@@ -448,7 +537,8 @@ namespace docraft::loom::pipeline {
                     const std::string reg_font = text->resolved_font_name();
                     const float font_size = text->font_size();
                     auto lines = wrap_text(text->text(), wrap_budget, reg_font, font_size);
-                    const float line_height = text_backend_->measure_text_height(reg_font, font_size);
+                    const float line_height = text_backend_->measure_text_height(reg_font, font_size) *
+                                               kWrappedLineHeightMultiplier;
                     auto& text_measured = text->edit_layout_box().measured_size;
                     text_measured.width = wrap_budget;
                     text_measured.height = line_height * static_cast<float>(lines.size());
@@ -474,6 +564,13 @@ namespace docraft::loom::pipeline {
     {
         if (!table)
             return;
+
+        // Table resolves per-column wrap budgets itself (pending_cell_wrap_budget_)
+        // rather than through inherited_wrap_width_ -- clear any value an ancestor
+        // pushed down (Rectangle/VStack now always arm one) so it doesn't leak into a
+        // cell's Text measurement alongside the budget computed below.
+        inherited_wrap_width_ = 0.0F;
+
         const int rows = table->row_count();
         const int cols = table->column_count();
 

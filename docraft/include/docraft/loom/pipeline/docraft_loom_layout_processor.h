@@ -69,6 +69,8 @@ namespace docraft::loom::pipeline {
         void set_content_width(float width);
 
         void visit(docraft::loom::nodes::DocraftLoomText*) override;
+        void visit(docraft::loom::nodes::DocraftLoomTitle*) override;
+        void visit(docraft::loom::nodes::DocraftLoomSubtitle*) override;
         void visit(docraft::loom::nodes::DocraftLoomRectangle*) override;
         void visit(docraft::loom::nodes::DocraftLoomParagraph*) override;
         void visit(docraft::loom::nodes::DocraftLoomVStack*) override;

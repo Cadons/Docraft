@@ -38,6 +38,8 @@
 #include "docraft/loom/nodes/docraft_loom_rectangle.h"
 #include "docraft/loom/nodes/docraft_loom_table.h"
 #include "docraft/loom/nodes/docraft_loom_text.h"
+#include "docraft/loom/nodes/docraft_loom_subtitle.h"
+#include "docraft/loom/nodes/docraft_loom_title.h"
 #include "docraft/loom/nodes/docraft_loom_triangle.h"
 
 namespace docraft::loom::craft {
@@ -85,6 +87,8 @@ namespace docraft::loom::craft {
         std::shared_ptr<nodes::DocraftLoomPolygon> build_polygon(const ParsedElement& element);
         std::shared_ptr<nodes::DocraftLoomLine> build_line(const ParsedElement& element);
         std::shared_ptr<nodes::DocraftLoomText> build_text(const ParsedElement& element);
+        std::shared_ptr<nodes::DocraftLoomTitle> build_title(const ParsedElement& element);
+        std::shared_ptr<nodes::DocraftLoomSubtitle> build_subtitle(const ParsedElement& element);
         std::shared_ptr<nodes::DocraftLoomPageNumber> build_page_number(const ParsedElement& element);
         std::shared_ptr<nodes::DocraftLoomImage> build_image(const ParsedElement& element);
         std::shared_ptr<nodes::DocraftLoomBlankLine> build_blank_line(const ParsedElement& element);

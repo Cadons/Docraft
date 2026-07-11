@@ -80,21 +80,13 @@ namespace docraft::craft::parser {
 
     std::any DocraftTextParser::parse(const pugi::xml_node& craft_language_source)
     {
+        // Tag-agnostic: `<Text>`, `<Title>`, and `<Subtitle>` all share this parser
+        // (registered per-tag in DocraftCraftLanguageParser) and produce the same
+        // ParsedTextData shape -- their differing heading-like defaults (font
+        // size/style/margin) live on DocraftLoomTitle/DocraftLoomSubtitle's own
+        // constructors instead (see DocraftLoomTreeBuilder::build_title/build_subtitle),
+        // not here, so this layer stays engine-agnostic (see docraft::craft's own docs).
         ParsedTextData data;
-        const std::string tag_name = craft_language_source.name();
-
-        // Predefined heading-like tags:
-        // - Title    -> h1-like defaults
-        // - Subtitle -> h2-like defaults
-        if (tag_name == std::string{elements::kTitle}) {
-            data.font_size = 24.0F;
-            data.style = ParsedTextStyle::kBold;
-        }
-        else if (tag_name == std::string{elements::kSubtitle})
-        {
-            data.font_size = 18.0F;
-            data.style = ParsedTextStyle::kBold;
-        }
 
         data.text = craft_language_source.child_value();
         data.text = trim_whitespace(data.text);

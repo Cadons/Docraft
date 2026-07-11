@@ -59,6 +59,18 @@ namespace docraft::loom::pipeline {
         void visit(docraft::loom::nodes::DocraftLoomText*) override;
 
         /**
+         * @brief Measured exactly like ordinary text (see visit(DocraftLoomText*)) --
+         * DocraftLoomTitle only differs in its constructor's default font/style/margin.
+         */
+        void visit(docraft::loom::nodes::DocraftLoomTitle*) override;
+
+        /**
+         * @brief Measured exactly like ordinary text (see visit(DocraftLoomText*)) --
+         * DocraftLoomSubtitle only differs in its constructor's default font/style/margin.
+         */
+        void visit(docraft::loom::nodes::DocraftLoomSubtitle*) override;
+
+        /**
          * @brief Visits a doccraft::loom::nodes::DocraftLoomRectangle node during the measurement process.
          *
          * This method computes any necessary measurements for the DocraftLoomRectangle node, such as its width and height, or
@@ -104,10 +116,15 @@ namespace docraft::loom::pipeline {
         std::shared_ptr<docraft::backend::IDocraftTextRenderingBackend> text_backend_;
         float content_width_ = 0.0F;
 
-        // Pushed by a weighted HStack onto the child it's about to measure (its
-        // resolved column width), consumed by the next DocraftLoomText that measures
-        // without its own explicit wrap_width -- Paragraph passes it through unchanged
-        // to each of its own children in turn. Zero means "no inherited constraint".
+        // The width budget the node about to be measured should wrap/fit into, pushed
+        // down by whichever ancestor last narrowed it: Rectangle/VStack relay
+        // content_width_ (or their own explicit width, minus padding) to every child,
+        // a weighted HStack resolves each column's share, List narrows it by each
+        // item's marker prefix, and Paragraph passes it through unchanged to each of
+        // its own children in turn. Consumed (and cleared) by the next DocraftLoomText
+        // that measures without its own explicit wrap_width. HStack (unweighted) and
+        // Table clear it on entry since they resolve widths their own way instead.
+        // Zero means "no inherited constraint".
         float inherited_wrap_width_ = 0.0F;
 
         // Pushed by DocraftLoomTable onto the cell it's about to measure: a best-effort

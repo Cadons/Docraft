@@ -21,6 +21,14 @@ namespace docraft::loom::pipeline {
     {
     }
 
+    void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomTitle*)
+    {
+    }
+
+    void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomSubtitle*)
+    {
+    }
+
     void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomRectangle* node)
     {
         if (!node)
