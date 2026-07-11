@@ -26,9 +26,12 @@
 namespace docraft::craft::parser {
     /**
      * @brief Tag-specific payload parsed from a `<Paragraph>` element. `<Paragraph>`
-     * groups child text/inline content (recursed into generically by
-     * `DocraftCraftLanguageParser`, exactly like `<layout>`) -- this struct only carries
-     * the tag's own typographic attributes.
+     * groups child element content (recursed into generically by
+     * `DocraftCraftLanguageParser`, exactly like `<layout>`), plus its own typographic
+     * attributes. `text` separately captures any bare PCDATA directly inside the
+     * `<Paragraph>` tag (e.g. `<Paragraph>Hello</Paragraph>`), which the generic child
+     * recursion skips since it only walks XML element children -- the tree builder
+     * turns non-empty `text` into an implicit `DocraftLoomText` child.
      */
     struct ParsedParagraphData
     {
@@ -36,6 +39,7 @@ namespace docraft::craft::parser {
         std::optional<float> space_before;
         std::optional<float> space_after;
         std::optional<ParsedTextAlignment> alignment;
+        std::string text;
     };
 
     /**

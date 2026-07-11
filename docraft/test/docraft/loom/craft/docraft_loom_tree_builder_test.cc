@@ -77,11 +77,65 @@ TEST(DocraftLoomTreeBuilderTest, BuildsTitleWithHeadingDefaults)
     const char* xml = R"XML(<Title>Heading</Title>)XML";
 
     const auto node = parse_and_build(xml);
-    const auto text = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomText>(node);
-    ASSERT_TRUE(text);
-    EXPECT_EQ(text->text(), "Heading");
-    EXPECT_FLOAT_EQ(text->font_size(), 24.0F);
-    EXPECT_TRUE(text->bold());
+    const auto title = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomTitle>(node);
+    ASSERT_TRUE(title);
+    EXPECT_EQ(title->text(), "Heading");
+    EXPECT_FLOAT_EQ(title->font_size(), 24.0F);
+    EXPECT_TRUE(title->bold());
+    EXPECT_FLOAT_EQ(title->margin().top, 24.0F); // 1em, coherent with font_size
+    EXPECT_FLOAT_EQ(title->margin().bottom, 24.0F);
+}
+
+TEST(DocraftLoomTreeBuilderTest, BuildsSubtitleWithHeadingDefaults)
+{
+    const char* xml = R"XML(<Subtitle>Heading</Subtitle>)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto subtitle = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomSubtitle>(node);
+    ASSERT_TRUE(subtitle);
+    EXPECT_EQ(subtitle->text(), "Heading");
+    EXPECT_FLOAT_EQ(subtitle->font_size(), 18.0F);
+    EXPECT_TRUE(subtitle->bold());
+    EXPECT_FLOAT_EQ(subtitle->margin().top, 18.0F); // 1em, coherent with font_size
+    EXPECT_FLOAT_EQ(subtitle->margin().bottom, 18.0F);
+}
+
+TEST(DocraftLoomTreeBuilderTest, TitleMarginTracksAnExplicitFontSizeOverride)
+{
+    // Margin must stay coherent with the *actual* font_size in use -- not the
+    // constructor's own default -- when an explicit font-size attribute shrinks it.
+    const char* xml = R"XML(<Title font_size="11">Heading</Title>)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto title = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomTitle>(node);
+    ASSERT_TRUE(title);
+    EXPECT_FLOAT_EQ(title->font_size(), 11.0F);
+    EXPECT_FLOAT_EQ(title->margin().top, 11.0F);
+}
+
+TEST(DocraftLoomTreeBuilderTest, TitleExplicitMarginAttributeOverridesFontSizeDerivedDefault)
+{
+    const char* xml = R"XML(<Title margin="40">Heading</Title>)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto title = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomTitle>(node);
+    ASSERT_TRUE(title);
+    EXPECT_FLOAT_EQ(title->font_size(), 24.0F);
+    EXPECT_FLOAT_EQ(title->margin().top, 40.0F);
+}
+
+TEST(DocraftLoomTreeBuilderTest, TitlePerEdgeMarginAttributesOverrideIndividualSides)
+{
+    const char* xml = R"XML(<Title margin_top="5" margin_bottom="30">Heading</Title>)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto title = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomTitle>(node);
+    ASSERT_TRUE(title);
+    EXPECT_FLOAT_EQ(title->margin().top, 5.0F);
+    EXPECT_FLOAT_EQ(title->margin().bottom, 30.0F);
+    // left/right fall back to the 1em heading default, untouched by the per-edge override.
+    EXPECT_FLOAT_EQ(title->margin().left, 24.0F);
+    EXPECT_FLOAT_EQ(title->margin().right, 24.0F);
 }
 
 TEST(DocraftLoomTreeBuilderTest, BuildsPageNumber)
@@ -434,7 +488,7 @@ TEST(DocraftLoomTreeBuilderTest, BuildsParagraphWithTypographicAttributesAndChil
     ASSERT_EQ(paragraph->children_count(), 2);
 }
 
-TEST(DocraftLoomTreeBuilderTest, BuildsHeaderAsRectangleWithStyleAndChildren)
+TEST(DocraftLoomTreeBuilderTest, BuildsHeaderAsVStackWithStyleAndChildren)
 {
     const char* xml = R"XML(
 <Header background_color="#00FF00" border_width="1.5" margin_top="3">
@@ -443,14 +497,14 @@ TEST(DocraftLoomTreeBuilderTest, BuildsHeaderAsRectangleWithStyleAndChildren)
 )XML";
 
     const auto node = parse_and_build(xml);
-    const auto rectangle = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomRectangle>(node);
-    ASSERT_TRUE(rectangle);
-    EXPECT_FLOAT_EQ(rectangle->style().border_width, 1.5F);
-    EXPECT_FLOAT_EQ(rectangle->style().background_color.toRGB().g, 1.0F);
-    ASSERT_EQ(rectangle->children_count(), 1);
+    const auto vstack = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomVStack>(node);
+    ASSERT_TRUE(vstack);
+    EXPECT_FLOAT_EQ(vstack->style().border_width, 1.5F);
+    EXPECT_FLOAT_EQ(vstack->style().background_color.toRGB().g, 1.0F);
+    ASSERT_EQ(vstack->children_count(), 1);
 }
 
-TEST(DocraftLoomTreeBuilderTest, BuildsBodyAsRectangle)
+TEST(DocraftLoomTreeBuilderTest, BuildsBodyAsVStack)
 {
     const char* xml = R"XML(
 <Body margin_left="20">
@@ -459,12 +513,12 @@ TEST(DocraftLoomTreeBuilderTest, BuildsBodyAsRectangle)
 )XML";
 
     const auto node = parse_and_build(xml);
-    const auto rectangle = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomRectangle>(node);
-    ASSERT_TRUE(rectangle);
-    ASSERT_EQ(rectangle->children_count(), 1);
+    const auto vstack = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomVStack>(node);
+    ASSERT_TRUE(vstack);
+    ASSERT_EQ(vstack->children_count(), 1);
 }
 
-TEST(DocraftLoomTreeBuilderTest, BuildsFooterAsRectangle)
+TEST(DocraftLoomTreeBuilderTest, BuildsFooterAsVStack)
 {
     const char* xml = R"XML(
 <Footer margin_right="15">
@@ -473,9 +527,9 @@ TEST(DocraftLoomTreeBuilderTest, BuildsFooterAsRectangle)
 )XML";
 
     const auto node = parse_and_build(xml);
-    const auto rectangle = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomRectangle>(node);
-    ASSERT_TRUE(rectangle);
-    ASSERT_EQ(rectangle->children_count(), 1);
+    const auto vstack = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomVStack>(node);
+    ASSERT_TRUE(vstack);
+    ASSERT_EQ(vstack->children_count(), 1);
 }
 
 TEST(DocraftLoomTreeBuilderTest, BuildsNewPageMarker)

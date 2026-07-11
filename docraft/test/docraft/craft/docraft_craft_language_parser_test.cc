@@ -7,8 +7,13 @@
 #include "docraft/craft/parser/docraft_parser.h"
 #include "docraft/exception/docraft_exceptions.h"
 
-TEST(DocraftCraftLanguageParserTest, ParsesTitleSubtitleAndTextWithPredefinedDefaults)
+TEST(DocraftCraftLanguageParserTest, ParsesTitleSubtitleAndTextIdentically)
 {
+    // Heading-like defaults (font size/style/margin) now live on
+    // DocraftLoomTitle/DocraftLoomSubtitle's own constructors, not at this
+    // engine-agnostic parsing layer (see docraft_loom_tree_builder_test.cc's
+    // BuildsTitleWithHeadingDefaults/BuildsSubtitleWithHeadingDefaults) -- so Title/
+    // Subtitle/Text all parse into the same shape of ParsedTextData here.
     const char* xml = R"XML(
 <Layout orientation="vertical">
   <Title>Main Heading</Title>
@@ -25,17 +30,13 @@ TEST(DocraftCraftLanguageParserTest, ParsesTitleSubtitleAndTextWithPredefinedDef
 
     const auto title = std::any_cast<docraft::craft::parser::ParsedTextData>(root->children[0]->data);
     EXPECT_EQ(title.text, "Main Heading");
-    ASSERT_TRUE(title.font_size.has_value());
-    EXPECT_FLOAT_EQ(*title.font_size, 24.0F);
-    ASSERT_TRUE(title.style.has_value());
-    EXPECT_EQ(*title.style, docraft::craft::parser::ParsedTextStyle::kBold);
+    EXPECT_FALSE(title.font_size.has_value());
+    EXPECT_FALSE(title.style.has_value());
 
     const auto subtitle = std::any_cast<docraft::craft::parser::ParsedTextData>(root->children[1]->data);
     EXPECT_EQ(subtitle.text, "Section Heading");
-    ASSERT_TRUE(subtitle.font_size.has_value());
-    EXPECT_FLOAT_EQ(*subtitle.font_size, 18.0F);
-    ASSERT_TRUE(subtitle.style.has_value());
-    EXPECT_EQ(*subtitle.style, docraft::craft::parser::ParsedTextStyle::kBold);
+    EXPECT_FALSE(subtitle.font_size.has_value());
+    EXPECT_FALSE(subtitle.style.has_value());
 
     const auto text = std::any_cast<docraft::craft::parser::ParsedTextData>(root->children[2]->data);
     EXPECT_EQ(text.text, "Body copy");
@@ -43,7 +44,7 @@ TEST(DocraftCraftLanguageParserTest, ParsesTitleSubtitleAndTextWithPredefinedDef
     EXPECT_FALSE(text.style.has_value());
 }
 
-TEST(DocraftCraftLanguageParserTest, HeadingAttributesOverridePredefinedDefaults)
+TEST(DocraftCraftLanguageParserTest, ParsesExplicitHeadingAttributes)
 {
     const char* xml = R"XML(
 <Layout orientation="vertical">
@@ -64,8 +65,9 @@ TEST(DocraftCraftLanguageParserTest, HeadingAttributesOverridePredefinedDefaults
     EXPECT_EQ(*title.style, docraft::craft::parser::ParsedTextStyle::kItalic);
 
     const auto subtitle = std::any_cast<docraft::craft::parser::ParsedTextData>(root->children[1]->data);
-    ASSERT_TRUE(subtitle.font_size.has_value());
-    EXPECT_FLOAT_EQ(*subtitle.font_size, 18.0F);
+    // No font_size attribute given -- this parsing layer no longer pre-fills a
+    // tag-based default (that now lives on DocraftLoomSubtitle's own constructor).
+    EXPECT_FALSE(subtitle.font_size.has_value());
     ASSERT_TRUE(subtitle.style.has_value());
     EXPECT_EQ(*subtitle.style, docraft::craft::parser::ParsedTextStyle::kNormal);
 }

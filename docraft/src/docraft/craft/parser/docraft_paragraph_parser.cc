@@ -44,11 +44,29 @@ namespace docraft::craft::parser {
             }
             throw docraft::exception::InvalidInputException("Invalid text alignment: " + alignment_str);
         }
+
+        // Duplicated from docraft_text_parser.cc's own local helper of the same name --
+        // see the comment on parse_alignment above for why this file duplicates rather
+        // than shares these small helpers.
+        std::string trim_whitespace(const std::string& text)
+        {
+            constexpr auto whitespace = " \t\n\r\f\v";
+
+            const auto first = text.find_first_not_of(whitespace);
+            if (first == std::string::npos)
+            {
+                return {};
+            }
+
+            const auto last = text.find_last_not_of(whitespace);
+            return text.substr(first, last - first + 1);
+        }
     } // namespace
 
     std::any DocraftParagraphParser::parse(const pugi::xml_node& craft_language_source)
     {
         ParsedParagraphData data;
+        data.text = trim_whitespace(craft_language_source.child_value());
         if (auto line_spacing_attr = craft_language_source.attribute(
             elements::paragraph::attribute::kLineSpacing.data()))
         {

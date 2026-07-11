@@ -539,8 +539,8 @@ namespace docraft::loom::craft {
     void DocraftLoomTreeBuilder::apply_common_attributes(NodeT& node,
                                                          const docraft::craft::DocraftCommonAttributes& common)
     {
-        // name/z_index/position mode/explicit position live on DocraftLoomNode itself,
-        // so every node type has them -- no gating needed.
+        // name/z_index/position mode/explicit position/padding/margin live on
+        // DocraftLoomNode itself, so every node type has them -- no gating needed.
         if (common.name)
         {
             node.set_name(*common.name);
@@ -549,9 +549,23 @@ namespace docraft::loom::craft {
         {
             node.set_z_index(*common.z_index);
         }
+        if (common.padding)
+        {
+            node.set_padding(*common.padding);
+        }
+        if (common.margin)
+        {
+            node.set_margin(*common.margin);
+        }
+        if (common.margin_top || common.margin_right || common.margin_bottom || common.margin_left)
+        {
+            const auto& current = node.margin();
+            node.set_margin(common.margin_top.value_or(current.top), common.margin_right.value_or(current.right),
+                             common.margin_bottom.value_or(current.bottom), common.margin_left.value_or(current.left));
+        }
 
-        // width/height/padding/weight vary per node type -- skip silently when NodeT has
-        // no matching setter, rather than failing to compile or throwing.
+        // width/height/weight vary per node type -- skip silently when NodeT has no
+        // matching setter, rather than failing to compile or throwing.
         if constexpr (requires(NodeT& n, float v) { n.set_width(v); })
         {
             if (common.width)
@@ -564,13 +578,6 @@ namespace docraft::loom::craft {
             if (common.height)
             {
                 node.set_height(*common.height);
-            }
-        }
-        if constexpr (requires(NodeT& n, float v) { n.set_padding(v); })
-        {
-            if (common.padding)
-            {
-                node.set_padding(*common.padding);
             }
         }
         if constexpr (requires(NodeT& n, float v) { n.set_weight(v); })
@@ -1029,14 +1036,30 @@ namespace docraft::loom::craft {
             node->set_alignment(to_loom_alignment(*data.alignment));
         }
         apply_common_attributes(*node, element.common);
+        // Bare PCDATA directly inside <Paragraph>text</Paragraph> is invisible to
+        // add_children() below (it only walks XML element children, see ParsedElement's
+        // recursion) -- surface it here as an implicit Text child so a Paragraph with no
+        // explicit <Text> wrapper still renders, matching the natural way authors write
+        // Craft Language paragraphs.
+        if (!data.text.empty())
+        {
+            auto text_node = std::make_shared<nodes::DocraftLoomText>();
+            text_node->set_text(template_engine_->render_template_string(data.text, current_foreach_item_));
+            node->add_child(text_node);
+        }
         add_children(node, element.children);
         return node;
     }
 
-    std::shared_ptr<nodes::DocraftLoomRectangle> DocraftLoomTreeBuilder::build_section(const ParsedElement& element)
+    std::shared_ptr<nodes::DocraftLoomVStack> DocraftLoomTreeBuilder::build_section(const ParsedElement& element)
     {
         const auto& data = std::any_cast<const parser::ParsedSectionData&>(element.data);
-        auto node = std::make_shared<nodes::DocraftLoomRectangle>();
+        // Header/Body/Footer only ever use background_color/border_color/border_width
+        // from ParsedSectionData -- never Rectangle's width_/height_/padding_ -- so a
+        // VStack (with its own composed DocraftLoomShapeStyle, see
+        // DocraftLoomVStack::style()) is a closer fit than Rectangle and reuses the
+        // vertical-stacking flow instead of duplicating it.
+        auto node = std::make_shared<nodes::DocraftLoomVStack>();
         if (data.background_color)
         {
             node->edit_style().background_color = *data.background_color;

@@ -4,7 +4,7 @@
 
 #include "docraft/craft/docraft_loom_craft_language_parser.h"
 #include "docraft/exception/docraft_exceptions.h"
-#include "docraft/loom/nodes/docraft_loom_rectangle.h"
+#include "docraft/loom/nodes/docraft_loom_vstack.h"
 
 TEST(DocraftLoomCraftLanguageParserTest, ParsesFullDocumentWithHeaderBodyFooter)
 {
@@ -33,9 +33,9 @@ TEST(DocraftLoomCraftLanguageParserTest, ParsesFullDocumentWithHeaderBodyFooter)
   ASSERT_TRUE(creator->header());
   ASSERT_TRUE(creator->footer());
 
-  const auto header_rect = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomRectangle>(creator->header());
-  ASSERT_TRUE(header_rect);
-  EXPECT_FLOAT_EQ(header_rect->style().border_width, 0.5F);
+  const auto header_vstack = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomVStack>(creator->header());
+  ASSERT_TRUE(header_vstack);
+  EXPECT_FLOAT_EQ(header_vstack->style().border_width, 0.5F);
 
   EXPECT_FLOAT_EQ(creator->header_margins().left, 30.0F);
   EXPECT_FLOAT_EQ(creator->header_margins().right, 30.0F);

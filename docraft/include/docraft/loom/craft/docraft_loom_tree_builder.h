@@ -41,6 +41,7 @@
 #include "docraft/loom/nodes/docraft_loom_subtitle.h"
 #include "docraft/loom/nodes/docraft_loom_title.h"
 #include "docraft/loom/nodes/docraft_loom_triangle.h"
+#include "docraft/loom/nodes/docraft_loom_vstack.h"
 
 namespace docraft::loom::craft {
     /**
@@ -96,7 +97,7 @@ namespace docraft::loom::craft {
         std::shared_ptr<nodes::DocraftLoomTable> build_table(const ParsedElement& element);
         std::shared_ptr<nodes::DocraftLoomNode> build_layout(const ParsedElement& element);
         std::shared_ptr<nodes::DocraftLoomParagraph> build_paragraph(const ParsedElement& element);
-        std::shared_ptr<nodes::DocraftLoomRectangle> build_section(const ParsedElement& element);
+        std::shared_ptr<nodes::DocraftLoomVStack> build_section(const ParsedElement& element);
         std::shared_ptr<nodes::DocraftLoomNewPage> build_new_page(const ParsedElement& element);
 
         /**
