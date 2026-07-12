@@ -16,6 +16,8 @@
 
 #include "docraft/backend/pdf/docraft_haru_text_backend.h"
 
+#include <cstddef>
+
 #include <hpdf.h>
 
 #include "docraft/utils/docraft_font_registry.h"
@@ -85,15 +87,22 @@ namespace docraft::backend::pdf {
         const std::string resolved_name = docraft::utils::DocraftFontRegistry::instance().resolve_font_alias(
             font_name);
 
-        // Try UTF-8 first: register_font() always embeds custom TrueType fonts, and an
-        // embedded TTF accepts UTF-8, which is required for any non-WinAnsi character
-        // (e.g. accented letters) to render correctly instead of being shown byte-by-byte.
-        // UTF-8 fails with HPDF_FONT_INVALID_WIDTHS_TABLE for the Type1 built-in fonts
-        // (Helvetica, Times, Courier…), so those fall back to WinAnsiEncoding below.
-        static constexpr const char* kEncodings[] = {"UTF-8", "WinAnsiEncoding", nullptr};
-        for (const char* enc : kEncodings)
+        // Try UTF-8 first, but only for a name that went through the alias table --
+        // that means it's a font *we* registered via DocraftLoomPdfCreator::register_font()
+        // (always an embedded TrueType, which accepts UTF-8, required for any non-WinAnsi
+        // character, e.g. accented letters, to render correctly instead of byte-by-byte).
+        // An unaliased name is a base-14 Type1 built-in (Helvetica, Times, Courier…),
+        // which always rejects UTF-8 with HPDF_INVALID_COMBINATION_BETWEEN_FONT_AND_ENCODER
+        // -- probing it would print that HPDF error to stderr on every single resolution
+        // for a guaranteed failure, so go straight to WinAnsiEncoding for those instead.
+        const bool is_registered_alias = resolved_name != font_name;
+        static constexpr const char* kEmbeddedEncodings[] = {"UTF-8", "WinAnsiEncoding"};
+        static constexpr const char* kBuiltinEncodings[] = {"WinAnsiEncoding"};
+        const char* const* encodings = is_registered_alias ? kEmbeddedEncodings : kBuiltinEncodings;
+        const std::size_t encoding_count = is_registered_alias ? 2 : 1;
+        for (std::size_t i = 0; i < encoding_count; ++i)
         {
-            HPDF_Font font = HPDF_GetFont(state_->pdf, resolved_name.c_str(), enc);
+            HPDF_Font font = HPDF_GetFont(state_->pdf, resolved_name.c_str(), encodings[i]);
             if (font && HPDF_GetError(state_->pdf) == HPDF_OK)
                 return font;
             HPDF_ResetError(state_->pdf);
