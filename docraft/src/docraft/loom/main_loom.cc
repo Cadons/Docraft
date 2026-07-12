@@ -235,6 +235,22 @@ namespace {
         table->add_row({make_table_cell("Department", true), make_table_cell("Engineering")});
         table->add_row({make_table_cell("Headcount", true), make_table_cell("142")});
         table->add_row({make_table_cell("Location", true), make_table_cell("Remote-first")});
+
+        // A table cell's content isn't limited to text -- DocraftLoomTableCell also
+        // accepts a DocraftLoomImage, exercised here with the same synthetic checker
+        // pattern as make_image_demo() so the row doesn't depend on any file on disk.
+        auto photo_cell = std::make_shared<DocraftLoomTableCell>();
+        auto photo = std::make_shared<DocraftLoomImage>();
+        const std::vector<unsigned char> photo_pixels = {
+            255, 0, 0, 0, 0, 255, // row 0: red, blue
+            0, 0, 255, 255, 0, 0, // row 1: blue, red
+        };
+        photo->set_raw_data(photo_pixels, 2, 2);
+        photo->set_width(200);
+        photo->set_height(100.0F);
+        photo_cell->set_content(photo);
+        table->add_row({make_table_cell("Photo", true), photo_cell});
+
         return table;
     }
 

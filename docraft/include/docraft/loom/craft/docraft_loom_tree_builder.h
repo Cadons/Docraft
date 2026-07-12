@@ -129,17 +129,5 @@ namespace docraft::loom::craft {
         const nlohmann::json* current_foreach_item_ = nullptr;
 
         std::shared_ptr<docraft::templating::DocraftTemplateEngine> template_engine_;
-
-        /**
-         * @brief Applies the generic `DocraftCommonAttributes` (name/x/y/width/height/
-         * padding/weight/z_index/position) to `node`. Position mode/explicit position/
-         * name/z_index are always available (they live on `DocraftLoomNode` itself);
-         * width/height/padding/weight are applied only if `NodeT` exposes the matching
-         * setter (checked via a `requires` expression), so e.g. a `DocraftLoomCircle`
-         * (no set_width) simply skips `common.width` rather than failing to compile or
-         * throwing. `common.visible` is handled by the caller (build()), not here.
-         */
-        template <typename NodeT>
-        static void apply_common_attributes(NodeT& node, const docraft::craft::DocraftCommonAttributes& common);
     };
 } // namespace docraft::loom::craft

@@ -235,6 +235,76 @@ namespace docraft::loom::craft {
             }
         }
 
+        template <typename NodeT>
+        void apply_common_attributes(NodeT& node, const docraft::craft::DocraftCommonAttributes& common)
+        {
+            if (common.name)
+            {
+                node.set_name(*common.name);
+            }
+            if (common.z_index)
+            {
+                node.set_z_index(*common.z_index);
+            }
+            if (common.padding)
+            {
+                node.set_padding(*common.padding);
+            }
+            if (common.margin)
+            {
+                node.set_margin(*common.margin);
+            }
+            if (common.margin_top || common.margin_right || common.margin_bottom || common.margin_left)
+            {
+                const auto& current = node.margin();
+                node.set_margin(common.margin_top.value_or(current.top), common.margin_right.value_or(current.right),
+                                common.margin_bottom.value_or(current.bottom),
+                                common.margin_left.value_or(current.left));
+            }
+
+            if constexpr (requires(NodeT& n, float v) { n.set_width(v); })
+            {
+                if (common.width)
+                {
+                    node.set_width(*common.width);
+                }
+            }
+            if constexpr (requires(NodeT& n, float v) { n.set_height(v); })
+            {
+                if (common.height)
+                {
+                    node.set_height(*common.height);
+                }
+            }
+            if constexpr (requires(NodeT& n, float v) { n.set_weight(v); })
+            {
+                if (common.weight)
+                {
+                    node.set_weight(*common.weight);
+                }
+            }
+
+            if (common.position_mode)
+            {
+                node.set_position_mode(*common.position_mode == docraft::craft::PositionMode::kAbsolute
+                                           ? nodes::DocraftPositionType::kAbsolute
+                                           : nodes::DocraftPositionType::kBlock);
+            }
+            if (common.x || common.y)
+            {
+                nodes::Position pos = node.explicit_position();
+                if (common.x)
+                {
+                    pos.x = *common.x;
+                }
+                if (common.y)
+                {
+                    pos.y = *common.y;
+                }
+                node.set_explicit_position(pos);
+            }
+        }
+
         std::shared_ptr<nodes::DocraftLoomTableCell> build_title_cell(
             const parser::ParsedTableTitleData& title, const docraft::templating::DocraftTemplateEngine& engine)
         {
@@ -268,6 +338,7 @@ namespace docraft::loom::craft {
                 // but global ${variable} substitution still applies.
                 fill_text_node(*text_node, std::any_cast<const parser::ParsedTextData&>(cell_data.content), engine,
                                nullptr);
+                apply_common_attributes(*text_node, cell_data.content_common);
                 content = text_node;
             }
             else
@@ -275,6 +346,7 @@ namespace docraft::loom::craft {
                 auto image_node = std::make_shared<nodes::DocraftLoomImage>();
                 fill_image_node(*image_node, std::any_cast<const parser::ParsedImageData&>(cell_data.content), engine,
                                 nullptr);
+                apply_common_attributes(*image_node, cell_data.content_common);
                 content = image_node;
             }
 
@@ -540,80 +612,6 @@ namespace docraft::loom::craft {
         for (int i = 0; i < count; ++i)
         {
             add_children(parent, foreach_element.children);
-        }
-    }
-
-    template <typename NodeT>
-    void DocraftLoomTreeBuilder::apply_common_attributes(NodeT& node,
-                                                         const docraft::craft::DocraftCommonAttributes& common)
-    {
-        // name/z_index/position mode/explicit position/padding/margin live on
-        // DocraftLoomNode itself, so every node type has them -- no gating needed.
-        if (common.name)
-        {
-            node.set_name(*common.name);
-        }
-        if (common.z_index)
-        {
-            node.set_z_index(*common.z_index);
-        }
-        if (common.padding)
-        {
-            node.set_padding(*common.padding);
-        }
-        if (common.margin)
-        {
-            node.set_margin(*common.margin);
-        }
-        if (common.margin_top || common.margin_right || common.margin_bottom || common.margin_left)
-        {
-            const auto& current = node.margin();
-            node.set_margin(common.margin_top.value_or(current.top), common.margin_right.value_or(current.right),
-                             common.margin_bottom.value_or(current.bottom), common.margin_left.value_or(current.left));
-        }
-
-        // width/height/weight vary per node type -- skip silently when NodeT has no
-        // matching setter, rather than failing to compile or throwing.
-        if constexpr (requires(NodeT& n, float v) { n.set_width(v); })
-        {
-            if (common.width)
-            {
-                node.set_width(*common.width);
-            }
-        }
-        if constexpr (requires(NodeT& n, float v) { n.set_height(v); })
-        {
-            if (common.height)
-            {
-                node.set_height(*common.height);
-            }
-        }
-        if constexpr (requires(NodeT& n, float v) { n.set_weight(v); })
-        {
-            if (common.weight)
-            {
-                node.set_weight(*common.weight);
-            }
-        }
-
-        if (common.position_mode)
-        {
-            node.set_position_mode(*common.position_mode == docraft::craft::PositionMode::kAbsolute
-                                       ? nodes::DocraftPositionType::kAbsolute
-                                       : nodes::DocraftPositionType::kBlock);
-        }
-        if (common.x || common.y)
-        {
-            nodes::Position pos = node.explicit_position();
-            if (common.x)
-            {
-                pos.x = *common.x;
-            }
-            if (common.y)
-            {
-                pos.y = *common.y;
-            }
-            node.set_explicit_position(pos);
         }
     }
 

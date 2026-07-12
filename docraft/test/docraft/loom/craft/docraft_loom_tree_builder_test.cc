@@ -255,6 +255,36 @@ TEST(DocraftLoomTreeBuilderTest, BuildsHorizontalTableGrid)
     EXPECT_EQ(body_text->text(), "v1");
 }
 
+TEST(DocraftLoomTreeBuilderTest, BuildsTableCellWithImageContentAndSize)
+{
+    const char* xml = R"XML(
+<Table>
+  <THead>
+    <HTitle>Name</HTitle>
+    <HTitle>Photo</HTitle>
+  </THead>
+  <TBody>
+    <Row>
+      <Cell><Text>v1</Text></Cell>
+      <Cell><Image src="assets/logo.png" width="50" height="50" /></Cell>
+    </Row>
+  </TBody>
+</Table>
+)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto table = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomTable>(node);
+    ASSERT_TRUE(table);
+
+    const auto body_cell = table->cell(1, 1);
+    ASSERT_TRUE(body_cell);
+    const auto image = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomImage>(body_cell->content());
+    ASSERT_TRUE(image);
+    EXPECT_EQ(image->path(), "assets/logo.png");
+    EXPECT_FLOAT_EQ(image->width(), 50.0F);
+    EXPECT_FLOAT_EQ(image->height(), 50.0F);
+}
+
 TEST(DocraftLoomTreeBuilderTest, BuildsTableFromJsonMatrixModelAndHeader)
 {
     const char* xml = R"XML(

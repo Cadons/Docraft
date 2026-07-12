@@ -24,6 +24,7 @@
 #include "docraft/docraft_color.h"
 #include "docraft/docraft_lib.h"
 
+#include "docraft/craft/docraft_craft_parsed_element.h"
 #include "docraft/craft/i_docraft_parser.h"
 
 namespace docraft::craft::parser {
@@ -184,6 +185,7 @@ namespace docraft::craft::parser {
     {
         std::string content_tag_name; // "Text" or "Image"
         std::any content;
+        docraft::craft::DocraftCommonAttributes content_common;
         std::optional<DocraftColor> background;
         std::optional<float> width;
     };

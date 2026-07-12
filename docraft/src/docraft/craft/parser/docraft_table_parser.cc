@@ -108,6 +108,7 @@ namespace docraft::craft::parser {
 
             const pugi::xml_node child = cell.first_child();
             const std::string child_name = child.name();
+            data.content_common = detail::parse_common_node_attributes(child);
             if (child_name == std::string{elements::kText})
             {
                 DocraftTextParser text_parser;
