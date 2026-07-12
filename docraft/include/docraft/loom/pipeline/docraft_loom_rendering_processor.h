@@ -8,6 +8,7 @@
 
 #include "docraft/backend/docraft_rendering_backend.h"
 #include "docraft/backend/pdf/docraft_haru_shared_state.h"
+#include "docraft/docraft_color.h"
 #include "docraft/loom/interfaces/docraft_loom_visitor.h"
 #include "docraft/loom/nodes/docraft_loom_node.h"
 #include "docraft/loom/nodes/docraft_loom_shape_style.h"
@@ -63,6 +64,20 @@ namespace docraft::loom::pipeline {
             nodes::TextAlignment alignment;
             std::string font_name;
             float font_size;
+            bool underline = false;
+            bool strikeout = false;
+            RGB color;
+        };
+
+        /**
+         * @brief Horizontal extent [x_start, x_end] a drawn line of text actually
+         * occupies, as positioned by draw_aligned_line's alignment handling -- used to
+         * size an underline stroke to the visible text rather than the full box_width.
+         */
+        struct LineExtent
+        {
+            float x_start;
+            float x_end;
         };
 
         /**
@@ -70,9 +85,58 @@ namespace docraft::loom::pipeline {
          * style.alignment within style.box_width -- kJustified distributes the gap
          * between the line's actual width and style.box_width evenly across its
          * inter-word spaces (falling back to kLeft if there are no spaces, or the line
-         * already fills style.box_width).
+         * already fills style.box_width). Returns the horizontal extent drawn, for
+         * callers that need to underline it.
          */
-        void draw_aligned_line(const std::string& line, float x, float y, const TextLineStyle& style);
+        LineExtent draw_aligned_line(const std::string& line, float x, float y, const TextLineStyle& style);
+
+        /**
+         * @brief Strokes an underline from (x_start, y_baseline) to (x_end, y_baseline),
+         * offset below the baseline using descent (see DocraftLoomText::descent()) and
+         * sized proportionally to font_size. Must be called outside a
+         * begin_text()/end_text() block -- path painting operators are not valid inside
+         * a PDF text object.
+         */
+        void draw_text_underline(float x_start, float x_end, float y_baseline, float font_size, float descent,
+                                 const RGB& color);
+
+        /**
+         * @brief Strokes a strikethrough from (x_start, y_baseline) to (x_end,
+         * y_baseline), offset above the baseline using ascent (see
+         * DocraftLoomText::ascent()) and sized proportionally to font_size. Must be
+         * called outside a begin_text()/end_text() block -- path painting operators are
+         * not valid inside a PDF text object.
+         */
+        void draw_text_strikeout(float x_start, float x_end, float y_baseline, float font_size, float ascent,
+                                 const RGB& color);
+
+        /**
+         * @brief Shared stroke primitive for draw_text_underline/draw_text_strikeout --
+         * both are a single horizontal rule at a caller-computed y, differing only in how
+         * that y is derived from the text's metrics.
+         */
+        void draw_horizontal_text_rule(float x_start, float x_end, float y, float thickness, const RGB& color);
+
+        /**
+         * @brief Fraction of descent()'s magnitude used as the underline's offset below
+         * the baseline (see draw_text_underline).
+         */
+        static constexpr float kUnderlineDescentFraction = 1.0F / 3.0F;
+        /**
+         * @brief Fraction of ascent() used as the strikeout's offset above the baseline
+         * (see draw_text_strikeout).
+         */
+        static constexpr float kStrikeoutAscentFraction = 1.0F / 3.0F;
+        /**
+         * @brief Fraction of font_size used as underline/strikeout stroke thickness,
+         * floored by kTextRuleMinThickness (see draw_horizontal_text_rule callers).
+         */
+        static constexpr float kTextRuleThicknessFontSizeFraction = 1.0F / 18.0F;
+        /**
+         * @brief Minimum underline/strikeout stroke thickness in points, regardless of
+         * font_size.
+         */
+        static constexpr float kTextRuleMinThickness = 0.75F;
 
         /**
          * @brief Paints style's background fill and/or border stroke as a rectangle at

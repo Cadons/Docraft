@@ -109,6 +109,10 @@ namespace docraft::craft::parser {
         {
             data.underline = underline_attr.as_bool();
         }
+        if (auto strikeout_attr = craft_language_source.attribute(elements::text::attribute::kStrikeout.data()))
+        {
+            data.strikeout = strikeout_attr.as_bool();
+        }
 
         return data;
     }

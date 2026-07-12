@@ -165,8 +165,8 @@ namespace docraft::loom::pipeline {
         const float effective_wrap_width = text->wrap_width() > 0.0F ? text->wrap_width() : inherited_wrap_width_;
         inherited_wrap_width_ = 0.0F;
 
-        text->set_ascent(text_backend_->measure_text_ascent(reg_font, font_size));
-
+        text->set_ascent(text_backend_->measure_text_ascent(reg_font, font_size));//ascent is positive the space above the baseline, so it is stored as a positive number
+        text->set_descent(text_backend_->measure_text_descent(reg_font, font_size));//descent is negative the space below the baseline, so it is stored as a negative number
         if (effective_wrap_width > 0.0F)
         {
             auto lines = wrap_text(text->text(), effective_wrap_width, reg_font, font_size);

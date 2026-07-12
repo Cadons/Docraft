@@ -281,6 +281,7 @@ namespace docraft::craft {
             constexpr string kStyle = "style";
             constexpr string kAlignment = "alignment";
             constexpr string kUnderline = "underline";
+            constexpr string kStrikeout = "strikeout";
         }
     }
 

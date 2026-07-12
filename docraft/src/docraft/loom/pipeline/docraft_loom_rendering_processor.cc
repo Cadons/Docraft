@@ -137,8 +137,8 @@ namespace docraft::loom::pipeline {
         return page_index < 0 || page_index == current_page_index_;
     }
 
-    void DocraftLoomRenderingProcessor::draw_aligned_line(const std::string& line, float x, float y,
-                                                          const TextLineStyle& style)
+    DocraftLoomRenderingProcessor::LineExtent DocraftLoomRenderingProcessor::draw_aligned_line(
+        const std::string& line, float x, float y, const TextLineStyle& style)
     {
         const float actual_width = text_backend_->measure_text_width(line, style.font_name, style.font_size);
         if (style.alignment == nodes::TextAlignment::kJustified)
@@ -147,7 +147,7 @@ namespace docraft::loom::pipeline {
             if (spaces == 0 || style.box_width <= actual_width)
             {
                 text_backend_->draw_text(line, x, y);
-                return;
+                return {x, x + actual_width};
             }
             const float extra_space = (style.box_width - actual_width) / static_cast<float>(spaces);
             const float space_width = text_backend_->measure_text_width(" ", style.font_name, style.font_size);
@@ -165,7 +165,7 @@ namespace docraft::loom::pipeline {
                 word_x += text_backend_->measure_text_width(word, style.font_name, style.font_size);
                 first = false;
             }
-            return;
+            return {x, word_x};
         }
 
         float draw_x = x;
@@ -178,6 +178,50 @@ namespace docraft::loom::pipeline {
             draw_x = x + (style.box_width - actual_width);
         }
         text_backend_->draw_text(line, draw_x, y);
+        return {draw_x, draw_x + actual_width};
+    }
+
+    void DocraftLoomRenderingProcessor::draw_text_underline(float x_start, float x_end, float y_baseline,
+                                                             float font_size, float descent, const RGB& color)
+    {
+        // No dedicated underline-position metric is exposed by the text backend, so the
+        // offset below the baseline is derived from the font's own descent()
+        // (populated by DocraftLoomMeasureProcessor) rather than a font_size guess --
+        // descent is negative, so -descent is the magnitude of space below the
+        // baseline, and the underline sits a third of the way into it.
+        const float offset = -descent * kUnderlineDescentFraction;
+        const float thickness = std::max(kTextRuleMinThickness, font_size * kTextRuleThicknessFontSizeFraction);
+        draw_horizontal_text_rule(x_start, x_end, y_baseline + offset, thickness, color);
+    }
+
+    void DocraftLoomRenderingProcessor::draw_text_strikeout(float x_start, float x_end, float y_baseline,
+                                                             float font_size, float ascent, const RGB& color)
+    {
+        // Mirrors draw_text_underline's reasoning: no x-height/strikeout-position
+        // metric is exposed, so the offset above the baseline is a third of ascent()
+        // (populated by DocraftLoomMeasureProcessor), which lands roughly through the
+        // middle of lowercase glyphs for typical fonts.
+        const float offset = ascent * kStrikeoutAscentFraction;
+        const float thickness = std::max(kTextRuleMinThickness, font_size * kTextRuleThicknessFontSizeFraction);
+        draw_horizontal_text_rule(x_start, x_end, y_baseline - offset, thickness, color);
+    }
+
+    void DocraftLoomRenderingProcessor::draw_horizontal_text_rule(float x_start, float x_end, float y,
+                                                                   float thickness, const RGB& color)
+    {
+        if (x_end <= x_start)
+        {
+            return;
+        }
+        shape_backend_->save_state();
+        if (color.a < 1.0F)
+        {
+            shape_backend_->set_stroke_alpha(color.a);
+        }
+        line_backend_->set_line_width(thickness);
+        line_backend_->set_stroke_color(color.r, color.g, color.b);
+        line_backend_->draw_line(x_start, y, x_end, y);
+        shape_backend_->restore_state();
     }
 
     void DocraftLoomRenderingProcessor::visit(docraft::loom::nodes::DocraftLoomText* text)
@@ -186,24 +230,32 @@ namespace docraft::loom::pipeline {
             return;
         text_backend_->set_font(text->resolved_font_name(), text->font_size());
         const auto& lines = text->wrapped_lines();
-
-        // draw_text's y is the baseline, but frame.position.y is the top of the text's
-        // own line box (as measured by measure_text_height, i.e. ascent + |descent|).
-        // The baseline of the first line sits `ascent` below that top, not a full
-        // line height below it -- placing it a full line height down (the old
-        // behavior) pushed every line's baseline past the bottom of its own line box
-        // by the descent amount, so a glyph with no descender (e.g. "X") rendered
-        // with most of its empty vertical space above it instead of split
-        // proportionally between top and bottom. ascent() is populated by the measure
-        // step (DocraftLoomMeasureProcessor); rendering only reads it.
         const float ascent = text->ascent();
+        const auto rgba = text->color().toRGB();
         if (lines.empty())
         {
+            const float y = text->layout_box().frame.position.y + ascent;
             text_backend_->begin_text();
-            text_backend_->set_text_color(text->color().toRGB().r, text->color().toRGB().g, text->color().toRGB().b);
-            text_backend_->draw_text(text->text(), text->layout_box().frame.position.x,
-                                     text->layout_box().frame.position.y + ascent);
+            text_backend_->set_text_color(rgba.r, rgba.g, rgba.b);
+            text_backend_->draw_text(text->text(), text->layout_box().frame.position.x, y);
             text_backend_->end_text();
+            // Path painting is not valid inside a BT/ET text object, so the
+            // underline/strikeout strokes are issued after end_text().
+            if (text->underline() || text->strikeout())
+            {
+                const float width = text_backend_->measure_text_width(text->text(), text->resolved_font_name(),
+                                                                       text->font_size());
+                const float x_start = text->layout_box().frame.position.x;
+                const float x_end = x_start + width;
+                if (text->underline())
+                {
+                    draw_text_underline(x_start, x_end, y, text->font_size(), text->descent(), rgba);
+                }
+                if (text->strikeout())
+                {
+                    draw_text_strikeout(x_start, x_end, y, text->font_size(), ascent, rgba);
+                }
+            }
             return;
         }
 
@@ -214,7 +266,10 @@ namespace docraft::loom::pipeline {
             .box_width = text->wrap_width(),
             .alignment = text->alignment(),
             .font_name = text->resolved_font_name(),
-            .font_size = text->font_size()
+            .font_size = text->font_size(),
+            .underline = text->underline(),
+            .strikeout = text->strikeout(),
+            .color = rgba
         };
         for (std::size_t i = 0; i < lines.size(); ++i)
         {
@@ -231,9 +286,17 @@ namespace docraft::loom::pipeline {
             // set_text_color() -- wrapped text silently kept whatever color the
             // backend's graphics state last had (e.g. white from a preceding table
             // header cell), regardless of this node's own color().
-            text_backend_->set_text_color(text->color().toRGB().r, text->color().toRGB().g, text->color().toRGB().b);
-            draw_aligned_line(lines[i], box_x, y, style);
+            text_backend_->set_text_color(rgba.r, rgba.g, rgba.b);
+            const auto extent = draw_aligned_line(lines[i], box_x, y, style);
             text_backend_->end_text();
+            if (style.underline)
+            {
+                draw_text_underline(extent.x_start, extent.x_end, y, style.font_size, text->descent(), style.color);
+            }
+            if (style.strikeout)
+            {
+                draw_text_strikeout(extent.x_start, extent.x_end, y, style.font_size, ascent, style.color);
+            }
         }
     }
 

@@ -183,6 +183,10 @@ namespace docraft::loom::craft {
             {
                 node.set_underline(*data.underline);
             }
+            if (data.strikeout)
+            {
+                node.set_strikeout(*data.strikeout);
+            }
         }
 
         void fill_page_number_node(nodes::DocraftLoomPageNumber& node, const parser::ParsedPageNumberData& data)
@@ -210,6 +214,10 @@ namespace docraft::loom::craft {
             if (data.underline)
             {
                 node.set_underline(*data.underline);
+            }
+            if (data.strikeout)
+            {
+                node.set_strikeout(*data.strikeout);
             }
         }
 

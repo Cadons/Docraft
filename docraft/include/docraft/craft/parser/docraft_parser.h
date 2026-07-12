@@ -91,6 +91,7 @@ namespace docraft::craft::parser {
         std::optional<ParsedTextStyle> style;
         std::optional<ParsedTextAlignment> alignment;
         std::optional<bool> underline;
+        std::optional<bool> strikeout;
     };
 
     /**
@@ -120,6 +121,7 @@ namespace docraft::craft::parser {
         std::optional<ParsedTextStyle> style;
         std::optional<ParsedTextAlignment> alignment;
         std::optional<bool> underline;
+        std::optional<bool> strikeout;
     };
 
     /**

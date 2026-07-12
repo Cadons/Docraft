@@ -89,6 +89,16 @@ namespace docraft::loom::nodes {
         underline_ = underline;
     }
 
+    bool DocraftLoomText::strikeout() const
+    {
+        return strikeout_;
+    }
+
+    void DocraftLoomText::set_strikeout(bool strikeout)
+    {
+        strikeout_ = strikeout;
+    }
+
     const DocraftColor& DocraftLoomText::color() const
     {
         return color_;
@@ -150,13 +160,20 @@ namespace docraft::loom::nodes {
 
     std::string DocraftLoomText::resolved_font_name() const
     {
-        const auto style = bold_ && italic_
-                               ? utils::TextStyle::kBoldItalic
-                               : bold_
-                               ? utils::TextStyle::kBold
-                               : italic_
-                               ? utils::TextStyle::kItalic
-                               : utils::TextStyle::kNormal;
+        auto style = utils::TextStyle::kNormal;
+        if (bold_ && italic_)
+        {
+            style = utils::TextStyle::kBoldItalic;
+        }
+        else if (bold_)
+        {
+            style = utils::TextStyle::kBold;
+        }
+        else if (italic_)
+        {
+            style = utils::TextStyle::kItalic;
+        }
+
         utils::DocraftFontResolver resolver;
         resolver.rebuild_index(utils::DocraftFontResolver::builtin_font_names(),
                                utils::DocraftFontRegistry::instance().registered_font_names());

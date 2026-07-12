@@ -38,6 +38,8 @@ namespace docraft::loom::nodes {
         void set_italic(bool italic);
         bool underline() const;
         void set_underline(bool underline);
+        bool strikeout() const;
+        void set_strikeout(bool strikeout);
         const DocraftColor& color() const;
         void set_color(const DocraftColor& color);
         TextAlignment alignment() const;
@@ -76,6 +78,11 @@ namespace docraft::loom::nodes {
          */
         float ascent() const;
         void set_ascent(float ascent);
+        /**
+         * @brief Distance from the baseline to the bottom of the line box, populated by
+         * DocraftLoomMeasureProcessor at measure time.
+         * @note descent is negative, so the space below the baseline is stored as a negative number.
+         */
         float descent() const;
         void set_descent(float descent);
 
@@ -85,7 +92,8 @@ namespace docraft::loom::nodes {
         float font_size_;
         bool bold_;
         bool italic_;
-        bool underline_;
+        bool underline_ = false;
+        bool strikeout_ = false;
         DocraftColor color_;
         TextAlignment alignment_;
         float wrap_width_ = 0.0F;
