@@ -100,5 +100,14 @@ namespace docraft::backend {
          * @return Line height in points.
          */
         virtual float measure_text_height(const std::string& font_name, float font_size) const = 0;
+
+        /**
+         * @brief Measures the ascent (distance from the baseline to the top of the line box) for the given font.
+         * @param font_name Backend-registered font name.
+         * @param font_size Font size in points.
+         * @return Ascent in points.
+         */
+        virtual float measure_text_ascent(const std::string& font_name, float font_size) const = 0;
+        virtual float measure_text_descent(const std::string& font_name, float font_size) const = 0;
     };
 } // docraft::backend

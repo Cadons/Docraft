@@ -160,6 +160,13 @@ namespace docraft::test::utils {
             return font_size;
         }
 
+        float measure_text_ascent(const std::string& /*font_name*/, float font_size) const override
+        {
+            MockBackendSharedState::ensure_supported(state_->config.supports_text_backend,
+                                                     "Text backend capability not supported");
+            return font_size;
+        }
+
     private:
         std::shared_ptr<MockBackendSharedState> state_;
     };

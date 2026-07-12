@@ -124,9 +124,30 @@ namespace docraft::backend::pdf {
             return font_size > 0.0F ? font_size : 12.0F;
         if (font_size <= 0.0F)
             font_size = 12.0F;
-        const float ascent = static_cast<float>(HPDF_Font_GetAscent(font)) * font_size / kEM;
-        const float descent = static_cast<float>(HPDF_Font_GetDescent(font)) * font_size / kEM;
+        const float ascent = measure_text_ascent(font_name, font_size);
+        const float descent = measure_text_descent(font_name, font_size);
         return ascent - descent;
+    }
+    float DocraftHaruTextBackend::measure_text_descent(const std::string& font_name, float font_size) const
+    {
+        constexpr float kEM = 1000.0F;
+        HPDF_Font font = resolve_font(font_name);
+        if (!font)
+            return font_size > 0.0F ? -font_size * 0.2F : -2.4F; // Default descent is ~20% of font size
+        if (font_size <= 0.0F)
+            font_size = 12.0F;
+        return static_cast<float>(HPDF_Font_GetDescent(font)) * font_size / kEM;
+    }
+
+    float DocraftHaruTextBackend::measure_text_ascent(const std::string& font_name, float font_size) const
+    {
+        constexpr float kEM = 1000.0F;
+        HPDF_Font font = resolve_font(font_name);
+        if (!font)
+            return font_size > 0.0F ? font_size : 12.0F;
+        if (font_size <= 0.0F)
+            font_size = 12.0F;
+        return static_cast<float>(HPDF_Font_GetAscent(font)) * font_size / kEM;
     }
 } // namespace docraft::backend::pdf
 

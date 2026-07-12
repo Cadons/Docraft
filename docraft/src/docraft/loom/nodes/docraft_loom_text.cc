@@ -129,6 +129,25 @@ namespace docraft::loom::nodes {
         wrapped_lines_ = std::move(lines);
     }
 
+    float DocraftLoomText::ascent() const
+    {
+        return ascent_;
+    }
+
+    void DocraftLoomText::set_ascent(float ascent)
+    {
+        ascent_ = ascent;
+    }
+    float DocraftLoomText::descent() const
+    {
+        return descent_;
+    }
+
+    void DocraftLoomText::set_descent(float descent)
+    {
+        descent_ = descent;
+    }
+
     std::string DocraftLoomText::resolved_font_name() const
     {
         const auto style = bold_ && italic_

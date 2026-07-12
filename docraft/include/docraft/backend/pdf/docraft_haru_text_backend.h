@@ -83,6 +83,20 @@ namespace docraft::backend::pdf {
          * Stateless: does not modify page state.
          */
         float measure_text_height(const std::string& font_name, float font_size) const override;
+        /**
+         * @brief Measures the descent (baseline to bottom of line box) for the specified font.
+         * Stateless: does not modify page state.
+         * @param font_name
+         * @param font_size
+         * @return
+         */
+        float measure_text_descent(const std::string& font_name, float font_size) const override;
+
+        /**
+         * @brief Measures the ascent (baseline to top of line box) for the specified font.
+         * Stateless: does not modify page state.
+         */
+        float measure_text_ascent(const std::string& font_name, float font_size) const override;
 
     private:
         HPDF_Font resolve_font(const std::string& font_name) const;

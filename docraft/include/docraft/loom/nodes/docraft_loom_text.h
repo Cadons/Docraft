@@ -68,6 +68,17 @@ namespace docraft::loom::nodes {
         const std::vector<std::string>& wrapped_lines() const;
         void set_wrapped_lines(std::vector<std::string> lines);
 
+        /**
+         * @brief Distance from the baseline to the top of the line box, populated by
+         * DocraftLoomMeasureProcessor at measure time. Rendering reads this instead of
+         * re-querying the text backend, keeping font-metric measurement confined to the
+         * measure step.
+         */
+        float ascent() const;
+        void set_ascent(float ascent);
+        float descent() const;
+        void set_descent(float descent);
+
     private:
         std::string text_;
         std::string font_family_ = "Helvetica";
@@ -79,5 +90,7 @@ namespace docraft::loom::nodes {
         TextAlignment alignment_;
         float wrap_width_ = 0.0F;
         std::vector<std::string> wrapped_lines_;
+        float ascent_ = 0.0F;
+        float descent_ = 0.0F;
     };
 } // docraft

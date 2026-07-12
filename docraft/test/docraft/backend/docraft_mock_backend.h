@@ -22,6 +22,7 @@ namespace docraft::test::backend {
         MOCK_CONST_METHOD3(measure_text_width,
                            float(const std::string& text, const std::string& font_name, float font_size));
         MOCK_CONST_METHOD2(measure_text_height, float(const std::string& font_name, float font_size));
+        MOCK_CONST_METHOD2(measure_text_ascent, float(const std::string& font_name, float font_size));
         MOCK_CONST_METHOD2(set_font, void (const std::string& font_name, float font_size));
     };
 } // namespace backend

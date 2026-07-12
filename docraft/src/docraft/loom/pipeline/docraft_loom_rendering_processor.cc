@@ -188,15 +188,21 @@ namespace docraft::loom::pipeline {
         const auto& lines = text->wrapped_lines();
 
         // draw_text's y is the baseline, but frame.position.y is the top of the text's
-        // own line box (as measured by measure_text_height) -- shift down by the full
-        // line height so the glyph sits inside [position.y, position.y + height]
-        // instead of poking above it.
+        // own line box (as measured by measure_text_height, i.e. ascent + |descent|).
+        // The baseline of the first line sits `ascent` below that top, not a full
+        // line height below it -- placing it a full line height down (the old
+        // behavior) pushed every line's baseline past the bottom of its own line box
+        // by the descent amount, so a glyph with no descender (e.g. "X") rendered
+        // with most of its empty vertical space above it instead of split
+        // proportionally between top and bottom. ascent() is populated by the measure
+        // step (DocraftLoomMeasureProcessor); rendering only reads it.
+        const float ascent = text->ascent();
         if (lines.empty())
         {
             text_backend_->begin_text();
             text_backend_->set_text_color(text->color().toRGB().r, text->color().toRGB().g, text->color().toRGB().b);
             text_backend_->draw_text(text->text(), text->layout_box().frame.position.x,
-                                     text->layout_box().frame.position.y + text->layout_box().measured_size.height);
+                                     text->layout_box().frame.position.y + ascent);
             text_backend_->end_text();
             return;
         }
@@ -219,7 +225,7 @@ namespace docraft::loom::pipeline {
             style.alignment = (text->alignment() == nodes::TextAlignment::kJustified && is_last_line)
                                   ? nodes::TextAlignment::kLeft
                                   : text->alignment();
-            const float y = box_top + line_height * static_cast<float>(i + 1);
+            const float y = box_top + ascent + line_height * static_cast<float>(i);
             text_backend_->begin_text();
             // Unlike the single-line branch above, this loop never went through
             // set_text_color() -- wrapped text silently kept whatever color the
@@ -419,9 +425,11 @@ namespace docraft::loom::pipeline {
                 const auto marker_rgba = text_child->color().toRGB();
                 text_backend_->set_text_color(marker_rgba.r, marker_rgba.g, marker_rgba.b);
                 // Same baseline adjustment as DocraftLoomText's own visit(): marker.position
-                // is the top of the marker's line box, not the baseline.
+                // is the top of the marker's line box, not the baseline -- the baseline
+                // sits `ascent` below that top, not a full line height below it.
+                // ascent() was populated for text_child by the measure step.
                 text_backend_->draw_text(marker.text, marker.position.x,
-                                         marker.position.y + text_child->layout_box().measured_size.height);
+                                         marker.position.y + text_child->ascent());
                 text_backend_->end_text();
             }
             text_child->accept(*this);
@@ -579,8 +587,11 @@ namespace docraft::loom::pipeline {
         text_backend_->set_font(node->resolved_font_name(), node->font_size());
         text_backend_->begin_text();
         text_backend_->set_text_color(node->color().toRGB().r, node->color().toRGB().g, node->color().toRGB().b);
+        // Same baseline adjustment as DocraftLoomText's own visit(): the baseline sits
+        // `ascent` below the top of the line box, not a full line height below it.
+        // ascent() was populated for this node by the measure step.
         text_backend_->draw_text(display, node->layout_box().frame.position.x,
-                                 node->layout_box().frame.position.y + node->layout_box().measured_size.height);
+                                 node->layout_box().frame.position.y + node->ascent());
         text_backend_->end_text();
     }
 
