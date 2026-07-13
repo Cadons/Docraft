@@ -121,10 +121,6 @@ namespace docraft::craft::parser {
                 data.content_tag_name = std::string{elements::kImage};
                 data.content = image_parser.parse(child);
             }
-            else
-            {
-                throw docraft::exception::InvalidInputException(child_name + " is not supported in the table column");
-            }
             return data;
         }
 

@@ -101,6 +101,7 @@ namespace docraft::backend::pdf {
     private:
         HPDF_Font resolve_font(const std::string& font_name) const;
         std::shared_ptr<DocraftHaruSharedState> state_;
+        static constexpr std::string kDefaultFont = "Helvetica";
     };
 } // namespace docraft::backend::pdf
 

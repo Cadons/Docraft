@@ -107,7 +107,7 @@ namespace docraft::backend::pdf {
                 return font;
             HPDF_ResetError(state_->pdf);
         }
-        return nullptr;
+        return HPDF_GetFont(state_->pdf, kDefaultFont.c_str(), "WinAnsiEncoding");
     }
 
     float DocraftHaruTextBackend::measure_text_width(const std::string& text, const std::string& font_name,

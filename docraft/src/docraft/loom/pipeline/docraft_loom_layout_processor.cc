@@ -395,6 +395,7 @@ namespace docraft::loom::pipeline {
         //cells cannot be in absolute position mode, they are always positioned by the table's own grid layout
         if (cell->position_mode() == nodes::DocraftPositionType::kAbsolute)
         {
+            //this is would, because it cannot use this position mode, it is an error in the configuration.
             throw exception::InvalidInputException("Table cells cannot be in absolute position mode");
         }
         PositionScope scope(*this, *cell);
