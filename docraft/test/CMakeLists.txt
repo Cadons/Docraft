@@ -12,6 +12,7 @@ set(TEST_SOURCES
         docraft/utils/docraft_parser_utils.cc
         docraft/utils/docraft_font_registry_test.cc
         docraft/loom/pipeline/docraft_loom_measure_processor_test.cc
+        docraft/loom/pipeline/docraft_loom_layout_processor_test.cc
         docraft/loom/pipeline/docraft_loom_pagination_processor_test.cc
         docraft/loom/nodes/docraft_loom_stack_nodes_test.cc
         docraft/loom/nodes/docraft_loom_node_test.cc

@@ -146,6 +146,13 @@ namespace docraft::test::utils {
                                                      "Text backend capability not supported");
         }
 
+        float measure_text_descent(const std::string& font_name, float font_size) const override
+        {
+            MockBackendSharedState::ensure_supported(state_->config.supports_text_backend,
+                                                     "Text backend capability not supported");
+            return font_size * 0.25F; // Example implementation, adjust as needed
+        }
+
         float measure_text_width(const std::string& text, const std::string& /*font_name*/,
                                  float /*font_size*/) const override
         {
