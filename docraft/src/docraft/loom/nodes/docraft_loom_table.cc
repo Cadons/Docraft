@@ -21,6 +21,10 @@ namespace docraft::loom::nodes {
                     text_clone->set_underline(text->underline());
                     text_clone->set_color(text->color());
                     text_clone->set_alignment(text->alignment());
+                    text_clone->set_wrap_width(text->wrap_width());
+                    text_clone->set_wrapped_lines(text->wrapped_lines());
+                    text_clone->set_ascent(text->ascent());
+                    text_clone->set_descent(text->descent());
                     clone->set_content(text_clone);
                 }
                 else if (auto image = std::dynamic_pointer_cast<DocraftLoomImage>(content))
