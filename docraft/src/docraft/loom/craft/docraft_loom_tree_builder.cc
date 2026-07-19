@@ -233,8 +233,8 @@ namespace docraft::loom::craft {
 
         // RAII guard that overrides current_foreach_item_ for its lifetime and restores
         // the previous value on scope exit (including via an exception) -- used by
-        // build_table() to force "no Foreach item in scope" for the whole table subtree,
-        // since a <Foreach> can't appear inside a <Table> (see build_table()'s use).
+        // build_templated_model_rows() to bind each JSON-model object to its cloned row
+        // template.
         class ForeachItemScope
         {
         public:
@@ -550,12 +550,12 @@ namespace docraft::loom::craft {
 
     // Resolves a `<Table model="...">` attribute (already known not to be the
     // "horizontal"/"vertical" keyword) into a rectangular, string-only matrix:
-    // `${...}` substitution (never against a Foreach item -- see build_table()'s
-    // ForeachItemScope), then the same single-quote-JSON normalization Foreach's model
-    // uses, then JSON-parse.
+    // `${...}` substitution (against current_foreach_item_ if this Table is nested inside
+    // an outer <Foreach>, same as Foreach's own model resolution), then the same
+    // single-quote-JSON normalization Foreach's model uses, then JSON-parse.
     nlohmann::json DocraftLoomTreeBuilder::resolve_table_model_json(const std::string& raw) const
     {
-        const std::string normalized = normalize_single_quoted_json(template_engine_->render_template_string(raw));
+        const std::string normalized = normalize_single_quoted_json(render_template_text(raw));
 
         nlohmann::json parsed;
         try
@@ -660,7 +660,6 @@ namespace docraft::loom::craft {
 
         add_table_model_header_row(table, data, data.rows.front().cells.size());
 
-        const nlohmann::json* previous_item = current_foreach_item_;
         for (const auto& item : model_json)
         {
             if (!item.is_object())
@@ -668,7 +667,10 @@ namespace docraft::loom::craft {
                 throw docraft::exception::DataFormatException(
                     "<Table> 'model' must be a JSON array of only objects or only arrays, not mixed");
             }
-            current_foreach_item_ = &item;
+            // Scoped per iteration (rather than a single save/restore around the whole
+            // loop) so current_foreach_item_ is restored to whatever it was before this
+            // call -- the outer <Foreach> item, if any -- even if building a row throws.
+            ForeachItemScope item_scope(current_foreach_item_, &item);
             for (const auto& row_data : data.rows)
             {
                 std::vector<std::shared_ptr<nodes::DocraftLoomTableCell>> row;
@@ -680,7 +682,6 @@ namespace docraft::loom::craft {
                 table.add_row(row);
             }
         }
-        current_foreach_item_ = previous_item;
     }
 
     // Resolves a `<Table header="...">` attribute into a non-empty, string-only array,
@@ -688,7 +689,7 @@ namespace docraft::loom::craft {
     // model matrix above.
     std::vector<std::string> DocraftLoomTreeBuilder::resolve_table_header(const std::string& raw) const
     {
-        const std::string normalized = normalize_single_quoted_json(template_engine_->render_template_string(raw));
+        const std::string normalized = normalize_single_quoted_json(render_template_text(raw));
 
         nlohmann::json parsed;
         try
@@ -967,12 +968,14 @@ namespace docraft::loom::craft {
 
         // Table structure is parsed specially (no generic child recursion -- see
         // DocraftCraftLanguageParser::parse_node's Table early-return), so a <Foreach>
-        // can't appear inside a <Table>; force "no current item" for cell content's
-        // ${...} substitution regardless of whether this Table itself is nested inside an
-        // outer Foreach, restoring the previous value on every exit path (including via
-        // an exception) below.
-        ForeachItemScope foreach_scope(current_foreach_item_, nullptr);
-
+        // can't appear as a literal child of a <Table>. That doesn't mean current_foreach_item_
+        // should be hidden from this Table's own attributes/content, though: if the Table
+        // itself is nested inside an outer <Foreach>, its `model`/`header` attributes and its
+        // cell content must still resolve `${data("field")}` against that outer item -- the
+        // ambient current_foreach_item_ is left untouched here and simply flows through
+        // resolve_table_model_json()/resolve_table_header()/build_content_cell() (via
+        // render_template_text()). build_templated_model_rows() below additionally overrides
+        // it per JSON-model object, scoped to that object's own rows.
         if (data.baseline_offset)
         {
             table->set_baseline_offset(*data.baseline_offset);

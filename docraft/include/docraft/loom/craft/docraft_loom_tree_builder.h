@@ -137,10 +137,10 @@ namespace docraft::loom::craft {
                              const docraft::craft::parser::ParsedImageData& data) const;
 
         /**
-         * @brief Builds a `<HTitle>`/`<VTitle>` table title cell. Table content never sees
-         * current_foreach_item_ (a `<Foreach>` can't appear inside a `<Table>` -- see
-         * build_table()'s ForeachItemScope), so this only ever resolves plain `${variable}`
-         * expressions, not `${data("field")}`.
+         * @brief Builds a `<HTitle>`/`<VTitle>` table title cell. Deliberately resolves only
+         * plain `${variable}` expressions, not `${data("field")}` -- unlike model/header/cell
+         * content, a title's text has no per-row or per-object data of its own to bind to, so
+         * it never consults current_foreach_item_.
          */
         std::shared_ptr<nodes::DocraftLoomTableCell> build_title_cell(
             const docraft::craft::parser::ParsedTableTitleData& title) const;
