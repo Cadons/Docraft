@@ -530,24 +530,34 @@ namespace docraft::loom::craft {
     std::shared_ptr<nodes::DocraftLoomTableCell> DocraftLoomTreeBuilder::build_content_cell(
         const parser::ParsedTableCellData& cell_data) const
     {
-        std::shared_ptr<nodes::DocraftLoomNode> content;
-        if (cell_data.content_tag_name == std::string{tokens::elements::kText})
+        auto cell = std::make_shared<nodes::DocraftLoomTableCell>();
+
+        // Cell content is built directly from ParsedTableCellData rather than via build()'s
+        // generic dispatcher (Table content isn't recursed into generically -- see
+        // build_table()), so build()'s "visible" check never runs for it; replicate that
+        // check here, or an explicitly-invisible Text/Image inside a <Cell> would still
+        // render, unlike everywhere else in the document.
+        const bool visible = !cell_data.content_common.visible.has_value() || *cell_data.content_common.visible;
+        if (visible)
         {
-            auto text_node = std::make_shared<nodes::DocraftLoomText>();
-            fill_text_node(*text_node, std::any_cast<const parser::ParsedTextData&>(cell_data.content));
-            apply_common_attributes(*text_node, cell_data.content_common);
-            content = text_node;
-        }
-        else
-        {
-            auto image_node = std::make_shared<nodes::DocraftLoomImage>();
-            fill_image_node(*image_node, std::any_cast<const parser::ParsedImageData&>(cell_data.content));
-            apply_common_attributes(*image_node, cell_data.content_common);
-            content = image_node;
+            std::shared_ptr<nodes::DocraftLoomNode> content;
+            if (cell_data.content_tag_name == std::string{tokens::elements::kText})
+            {
+                auto text_node = std::make_shared<nodes::DocraftLoomText>();
+                fill_text_node(*text_node, std::any_cast<const parser::ParsedTextData&>(cell_data.content));
+                apply_common_attributes(*text_node, cell_data.content_common);
+                content = text_node;
+            }
+            else
+            {
+                auto image_node = std::make_shared<nodes::DocraftLoomImage>();
+                fill_image_node(*image_node, std::any_cast<const parser::ParsedImageData&>(cell_data.content));
+                apply_common_attributes(*image_node, cell_data.content_common);
+                content = image_node;
+            }
+            cell->set_content(content);
         }
 
-        auto cell = std::make_shared<nodes::DocraftLoomTableCell>();
-        cell->set_content(content);
         if (cell_data.background)
         {
             cell->set_background(resolve_color(*cell_data.background));
