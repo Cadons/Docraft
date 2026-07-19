@@ -42,7 +42,7 @@ namespace docraft::craft::parser {
         if (auto border_color_attr = craft_language_source.attribute(
                 elements::line::attribute::kBorderColor.data()))
         {
-            data.border_color = detail::get_docraft_color(border_color_attr);
+            data.border_color = detail::get_color_attribute_raw(border_color_attr);
         }
         if (auto border_width_attr = craft_language_source.attribute(
                 elements::line::attribute::kBorderWidth.data()))

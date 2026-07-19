@@ -32,15 +32,26 @@ namespace docraft::craft::parser::detail {
     bool is_hex_color(const std::string &color);
 
     /**
-     * @brief Parses a color attribute value into a DocraftColor object.
-     * Supports hex colors (e.g., \#RRGGBB or \#RRGGBBAA), named colors (e.g., "red",
-     * "blue") and template expressions (e.g. "${variable}"), which `DocraftColor` itself
-     * stores verbatim for a later templating pass to resolve.
+     * @brief Extracts a color attribute's raw text, unresolved. The value may be a hex
+     * code, a named color, or a `${...}` template expression -- interpretation is
+     * deferred to `parse_docraft_color`, called after templating has resolved any
+     * expression (see `DocraftLoomTreeBuilder`), since this parser stage runs before
+     * templating and has no template engine to resolve against.
      * @param color_attr XML attribute containing the color value.
+     * @return The attribute's raw text.
+     * @throws docraft::exception::InvalidInputException if the attribute value is empty.
+     */
+    std::string get_color_attribute_raw(const pugi::xml_attribute &color_attr);
+
+    /**
+     * @brief Parses an already-resolved (template-free) color string into a DocraftColor.
+     * Supports hex colors (e.g., \#RRGGBB or \#RRGGBBAA) and named colors (e.g., "red",
+     * "blue").
+     * @param color_str The resolved color string.
      * @return A DocraftColor object representing the parsed color.
      * @throws docraft::exception::InvalidInputException if the color string is not in a valid format or is an unsupported named color.
      */
-    DocraftColor get_docraft_color(const pugi::xml_attribute &color_attr);
+    DocraftColor parse_docraft_color(const std::string &color_str);
 
     /**
      * @brief Parses the universal attributes (name/x/y/width/height/padding/weight/

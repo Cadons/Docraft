@@ -21,7 +21,6 @@
 #include <string>
 #include <vector>
 
-#include "docraft/docraft_color.h"
 #include "docraft/docraft_lib.h"
 
 #include "docraft/craft/docraft_craft_parsed_element.h"
@@ -33,8 +32,8 @@ namespace docraft::craft::parser {
      */
     struct ParsedRectangleData
     {
-        std::optional<DocraftColor> background_color;
-        std::optional<DocraftColor> border_color;
+        std::optional<std::string> background_color;
+        std::optional<std::string> border_color;
         std::optional<float> border_width;
     };
 
@@ -88,7 +87,7 @@ namespace docraft::craft::parser {
         std::string text;
         std::optional<float> font_size;
         std::optional<std::string> font_name;
-        std::optional<DocraftColor> color;
+        std::optional<std::string> color;
         std::optional<ParsedTextStyle> style;
         std::optional<ParsedTextAlignment> alignment;
         std::optional<bool> underline;
@@ -118,7 +117,7 @@ namespace docraft::craft::parser {
     {
         std::optional<float> font_size;
         std::optional<std::string> font_name;
-        std::optional<DocraftColor> color;
+        std::optional<std::string> color;
         std::optional<ParsedTextStyle> style;
         std::optional<ParsedTextAlignment> alignment;
         std::optional<bool> underline;
@@ -173,8 +172,8 @@ namespace docraft::craft::parser {
         std::string text;
         ParsedTextAlignment alignment = ParsedTextAlignment::kCenter;
         ParsedTextStyle style = ParsedTextStyle::kBold;
-        std::optional<DocraftColor> color;
-        std::optional<DocraftColor> background;
+        std::optional<std::string> color;
+        std::optional<std::string> background;
     };
 
     /**
@@ -186,7 +185,7 @@ namespace docraft::craft::parser {
         std::string content_tag_name; // "Text" or "Image"
         std::any content;
         docraft::craft::DocraftCommonAttributes content_common;
-        std::optional<DocraftColor> background;
+        std::optional<std::string> background;
         std::optional<float> width;
     };
 
@@ -196,7 +195,7 @@ namespace docraft::craft::parser {
     struct ParsedTableRowData
     {
         std::vector<ParsedTableCellData> cells;
-        std::optional<DocraftColor> background;
+        std::optional<std::string> background;
         std::optional<ParsedTableTitleData> row_title; // vertical orientation's <VTitle>
     };
 
@@ -222,7 +221,7 @@ namespace docraft::craft::parser {
     {
         ParsedTableOrientation orientation = ParsedTableOrientation::kHorizontal;
         std::optional<float> baseline_offset;
-        std::optional<DocraftColor> default_cell_background;
+        std::optional<std::string> default_cell_background;
         std::vector<ParsedTableTitleData> header_titles; // <THead><HTitle>
         std::vector<ParsedTableRowData> rows; // <TBody><Row>
         std::optional<std::string> model_data_template; // `model`, when a JSON matrix/`${...}` rather than a keyword

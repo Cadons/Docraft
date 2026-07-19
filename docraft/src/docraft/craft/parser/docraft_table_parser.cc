@@ -75,20 +75,20 @@ namespace docraft::craft::parser {
             data.style = parse_table_title_style(title);
             if (auto color_attr = title.attribute(elements::table_title::attribute::kColor.data()))
             {
-                data.color = detail::get_docraft_color(color_attr);
+                data.color = detail::get_color_attribute_raw(color_attr);
             }
             if (auto bg_attr = title.attribute(background_attr_name))
             {
-                data.background = detail::get_docraft_color(bg_attr);
+                data.background = detail::get_color_attribute_raw(bg_attr);
             }
             return data;
         }
 
-        std::optional<DocraftColor> parse_background_color(const pugi::xml_node& node, const char* attr_name)
+        std::optional<std::string> parse_background_color(const pugi::xml_node& node, const char* attr_name)
         {
             if (auto attr = node.attribute(attr_name))
             {
-                return detail::get_docraft_color(attr);
+                return detail::get_color_attribute_raw(attr);
             }
             return std::nullopt;
         }
@@ -238,7 +238,7 @@ namespace docraft::craft::parser {
 
         if (auto tile_attr = craft_language_source.attribute(elements::table::attribute::kTableTile.data()))
         {
-            data.default_cell_background = detail::get_docraft_color(tile_attr);
+            data.default_cell_background = detail::get_color_attribute_raw(tile_attr);
         }
 
         const bool is_vertical = data.orientation == ParsedTableOrientation::kVertical;

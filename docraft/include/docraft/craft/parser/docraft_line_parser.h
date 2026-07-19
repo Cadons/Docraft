@@ -17,8 +17,8 @@
 #pragma once
 
 #include <optional>
+#include <string>
 
-#include "docraft/docraft_color.h"
 #include "docraft/docraft_lib.h"
 
 #include "docraft/craft/i_docraft_parser.h"
@@ -33,7 +33,7 @@ namespace docraft::craft::parser {
         std::optional<float> y1;
         std::optional<float> x2;
         std::optional<float> y2;
-        std::optional<DocraftColor> border_color;
+        std::optional<std::string> border_color;
         std::optional<float> border_width;
     };
 

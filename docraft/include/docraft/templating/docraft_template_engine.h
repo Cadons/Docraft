@@ -112,29 +112,48 @@ namespace docraft::templating {
 
                 /**
                  * @brief Renders a template string, replacing every `${variable}` with its
-                 * registered value and, if `foreach_item` is given, every `${data("field")}`
-                 * with that field of `foreach_item`. An unresolvable `${...}` expression
-                 * (unknown variable, or `data(...)` with no `foreach_item`) is left in the
-                 * output exactly as written, rather than resolved to anything else.
+                 * registered value. Has no notion of a Foreach iteration item -- callers
+                 * that may or may not have one in scope (e.g.
+                 * `docraft::loom::craft::DocraftLoomTreeBuilder`) decide which of this or
+                 * render_template_string_foreach_item() to call. An unknown variable is
+                 * left in the output exactly as written.
                  * @param text Template string to render.
-                 * @param foreach_item JSON object supplying the current Foreach iteration's
-                 * fields, or nullptr outside of a Foreach expansion.
-                 * @return Rendered string with every resolvable expression replaced.
+                 * @return Rendered string with every resolvable `${variable}` replaced.
                  */
-                std::string render_template_string(const std::string& text,
-                                                   const nlohmann::json* foreach_item = nullptr) const;
+                std::string render_template_string(const std::string& text) const;
 
-            private:
-                static std::string normalize_name(const std::string &name);
                 /**
-                 * @brief Renders a template string by replacing template variables with their values.
-                 * @note input data = ${data("field_name")), json cannot have multiple levels of nested,
+                 * @brief Renders a template string against one Foreach iteration's item,
+                 * replacing every `${data("field")}` with that field of `item` and every
+                 * `${variable}` with its registered value (`data(...)` is tried first).
+                 * @note `data("field_name")` reads a top-level field only; `item` cannot be
+                 * nested more than one level.
                  * @param text Template string to render.
-                 * @param item JSON object supplying per-iteration data for foreach loops.
-                 * @return Rendered string with template variables replaced.
+                 * @param item JSON object supplying the current Foreach iteration's fields.
+                 * @return Rendered string with every resolvable expression replaced.
                  */
                 std::string render_template_string_foreach_item(const std::string &text,
                                                                 const nlohmann::json &item) const;
+
+            private:
+                static std::string normalize_name(const std::string &name);
+
+                /**
+                 * @brief Shared by render_template_string() and
+                 * render_template_string_foreach_item(): scans `text` for `${...}`
+                 * expressions and replaces each with whatever `resolve` returns for it.
+                 * Owns the scanning/replacing and the exception safety net (a `resolve`
+                 * that throws falls back to leaving the expression as written); `resolve`
+                 * owns only the decision of what a single expression's value is.
+                 * @param text Template string to scan.
+                 * @param resolve Callable `(const std::string& expression, const
+                 * std::string& variable_name) -> std::string` invoked once per `${...}`
+                 * found; `expression` is the full `${...}` text, `variable_name` is the
+                 * text between the braces.
+                 * @return `text` with every `${...}` replaced by `resolve`'s result.
+                 */
+                template <typename Resolver>
+                std::string scan_and_replace(const std::string &text, Resolver resolve) const;
 
                 std::unordered_map<std::string, std::string> template_variables_;
                 std::unordered_map<std::string, RawImageData> image_data_;

@@ -36,18 +36,15 @@ namespace docraft::craft::parser::detail {
         return true;
     }
 
-    DocraftColor get_docraft_color(const pugi::xml_attribute &color_attr) {
+    std::string get_color_attribute_raw(const pugi::xml_attribute &color_attr) {
         std::string color_name_str = color_attr.as_string();
         if (color_name_str.empty()) {
             throw docraft::exception::InvalidInputException("Color attribute cannot be empty");
         }
+        return color_name_str;
+    }
 
-        // Support template expressions: ${data("fieldname")} or ${variable_name}.
-        // DocraftColor stores the raw expression itself; a later templating pass resolves it.
-        if (color_name_str.contains("${") && color_name_str.contains("}")) {
-            return DocraftColor(color_name_str);
-        }
-
+    DocraftColor parse_docraft_color(const std::string &color_name_str) {
         if (color_name_str[0] == '#') {
             if (!is_hex_color(color_name_str)) {
                 throw docraft::exception::InvalidInputException("Invalid hex color: " + color_name_str);

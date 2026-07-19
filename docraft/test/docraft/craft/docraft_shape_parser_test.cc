@@ -6,14 +6,18 @@
 #include "docraft/craft/parser/docraft_circle_parser.h"
 #include "docraft/craft/parser/docraft_line_parser.h"
 #include "docraft/craft/parser/docraft_parser.h"
+#include "docraft/craft/parser/docraft_parser_helpers.h"
 #include "docraft/craft/parser/docraft_polygon_parser.h"
 #include "docraft/craft/parser/docraft_triangle_parser.h"
 #include "docraft/docraft_color.h"
 #include "docraft/exception/docraft_exceptions.h"
 
 namespace {
-    docraft::RGB to_rgb(const docraft::DocraftColor &color) {
-        return color.toRGB();
+    // The parser now only extracts a color attribute's raw text (see
+    // docraft_parser_helpers.h) -- interpretation is deferred to the loom tree builder,
+    // after templating. Parsing it here still exercises the same interpretation logic.
+    docraft::RGB to_rgb(const std::string &color) {
+        return docraft::craft::parser::detail::parse_docraft_color(color).toRGB();
     }
 }
 

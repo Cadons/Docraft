@@ -17,9 +17,9 @@
 #pragma once
 
 #include <optional>
+#include <string>
 #include <vector>
 
-#include "docraft/docraft_color.h"
 #include "docraft/docraft_lib.h"
 #include "docraft/docraft_position.h"
 
@@ -31,8 +31,8 @@ namespace docraft::craft::parser {
      */
     struct ParsedPolygonData
     {
-        std::optional<DocraftColor> background_color;
-        std::optional<DocraftColor> border_color;
+        std::optional<std::string> background_color;
+        std::optional<std::string> border_color;
         std::optional<float> border_width;
         std::vector<docraft::Position> points;
     };

@@ -17,10 +17,12 @@
 #pragma once
 
 #include <memory>
+#include <string>
 #include <vector>
 
 #include <nlohmann/json_fwd.hpp>
 
+#include "docraft/docraft_color.h"
 #include "docraft/docraft_lib.h"
 
 #include "docraft/craft/docraft_craft_parsed_element.h"
@@ -42,6 +44,14 @@
 #include "docraft/loom/nodes/docraft_loom_title.h"
 #include "docraft/loom/nodes/docraft_loom_triangle.h"
 #include "docraft/loom/nodes/docraft_loom_vstack.h"
+
+namespace docraft::craft::parser {
+    struct ParsedTextData;
+    struct ParsedPageNumberData;
+    struct ParsedImageData;
+    struct ParsedTableTitleData;
+    struct ParsedTableCellData;
+} // namespace docraft::craft::parser
 
 namespace docraft::loom::craft {
     /**
@@ -99,6 +109,58 @@ namespace docraft::loom::craft {
         std::shared_ptr<nodes::DocraftLoomParagraph> build_paragraph(const ParsedElement& element);
         std::shared_ptr<nodes::DocraftLoomVStack> build_section(const ParsedElement& element);
         std::shared_ptr<nodes::DocraftLoomNewPage> build_new_page(const ParsedElement& element);
+
+        /**
+         * @brief Resolves a raw color attribute (hex, named color, or a `${...}` template
+         * expression) against this builder's template engine and current Foreach item, then
+         * interprets it. Color parsing itself happens too early (during the engine-agnostic
+         * craft parse, before templating) to resolve `${...}` there, so the raw text is
+         * carried in the parsed data until this point.
+         * @param raw The raw color attribute text.
+         * @throws docraft::exception::InvalidInputException if the resolved string is not a
+         * valid hex code or a recognized named color.
+         */
+        DocraftColor resolve_color(const std::string& raw) const;
+
+        /**
+         * @brief Renders `text` against this builder's template engine, using
+         * current_foreach_item_ if one is in scope (per-Foreach-item `${data("field")}`
+         * resolution) or plain `${variable}` substitution otherwise.
+         */
+        std::string render_template_text(const std::string& text) const;
+
+        void fill_text_node(nodes::DocraftLoomText& node, const docraft::craft::parser::ParsedTextData& data) const;
+        void fill_page_number_node(nodes::DocraftLoomPageNumber& node,
+                                   const docraft::craft::parser::ParsedPageNumberData& data) const;
+        void fill_image_node(nodes::DocraftLoomImage& node,
+                             const docraft::craft::parser::ParsedImageData& data) const;
+
+        /**
+         * @brief Builds a `<HTitle>`/`<VTitle>` table title cell. Table content never sees
+         * current_foreach_item_ (a `<Foreach>` can't appear inside a `<Table>` -- see
+         * build_table()'s ForeachItemScope), so this only ever resolves plain `${variable}`
+         * expressions, not `${data("field")}`.
+         */
+        std::shared_ptr<nodes::DocraftLoomTableCell> build_title_cell(
+            const docraft::craft::parser::ParsedTableTitleData& title) const;
+        std::shared_ptr<nodes::DocraftLoomTableCell> build_content_cell(
+            const docraft::craft::parser::ParsedTableCellData& cell_data) const;
+
+        /**
+         * @brief Resolves a `<Table model="...">` attribute (already known not to be the
+         * "horizontal"/"vertical" keyword) into a rectangular, string-only matrix.
+         * @throws docraft::exception::DataFormatException if `raw` doesn't resolve to a
+         * non-empty, rectangular JSON array of strings.
+         */
+        std::vector<std::vector<std::string>> resolve_table_model_matrix(const std::string& raw) const;
+
+        /**
+         * @brief Resolves a `<Table header="...">` attribute into a non-empty,
+         * string-only array.
+         * @throws docraft::exception::DataFormatException if `raw` doesn't resolve to a
+         * non-empty JSON array of strings.
+         */
+        std::vector<std::string> resolve_table_header(const std::string& raw) const;
 
         /**
          * @brief Recursively builds each of `children` and appends the non-null results

@@ -73,12 +73,12 @@ namespace docraft::templating {
         return template_variables_.contains(normalize_name(name));
     }
 
-    std::string DocraftTemplateEngine::render_template_string_foreach_item(const std::string &text,
-                                                                           const nlohmann::json &item) const {
+    template <typename Resolver>
+    std::string DocraftTemplateEngine::scan_and_replace(const std::string &text, Resolver resolve) const {
         std::string result = text;
         size_t pos = 0;
         while ((pos = result.find("${", pos)) != std::string::npos) {
-            size_t end_pos = result.find("}", pos);
+            size_t end_pos = result.find('}', pos);
             if (end_pos == std::string::npos) {
                 break;
             }
@@ -86,19 +86,7 @@ namespace docraft::templating {
             std::string variable_name = result.substr(pos + 2, end_pos - pos - 2);
             std::string variable_value;
             try {
-                // Handle data("fieldName") syntax for foreach item fields using the utility method
-                if (variable_name.rfind("data(", 0) == 0) {
-                    variable_value = utils::DocraftParserUtilis::extract_data_attribute(variable_expression, item);
-                    if (variable_value.empty()) {
-                        LOG_WARNING("Template variable '" + variable_name + "' not found in foreach item.");
-                    }
-                } else if (has_template_variable(variable_name)) {
-                    // Handle normal template variables if they are used in foreach item templates
-                    variable_value = find_template_variable(variable_name);
-                } else {
-                    LOG_WARNING("Template variable '" + variable_name + "' not found in template engine.");
-                    variable_value = variable_expression;
-                }
+                variable_value = resolve(variable_expression, variable_name);
             } catch (...) {
                 LOG_ERROR("Template variable '" + variable_name + "' not found");
                 variable_value = variable_expression;
@@ -108,37 +96,36 @@ namespace docraft::templating {
         }
         return result;
     }
-    std::string DocraftTemplateEngine::render_template_string(const std::string &text,
-                                                              const nlohmann::json* foreach_item) const
+
+    std::string DocraftTemplateEngine::render_template_string(const std::string &text) const
     {
-        if (foreach_item != nullptr) {
-            return render_template_string_foreach_item(text, *foreach_item);
-        }
-        std::string result = text;
-        size_t pos = 0;
-        while ((pos = result.find("${", pos)) != std::string::npos) {
-            size_t end_pos = result.find("}", pos);
-            if (end_pos == std::string::npos) {
-                break;
+        return scan_and_replace(text, [this](const std::string &expression, const std::string &variable_name) {
+            if (has_template_variable(variable_name)) {
+                return find_template_variable(variable_name);
             }
-            std::string variable_expression = result.substr(pos, end_pos - pos + 1);
-            std::string variable_name = result.substr(pos + 2, end_pos - pos - 2);
-            std::string variable_value;
-            try {
-                if (has_template_variable(variable_name)) {
-                    variable_value = find_template_variable(variable_name);
-                } else {
-                    LOG_WARNING("Template variable '" + variable_name + "' not found in template engine.");
-                    variable_value = variable_expression;
+            LOG_WARNING("Template variable '" + variable_name + "' not found in template engine.");
+            return expression;
+        });
+    }
+
+    std::string DocraftTemplateEngine::render_template_string_foreach_item(const std::string &text,
+                                                                           const nlohmann::json &item) const {
+        return scan_and_replace(text, [this, &item](const std::string &expression, const std::string &variable_name) {
+            // Handle data("fieldName") syntax for foreach item fields using the utility method
+            if (variable_name.starts_with("data(")) {
+                std::string value = utils::DocraftParserUtilis::extract_data_attribute(expression, item);
+                if (value.empty()) {
+                    LOG_WARNING("Template variable '" + variable_name + "' not found in foreach item.");
                 }
-            } catch (...) {
-                LOG_ERROR("Template variable '" + variable_name + "' not found");
-                variable_value = variable_expression;
+                return value;
             }
-            result.replace(pos, end_pos - pos + 1, variable_value);
-            pos += variable_value.length();
-        }
-        return result;
+            // Handle normal template variables if they are used in foreach item templates
+            if (has_template_variable(variable_name)) {
+                return find_template_variable(variable_name);
+            }
+            LOG_WARNING("Template variable '" + variable_name + "' not found in template engine.");
+            return expression;
+        });
     }
 
     void DocraftTemplateEngine::add_image_data(const std::string &image_id,

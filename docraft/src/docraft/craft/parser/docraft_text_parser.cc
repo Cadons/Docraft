@@ -97,7 +97,7 @@ namespace docraft::craft::parser {
             data.font_name = font_name_attr.as_string();
         }
         if (auto color_attr = craft_language_source.attribute(basic::attribute::kColor.data())) {
-            data.color = detail::get_docraft_color(color_attr);
+            data.color = detail::get_color_attribute_raw(color_attr);
         }
         if (auto style_attr = craft_language_source.attribute(elements::text::attribute::kStyle.data())) {
             data.style = parse_style(style_attr.as_string());

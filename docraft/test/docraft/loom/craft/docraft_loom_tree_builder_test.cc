@@ -760,3 +760,33 @@ TEST(DocraftLoomTreeBuilderTest, NestedForeachModelResolvesFromOuterItemData)
     ASSERT_TRUE(member2);
     EXPECT_EQ(member2->text(), "Bob");
 }
+
+// --- Regression tests for confirmed-but-not-yet-fixed bugs from the code review
+// (.local/CODE_REVIEW_LOOM_MIGRATION.md). These currently FAIL against the
+// unmodified codebase -- they encode the desired behavior and will pass once the
+// corresponding fix from the review is implemented.
+
+// Review bug #1: a color attribute containing a ${...} template expression must
+// resolve per Foreach item, not throw at parse time.
+TEST(DocraftLoomTreeBuilderTest, ForeachColorTemplateExpressionResolvesPerItem)
+{
+    const char* xml = R"XML(
+<Layout orientation="vertical">
+  <Foreach model='[{"color":"#FF0000"},{"color":"#00FF00"}]'>
+    <Text color='${data("color")}'>x</Text>
+  </Foreach>
+</Layout>
+)XML";
+
+    const auto node = parse_and_build(xml);
+    ASSERT_TRUE(node);
+    ASSERT_EQ(node->children_count(), 2);
+    const auto first = std::dynamic_pointer_cast<const docraft::loom::nodes::DocraftLoomText>(node->child(0));
+    ASSERT_TRUE(first);
+    EXPECT_FLOAT_EQ(first->color().toRGB().r, 1.0F);
+    EXPECT_FLOAT_EQ(first->color().toRGB().g, 0.0F);
+    const auto second = std::dynamic_pointer_cast<const docraft::loom::nodes::DocraftLoomText>(node->child(1));
+    ASSERT_TRUE(second);
+    EXPECT_FLOAT_EQ(second->color().toRGB().g, 1.0F);
+}
+

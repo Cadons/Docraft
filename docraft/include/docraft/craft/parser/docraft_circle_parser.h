@@ -17,8 +17,8 @@
 #pragma once
 
 #include <optional>
+#include <string>
 
-#include "docraft/docraft_color.h"
 #include "docraft/docraft_lib.h"
 
 #include "docraft/craft/i_docraft_parser.h"
@@ -33,8 +33,8 @@ namespace docraft::craft::parser {
      */
     struct ParsedCircleData
     {
-        std::optional<DocraftColor> background_color;
-        std::optional<DocraftColor> border_color;
+        std::optional<std::string> background_color;
+        std::optional<std::string> border_color;
         std::optional<float> border_width;
         std::optional<float> radius;
     };

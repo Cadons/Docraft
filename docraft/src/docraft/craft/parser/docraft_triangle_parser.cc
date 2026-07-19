@@ -27,11 +27,11 @@ namespace docraft::craft::parser {
         ParsedTriangleData data;
         if (auto background_color_attr = craft_language_source.attribute(
                 elements::triangle::attribute::kBackgroundColor.data())) {
-            data.background_color = detail::get_docraft_color(background_color_attr);
+            data.background_color = detail::get_color_attribute_raw(background_color_attr);
         }
         if (auto border_color_attr = craft_language_source.attribute(
                 elements::triangle::attribute::kBorderColor.data())) {
-            data.border_color = detail::get_docraft_color(border_color_attr);
+            data.border_color = detail::get_color_attribute_raw(border_color_attr);
         }
         if (auto border_width_attr = craft_language_source.attribute(
                 elements::triangle::attribute::kBorderWidth.data())) {
