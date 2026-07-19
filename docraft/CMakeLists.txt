@@ -184,10 +184,6 @@ if (BUILD_SHARED_LIBS)
 endif ()
 
 generate_docraft_fonts(docraft "${CMAKE_CURRENT_SOURCE_DIR}/fonts.json")
-add_executable(docraft_loom_tool src/docraft/loom/main_loom.cc)
-#declare define in the c++ code to export version
-target_compile_definitions(docraft_loom_tool PRIVATE DOCRAFT_VERSION="${DOCRAFT_LIBRARY_VERSION}")
-configure_artifact_version(docraft_loom_tool ${PROJECT_VERSION})
 
 add_executable(docraft_tool src/docraft/main.cpp)
 #declare define in the c++ code to export version
@@ -203,7 +199,6 @@ else ()
 endif ()
 
 target_link_libraries(docraft PUBLIC ${PUGIXML_TARGET} nlohmann_json::nlohmann_json ${LIBHARU_TARGET} fmt::fmt)
-target_link_libraries(docraft_loom_tool PRIVATE docraft)
 target_link_libraries(docraft_tool PRIVATE docraft)
 
 target_include_directories(docraft
@@ -221,11 +216,7 @@ install(TARGETS docraft
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
-install(TARGETS docraft_loom_tool
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
+
 install(TARGETS docraft_tool
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
