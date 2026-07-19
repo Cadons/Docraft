@@ -1,5 +1,8 @@
 #include "docraft/loom/pipeline/docraft_loom_measure_processor.h"
 
+#include "docraft/loom/nodes/docraft_loom_circle.h"
+#include "docraft/loom/nodes/docraft_loom_hstack.h"
+#include "docraft/loom/nodes/docraft_loom_rectangle.h"
 #include "docraft/loom/nodes/docraft_loom_text.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
@@ -53,5 +56,75 @@ namespace docraft::test {
 
         EXPECT_EQ(text_node->edit_layout_box().measured_size.width, 11.0F);
         EXPECT_EQ(text_node->edit_layout_box().measured_size.height, 12.0F);
+    }
+
+    // --- Regression tests for confirmed-but-not-yet-fixed bugs from the code review
+    // (.local/CODE_REVIEW_LOOM_MIGRATION.md). These currently FAIL against the
+    // unmodified codebase -- they encode the desired behavior and will pass once the
+    // corresponding fix is implemented.
+
+    // Review bug #2 (Measure side): a weighted HStack nested inside a narrower
+    // Rectangle must resolve its columns against the Rectangle's own width, not
+    // the full page/region width.
+    TEST_F(DocraftLoomMeasureProcessorTest, RectangleNarrowsWeightedHStackWidthInsteadOfFullRegion)
+    {
+        processor()->set_content_width(500.0F);
+
+        auto rectangle = std::make_shared<docraft::loom::nodes::DocraftLoomRectangle>();
+        rectangle->set_width(200.0F);
+
+        auto hstack = std::make_shared<docraft::loom::nodes::DocraftLoomHStack>();
+        hstack->set_weights({1.0F, 1.0F});
+
+        auto first = std::make_shared<docraft::loom::nodes::DocraftLoomText>("hello");
+        auto second = std::make_shared<docraft::loom::nodes::DocraftLoomText>("world");
+        hstack->add_child(first);
+        hstack->add_child(second);
+        rectangle->add_child(hstack);
+
+        rectangle->accept(*processor());
+
+        // Each column must be sized against the rectangle's 200pt budget (100 each),
+        // not the full 500pt region width (which would give 250 each).
+        EXPECT_NEAR(first->edit_layout_box().measured_size.width, 100.0F, 0.01F);
+        EXPECT_NEAR(second->edit_layout_box().measured_size.width, 100.0F, 0.01F);
+    }
+
+    // Review bug #10: DocraftLoomPdfCreator::create() reuses a single
+    // MeasureProcessor instance across header/footer/body via set_content_width(),
+    // which only resets content_width_ -- inherited_wrap_width_ can leak from one
+    // region into the next if the last node measured in a region doesn't consume
+    // it (e.g. a Circle, which -- unlike Text -- never reads or clears it).
+    TEST_F(DocraftLoomMeasureProcessorTest, WrapWidthDoesNotLeakBetweenRegions)
+    {
+        using ::testing::_;
+        using ::testing::Return;
+        EXPECT_CALL(*text_backend_mock(), measure_text_width(_, _, _)).WillRepeatedly(Return(42.0F));
+        EXPECT_CALL(*text_backend_mock(), measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+        EXPECT_CALL(*text_backend_mock(), measure_text_ascent(_, _)).WillRepeatedly(Return(8.0F));
+        EXPECT_CALL(*text_backend_mock(), measure_text_descent(_, _)).WillRepeatedly(Return(-2.0F));
+
+        // Header: a weighted HStack whose last column is a Circle -- it never reads
+        // or clears inherited_wrap_width_, so the value pushed for it stays set.
+        processor()->set_content_width(500.0F);
+        auto header = std::make_shared<docraft::loom::nodes::DocraftLoomHStack>();
+        header->set_weights({1.0F, 1.0F});
+        header->add_child(std::make_shared<docraft::loom::nodes::DocraftLoomText>("h"));
+        auto header_circle = std::make_shared<docraft::loom::nodes::DocraftLoomCircle>();
+        header_circle->set_radius(5.0F);
+        header->add_child(header_circle);
+        header->accept(*processor());
+
+        // Footer: mirrors DocraftLoomPdfCreator::create() calling set_content_width()
+        // again before measuring the next region, then a bare Text with no explicit
+        // wrap_width of its own.
+        processor()->set_content_width(100.0F);
+        auto footer_text = std::make_shared<docraft::loom::nodes::DocraftLoomText>("f");
+        footer_text->accept(*processor());
+
+        // With no leak, the footer's Text has no wrap constraint, so it measures its
+        // own natural width via measure_text_width (mocked to 42.0F) -- not whatever
+        // column width leaked from the header.
+        EXPECT_FLOAT_EQ(footer_text->edit_layout_box().measured_size.width, 42.0F);
     }
 }

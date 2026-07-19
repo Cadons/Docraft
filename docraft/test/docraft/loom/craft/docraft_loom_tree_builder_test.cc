@@ -790,3 +790,99 @@ TEST(DocraftLoomTreeBuilderTest, ForeachColorTemplateExpressionResolvesPerItem)
     EXPECT_FLOAT_EQ(second->color().toRGB().g, 1.0F);
 }
 
+// Review bug #3: a <Table> combining a JSON array-of-objects `model` with an
+// explicit <TBody> must use the TBody as a per-row template, cloning it once per
+// JSON object and resolving ${data(field)} against that object -- matching the
+// legacy pipeline's behavior (git show main:docraft/src/docraft/model/docraft_table.cc,
+// parse_json_object_for_templated_table).
+TEST(DocraftLoomTreeBuilderTest, TableJsonModelWithTBodyTemplateClonesRowPerObject)
+{
+    const char* xml = R"XML(
+<Table model='[{"name":"Alice"},{"name":"Bob"}]'>
+  <TBody>
+    <Row>
+      <Cell><Text>${data("name")}</Text></Cell>
+    </Row>
+  </TBody>
+</Table>
+)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto table = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomTable>(node);
+    ASSERT_TRUE(table);
+    EXPECT_EQ(table->row_count(), 2);
+    EXPECT_EQ(table->column_count(), 1);
+
+    const auto first_text =
+        std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomText>(table->cell(0, 0)->content());
+    ASSERT_TRUE(first_text);
+    EXPECT_EQ(first_text->text(), "Alice");
+
+    const auto second_text =
+        std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomText>(table->cell(1, 0)->content());
+    ASSERT_TRUE(second_text);
+    EXPECT_EQ(second_text->text(), "Bob");
+}
+
+// Review bug #4: a <Table> nested inside a <Foreach> must resolve ${data(...)} in
+// its model against the outer Foreach item, not leave it as literal text.
+TEST(DocraftLoomTreeBuilderTest, TableNestedInForeachResolvesDataFieldsInModel)
+{
+    const char* xml = R"XML(
+<Layout orientation="vertical">
+  <Foreach model='[{"name":"Alice"}]'>
+    <Table model='[["${data("name")}"]]' />
+  </Foreach>
+</Layout>
+)XML";
+
+    const auto node = parse_and_build(xml);
+    ASSERT_TRUE(node);
+    ASSERT_EQ(node->children_count(), 1);
+    const auto table = std::dynamic_pointer_cast<const docraft::loom::nodes::DocraftLoomTable>(node->child(0));
+    ASSERT_TRUE(table);
+    const auto text = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomText>(table->cell(0, 0)->content());
+    ASSERT_TRUE(text);
+    EXPECT_EQ(text->text(), "Alice");
+}
+
+// Review bug #5: a table model's JSON normalizer must not corrupt an escaped
+// quote inside a double-quoted string when converting the .craft single-quoted-
+// JSON convention.
+TEST(DocraftLoomTreeBuilderTest, TableModelPreservesEscapedQuotesInsideDoubleQuotedStrings)
+{
+    const char* xml = R"XML(<Table model='[["say \"hi\"","v2"]]' />)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto table = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomTable>(node);
+    ASSERT_TRUE(table);
+    EXPECT_EQ(table->row_count(), 1);
+    EXPECT_EQ(table->column_count(), 2);
+
+    const auto cell = table->cell(0, 0);
+    ASSERT_TRUE(cell);
+    const auto text = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomText>(cell->content());
+    ASSERT_TRUE(text);
+    EXPECT_EQ(text->text(), "say \"hi\"");
+}
+
+// Review bug #7: table cell content must honor visible="false" the same way
+// build()'s top-level dispatcher does for every other node.
+TEST(DocraftLoomTreeBuilderTest, TableCellContentHonorsVisibleFalse)
+{
+    const char* xml = R"XML(
+<Table>
+  <THead><HTitle>Col</HTitle></THead>
+  <TBody>
+    <Row><Cell><Text visible="false">hidden</Text></Cell></Row>
+  </TBody>
+</Table>
+)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto table = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomTable>(node);
+    ASSERT_TRUE(table);
+    const auto body_cell = table->cell(1, 0);
+    ASSERT_TRUE(body_cell);
+    EXPECT_EQ(body_cell->content(), nullptr);
+}

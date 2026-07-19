@@ -70,12 +70,12 @@ namespace docraft {
         unsigned int g = std::stoul(std::string(hex_code.substr(3, 2)), nullptr, 16);
         unsigned int b = std::stoul(std::string(hex_code.substr(5, 2)), nullptr, 16);
         if (hex_code.size() == 7) {
-            rgb_ = RGB(r / 255.0F, g / 255.0F, b / 255.0F, 1.0F);
+            rgb_ = RGB{r / 255.0F, g / 255.0F, b / 255.0F, 1.0F};
             return;
         }
         //handle alpha
         unsigned int a = std::stoul(std::string(hex_code.substr(7, 2)), nullptr, 16);
-        rgb_ = RGB(r / 255.0F, g / 255.0F, b / 255.0F, a / 255.0F);
+        rgb_ = RGB{r / 255.0F, g / 255.0F, b / 255.0F, a / 255.0F};
     }
 
     RGB DocraftColor::toRGB() const {
