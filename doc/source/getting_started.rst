@@ -30,53 +30,19 @@ Add Docraft as a subdirectory or install it system-wide:
 Your CMake target automatically gets the correct include paths and
 transitive dependencies (pugixml, libharu, nlohmann_json).
 
-Minimal Example — Programmatic API
------------------------------------
-
-Build a document entirely from C++ without any ``.craft`` file:
-
-.. code-block:: cpp
-
-   #include <docraft/docraft_document.h>
-   #include <docraft/model/docraft_text.h>
-   #include <docraft/model/docraft_body.h>
-
-   int main() {
-       // 1. Create a document
-       docraft::DocraftDocument doc("My First Document");
-       doc.set_document_path("output/");
-
-       // 2. Build a body section with text
-       auto body = std::make_shared<docraft::model::DocraftBody>();
-       body->set_margins(20);
-
-       auto title = std::make_shared<docraft::model::DocraftText>("Hello, Docraft!");
-       title->set_font_size(28);
-       title->set_style(docraft::model::TextStyle::kBold);
-       title->set_alignment(docraft::model::TextAlignment::kCenter);
-       body->add_child(title);
-
-       auto paragraph = std::make_shared<docraft::model::DocraftText>(
-           "This PDF was generated entirely from C++ code — no external tools."
-       );
-       paragraph->set_font_size(12);
-       body->add_child(paragraph);
-
-       doc.add_node(body);
-
-       // 3. Render
-       doc.render();
-       return 0;
-   }
-
 Minimal Example — Craft Language File
 --------------------------------------
+
+Docraft's engine (codenamed **loom**, see :doc:`about`) is driven by parsing a
+``.craft`` XML file into a node tree and running it through the pipeline —
+there is currently no public programmatic API for building a document node
+by node in C++; ``.craft`` markup is the primary way to describe a document.
 
 Create a file called ``hello.craft``:
 
 .. code-block:: xml
 
-   <Document path="output/">
+   <Document>
      <Body margin_left="30" margin_right="30">
        <Text font_size="28" style="bold" alignment="center">
          Hello, Docraft!
@@ -92,16 +58,16 @@ Parse and render it from C++:
 
 .. code-block:: cpp
 
-   #include <docraft/craft/docraft_craft_language_parser.h>
+   #include <docraft/craft/docraft_loom_craft_language_parser.h>
 
    int main() {
-       docraft::craft::DocraftCraftLanguageParser parser;
+       docraft::craft::DocraftLoomCraftLanguageParser parser;
        parser.load_from_file("hello.craft");
 
-       auto document = parser.get_document();
-       document->set_document_path("output/");
-       document->set_document_title("hello");
-       document->render();
+       // edit_creator() returns the DocraftLoomPdfCreator built while parsing
+       auto creator = parser.edit_creator();
+       creator->create();                 // Measure -> Layout -> Paginate
+       creator->render("output/hello.pdf"); // Paint each page + save to disk
        return 0;
    }
 
@@ -114,29 +80,28 @@ Or use the CLI tool directly:
 Using the Template Engine
 -------------------------
 
-Inject runtime data into a ``.craft`` template:
+Inject runtime data into a ``.craft`` template before parsing — the template
+engine must be attached *before* ``load_from_file()``/``parse()``, since
+``${...}`` expressions are resolved while the node tree is being built:
 
 .. code-block:: cpp
 
-   #include <docraft/craft/docraft_craft_language_parser.h>
+   #include <docraft/craft/docraft_loom_craft_language_parser.h>
    #include <docraft/templating/docraft_template_engine.h>
 
    int main() {
-       docraft::craft::DocraftCraftLanguageParser parser;
-       parser.load_from_file("invoice.craft");
-
-       auto document = parser.get_document();
-
-       // Create and populate the template engine
        auto engine = std::make_shared<docraft::templating::DocraftTemplateEngine>();
        engine->add_template_variable("customer_name", "Acme Corp");
        engine->add_template_variable("invoice_number", "INV-2025-042");
        engine->add_template_variable("total", "€ 1,250.00");
 
-       document->set_document_template_engine(engine);
-       document->set_document_path("output/");
-       document->set_document_title("invoice");
-       document->render();
+       docraft::craft::DocraftLoomCraftLanguageParser parser;
+       parser.set_template_engine(engine);
+       parser.load_from_file("invoice.craft");
+
+       auto creator = parser.edit_creator();
+       creator->create();
+       creator->render("output/invoice.pdf");
        return 0;
    }
 
@@ -157,7 +122,8 @@ Create a ``data.json`` file:
      ]
    }
 
-Render with data:
+Render with data — every top-level field becomes ``${field}``, and nested
+objects flatten to dot notation (``${user.name}``):
 
 .. code-block:: bash
 
@@ -166,32 +132,34 @@ Render with data:
 Document Metadata
 -----------------
 
-Set PDF metadata from C++:
+The ``.craft`` ``<Metadata>`` block (see :doc:`craft_language/metadata`)
+covers the common fields. From C++, ``DocraftDocumentMetadata`` exposes the
+full libharu info-dict surface, including trapped/GTS-PDFX flags and
+creation/modification dates not yet wired up in the XML layer:
 
 .. code-block:: cpp
+
+   #include <docraft/docraft_document_metadata.h>
 
    docraft::DocraftDocumentMetadata meta;
    meta.set_author("Engineering Team");
    meta.set_title("Quarterly Report");
    meta.set_subject("Q1 2025 Financial Summary");
    meta.set_keywords("finance, quarterly, report");
-   document->set_document_metadata(meta);
 
-   // Optional: automatic keyword extraction from text content
-   document->enable_auto_keywords(true);
+   creator->set_metadata(meta); // applies immediately; a later call overwrites it
 
 Custom Fonts
 ------------
 
-Register external TTF fonts at runtime:
+Register external TTF fonts at runtime, before calling ``create()``:
 
 .. code-block:: cpp
 
-   #include <docraft/utils/docraft_font_registry.h>
-
-   auto& registry = docraft::utils::DocraftFontRegistry::instance();
-   registry.register_font("MyFont",       "fonts/MyFont-Regular.ttf");
-   registry.register_font("MyFont-Bold",  "fonts/MyFont-Bold.ttf");
+   // A variant left unregistered falls back to the closest available one.
+   creator->register_font("MyFont",
+                           "fonts/MyFont-Regular.ttf",
+                           "fonts/MyFont-Bold.ttf");
 
 Or declare them in the Craft Language:
 

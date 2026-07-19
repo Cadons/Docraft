@@ -79,8 +79,8 @@ Complex Structures
       :link: lists
       :link-type: doc
 
-      Ordered and unordered lists — number, roman numeral, alphabetic, dash,
-      star, circle, and box markers.
+      Ordered and unordered lists — number, roman numeral, dash, star,
+      circle, and box markers.
 
    .. grid-item-card:: 📐 Layout
       :link: layout
@@ -93,8 +93,8 @@ Complex Structures
       :link: templating
       :link-type: doc
 
-      Data binding with ``${variables}``, ``<Foreach>`` loops, conditional
-      rendering, and JSON model integration for dynamic documents.
+      Data binding with ``${variables}``, ``<Foreach>`` loops, and JSON
+      model integration for dynamic documents.
 
 Configuration
 -------------
@@ -113,6 +113,6 @@ Configuration
       :link: metadata
       :link-type: doc
 
-      Document properties — title, author, subject, keywords, creation date,
-      and automatic keyword extraction from content.
+      Document properties — title, author, creator, producer, subject, and
+      keywords.
 

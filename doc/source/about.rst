@@ -33,118 +33,122 @@ Key Features
 
 - **Declarative XML markup** — Define documents with the Craft Language
   instead of writing coordinate-level drawing code.
-- **Automatic page layout** — Flow-based layout engine with automatic page
-  breaking; no manual page management required.
-- **Header / Body / Footer sections** — Define them once; Docraft repeats
-  headers and footers on every page automatically.
+- **Automatic page layout** — Content is laid out once on a continuous,
+  unbounded-height canvas, then paginated across discrete pages automatically
+  — including mid-table splits with repeating header rows.
+- **Header / Body / Footer sections** — Define them once; Docraft lays them
+  out a single time and redraws header/footer on every physical page.
 - **Automatic page numbering** — Insert ``<PageNumber/>`` and the library
-  fills in the correct number on each page.
+  fills in the correct current/total page number on each page.
 - **Template engine** — Bind ``${variables}`` and iterate over JSON arrays
   with ``<Foreach>`` to generate data-driven documents at runtime.
-- **Rich text styling** — Font family, size, bold, italic, underline,
-  alignment (left, center, right, justified), and color.
+- **Rich text styling** — Font family, size, independent bold/italic/
+  underline/strikeout flags, alignment (left, center, right, justified),
+  and color.
 - **External font support** — Register custom TTF fonts (regular, bold,
-  italic, bold-italic variants) for full typographic control.
+  italic, bold-italic variants) for full typographic control, either from
+  C++ or declaratively via ``<Settings><Fonts>``.
 - **Shapes** — Rectangle, Circle, Triangle, Line, Polygon with background
   color, border color, and border width.
-- **Tables** — Column titles, row/column weights, per-cell backgrounds, and
-  JSON model binding for data-driven tables.
-- **Ordered & unordered lists** — Number, roman numeral, dash, star, circle,
-  and box markers.
+- **Tables** — Column titles, column weights, per-cell backgrounds, and
+  JSON model binding (matrix or array-of-objects) for data-driven tables,
+  with automatic pagination across pages.
+- **Ordered & unordered lists** — Number and roman-numeral ordered markers;
+  dash, star, circle, and box unordered markers.
 - **Horizontal & vertical layouts** — Nest ``<Layout>`` elements with
-  weights to build multi-column or multi-row compositions.
+  weighted children to build multi-column compositions (weights apply to
+  horizontal layouts and tables).
+- **Paragraphs** — Group runs of ``<Text>`` into one flowing block with
+  ``line_spacing``, ``space_before``/``space_after``.
 - **Image support** — PNG, JPEG from file, and raw RGB pixel data injected
   at runtime via the template engine (including base64 decoding).
-- **Document metadata** — Author, title, subject, keywords, creation date,
-  and automatic keyword extraction from document content.
+- **Document metadata** — Title, author, creator, producer, subject, and
+  keywords, applied straight to the PDF info dictionary.
 - **Page format control** — A3, A4, A5, Letter, Legal in portrait or
-  landscape orientation; configurable header/body/footer ratios.
-- **Absolute positioning** — Place any element at exact (x, y) coordinates
-  when flow layout is not appropriate.
-- **Z-index stacking** — Control rendering order with ``z_index``.
-- **DOM traversal & lookup** — Query the document tree by name or type after
-  parsing, before rendering.
-- **Pluggable backend** — The rendering backend is abstracted behind
-  interfaces; swap or extend it without changing the document model.
+  landscape orientation; configurable header/body/footer height ratios.
+- **Absolute & block positioning** — Most elements flow automatically;
+  any element can opt into exact (x, y) placement with ``position="absolute"``.
+- **Margin & padding** — CSS-like per-edge ``margin`` (adjacent margins
+  collapse via ``max()``, not sum) plus ``padding`` for inset content.
+- **Z-index stacking** — Control paint order with ``z_index`` (layout is
+  unaffected).
 - **CLI tool** — The ``docraft_tool`` executable renders ``.craft`` files
-  to PDF from the command line, with optional JSON / key-value data files.
+  to PDF from the command line, with optional JSON data files.
 
 Architecture at a Glance
 -------------------------
 
+Docraft's layout/render engine — codenamed **loom** — is a pipeline of
+visitor passes over a plain node tree, not a monolithic renderer:
+
 .. code-block:: text
 
-   ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-   │  .craft file │────▶│    Parser     │────▶│  Document    │
-   │  (XML)       │     │  (pugixml)   │     │  DOM tree    │
-   └──────────────┘     └──────────────┘     └──────┬───────┘
-                                                    │
-                                            ┌───────▼───────┐
-                                            │  Template      │
-                                            │  Engine        │
-                                            └───────┬───────┘
-                                                    │
-                                            ┌───────▼───────┐
-                                            │  Layout        │
-                                            │  Engine        │
-                                            └───────┬───────┘
-                                                    │
-                                            ┌───────▼───────┐
-                                            │  Renderer +    │
-                                            │  Painters      │
-                                            └───────┬───────┘
-                                                    │
-                                            ┌───────▼───────┐
-                                            │  Backend       │
-                                            │  (libharu)     │
-                                            └───────┬───────┘
-                                                    │
-                                              output.pdf
+   .craft XML file
+         │
+         ▼
+   DocraftCraftLanguageParser  (pugixml, generic per-tag parsers)
+         │
+         ▼
+   DocraftParsedElement tree   (tag-agnostic, engine-agnostic)
+         │
+         ▼
+   DocraftLoomTreeBuilder + DocraftTemplateEngine
+         │
+         ▼
+   DocraftLoomNode tree        (Text, Paragraph, VStack, Table, ...)
+         │
+         ▼
+   MeasureProcessor    → writes measured_size
+         │
+         ▼
+   LayoutProcessor     → writes frame (cursor-based flow)
+         │
+         ▼
+   PaginationProcessor → writes page_index, splits across pages
+         │
+         ▼
+   RenderingProcessor  → paints one page at a time via backend interfaces
+         │
+         ▼
+   DocraftHaruBackend (libharu) → output.pdf
 
-Pluggable Backend Architecture
-------------------------------
+Each stage has a single responsibility and touches every node exactly once
+via double-dispatch (``node->accept(visitor)``). See
+:doc:`craft_language/index` for the markup this pipeline consumes and
+:doc:`api/index` for the C++ types involved.
 
-**Default Backend: libharu**
+Backend Architecture
+---------------------
 
-By default, Docraft uses `libharu <https://github.com/libharu/libharu>`_ as
-its rendering backend for PDF generation. This library is embedded and requires
-no external dependencies.
+**Default backend: libharu**
 
-**Custom Backend Support**
+Docraft uses `libharu <https://github.com/libharu/libharu>`_ as its PDF
+backend. It is embedded and requires no external processes or runtime
+dependencies.
 
-The rendering backend is fully pluggable — you can replace or extend it to
-support different output formats (e.g., SVG, HTML Canvas, PostScript) or to
-integrate with proprietary rendering engines.
+**Capability-split interfaces**
 
-To implement a custom backend, you need to create a class that implements the
-``docraft::backend::IDocraftRenderingBackend`` interface, which aggregates
-four sub-interfaces:
+Rather than one monolithic backend interface, drawing capabilities are split
+by responsibility so consumers depend only on what they need:
 
-- ``IDocraftTextRenderingBackend`` — Text drawing, font management, and text measurement
-- ``IDocraftShapeRenderingBackend`` — Shapes (rectangles, circles, polygons, lines) with fill and stroke
-- ``IDocraftImageRenderingBackend`` — Image rendering (PNG, JPEG, raw RGB data)
-- ``IDocraftPageRenderingBackend`` — Page creation, navigation, and dimension queries
+- ``IDocraftTextRenderingBackend`` — text drawing, font metrics, measurement
+- ``IDocraftShapeRenderingBackend`` — rectangles, circles, polygons, triangles
+- ``IDocraftLineRenderingBackend`` — line strokes
+- ``IDocraftImageRenderingBackend`` — PNG/JPEG/raw-pixel image drawing
+- ``IDocraftPageRenderingBackend`` — page creation, navigation, dimensions
+- ``IDocraftFontBackend`` / ``IDocraftOutputBackend`` / ``IDocraftMetadataBackend``
+  — font registration, file persistence, PDF metadata
 
-Your backend implementation must provide:
-
-- **save_to_file(path)** — Writes the rendered document to disk
-- **file_extension()** — Returns the output file extension (e.g., ".pdf", ".svg")
-- **register_ttf_font_from_file(path, embed)** — Registers custom fonts
-- **set_font(name, size, encoder)** — Sets the active font for text rendering
-- **set_metadata(metadata)** — Applies document metadata (author, title, etc.)
-- All pure virtual methods from the four sub-interfaces
-
-**Setting a Custom Backend**
-
-You can override the backend for a document by calling:
-
-.. code-block:: cpp
-
-   auto custom_backend = std::make_shared<MyCustomBackend>();
-   document.set_backend(custom_backend);
-
-This allows Docraft to generate documents in formats beyond PDF, making it
-suitable for diverse rendering pipelines and output targets.
+These are grouped into three provider interfaces
+(``IDocraftRenderingCapabilityProvider``, ``IDocraftResourceCapabilityProvider``,
+``IDocraftLifecycleCapabilityProvider`` — see :doc:`api/backend`), and
+``DocraftHaruBackend`` is currently the only implementation. The loom
+pipeline consumes these interfaces exclusively — ``DocraftLoomRenderingProcessor``
+never references the concrete Haru type — but ``DocraftLoomPdfCreator``
+constructs its own ``DocraftHaruBackend`` internally today; there is no
+public API yet to inject an alternative implementation at that level. The
+abstraction exists to keep the pipeline decoupled from libharu, not (yet) as
+an end-user extension point.
 
 License & Credits
 -----------------

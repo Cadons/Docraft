@@ -29,6 +29,17 @@ Example — Horizontal Layout
      <Text weight="1">Right column</Text>
    </Layout>
 
+Instead of a per-child ``weight`` attribute, ``<Layout>`` also accepts an
+explicit ``weights`` list, which takes precedence over any per-child weight:
+
+.. code-block:: xml
+
+   <Layout orientation="horizontal" weights="1,2,1" spacing="5">
+     <Text>Left column</Text>
+     <Text>Center column (twice as wide)</Text>
+     <Text>Right column</Text>
+   </Layout>
+
 Example — Vertical Layout
 --------------------------
 
@@ -55,6 +66,15 @@ Attributes
    * - ``orientation``
      - string
      - ``horizontal`` or ``vertical`` (default ``horizontal``).
+   * - ``spacing``
+     - float
+     - Fixed gap in points between adjacent children (default ``0``).
+   * - ``weights``
+     - string
+     - Comma-separated list of per-column weights, e.g. ``"1,2,1"``.
+       Horizontal layouts only; takes precedence over any per-child
+       ``weight`` attribute.
 
-Child nodes inside a layout can use the ``weight`` attribute to control
-proportional sizing. If no weights are set, children share space equally.
+Child nodes inside a horizontal layout can instead use their own ``weight``
+attribute to control proportional sizing (see :doc:`structure`). If no
+weights are set at all, children share space equally.

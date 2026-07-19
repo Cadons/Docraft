@@ -1,17 +1,7 @@
 Utilities
 =========
 
-Helper classes used across the library for fonts, logging, keywords, and
-encoding.
-
-DocraftFontApplier
-------------------
-
-Applies fonts to text nodes and manages font registration with the backend.
-
-.. doxygenclass:: docraft::generic::DocraftFontApplier
-   :project: docraft
-   :members:
+Helper classes used across the library for fonts, logging, and encoding.
 
 DocraftFontRegistry
 -------------------
@@ -28,16 +18,6 @@ DocraftFontResolver
 Resolves a font family + style request into the best available font name.
 
 .. doxygenclass:: docraft::utils::DocraftFontResolver
-   :project: docraft
-   :members:
-
-DocraftKeywordExtractor
------------------------
-
-Extracts document keywords using term-frequency statistics and stop-word
-filtering.
-
-.. doxygenclass:: docraft::utils::DocraftKeywordExtractor
    :project: docraft
    :members:
 
@@ -64,13 +44,4 @@ Base64 Decoding
 
 .. doxygenfunction:: docraft::utils::decode_base64
    :project: docraft
-
-Chain of Responsibility
------------------------
-
-Generic handler interface used by the layout engine.
-
-.. doxygenclass:: docraft::generic::DocraftChainOfResponsibilityHandler
-   :project: docraft
-   :members:
 

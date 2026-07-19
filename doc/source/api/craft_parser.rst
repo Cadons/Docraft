@@ -1,15 +1,43 @@
 Craft Language Parser
 =====================
 
-The parser subsystem converts Craft Language XML sources into the Docraft
-model tree. A registry of ``IDocraftParser`` implementations handles each
-element tag.
+Two collaborating layers convert a ``.craft`` file into a loom node tree
+(see :doc:`../about`): a generic, engine-agnostic XML parser
+(``docraft::craft``), and a loom-specific bridge that builds
+``DocraftLoomNode``\ s from its output.
+
+DocraftLoomCraftLanguageParser
+---------------------------------
+
+The top-level driver — the only piece that understands ``<Document>``
+structure itself (``<Header>``/``<Body>``/``<Footer>``/``<Settings>``/
+``<Metadata>``). Parses each section with ``DocraftCraftLanguageParser``,
+builds it into loom nodes via ``DocraftLoomTreeBuilder``, and wraps the
+result in a ``DocraftLoomPdfCreator`` (see :doc:`document`) retrievable via
+``edit_creator()``.
+
+.. doxygenclass:: docraft::craft::DocraftLoomCraftLanguageParser
+   :project: docraft
+   :members:
+
+DocraftLoomTreeBuilder
+-------------------------
+
+The only component depending on both ``docraft::craft`` and
+``docraft::loom`` — converts a generic ``DocraftParsedElement`` tree into a
+typed ``DocraftLoomNode`` tree, resolving ``${...}``/``<Foreach>`` templating
+per node as it builds (see :doc:`templating`).
+
+.. doxygenclass:: docraft::loom::craft::DocraftLoomTreeBuilder
+   :project: docraft
+   :members:
 
 DocraftCraftLanguageParser
 --------------------------
 
-Main parser that loads XML, registers tag-specific parsers, and builds the
-``DocraftDocument``.
+Generic, engine-agnostic XML parser (pugixml-based). Holds one
+``IDocraftParser`` per recognized tag and produces a tag-agnostic
+``DocraftParsedElement`` tree with zero knowledge of layout or rendering.
 
 .. doxygenclass:: docraft::craft::DocraftCraftLanguageParser
    :project: docraft
@@ -27,7 +55,8 @@ Interface for single-tag parsers.
 Element Parsers
 ---------------
 
-Each parser translates one XML tag into the corresponding model node.
+Each parser translates one XML tag into a ``Parsed<Tag>Data`` payload
+attached to the corresponding ``DocraftParsedElement``.
 
 .. doxygenclass:: docraft::craft::parser::DocraftTextParser
    :project: docraft
@@ -73,6 +102,10 @@ Each parser translates one XML tag into the corresponding model node.
    :project: docraft
    :members:
 
+.. doxygenclass:: docraft::craft::parser::DocraftParagraphParser
+   :project: docraft
+   :members:
+
 .. doxygenclass:: docraft::craft::parser::DocraftBlackLineParser
    :project: docraft
    :members:
@@ -85,21 +118,14 @@ Each parser translates one XML tag into the corresponding model node.
    :project: docraft
    :members:
 
-.. doxygenclass:: docraft::craft::parser::DocraftSettingsParser
+.. doxygenclass:: docraft::craft::parser::DocraftSectionParser
    :project: docraft
    :members:
 
-.. doxygenclass:: docraft::craft::parser::DocraftHeaderParser
-   :project: docraft
-   :members:
-
-.. doxygenclass:: docraft::craft::parser::DocraftBodyParser
-   :project: docraft
-   :members:
-
-.. doxygenclass:: docraft::craft::parser::DocraftFooterParser
-   :project: docraft
-   :members:
+Note: ``<Header>``/``<Body>``/``<Footer>`` all parse through this single
+``DocraftSectionParser`` (producing ``ParsedSectionData``) rather than one
+class per tag; ``<Settings>``/``<Metadata>`` are not tag parsers at all —
+they're read directly by ``DocraftLoomCraftLanguageParser`` above.
 
 .. doxygenclass:: docraft::craft::parser::DocraftForeachParser
    :project: docraft

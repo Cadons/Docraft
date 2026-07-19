@@ -10,7 +10,9 @@ Template — ``medical_report.craft``
 .. code-block:: xml
 
    <Document>
-       <Settings page_size="A4" page_orientation="portrait"/>
+       <Settings>
+           <Page size="A4" orientation="portrait"/>
+       </Settings>
 
        <Metadata>
            <Author>${clinic_name}</Author>
@@ -164,7 +166,7 @@ Usage
 
 .. code-block:: bash
 
-   docraft_tool medical_report.craft output/medical_report.pdf -d medical_report.json
+   docraft_tool medical_report.craft output/medical_report.pdf --data medical_report.json
 
 Output Example
 --------------

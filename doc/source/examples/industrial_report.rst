@@ -10,8 +10,10 @@ Template — ``quality_report.craft``
 .. code-block:: xml
 
    <Document>
-       <Settings page_size="A4" page_orientation="portrait"
-                 header_ratio="0.08" body_ratio="0.84" footer_ratio="0.08"/>
+       <Settings>
+           <Page size="A4" orientation="portrait"/>
+           <SectionRatios header_ratio="0.08" body_ratio="0.84" footer_ratio="0.08"/>
+       </Settings>
 
        <Metadata>
            <Author>${company_name}</Author>
@@ -213,7 +215,7 @@ Usage
 
 .. code-block:: bash
 
-   docraft_tool quality_report.craft output/quality_report.pdf -d quality_report.json
+   docraft_tool quality_report.craft output/quality_report.pdf --data quality_report.json
 
 Output Example
 --------------

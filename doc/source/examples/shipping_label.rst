@@ -10,7 +10,9 @@ Template — ``shipping_label.craft``
 .. code-block:: xml
 
    <Document>
-       <Settings page_size="A5" page_orientation="landscape"/>
+       <Settings>
+           <Page size="A5" orientation="landscape"/>
+       </Settings>
 
        <Body margin_left="8" margin_right="8" margin_top="6" margin_bottom="6">
            <!-- Header: Company + Tracking -->
@@ -42,7 +44,7 @@ Template — ``shipping_label.craft``
                        <Text font_size="8">${sender_phone}</Text>
 
 
-                       <Image src="${qr_code}" width="290" height="250" alignment="center"/>
+                       <Image src="${qr_code}" width="290" height="250"/>
                    </Layout>
                </Rectangle>
                <Rectangle padding="5" weight="0.5" background_color="#ECF0F1" border_color="#BDC3C7">
@@ -96,6 +98,10 @@ Template — ``shipping_label.craft``
 Data — ``shipping_label.json``
 -------------------------------
 
+``qr_code`` points at an image file expected next to the ``docraft_tool``
+executable (JSON has no comment syntax, so this can't be noted inline in the
+file itself):
+
 .. code-block:: json
 
    {
@@ -116,7 +122,7 @@ Data — ``shipping_label.json``
      "handling_instructions": "FRAGILE — THIS SIDE UP",
      "ship_date": "2025-03-08",
      "eta": "2025-03-10",
-     "qr_code": "test.png" //this is an image in the same folder of the executable
+     "qr_code": "test.png"
    }
 
 Usage
@@ -124,7 +130,7 @@ Usage
 
 .. code-block:: bash
 
-   docraft_tool shipping_label.craft output/shipping_label.pdf -d shipping_label.json
+   docraft_tool shipping_label.craft output/shipping_label.pdf --data shipping_label.json
 
 Output Example
 --------------
