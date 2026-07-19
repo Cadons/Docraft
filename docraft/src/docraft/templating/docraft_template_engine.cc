@@ -26,11 +26,13 @@
 #include <nlohmann/json_fwd.hpp>
 
 #include "docraft/docraft_color.h"
+#include "docraft/exception/docraft_data_exceptions.h"
 #include "docraft/utils/docraft_logger.h"
 #include "docraft/utils/docraft_base64.h"
 #include "docraft/utils/docraft_parser_utilis.h"
 
 namespace docraft::templating {
+    using exception::DataFormatException;
     using exception::TemplateImageDataException;
     using exception::TemplateVariableExistsException;
     using exception::TemplateVariableNotFoundException;
@@ -71,6 +73,29 @@ namespace docraft::templating {
 
     bool DocraftTemplateEngine::has_template_variable(const std::string &name) const {
         return template_variables_.contains(normalize_name(name));
+    }
+
+    void DocraftTemplateEngine::add_template_variables_from_json(const nlohmann::json& json)
+    {
+        if (!json.is_object())
+        {
+            throw DataFormatException("Template variables JSON must be a JSON object");
+        }
+        add_json_object_fields("", json);
+    }
+
+    void DocraftTemplateEngine::add_json_object_fields(const std::string& prefix, const nlohmann::json& object)
+    {
+        for (const auto& [key, value] : object.items())
+        {
+            const std::string full_key = prefix.empty() ? key : prefix + "." + key;
+            if (value.is_object())
+            {
+                add_json_object_fields(full_key, value);
+                continue;
+            }
+            add_template_variable(full_key, value.is_string() ? value.get<std::string>() : value.dump());
+        }
     }
 
     template <typename Resolver>

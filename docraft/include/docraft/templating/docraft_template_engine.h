@@ -71,6 +71,23 @@ namespace docraft::templating {
                 bool has_template_variable(const std::string &name) const;
 
                 /**
+                 * @brief Registers every field of a JSON object as a template variable,
+                 * flattening nested objects into dot-notation keys -- e.g.
+                 * `{"user":{"name":"Bob"}}` registers `"user.name"` -> `"Bob"`, so
+                 * `${user.name}` resolves -- rather than registering the nested object as a
+                 * single JSON-text variable. Strings are registered as-is; every other leaf
+                 * value (numbers/bools/null/arrays) is registered as its compact JSON text --
+                 * e.g. an array field becomes a JSON array string usable directly as a
+                 * `<Foreach model="${field}">` attribute.
+                 * @param json JSON object whose fields to register.
+                 * @throws docraft::exception::DataFormatException if `json` is not a JSON
+                 * object.
+                 * @throws docraft::exception::TemplateVariableExistsException if a flattened
+                 * key collides with one already registered.
+                 */
+                void add_template_variables_from_json(const nlohmann::json& json);
+
+                /**
                  * @brief Struct to hold raw image data along with its dimensions.
                  */
                 struct RawImageData {
@@ -137,6 +154,13 @@ namespace docraft::templating {
 
             private:
                 static std::string normalize_name(const std::string &name);
+
+                /**
+                 * @brief Recursion step for add_template_variables_from_json(): registers
+                 * every field of `object`, prefixing each key with `prefix.` (or just the
+                 * field's own key if `prefix` is empty).
+                 */
+                void add_json_object_fields(const std::string& prefix, const nlohmann::json& object);
 
                 /**
                  * @brief Shared by render_template_string() and

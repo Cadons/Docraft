@@ -34,7 +34,8 @@
 #include "docraft/utils/docraft_logger.h"
 
 namespace {
-    struct CliOptions {
+    struct CliOptions
+    {
         std::filesystem::path craft_file; //input file
         std::filesystem::path output_file; //output filename
         std::optional<std::filesystem::path> data_file; //optional --data JSON file
@@ -45,9 +46,11 @@ namespace {
      * @param file_path Path to check.
      * @return True if the file has a .craft extension, false otherwise.
      */
-    bool has_craft_extension(const std::filesystem::path &file_path) {
+    bool has_craft_extension(const std::filesystem::path& file_path)
+    {
         std::string extension = file_path.extension().string();
-        std::ranges::transform(extension, extension.begin(), [](const unsigned char ch) {
+        std::ranges::transform(extension, extension.begin(), [](const unsigned char ch)
+        {
             return static_cast<char>(std::tolower(ch));
         });
         return extension == ".craft";
@@ -58,7 +61,8 @@ namespace {
      * @param output Output stream to print to (e.g., std::cout or std::cerr).
      * @param program_name Name of the program (typically argv[0]).
      */
-    void print_usage(std::ostream &output, const char *program_name) {
+    void print_usage(std::ostream& output, const char* program_name)
+    {
         output << "Usage: " << program_name << " <file.craft> <output.pdf> [--data <data.json>]\n";
         output << "Options:\n";
         output << "  --data <data.json> Registers each top-level JSON field as a template\n";
@@ -77,19 +81,23 @@ namespace {
      * @return Parsed command-line options.
      * @throws docraft::exception::ConfigurationException if arguments are invalid.
      */
-    CliOptions parse_args(int argc, char *argv[]) {
+    CliOptions parse_args(int argc, char* argv[])
+    {
         CliOptions options;
         std::vector<std::string> positional_args;
 
         //handle -v --version before other parsing to allow it to work without required positional arguments
-        if (argc == 2 && (std::string(argv[1]) == "-v" || std::string(argv[1]) == "--version")) {
+        if (argc == 2 && (std::string(argv[1]) == "-v" || std::string(argv[1]) == "--version"))
+        {
             std::cout << "Docraft version " << DOCRAFT_VERSION;
             std::exit(0);
         }
-        for (int i = 1; i < argc; ++i) {
+        for (int i = 1; i < argc; ++i)
+        {
             const std::string arg = argv[i];
 
-            if (arg == "-h" || arg == "--help") {
+            if (arg == "-h" || arg == "--help")
+            {
                 print_usage(std::cout, argv[0]);
                 std::exit(0);
             }
@@ -104,14 +112,16 @@ namespace {
                 continue;
             }
 
-            if (!arg.empty() && arg.front() == '-') {
+            if (!arg.empty() && arg.front() == '-')
+            {
                 throw docraft::exception::ConfigurationException("Unknown option: " + arg);
             }
 
             positional_args.push_back(arg); //collect positional arguments
         }
 
-        if (positional_args.size() != 2) {
+        if (positional_args.size() != 2)
+        {
             throw docraft::exception::ConfigurationException("Expected required arguments: <file.craft> <output.pdf>");
         }
 
@@ -119,21 +129,28 @@ namespace {
         options.output_file = positional_args[1]; //second positional argument is the output file, always
 
         // Validate input and output file paths
-        if (!has_craft_extension(options.craft_file)) {
+        if (!has_craft_extension(options.craft_file))
+        {
             throw docraft::exception::ConfigurationException("Input file must have .craft extension");
         }
-        if (options.output_file.filename().empty()) {
+        if (options.output_file.filename().empty())
+        {
             throw docraft::exception::ConfigurationException("Output destination must include a filename");
         }
         // If output file has no extension, add .pdf. If it has an extension, ensure it's .pdf (case-insensitive).
-        if (!options.output_file.has_extension()) {
+        if (!options.output_file.has_extension())
+        {
             options.output_file += ".pdf";
-        } else {
+        }
+        else
+        {
             std::string extension = options.output_file.extension().string();
-            std::ranges::transform(extension, extension.begin(), [](const unsigned char ch) {
+            std::ranges::transform(extension, extension.begin(), [](const unsigned char ch)
+            {
                 return static_cast<char>(std::tolower(ch));
             });
-            if (extension != ".pdf") {
+            if (extension != ".pdf")
+            {
                 throw docraft::exception::ConfigurationException("Output file extension must be .pdf");
             }
         }
@@ -142,12 +159,11 @@ namespace {
     }
 
     /**
-     * @brief Loads a JSON file and registers each top-level field as a template
-     * variable: strings are registered as-is, other values (numbers/bools/arrays/
-     * objects) as their compact JSON text -- e.g. an array field becomes a JSON array
-     * string usable directly as a `<Foreach model="${field}">` attribute.
+     * @brief Loads a JSON file and registers every field as a template variable, via
+     * docraft::templating::DocraftTemplateEngine::add_template_variables_from_json()
+     * (nested objects flattened to dot-notation keys).
      * @param data_file Path to the JSON file.
-     * @return Template engine with every top-level field registered.
+     * @return Template engine with every field registered.
      * @throws docraft::exception::ConfigurationException if the file can't be read or
      * parsed, or isn't a JSON object at the top level.
      */
@@ -179,25 +195,25 @@ namespace {
         }
 
         auto engine = std::make_shared<docraft::templating::DocraftTemplateEngine>();
-        for (const auto& [key, value] : root.items())
-        {
-            engine->add_template_variable(key, value.is_string() ? value.get<std::string>() : value.dump());
-        }
+        engine->add_template_variables_from_json(root);
         return engine;
     }
 } // namespace
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[])
+{
     docraft::utils::DocraftLogger::enable_error();
     docraft::utils::DocraftLogger::enable_warning();
     docraft::utils::DocraftLogger::enable_info();
 
-    try {
+    try
+    {
         LOG_INFO("Welcome to Docraft Generation Tool!");
         LOG_INFO("Docraft version " + std::string(DOCRAFT_VERSION));
 
         const CliOptions options = parse_args(argc, argv);
-        if (!std::filesystem::exists(options.craft_file)) {
+        if (!std::filesystem::exists(options.craft_file))
+        {
             throw docraft::exception::FileNotFoundException(
                 "docraft/craft file not found: " + options.craft_file.string());
         }
@@ -215,12 +231,14 @@ int main(int argc, char *argv[]) {
         parser.load_from_file(options.craft_file);
 
         auto creator = parser.edit_creator();
-        if (!creator) {
+        if (!creator)
+        {
             throw docraft::exception::RenderingFailedException("Unable to build document from .craft file");
         }
 
         const std::filesystem::path output_parent = options.output_file.parent_path();
-        if (!output_parent.empty()) {
+        if (!output_parent.empty())
+        {
             std::filesystem::create_directories(output_parent); //ensure output directory exists
         }
 
@@ -233,11 +251,15 @@ int main(int argc, char *argv[]) {
         LOG_INFO("Document rendered in " + std::to_string(duration) + " ms");
         LOG_INFO("Generated: " + options.output_file.string());
         return 0;
-    } catch (const docraft::exception::DocraftException &ex) {
+    }
+    catch (const docraft::exception::DocraftException& ex)
+    {
         LOG_ERROR("Error: " + std::string(ex.what()));
         LOG_INFO("Use -h or --help for usage information.");
         return 1;
-    } catch (const std::exception &ex) {
+    }
+    catch (const std::exception& ex)
+    {
         LOG_ERROR("Error: " + std::string(ex.what()));
         return 1;
     }

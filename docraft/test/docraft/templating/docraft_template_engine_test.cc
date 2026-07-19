@@ -41,6 +41,32 @@ namespace docraft::test::templating {
         EXPECT_EQ(engine_.find_template_variable("title"), "Docraft");
     }
 
+    TEST_F(DocraftTemplateEngineTest, AddTemplateVariablesFromJsonFlattensNestedObjects)
+    {
+        const auto json = nlohmann::json::parse(R"({"user":{"name":"Bob","age":30},"title":"Docraft"})");
+        engine_.add_template_variables_from_json(json);
+
+        EXPECT_EQ(engine_.items(), 3);
+        EXPECT_EQ(engine_.find_template_variable("user.name"), "Bob");
+        EXPECT_EQ(engine_.find_template_variable("user.age"), "30");
+        EXPECT_EQ(engine_.find_template_variable("title"), "Docraft");
+        EXPECT_FALSE(engine_.has_template_variable("user"));
+    }
+
+    TEST_F(DocraftTemplateEngineTest, AddTemplateVariablesFromJsonKeepsArraysAsJsonText)
+    {
+        const auto json = nlohmann::json::parse(R"({"items":["a","b"]})");
+        engine_.add_template_variables_from_json(json);
+
+        EXPECT_EQ(engine_.find_template_variable("items"), R"(["a","b"])");
+    }
+
+    TEST_F(DocraftTemplateEngineTest, AddTemplateVariablesFromJsonRejectsNonObject)
+    {
+        const auto json = nlohmann::json::parse(R"(["a","b"])");
+        EXPECT_THROW(engine_.add_template_variables_from_json(json), docraft::exception::DataFormatException);
+    }
+
     TEST_F(DocraftTemplateEngineTest, GetMissingVariableThrows) {
         EXPECT_THROW(engine_.find_template_variable("missing"), docraft::exception::TemplateVariableNotFoundException);
     }
