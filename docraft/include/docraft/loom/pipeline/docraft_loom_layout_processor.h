@@ -94,6 +94,14 @@ namespace docraft::loom::pipeline {
          */
         nodes::Position resolve_position(const nodes::DocraftLoomNode& node) const;
 
+        /**
+         * @brief The width budget this node has to work with: whatever an ancestor
+         * Rectangle/VStack pushed down via inherited_width_, or page_size_.width if
+         * none did (the root case). Read at the top of every visit() that needs a
+         * width constraint (Rectangle/VStack/HStack/Table), before inherited_width_ is
+         * cleared or overwritten for that node's own children.
+         */
+        float incoming_width() const;
 
         /**
          * @brief RAII helper class to manage cursor state during node visits.
@@ -125,7 +133,8 @@ namespace docraft::loom::pipeline {
 
         static TableNaturalGeometry gather_table_natural_geometry(const nodes::DocraftLoomTable& table);
         std::vector<float> resolve_table_column_widths(const nodes::DocraftLoomTable& table,
-                                                       const TableNaturalGeometry& geometry) const;
+                                                       const TableNaturalGeometry& geometry,
+                                                       float incoming_width) const;
         static float table_cell_horizontal_offset(const nodes::DocraftLoomNode& content, float extra_width);
         void place_table_cells(
             nodes::DocraftLoomTable& table, const std::vector<float>& resolved_widths,
@@ -133,5 +142,15 @@ namespace docraft::loom::pipeline {
 
         DocraftLoomCursor cursor_;
         nodes::Size page_size_; /// Document page sizes, used for layout computation
+
+        /**
+         * @brief Width budget pushed down by an ancestor Rectangle/VStack to the child
+         * about to be visited -- the Layout-side counterpart of
+         * DocraftLoomMeasureProcessor::inherited_wrap_width_, kept in sync with it so a
+         * weighted HStack/Table nested inside a narrower Rectangle/VStack resolves its
+         * columns against that ancestor's width in both passes, not the full page. 0
+         * means "no ancestor constraint" (falls back to page_size_.width).
+         */
+        float inherited_width_ = 0.0F;
     };
 } // docraft

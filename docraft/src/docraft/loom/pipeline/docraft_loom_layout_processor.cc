@@ -21,6 +21,7 @@
 #include "docraft/loom/nodes/docraft_loom_text.h"
 #include "docraft/loom/nodes/docraft_loom_title.h"
 #include "docraft/loom/nodes/docraft_loom_vstack.h"
+#include "docraft/loom/pipeline/docraft_loom_weighted_distribution.h"
 
 namespace docraft::loom::pipeline {
 #pragma region Cursor
@@ -89,6 +90,11 @@ namespace docraft::loom::pipeline {
         }
     }
 
+    float DocraftLoomLayoutProcessor::incoming_width() const
+    {
+        return inherited_width_ > 0.0F ? inherited_width_ : page_size_.width;
+    }
+
     void DocraftLoomLayoutProcessor::visit(docraft::loom::nodes::DocraftLoomText* node)
     {
         PositionScope scope(*this, *node);
@@ -123,6 +129,9 @@ namespace docraft::loom::pipeline {
         PositionScope scope(*this, *node);
         auto& layout_box = node->edit_layout_box();
         layout_box.frame.size = layout_box.measured_size;
+        const float own_width = node->width() > 0.0F ? node->width() : incoming_width();
+        const float children_width =
+            own_width > 0.0F ? std::max(0.0F, own_width - (2.0F * node->padding())) : 0.0F;
 
         const int n = node->children_count();
         if (n > 0)
@@ -134,6 +143,7 @@ namespace docraft::loom::pipeline {
                 + node->resolve_outer_margin(*node, /*leading=*/true);
             for (int i = 0; i < n; ++i)
             {
+                inherited_width_ = children_width;
                 cursor_.set_position(start_x, current_y);
                 auto child = node->edit_child(i);
                 child->accept(*this);
@@ -185,6 +195,11 @@ namespace docraft::loom::pipeline {
         // this container's real footprint instead of a zero-initialized default.
         layout_box.frame.size = layout_box.measured_size;
 
+        // A VStack has no width/padding of its own, so it neither narrows nor owns the
+        // constraint -- it just relays whatever width is available straight through to
+        // each child
+        const float relay_width = incoming_width();
+
         const float start_x = position.x;
         const int n = node->children_count();
         // Mirrors the measure pass: the first/last child's own margin is reserved
@@ -192,6 +207,7 @@ namespace docraft::loom::pipeline {
         float current_y = position.y + node->resolve_outer_margin(*node, /*leading=*/true);
         for (int i = 0; i < n; ++i)
         {
+            inherited_width_ = relay_width;
             cursor_.set_position(start_x, current_y);
             auto child = node->edit_child(i);
             child->accept(*this);
@@ -216,6 +232,13 @@ namespace docraft::loom::pipeline {
         // See the matching comment in visit(DocraftLoomVStack*).
         layout_box.frame.size = layout_box.measured_size;
 
+        // Capture whatever an ancestor pushed down before clearing it: without
+        // weights, HStack's contract is shrink-to-fit (each child keeps its own
+        // natural width), so a stale value must not leak into the first child --
+        // mirrors DocraftLoomMeasureProcessor::visit(DocraftLoomHStack*).
+        const float width_budget = incoming_width();
+        inherited_width_ = 0.0F;
+
         const float start_y = position.y;
         const int n = node->children_count();
         const auto& weights = node->weights();
@@ -236,34 +259,24 @@ namespace docraft::loom::pipeline {
 
         // Opt-in: only engaged when weights() is non-empty, so plain HStacks (headers,
         // footers, shape rows, ...) keep today's shrink-to-fit behavior untouched. When
-        // engaged, the available content width is divided among children by weight
+        // engaged, the available width is divided among children by weight
         // (missing/non-positive entries default to 1.0, i.e. homogeneous division),
         // mirroring DocraftLoomTable's column_weights -- each child is never squeezed
-        // narrower than its own natural width, though.
+        // narrower than its own natural width, though. Divides width_budget (an
+        // ancestor's constraint, or page_size_.width at the root) -- not
+        // page_size_.width unconditionally -- so a weighted HStack nested inside a
+        // narrower Rectangle/VStack divides that narrower budget instead of the full
+        // page (mirrors the matching fix in DocraftLoomMeasureProcessor).
         std::vector<float> resolved_widths;
         if (!weights.empty() && n > 0)
         {
-            std::vector<float> effective_weights(static_cast<std::size_t>(n));
-            float total_weight = 0.0F;
+            const float available_width = width_budget - total_gap - leading_margin - trailing_margin;
+            std::vector<float> natural_widths(static_cast<std::size_t>(n));
             for (int i = 0; i < n; ++i)
             {
-                const float w = i < static_cast<int>(weights.size()) && weights[static_cast<std::size_t>(i)] > 0.0F
-                                    ? weights[static_cast<std::size_t>(i)]
-                                    : 1.0F;
-                effective_weights[static_cast<std::size_t>(i)] = w;
-                total_weight += w;
+                natural_widths[static_cast<std::size_t>(i)] = node->child(i)->layout_box().measured_size.width;
             }
-
-            const float available_width = (page_size_.width > 0.0F ? page_size_.width : layout_box.frame.size.width)
-                - total_gap - leading_margin - trailing_margin;
-
-            resolved_widths.resize(static_cast<std::size_t>(n));
-            for (int i = 0; i < n; ++i)
-            {
-                const float natural_width = node->child(i)->layout_box().measured_size.width;
-                resolved_widths[static_cast<std::size_t>(i)] = std::max(
-                    natural_width, available_width * effective_weights[static_cast<std::size_t>(i)] / total_weight);
-            }
+            resolved_widths = distribute_weighted_widths(available_width, weights, n, natural_widths);
         }
 
         float current_x = position.x + leading_margin;
@@ -453,14 +466,17 @@ namespace docraft::loom::pipeline {
 
 
     std::vector<float> DocraftLoomLayoutProcessor::resolve_table_column_widths(
-        const nodes::DocraftLoomTable& table, const TableNaturalGeometry& geometry) const
+        const nodes::DocraftLoomTable& table, const TableNaturalGeometry& geometry, float incoming_width) const
     {
         // Resolves each column's final width:
-        // - available_width is the page width minus outer padding, or -- if this processor
-        //   was built without a page width (page_size_.width <= 0, e.g. in a unit test) --
-        //   the sum of the natural widths, so the table just hugs its own content.
-        // - column weights: missing entries default to 1.0; if every weight is <= 0 (e.g.
-        //   an all-zero weight vector), fall back to one unit of weight per column.
+        // - available_width is incoming_width (an ancestor's constraint pushed down via
+        //   inherited_width_, or page_size_.width at the root -- see visit(Table)) minus
+        //   outer padding, or -- if incoming_width is 0 (e.g. a table built without a
+        //   page width in a unit test) -- the sum of the natural widths, so the table
+        //   just hugs its own content. Mirrors the matching fix in
+        //   DocraftLoomMeasureProcessor::visit(Table).
+        // - column weights: missing or non-positive entries default to 1.0 (handled by
+        //   distribute_weighted_widths()), so an all-zero weight vector divides evenly.
         // - a column with an explicit width uses it verbatim (a hard constraint); otherwise
         //   it gets its proportional share of available_width by weight, floored at its own
         //   natural width (a column is never squeezed narrower than its content).
@@ -473,19 +489,13 @@ namespace docraft::loom::pipeline {
         float sum_natural = 0.0F;
         for (float w : geometry.natural_widths)
             sum_natural += w;
-        const float available_width = page_size_.width > 0.0F
-                                          ? page_size_.width - (2.0F * nodes::DocraftLoomTable::kCellPaddingX) -
+        const float available_width = incoming_width > 0.0F
+                                          ? incoming_width - (2.0F * nodes::DocraftLoomTable::kCellPaddingX) -
                                           (2.0F * table.padding())
                                           : sum_natural;
 
-        const auto& weights = table.column_weights();
-        float total_weight = 0.0F;
-        for (int c = 0; c < cols; ++c)
-            total_weight += (c < static_cast<int>(weights.size()) ? weights[static_cast<std::size_t>(c)] : 1.0F);
-        if (total_weight <= 0.0F)
-        {
-            total_weight = static_cast<float>(cols);
-        }
+        const auto by_weight =
+            distribute_weighted_widths(available_width, table.column_weights(), cols, geometry.natural_widths);
 
         std::vector<float> resolved(static_cast<std::size_t>(cols), 0.0F);
         bool any_explicit = false;
@@ -499,9 +509,7 @@ namespace docraft::loom::pipeline {
             }
             else
             {
-                const float weight = c < static_cast<int>(weights.size()) ? weights[static_cast<std::size_t>(c)] : 1.0F;
-                resolved[static_cast<std::size_t>(c)] = std::max(geometry.natural_widths[static_cast<std::size_t>(c)],
-                                                                 available_width * weight / total_weight);
+                resolved[static_cast<std::size_t>(c)] = by_weight[static_cast<std::size_t>(c)];
             }
         }
         if (!any_explicit)
@@ -599,8 +607,15 @@ namespace docraft::loom::pipeline {
             return;
         PositionScope scope(*this, *table);
 
+        // Table resolves its columns' widths itself (below) rather than relaying
+        // inherited_width_ to children the way Rectangle/VStack do -- capture whatever
+        // an ancestor pushed down before clearing it, mirroring
+        // DocraftLoomMeasureProcessor::visit(Table).
+        const float width_budget = incoming_width();
+        inherited_width_ = 0.0F;
+
         const auto geometry = gather_table_natural_geometry(*table);
-        const auto resolved_widths = resolve_table_column_widths(*table, geometry);
+        const auto resolved_widths = resolve_table_column_widths(*table, geometry, width_budget);
 
         float total_width = 0.0F;
         for (float w : resolved_widths)

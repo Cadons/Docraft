@@ -27,6 +27,7 @@
 #include "docraft/loom/nodes/docraft_loom_text.h"
 #include "docraft/loom/nodes/docraft_loom_title.h"
 #include "docraft/loom/nodes/docraft_loom_vstack.h"
+#include "docraft/loom/pipeline/docraft_loom_weighted_distribution.h"
 
 namespace docraft::loom::pipeline {
     namespace {
@@ -310,10 +311,13 @@ namespace docraft::loom::pipeline {
         const int n = node->children_count();
         const auto& weights = node->weights();
 
-        // Clear any width pushed down by an ancestor (Rectangle/VStack now always arm
-        // one) before deciding whether to push our own: without weights, HStack's
-        // contract is shrink-to-fit (each child gets its own natural width, see class
-        // doc), so a stale inherited value must not leak into the first child.
+        // Capture whatever width an ancestor (Rectangle/VStack now always arm one)
+        // pushed down before clearing it: without weights, HStack's contract is
+        // shrink-to-fit (each child gets its own natural width, see class doc), so a
+        // stale inherited value must not leak into the first child -- but the weighted
+        // branch below still needs it (an ancestor's constraint, not content_width_, is
+        // what a nested weighted HStack must divide among its columns).
+        const float incoming_width = inherited_wrap_width_ > 0.0F ? inherited_wrap_width_ : content_width_;
         inherited_wrap_width_ = 0.0F;
 
         // Precomputed once, upfront: margin() is a static per-child property (doesn't
@@ -339,27 +343,15 @@ namespace docraft::loom::pipeline {
         // Layout's) and push it down as a wrap constraint before measuring that child,
         // so e.g. a Paragraph's Text auto-wraps to fit its column instead of the column
         // having to grow to fit unwrapped text. Layout's own floor becomes a no-op once
-        // that child's natural width already equals its resolved share.
+        // that child's natural width already equals its resolved share. Divides
+        // incoming_width (the ancestor's constraint, or content_width_ at the root) --
+        // not content_width_ unconditionally -- so a weighted HStack nested inside a
+        // narrower Rectangle/VStack divides that narrower budget, not the full page.
         std::vector<float> resolved_widths;
-        if (!weights.empty() && n > 0 && content_width_ > 0.0F)
+        if (!weights.empty() && n > 0 && incoming_width > 0.0F)
         {
-            float total_weight = 0.0F;
-            std::vector<float> effective_weights(static_cast<std::size_t>(n));
-            for (int i = 0; i < n; ++i)
-            {
-                const float w = i < static_cast<int>(weights.size()) && weights[static_cast<std::size_t>(i)] > 0.0F
-                                    ? weights[static_cast<std::size_t>(i)]
-                                    : 1.0F;
-                effective_weights[static_cast<std::size_t>(i)] = w;
-                total_weight += w;
-            }
-            const float available_width = content_width_ - total_gap - leading_margin - trailing_margin;
-            resolved_widths.resize(static_cast<std::size_t>(n));
-            for (int i = 0; i < n; ++i)
-            {
-                resolved_widths[static_cast<std::size_t>(i)] =
-                    available_width * effective_weights[static_cast<std::size_t>(i)] / total_weight;
-            }
+            const float available_width = incoming_width - total_gap - leading_margin - trailing_margin;
+            resolved_widths = distribute_weighted_widths(available_width, weights, n);
         }
 
         for (int i = 0; i < n; ++i)
@@ -568,9 +560,12 @@ namespace docraft::loom::pipeline {
             return;
 
         // Table resolves per-column wrap budgets itself (pending_cell_wrap_budget_)
-        // rather than through inherited_wrap_width_ -- clear any value an ancestor
-        // pushed down (Rectangle/VStack now always arm one) so it doesn't leak into a
-        // cell's Text measurement alongside the budget computed below.
+        // rather than through inherited_wrap_width_ -- capture whatever value an
+        // ancestor pushed down (Rectangle/VStack now always arm one) before clearing it,
+        // so it doesn't leak into a cell's Text measurement alongside the budget
+        // computed below, but the weight-based estimate can still divide it (rather than
+        // content_width_ unconditionally) for a Table nested in a narrower container.
+        const float incoming_width = inherited_wrap_width_ > 0.0F ? inherited_wrap_width_ : content_width_;
         inherited_wrap_width_ = 0.0F;
 
         const int rows = table->row_count();
@@ -584,29 +579,17 @@ namespace docraft::loom::pipeline {
         // pushed unconditionally (see visit(DocraftLoomTableCell*)), so it never disturbs
         // the natural-width-floor sizing of cells that already fit.
         std::vector<float> column_wrap_budget(static_cast<std::size_t>(cols), 0.0F);
-        if (cols > 0 && content_width_ > 0.0F)
+        if (cols > 0 && incoming_width > 0.0F)
         {
             const float available_width =
-                content_width_ - (2.0F * nodes::DocraftLoomTable::kCellPaddingX) - (2.0F * table->padding());
+                incoming_width - (2.0F * nodes::DocraftLoomTable::kCellPaddingX) - (2.0F * table->padding());
             if (available_width > 0.0F)
             {
-                const auto& weights = table->column_weights();
-                float total_weight = 0.0F;
+                const auto shares = distribute_weighted_widths(available_width, table->column_weights(), cols);
                 for (int c = 0; c < cols; ++c)
                 {
-                    total_weight += (c < static_cast<int>(weights.size()) && weights[static_cast<std::size_t>(c)] >
-                                        0.0F)
-                                        ? weights[static_cast<std::size_t>(c)]
-                                        : 1.0F;
-                }
-                for (int c = 0; c < cols; ++c)
-                {
-                    const float weight =
-                        (c < static_cast<int>(weights.size()) && weights[static_cast<std::size_t>(c)] > 0.0F)
-                            ? weights[static_cast<std::size_t>(c)]
-                            : 1.0F;
                     column_wrap_budget[static_cast<std::size_t>(c)] =
-                        std::max(0.0F, (available_width * weight / total_weight) -
+                        std::max(0.0F, shares[static_cast<std::size_t>(c)] -
                                  (2.0F * nodes::DocraftLoomTable::kCellPaddingX));
                 }
             }
