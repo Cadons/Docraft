@@ -416,10 +416,19 @@ namespace docraft::loom::pipeline {
         layout_box.frame.size = layout_box.measured_size;
         if (auto content = cell->content())
         {
+            // Content is positioned by the cell's own grid slot, same as the cell itself --
+            // absolute mode would silently resolve to a raw page coordinate instead,
+            // ignoring the cell's layout entirely.
+            if (content->position_mode() == nodes::DocraftPositionType::kAbsolute)
+            {
+                throw exception::InvalidInputException("Table cell content cannot be in absolute position mode");
+            }
             // Inset by the same padding folded into the cell's measured_size in Measure,
-            // so content never sits flush against the cell's own edge.
-            cursor_.set_position(layout_box.frame.position.x + nodes::DocraftLoomTable::kCellPaddingX,
-                                 layout_box.frame.position.y + nodes::DocraftLoomTable::kCellPaddingY);
+            // plus the content's own margin -- mirrors how VStack/HStack apply
+            // resolve_outer_margin to their children instead of only their own padding.
+            cursor_.set_position(
+                layout_box.frame.position.x + nodes::DocraftLoomTable::kCellPaddingX + content->margin().left,
+                layout_box.frame.position.y + nodes::DocraftLoomTable::kCellPaddingY + content->margin().top);
             content->accept(*this);
         }
     }
