@@ -17,7 +17,7 @@ namespace docraft::test {
     protected:
         void SetUp() override
         {
-            text_backend_ = std::make_shared<backend::MockDocraftTextRenderingBackend>();
+            text_backend_ = std::make_shared<::testing::NiceMock<backend::MockDocraftTextRenderingBackend>>();
             ON_CALL(*text_backend_, measure_text_width(_, _, _)).WillByDefault(Return(50.0F));
             ON_CALL(*text_backend_, measure_text_height(_, _)).WillByDefault(Return(10.0F));
             measure_ = std::make_unique<loom::pipeline::DocraftLoomMeasureProcessor>(text_backend_);

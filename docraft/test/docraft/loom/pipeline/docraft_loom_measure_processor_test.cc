@@ -15,7 +15,7 @@ namespace docraft::test {
     protected:
         void SetUp() override
         {
-            text_backend_mock_ = std::make_shared<backend::MockDocraftTextRenderingBackend>();
+            text_backend_mock_ = std::make_shared<::testing::NiceMock<backend::MockDocraftTextRenderingBackend>>();
             processor_ = std::make_unique<docraft::loom::pipeline::DocraftLoomMeasureProcessor>(text_backend_mock_);
         }
 
