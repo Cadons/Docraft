@@ -161,7 +161,7 @@ Render with data:
 
 .. code-block:: bash
 
-   docraft_tool invoice.craft output/invoice.pdf -d data.json
+   docraft_tool invoice.craft output/invoice.pdf --data data.json
 
 Document Metadata
 -----------------

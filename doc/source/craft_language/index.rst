@@ -72,7 +72,7 @@ Complex Structures
       :link: tables
       :link-type: doc
 
-      Grid-based tables with column titles, row/column weights, cell backgrounds,
+      Grid-based tables with column titles, cell backgrounds,
       and automatic JSON data binding via ``<Foreach>``.
 
    .. grid-item-card:: 📋 Lists

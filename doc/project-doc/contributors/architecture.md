@@ -2,7 +2,7 @@
 
 This document explains how Docraft is built, which components compose the system, how they interact at runtime, and where contributors can extend behavior.
 
-It is a high-level map. For component-level narrative details, use the files in `doc/contributors/components/`.
+It is a high-level map. For component-level narrative details, use the files in `doc/project-doc/contributors/components/`.
 
 ## 1. Architecture at a glance
 
@@ -181,18 +181,18 @@ Current behavior:
 
 Detailed guide and examples are in:
 
-- `doc/contributors/components/backend-integration.md`
+- `doc/project-doc/contributors/components/backend-integration.md`
 
 ## 7. Detailed component docs
 
-- `doc/contributors/components/document-and-context.md`
-- `doc/contributors/components/parser.md`
-- `doc/contributors/components/model-and-dom.md`
-- `doc/contributors/components/templating.md`
-- `doc/contributors/components/layout-and-pagination.md`
-- `doc/contributors/components/renderer-and-painters.md`
-- `doc/contributors/components/backend.md`
-- `doc/contributors/components/backend-integration.md`
+- `doc/project-doc/contributors/components/document-and-context.md`
+- `doc/project-doc/contributors/components/parser.md`
+- `doc/project-doc/contributors/components/model-and-dom.md`
+- `doc/project-doc/contributors/components/templating.md`
+- `doc/project-doc/contributors/components/layout-and-pagination.md`
+- `doc/project-doc/contributors/components/renderer-and-painters.md`
+- `doc/project-doc/contributors/components/backend.md`
+- `doc/project-doc/contributors/components/backend-integration.md`
 
 ## 8. Testing strategy map
 

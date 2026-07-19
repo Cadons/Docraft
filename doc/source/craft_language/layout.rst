@@ -7,8 +7,16 @@ distributed.
 
 .. note::
 
-   The ``weight`` attribute is valid only in the inclusive range ``0`` to ``1``.
-   Values greater than ``1`` are invalid.
+   ``weight`` is a relative share, not a fraction of ``1``: values don't need to sum to
+   ``1``, and any value greater than ``1`` is allowed (a column weighted ``2`` simply
+   gets twice the share of one weighted ``1``). A missing or non-positive ``weight``
+   defaults to an even share (``1.0``) rather than collapsing to zero width.
+
+.. note::
+
+   ``weight`` currently only affects **horizontal** ``<Layout>``; on a ``vertical``
+   ``<Layout>`` it is parsed but not yet applied — all rows keep their natural
+   (shrink-to-fit) height.
 
 Example — Horizontal Layout
 ----------------------------
@@ -16,19 +24,22 @@ Example — Horizontal Layout
 .. code-block:: xml
 
    <Layout orientation="horizontal">
-     <Text weight="0.25">Left column</Text>
-     <Text weight="0.50">Center column (twice as wide)</Text>
-     <Text weight="0.25">Right column</Text>
+     <Text weight="1">Left column</Text>
+     <Text weight="2">Center column (twice as wide)</Text>
+     <Text weight="1">Right column</Text>
    </Layout>
 
 Example — Vertical Layout
 --------------------------
 
+Vertical layouts stack children top to bottom; ``weight`` has no effect yet (see note
+above):
+
 .. code-block:: xml
 
    <Layout orientation="vertical">
-     <Text weight="0.60">Top row</Text>
-     <Text weight="0.40">Bottom row</Text>
+     <Text>Top row</Text>
+     <Text>Bottom row</Text>
    </Layout>
 
 Attributes

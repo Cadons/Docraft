@@ -88,7 +88,10 @@ sequenceDiagram
 - **`docraft::loom::nodes`** — the node tree (`DocraftLoomNode` and subclasses) plus `LayoutBox`,
   the per-node accumulator that the four pipeline stages fill in, one field each.
 - **`docraft::loom::pipeline`** — the four visitor processors (Measure, Layout, Pagination,
-  Rendering).
+  Rendering), plus `DocraftLoomPipelineExecutor`, which runs a fresh Measure+Layout processor
+  pair over one region (header/footer/body) at a time so per-traversal state never leaks between
+  regions (§4.5), and `distribute_weighted_widths()`, the weight-resolution helper shared by
+  Measure and Layout for HStack/Table column sizing.
 - **`docraft::loom::DocraftLoomPdfCreator`** — top-level orchestrator; owns the single
   `DocraftHaruBackend` instance and sequences the six stages above.
 - **`docraft::backend`** — capability-split backend interfaces (text/line/shape/image/page/output/
@@ -99,16 +102,15 @@ sequenceDiagram
 
 ### 4.1 Entry point
 
-The real "`.craft` file path → PDF on disk" driver is `docraft_tool`
-(`docraft/src/docraft/main.cpp`), **not** `docraft_loom_tool` (`main_loom.cc`, which builds a
-`DocraftLoomNode` tree by hand in C++ for demo purposes and skips parsing entirely). `main()` in
-`main.cpp`:
+The "`.craft` file path → PDF on disk" driver is `docraft_tool` (`docraft/src/docraft/main.cpp`).
+`main()` in `main.cpp`:
 
 1. Parses CLI args: `<file.craft> <output.pdf> [--data data.json]`.
 2. Validates the input file exists.
 3. Constructs `docraft::craft::DocraftLoomCraftLanguageParser`.
-4. If `--data` was given, builds a `DocraftTemplateEngine` from the JSON (each top-level field
-   becomes a `${field}` variable) and calls `parser.set_template_engine(engine)`.
+4. If `--data` was given, builds a `DocraftTemplateEngine` from the JSON via
+   `add_template_variables_from_json()` (every field becomes a `${field}` variable, nested
+   objects flattened to `${parent.child}`) and calls `parser.set_template_engine(engine)`.
 5. `parser.load_from_file(path)` — parses the XML and builds a fully-wired
    `DocraftLoomPdfCreator` internally (§4.2–4.3).
 6. `auto creator = parser.edit_creator();`
@@ -211,20 +213,29 @@ overload per node type — dispatched via double dispatch (`node->accept(visitor
 
 ### 4.5 Measure → Layout → Pagination (`DocraftLoomPdfCreator::create()`)
 
-`create()` runs the three layout-computation stages, reusing **one** `DocraftLoomMeasureProcessor`
-and **one** `DocraftLoomLayoutProcessor` across header, footer, and body:
+`create()` runs the three layout-computation stages, delegating the Measure+Layout half of each
+region (header/footer/body) to a `DocraftLoomPipelineExecutor` constructed once per `create()`
+call with the page-wide context (text backend, page width):
 
 1. Computes `header_height`/`footer_height` from `page_height * ratio`, and the body's usable
    `body_top_y_`/`body_height_` from margins.
-2. **Header** (if set): measure pass (`header_->accept(measure_processor)`), then layout pass with
-   the cursor reset to the header's top-left, then
+2. **Header** (if set): `executor.run(*header_, ..., assign_fixed_page_index=true)` — measures,
+   lays out with the cursor reset to the header's top-left, then, because
+   `assign_fixed_page_index` is `true`, stamps the whole subtree via
    `DocraftLoomPaginationProcessor::assign_page_index_recursive(header_, -1)` — header always
    renders, on every page.
-3. **Footer** (if set): identical, cursor reset to the footer's top-left, also stamped `-1`.
-4. **Body**: measure pass over the whole body tree, then layout pass with the cursor reset to
-   `(body_margins_.left, body_top_y_)` — this places the *entire* body on one continuous,
+3. **Footer** (if set): identical `executor.run(...)` call, cursor reset to the footer's top-left,
+   also stamped `-1`.
+4. **Body**: `executor.run(*root_node_, ..., cursor at (body_margins_.left, body_top_y_))` (default
+   `assign_fixed_page_index=false`) — measures and lays out the whole body tree in one continuous,
    unbounded-height canvas; no page breaks exist yet.
-5. `DocraftLoomPaginationProcessor::paginate_body(body, body_top_y_, body_height_, page_backend)`
+5. Each `executor.run()` call builds its own fresh `DocraftLoomMeasureProcessor`/
+   `DocraftLoomLayoutProcessor` pair rather than reusing one pair across regions: a region is a
+   wholly separate traversal, and per-traversal state internal to those processors (e.g.
+   `DocraftLoomMeasureProcessor`'s `inherited_wrap_width_`, `DocraftLoomLayoutProcessor`'s
+   `inherited_width_`) must not leak from one region into the next — a fresh instance guarantees
+   that structurally.
+6. `DocraftLoomPaginationProcessor::paginate_body(body, body_top_y_, body_height_, page_backend)`
    walks the body's top-level children in order, tracking how much of the current page remains:
    - `DocraftLoomNewPage` forces a break.
    - A child that fits on the current page gets `page_index` stamped and the cursor advances.
@@ -255,9 +266,12 @@ The processor holds four narrow interface pointers pulled from
 `IDocraftShapeRenderingBackend`, `IDocraftLineRenderingBackend`, `IDocraftImageRenderingBackend` —
 and never depends on the concrete Haru type. Per node type it does roughly:
 
-- **Text/Title/Subtitle/PageNumber**: draws wrapped or single-line text with alignment (including
-  justified, via inter-word space redistribution), then strokes underline/strikeout outside the
-  PDF text block. `PageNumber` recomputes its string from `current_page_index_ + 1`.
+- **Text/Title/Subtitle**: draws wrapped or single-line text with alignment (including justified,
+  via inter-word space redistribution), then strokes underline/strikeout outside the PDF text
+  block. `PageNumber` recomputes its display string from `current_page_index_ + 1`, substitutes it
+  (and, when boxed, its single wrapped line) into the node, then delegates to the same
+  `visit(DocraftLoomText*)` path rather than duplicating its alignment/box-width handling — this
+  is also what gives `PageNumber` underline/strikeout support.
 - **Rectangle/VStack/HStack**: paints a background/border, then recurses into children.
 - **Image**: dispatches on format (`kPng`/`kJpeg`/`kRaw`) to the matching backend call.
 - **Line/Circle/Triangle/Polygon**: fills and/or strokes based on resolved style flags.
@@ -339,8 +353,10 @@ libharu document object.
 **Pipeline**: `docraft/include/docraft/loom/pipeline/docraft_loom_measure_processor.h`,
 `docraft/include/docraft/loom/pipeline/docraft_loom_layout_processor.h` (also defines
 `DocraftLoomCursor`), `docraft/include/docraft/loom/pipeline/docraft_loom_pagination_processor.h`,
-`docraft/include/docraft/loom/pipeline/docraft_loom_rendering_processor.h` (impls under matching
-`docraft/src/...` paths).
+`docraft/include/docraft/loom/pipeline/docraft_loom_rendering_processor.h`,
+`docraft/include/docraft/loom/pipeline/docraft_loom_pipeline_executor.h` (runs Measure+Layout per
+region, §4.5), `docraft/include/docraft/loom/pipeline/docraft_loom_weighted_distribution.h`
+(shared HStack/Table column-weight resolution) — impls under matching `docraft/src/...` paths.
 
 **Backend**: `docraft/include/docraft/backend/docraft_rendering_backend.h` and the per-capability
 interfaces (`docraft_text_rendering_backend.h`, `docraft_shape_rendering_backend.h`,

@@ -2,13 +2,19 @@ Tables
 ======
 
 The ``<Table>`` element renders tabular data with titles, rows, and cells.
-Tables support horizontal and vertical orientations, column/row weights,
+Tables support horizontal and vertical orientations, per-cell/row backgrounds,
 and JSON model binding for data-driven content.
 
 .. note::
 
    Inside tables, ``<Title>`` is not valid.
    Use ``<HTitle>`` for horizontal table headers and ``<VTitle>`` for vertical table titles.
+
+.. note::
+
+   Column weighting exists on the underlying ``DocraftLoomTable`` node
+   (``set_column_weights()``), but is not yet exposed as a Craft Language XML attribute —
+   there is currently no way to set it from a ``.craft`` file.
 
 Basic Table (Horizontal)
 ------------------------

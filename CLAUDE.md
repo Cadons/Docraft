@@ -40,8 +40,7 @@ ctest --test-dir build -C Release -L stress
 CLI tools (built alongside the library):
 
 ```bash
-./build/artifacts/bin/docraft_tool <file.craft> <output.pdf> [-d data.txt]
-./build/artifacts/bin/docraft_loom_tool ...   # exercises the new "loom" pipeline (see below)
+./build/artifacts/bin/docraft_tool <file.craft> <output.pdf> [--data data.json]
 ```
 
 `BUILD_SHARED_LIBS=ON` builds docraft as a shared lib instead of static (default OFF).
@@ -107,11 +106,10 @@ DocraftLoomNode tree (nodes/: Text, Paragraph, Rectangle, VStack, HStack, ...)
 - `DocraftLoomCursor` tracks the "pen" position during layout (origin top-left, y grows downward),
   separate from any node — this replaces the old handler-local cursor bookkeeping.
 - `DocraftLoomPdfCreator` is the loom-side equivalent of `DocraftDocument` (top-level orchestrator);
-  `docraft_loom_tool` / `main_loom.cpp` exercise it end to end.
-- Tests live in `docraft/test/docraft/loom/`; note `docraft/test/CMakeLists.txt` currently wires up
-  only `loom/pipeline/docraft_loom_measure_processor_test.cpp` and
-  `loom/nodes/docraft_loom_stack_nodes_test.cpp` as TEST_SOURCES — if you add a new loom test file,
-  you must add it there or it silently won't run.
+  `docraft_tool` (`docraft/src/docraft/main.cpp`) exercises it end to end via
+  `DocraftLoomCraftLanguageParser`.
+- Tests live in `docraft/test/docraft/loom/`; `docraft/test/CMakeLists.txt` is not glob-based — if
+  you add a new loom test file, you must add it to TEST_SOURCES there or it silently won't run.
 
 When asked to work on layout/rendering, check whether the task is about the legacy pipeline or
 `loom` — they don't share types, and "the layout engine" is ambiguous in this repo right now.

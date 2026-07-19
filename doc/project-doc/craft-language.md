@@ -96,7 +96,7 @@ Most nodes call the shared attribute configurator and accept:
 | `auto_fill_width` | bool | `true` / `false`. |
 | `auto_fill_height` | bool | `true` / `false`. |
 | `padding` | float | Padding in points. |
-| `weight` | float | Must be `> 0` and `<= 1`. |
+| `weight` | float | Relative share among siblings; need not sum to `1`. Missing or `<= 0` defaults to an even share (`1.0`). |
 | `position` | string | `block` or `absolute`. |
 | `z_index` | int | Rendering order among siblings. |
 | `visible` | bool | Defaults to `true`. |
@@ -104,7 +104,7 @@ Most nodes call the shared attribute configurator and accept:
 Notes:
 
 - `id` exists as a token name but is not consumed by current parsers.
-- Invalid `position` or invalid `weight` raises an exception.
+- Invalid `position` raises an exception; there is no validation on `weight`'s value.
 
 ## 5. Colors
 
