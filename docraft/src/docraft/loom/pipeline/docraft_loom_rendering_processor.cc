@@ -644,36 +644,18 @@ namespace docraft::loom::pipeline {
     {
         if (!node || !should_render(*node))
             return;
-        // Unlike a plain DocraftLoomText, the drawn string is computed fresh from the
-        // current page context rather than read from the node's own (placeholder) text.
+        // The only aspect DocraftLoomText's own visit() can't already handle: Measure
+        // reserved space/wrap_width using the placeholder text ("99999", see the class
+        // doc), so the real string is substituted here before delegating -- alignment,
+        // underline/strikeout and the ascent-based baseline all then come from the
+        // shared Text paint path for free.
         const std::string display = std::to_string(current_page_index_ + 1);
-        text_backend_->set_font(node->resolved_font_name(), node->font_size());
-        const auto rgba = node->color().toRGB();
-        // Same baseline adjustment as DocraftLoomText's own visit(): the baseline sits
-        // `ascent` below the top of the line box, not a full line height below it.
-        // ascent() was populated for this node by the measure step.
-        const float y = node->layout_box().frame.position.y + node->ascent();
-        text_backend_->begin_text();
-        text_backend_->set_text_color(rgba.r, rgba.g, rgba.b);
+        node->set_text(display);
         if (node->wrap_width() > 0.0F)
         {
-            // Box-relative alignment, same contract as DocraftLoomText: only applies
-            // once an ancestor has pushed down a width to align within (wrap_width()),
-            // applied here to the real page-number string rather than the placeholder
-            // measured earlier.
-            const TextLineStyle style{
-                .box_width = node->wrap_width(),
-                .alignment = node->alignment(),
-                .font_name = node->resolved_font_name(),
-                .font_size = node->font_size()
-            };
-            draw_aligned_line(display, node->layout_box().frame.position.x, y, style);
+            node->set_wrapped_lines({display});
         }
-        else
-        {
-            text_backend_->draw_text(display, node->layout_box().frame.position.x, y);
-        }
-        text_backend_->end_text();
+        visit(static_cast<docraft::loom::nodes::DocraftLoomText*>(node));
     }
 
     void DocraftLoomRenderingProcessor::visit(docraft::loom::nodes::DocraftLoomNewPage*)
