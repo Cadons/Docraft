@@ -648,13 +648,31 @@ namespace docraft::loom::pipeline {
         // current page context rather than read from the node's own (placeholder) text.
         const std::string display = std::to_string(current_page_index_ + 1);
         text_backend_->set_font(node->resolved_font_name(), node->font_size());
-        text_backend_->begin_text();
-        text_backend_->set_text_color(node->color().toRGB().r, node->color().toRGB().g, node->color().toRGB().b);
+        const auto rgba = node->color().toRGB();
         // Same baseline adjustment as DocraftLoomText's own visit(): the baseline sits
         // `ascent` below the top of the line box, not a full line height below it.
         // ascent() was populated for this node by the measure step.
-        text_backend_->draw_text(display, node->layout_box().frame.position.x,
-                                 node->layout_box().frame.position.y + node->ascent());
+        const float y = node->layout_box().frame.position.y + node->ascent();
+        text_backend_->begin_text();
+        text_backend_->set_text_color(rgba.r, rgba.g, rgba.b);
+        if (node->wrap_width() > 0.0F)
+        {
+            // Box-relative alignment, same contract as DocraftLoomText: only applies
+            // once an ancestor has pushed down a width to align within (wrap_width()),
+            // applied here to the real page-number string rather than the placeholder
+            // measured earlier.
+            const TextLineStyle style{
+                .box_width = node->wrap_width(),
+                .alignment = node->alignment(),
+                .font_name = node->resolved_font_name(),
+                .font_size = node->font_size()
+            };
+            draw_aligned_line(display, node->layout_box().frame.position.x, y, style);
+        }
+        else
+        {
+            text_backend_->draw_text(display, node->layout_box().frame.position.x, y);
+        }
         text_backend_->end_text();
     }
 
