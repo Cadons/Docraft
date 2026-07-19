@@ -553,8 +553,7 @@ namespace docraft::loom::craft {
     // `${...}` substitution (never against a Foreach item -- see build_table()'s
     // ForeachItemScope), then the same single-quote-JSON normalization Foreach's model
     // uses, then JSON-parse.
-    std::vector<std::vector<std::string>> DocraftLoomTreeBuilder::resolve_table_model_matrix(
-        const std::string& raw) const
+    nlohmann::json DocraftLoomTreeBuilder::resolve_table_model_json(const std::string& raw) const
     {
         const std::string normalized = normalize_single_quoted_json(template_engine_->render_template_string(raw));
 
@@ -572,7 +571,11 @@ namespace docraft::loom::craft {
         {
             throw docraft::exception::DataFormatException("<Table> 'model' must resolve to a non-empty JSON array");
         }
+        return parsed;
+    }
 
+    std::vector<std::vector<std::string>> DocraftLoomTreeBuilder::to_string_matrix(const nlohmann::json& parsed) const
+    {
         std::vector<std::vector<std::string>> matrix;
         matrix.reserve(parsed.size());
         for (const auto& row : parsed)
@@ -600,6 +603,84 @@ namespace docraft::loom::craft {
             matrix.push_back(std::move(parsed_row));
         }
         return matrix;
+    }
+
+    void DocraftLoomTreeBuilder::add_table_model_header_row(
+        nodes::DocraftLoomTable& table, const parser::ParsedTableData& data, std::size_t column_count) const
+    {
+        if (data.header_data_template)
+        {
+            const std::vector<std::string> header = resolve_table_header(*data.header_data_template);
+            if (header.size() != column_count)
+            {
+                throw docraft::exception::DataFormatException(
+                    "<Table> 'header' size must match 'model' column count");
+            }
+            std::vector<std::shared_ptr<nodes::DocraftLoomTableCell>> header_row;
+            header_row.reserve(header.size());
+            for (const auto& title : header)
+            {
+                parser::ParsedTableTitleData title_data;
+                title_data.text = title;
+                header_row.push_back(build_title_cell(title_data));
+            }
+            table.add_row(header_row);
+            return;
+        }
+
+        if (!data.header_titles.empty())
+        {
+            // An explicit <THead> can be used instead of the `header` attribute alongside a
+            // JSON/template `model` -- the parser doesn't reject that combination (only
+            // `header` + <THead> together is rejected), so it must be honored here too, not
+            // just the header_data_template path above.
+            if (data.header_titles.size() != column_count)
+            {
+                throw docraft::exception::DataFormatException(
+                    "<Table> THead column count must match 'model' column count");
+            }
+            std::vector<std::shared_ptr<nodes::DocraftLoomTableCell>> header_row;
+            header_row.reserve(data.header_titles.size());
+            for (const auto& title : data.header_titles)
+            {
+                header_row.push_back(build_title_cell(title));
+            }
+            table.add_row(header_row);
+        }
+    }
+
+    void DocraftLoomTreeBuilder::build_templated_model_rows(
+        nodes::DocraftLoomTable& table, const nlohmann::json& model_json, const parser::ParsedTableData& data)
+    {
+        if (data.rows.empty())
+        {
+            throw docraft::exception::InvalidInputException(
+                "<Table> 'model' resolving to a JSON array of objects requires an explicit <TBody> row template");
+        }
+
+        add_table_model_header_row(table, data, data.rows.front().cells.size());
+
+        const nlohmann::json* previous_item = current_foreach_item_;
+        for (const auto& item : model_json)
+        {
+            if (!item.is_object())
+            {
+                throw docraft::exception::DataFormatException(
+                    "<Table> 'model' must be a JSON array of only objects or only arrays, not mixed");
+            }
+            current_foreach_item_ = &item;
+            for (const auto& row_data : data.rows)
+            {
+                std::vector<std::shared_ptr<nodes::DocraftLoomTableCell>> row;
+                row.reserve(row_data.cells.size());
+                for (const auto& cell_data : row_data.cells)
+                {
+                    row.push_back(build_content_cell(cell_data));
+                }
+                table.add_row(row);
+            }
+        }
+        current_foreach_item_ = previous_item;
     }
 
     // Resolves a `<Table header="...">` attribute into a non-empty, string-only array,
@@ -906,46 +987,29 @@ namespace docraft::loom::craft {
 
         if (data.model_data_template)
         {
-            const std::vector<std::vector<std::string>> matrix =
-                resolve_table_model_matrix(*data.model_data_template);
+            const nlohmann::json model_json = resolve_table_model_json(*data.model_data_template);
 
-            if (data.header_data_template)
+            if (model_json.front().is_object())
             {
-                const std::vector<std::string> header = resolve_table_header(*data.header_data_template);
-                if (header.size() != matrix.front().size())
-                {
-                    throw docraft::exception::DataFormatException(
-                        "<Table> 'header' size must match 'model' column count");
-                }
-                std::vector<std::shared_ptr<nodes::DocraftLoomTableCell>> header_row;
-                header_row.reserve(header.size());
-                for (const auto& title : header)
-                {
-                    parser::ParsedTableTitleData title_data;
-                    title_data.text = title;
-                    header_row.push_back(build_title_cell(title_data));
-                }
-                table->add_row(header_row);
+                // `model` is a JSON array of objects -- the explicit <TBody> (already parsed
+                // into data.rows) is used as a per-object row template rather than literal
+                // rows; see build_templated_model_rows().
+                build_templated_model_rows(*table, model_json, data);
+                apply_common_attributes(*table, element.common);
+                return table;
             }
-            else if (!data.header_titles.empty())
+
+            // `model` is a JSON array of arrays (a string matrix): an explicit <TBody> has
+            // no role here (there's no per-object data to bind it against), so require the
+            // author to pick one or the other rather than silently dropping their <TBody>.
+            if (!data.rows.empty())
             {
-                // An explicit <THead> can be used instead of the `header` attribute
-                // alongside a JSON/template `model` -- the parser doesn't reject that
-                // combination (only `header` + <THead> together is rejected), so it must
-                // be honored here too, not just the header_data_template path above.
-                if (data.header_titles.size() != matrix.front().size())
-                {
-                    throw docraft::exception::DataFormatException(
-                        "<Table> THead column count must match 'model' column count");
-                }
-                std::vector<std::shared_ptr<nodes::DocraftLoomTableCell>> header_row;
-                header_row.reserve(data.header_titles.size());
-                for (const auto& title : data.header_titles)
-                {
-                    header_row.push_back(build_title_cell(title));
-                }
-                table->add_row(header_row);
+                throw docraft::exception::InvalidInputException(
+                    "<Table> 'model' resolving to a JSON array of arrays cannot be combined with an explicit <TBody>");
             }
+
+            const std::vector<std::vector<std::string>> matrix = to_string_matrix(model_json);
+            add_table_model_header_row(*table, data, matrix.front().size());
 
             for (const auto& matrix_row : matrix)
             {

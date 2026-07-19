@@ -51,6 +51,7 @@ namespace docraft::craft::parser {
     struct ParsedImageData;
     struct ParsedTableTitleData;
     struct ParsedTableCellData;
+    struct ParsedTableData;
 } // namespace docraft::craft::parser
 
 namespace docraft::loom::craft {
@@ -148,11 +149,21 @@ namespace docraft::loom::craft {
 
         /**
          * @brief Resolves a `<Table model="...">` attribute (already known not to be the
-         * "horizontal"/"vertical" keyword) into a rectangular, string-only matrix.
-         * @throws docraft::exception::DataFormatException if `raw` doesn't resolve to a
-         * non-empty, rectangular JSON array of strings.
+         * "horizontal"/"vertical" keyword) into its parsed JSON form: `${...}` substitution
+         * (never against a Foreach item -- Table forces current_foreach_item_ null for its
+         * own model/header resolution), then single-quote-JSON normalization and parsing.
+         * @throws docraft::exception::DataFormatException if `raw` doesn't resolve to valid,
+         * non-empty JSON array.
          */
-        std::vector<std::vector<std::string>> resolve_table_model_matrix(const std::string& raw) const;
+        nlohmann::json resolve_table_model_json(const std::string& raw) const;
+
+        /**
+         * @brief Converts an already-resolved `<Table model="...">` JSON array into a
+         * rectangular, string-only matrix (the "array of arrays" model shape).
+         * @throws docraft::exception::DataFormatException if `parsed` isn't a non-empty,
+         * rectangular JSON array of arrays of strings.
+         */
+        std::vector<std::vector<std::string>> to_string_matrix(const nlohmann::json& parsed) const;
 
         /**
          * @brief Resolves a `<Table header="...">` attribute into a non-empty,
@@ -161,6 +172,32 @@ namespace docraft::loom::craft {
          * non-empty JSON array of strings.
          */
         std::vector<std::string> resolve_table_header(const std::string& raw) const;
+
+        /**
+         * @brief Builds and appends the header row for a JSON/template `model` table (either
+         * shape), from `header` attribute or an explicit `<THead>` -- whichever `data`
+         * carries -- validated against `column_count`. Does nothing if neither is present.
+         * @throws docraft::exception::DataFormatException if the header size doesn't match
+         * `column_count`.
+         */
+        void add_table_model_header_row(nodes::DocraftLoomTable& table,
+                                        const docraft::craft::parser::ParsedTableData& data,
+                                        std::size_t column_count) const;
+
+        /**
+         * @brief Builds rows for a `<Table model="...">` that resolves to a JSON array of
+         * objects: the explicit `<TBody>` (already parsed into `data.rows`) is used as a
+         * per-object row template, repeated once per array element with
+         * current_foreach_item_ set to that element so `build_content_cell()`'s
+         * `${data("field")}` substitution resolves against it -- the same mechanism
+         * expand_foreach() uses for `<Foreach model="...">`.
+         * @throws docraft::exception::InvalidInputException if `data.rows` is empty (no
+         * `<TBody>` template was given).
+         * @throws docraft::exception::DataFormatException if `model_json` contains a
+         * non-object element.
+         */
+        void build_templated_model_rows(nodes::DocraftLoomTable& table, const nlohmann::json& model_json,
+                                        const docraft::craft::parser::ParsedTableData& data);
 
         /**
          * @brief Recursively builds each of `children` and appends the non-null results

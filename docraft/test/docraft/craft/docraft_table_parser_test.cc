@@ -219,7 +219,13 @@ TEST(DocraftTableParserTest, ParsesJsonMatrixModelAndHeaderAsDeferredTemplates)
     EXPECT_TRUE(data.rows.empty());
 }
 
-TEST(DocraftTableParserTest, RejectsJsonModelCombinedWithExplicitTBody)
+// Whether a JSON/template `model` is an array of arrays (incompatible with an explicit
+// TBody) or an array of objects (which uses the TBody as a per-row template -- see
+// docraft_loom_tree_builder_test.cc's TableJsonModelWithTBodyTemplateClonesRowPerObject)
+// is only known once `model` is resolved, which may require ${...} substitution the parser
+// doesn't perform. So the parser must not reject this combination up front; it just parses
+// both and leaves the decision to the loom builder.
+TEST(DocraftTableParserTest, ParsesJsonModelCombinedWithExplicitTBodyWithoutValidatingShape)
 {
     const char* xml = R"XML(
 <Table model='[["v1","v2"]]'>
@@ -235,7 +241,12 @@ TEST(DocraftTableParserTest, RejectsJsonModelCombinedWithExplicitTBody)
     ASSERT_TRUE(doc.load_string(xml));
 
     docraft::craft::parser::DocraftTableParser parser;
-    EXPECT_THROW(parser.parse(doc.child("Table")), docraft::exception::InvalidInputException);
+    const auto data = std::any_cast<docraft::craft::parser::ParsedTableData>(parser.parse(doc.child("Table")));
+
+    ASSERT_TRUE(data.model_data_template.has_value());
+    EXPECT_EQ(*data.model_data_template, "[[\"v1\",\"v2\"]]");
+    ASSERT_EQ(data.rows.size(), 1);
+    ASSERT_EQ(data.rows.front().cells.size(), 1);
 }
 
 TEST(DocraftTableParserTest, RejectsHeaderAttributeCombinedWithExplicitTHead)

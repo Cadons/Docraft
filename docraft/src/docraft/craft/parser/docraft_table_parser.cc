@@ -265,13 +265,15 @@ namespace docraft::craft::parser {
                 std::string(elements::kTHead) + " tag not found, it is mandatory");
         }
 
+        // An explicit TBody alongside a JSON/template `model` is only meaningful when the
+        // model resolves to an array of objects, in which case the loom builder uses these
+        // rows as a per-object template (mirroring `<Foreach>`'s model+children expansion).
+        // Whether the model is an object array or a string matrix is only known once it's
+        // resolved (it may itself be a `${...}` expression), so that distinction -- and
+        // rejecting a string-matrix model paired with an explicit TBody -- is enforced by
+        // the loom builder instead of here.
         if (auto tbody = craft_language_source.child(elements::kTBody.data()))
         {
-            if (has_json_model)
-            {
-                throw docraft::exception::InvalidInputException(
-                    "Table 'model' JSON/template data cannot be combined with an explicit TBody");
-            }
             parse_tbody(tbody, data, is_vertical);
         }
 

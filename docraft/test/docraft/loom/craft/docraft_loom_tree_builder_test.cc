@@ -824,6 +824,24 @@ TEST(DocraftLoomTreeBuilderTest, TableJsonModelWithTBodyTemplateClonesRowPerObje
     EXPECT_EQ(second_text->text(), "Bob");
 }
 
+// Unlike a JSON array-of-objects `model` (see above), an array-of-arrays `model` has no
+// per-row data to bind an explicit <TBody> against, so combining them is rejected rather
+// than silently dropping the <TBody> (the legacy pipeline's behavior).
+TEST(DocraftLoomTreeBuilderTest, TableStringMatrixModelRejectsExplicitTBody)
+{
+    const char* xml = R"XML(
+<Table model='[["v1","v2"]]'>
+  <TBody>
+    <Row>
+      <Cell><Text>ignored</Text></Cell>
+    </Row>
+  </TBody>
+</Table>
+)XML";
+
+    EXPECT_THROW(parse_and_build(xml), docraft::exception::InvalidInputException);
+}
+
 // Review bug #4: a <Table> nested inside a <Foreach> must resolve ${data(...)} in
 // its model against the outer Foreach item, not leave it as literal text.
 TEST(DocraftLoomTreeBuilderTest, TableNestedInForeachResolvesDataFieldsInModel)
