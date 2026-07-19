@@ -32,6 +32,8 @@
 #include "docraft/loom/docraft_loom_pdf_creator.h"
 #include "docraft/templating/docraft_template_engine.h"
 #include "docraft/utils/docraft_logger.h"
+#define CRAFT_EXTENSION ".craft"
+#define PDF_EXTENSION ".pdf"
 
 namespace {
     struct CliOptions
@@ -53,7 +55,7 @@ namespace {
         {
             return static_cast<char>(std::tolower(ch));
         });
-        return extension == ".craft";
+        return extension == CRAFT_EXTENSION;
     }
 
     /**
@@ -140,7 +142,7 @@ namespace {
         // If output file has no extension, add .pdf. If it has an extension, ensure it's .pdf (case-insensitive).
         if (!options.output_file.has_extension())
         {
-            options.output_file += ".pdf";
+            options.output_file += PDF_EXTENSION;
         }
         else
         {
@@ -149,7 +151,7 @@ namespace {
             {
                 return static_cast<char>(std::tolower(ch));
             });
-            if (extension != ".pdf")
+            if (extension != PDF_EXTENSION)
             {
                 throw docraft::exception::ConfigurationException("Output file extension must be .pdf");
             }
