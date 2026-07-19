@@ -72,17 +72,28 @@ namespace docraft::loom::craft {
             for (std::size_t i = 0; i < input.size(); ++i)
             {
                 const char ch = input[i];
-                if (ch == '\\')
+                if (ch == '\\' && (i + 1) < input.size())
                 {
-                    if (in_single && (i + 1) < input.size())
+                    const char next = input[i + 1];
+                    if (in_single && (next == '\\' || next == '\''))
                     {
-                        const char next = input[i + 1];
-                        if (next == '\\' || next == '\'')
-                        {
-                            output.push_back(next);
-                            ++i;
-                            continue;
-                        }
+                        // Escaped backslash/single-quote inside a single-quoted literal --
+                        // drop the backslash, since the bare escaped char is fine once the
+                        // delimiters below are converted to double quotes.
+                        output.push_back(next);
+                        ++i;
+                        continue;
+                    }
+                    if (in_single || in_double)
+                    {
+                        // Any other escape inside a string (`\"`/`\\` while in_double, or a
+                        // JSON escape like `\n` in either) must be consumed as a unit so the
+                        // escaped character -- notably an escaped quote -- can't be read on
+                        // its own as a delimiter and toggle in_single/in_double.
+                        output.push_back(ch);
+                        output.push_back(next);
+                        ++i;
+                        continue;
                     }
                     output.push_back(ch);
                     continue;

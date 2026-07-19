@@ -884,6 +884,37 @@ TEST(DocraftLoomTreeBuilderTest, TableModelPreservesEscapedQuotesInsideDoubleQuo
     EXPECT_EQ(text->text(), "say \"hi\"");
 }
 
+// Review bug #6: normalize_single_quoted_json's backslash handling only special-cased
+// in_single, so an escaped double quote (`\"`) while in_double was read as two independent
+// characters -- the bare `\` fell through unconsumed, and the `"` then toggled in_double as
+// if it were a real (unescaped) delimiter. A single escaped quote inside a double-quoted
+// cell therefore leaves in_double permanently flipped for the rest of the model string, so a
+// later single-quoted cell's delimiters are never converted to double quotes and the overall
+// JSON fails to parse.
+TEST(DocraftLoomTreeBuilderTest, TableModelEscapedQuoteDoesNotDesyncLaterSingleQuotedCell)
+{
+    // The outer XML attribute is double-quote-delimited (with its own `"` escaped as
+    // &quot;) so the decoded model text can freely contain both an escaped-double-quote
+    // cell and a single-quoted cell: [["a\"", 'b']]
+    const char* xml = R"XML(<Table model="[[&quot;a\&quot;&quot;, 'b']]" />)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto table = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomTable>(node);
+    ASSERT_TRUE(table);
+    EXPECT_EQ(table->row_count(), 1);
+    EXPECT_EQ(table->column_count(), 2);
+
+    const auto first_text =
+        std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomText>(table->cell(0, 0)->content());
+    ASSERT_TRUE(first_text);
+    EXPECT_EQ(first_text->text(), "a\"");
+
+    const auto second_text =
+        std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomText>(table->cell(0, 1)->content());
+    ASSERT_TRUE(second_text);
+    EXPECT_EQ(second_text->text(), "b");
+}
+
 // Review bug #7: table cell content must honor visible="false" the same way
 // build()'s top-level dispatcher does for every other node.
 TEST(DocraftLoomTreeBuilderTest, TableCellContentHonorsVisibleFalse)
