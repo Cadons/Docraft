@@ -48,6 +48,15 @@ namespace docraft::loom::pipeline {
     void DocraftLoomMeasureProcessor::set_content_width(float width)
     {
         content_width_ = width;
+        // A single processor instance is reused across header/footer/body (see
+        // DocraftLoomPdfCreator::create()), each a wholly separate traversal that must
+        // start with no ancestor-pushed wrap constraint. Without this, a weighted HStack
+        // whose last column is a leaf node (Image/Line/Circle/Triangle/Polygon -- none of
+        // which read or clear inherited_wrap_width_, unlike Text/Paragraph/VStack/HStack/
+        // Rectangle/Table) leaves inherited_wrap_width_ set to that column's width after
+        // the region finishes, and the next region's first Text without an explicit
+        // wrap_width would silently inherit it instead of content_width_.
+        inherited_wrap_width_ = 0.0F;
     }
 
     std::vector<std::string> DocraftLoomMeasureProcessor::wrap_text(const std::string& text, float max_width,

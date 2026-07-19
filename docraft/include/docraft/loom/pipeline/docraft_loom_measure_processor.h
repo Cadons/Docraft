@@ -37,7 +37,11 @@ namespace docraft::loom::pipeline {
          * @brief Sets the width available to block-flow content for the region about to
          * be measured (mirrors DocraftLoomLayoutProcessor::set_content_width) -- needed
          * so a weighted DocraftLoomHStack can resolve each column's width and push it
-         * down to Text descendants as their wrap width, all before Layout ever runs.
+         * down to Text descendants as their wrap width, all before Layout ever runs. Also
+         * clears any wrap-width constraint left over from a previous region's traversal
+         * (see DocraftLoomPdfCreator::create(), which reuses one processor instance
+         * across header/footer/body): each region must start fresh, with no ancestor-
+         * pushed constraint carried over from an unrelated region.
          */
         void set_content_width(float width);
 
