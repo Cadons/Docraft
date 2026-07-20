@@ -9,6 +9,7 @@
 #include "docraft/docraft_document_metadata.h"
 #include "docraft/exception/docraft_exceptions.h"
 #include "docraft/backend/docraft_page_format.h"
+#include "docraft/utils/docraft_test_temp_file.h"
 
 namespace docraft::test::backend {
 
@@ -162,7 +163,7 @@ TEST_F(DocraftHaruBackendTest, ThrowsWhenSettingUnknownFont) {
 }
 
 TEST_F(DocraftHaruBackendTest, SavesPdfToFile) {
-    const auto output_path = std::filesystem::temp_directory_path() / "docraft_haru_backend_test_output.pdf";
+    const auto output_path = docraft::test::utils::make_unique_temp_path(".pdf");
 
     ASSERT_NE(backend().output_backend(), nullptr);
     backend().output_backend()->save_to_file(output_path.string());
@@ -189,7 +190,7 @@ TEST_F(DocraftHaruBackendTest, SavesPdfWithMetadataInfo) {
     ASSERT_NE(backend().edit_metadata_backend(), nullptr);
     EXPECT_NO_THROW(backend().edit_metadata_backend()->set_document_metadata(metadata));
 
-    const auto output_path = std::filesystem::temp_directory_path() / "docraft_haru_backend_test_metadata_output.pdf";
+    const auto output_path = docraft::test::utils::make_unique_temp_path(".pdf");
     ASSERT_NE(backend().output_backend(), nullptr);
     backend().output_backend()->save_to_file(output_path.string());
 

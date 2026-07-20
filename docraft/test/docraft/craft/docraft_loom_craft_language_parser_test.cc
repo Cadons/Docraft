@@ -5,6 +5,7 @@
 #include "docraft/craft/docraft_loom_craft_language_parser.h"
 #include "docraft/exception/docraft_exceptions.h"
 #include "docraft/loom/nodes/docraft_loom_vstack.h"
+#include "docraft/utils/docraft_test_temp_file.h"
 
 TEST(DocraftLoomCraftLanguageParserTest, ParsesFullDocumentWithHeaderBodyFooter)
 {
@@ -114,7 +115,7 @@ TEST(DocraftLoomCraftLanguageParserTest, AppliesMetadataAndRenders)
   ASSERT_TRUE(creator);
   EXPECT_NO_THROW(creator->create());
 
-  const auto output_path = std::filesystem::temp_directory_path() / "docraft_metadata_test_output.pdf";
+  const auto output_path = docraft::test::utils::make_unique_temp_path(".pdf");
   EXPECT_NO_THROW(creator->render(output_path));
   ASSERT_TRUE(std::filesystem::exists(output_path));
   EXPECT_GT(std::filesystem::file_size(output_path), 0U);
@@ -180,7 +181,7 @@ TEST(DocraftLoomCraftLanguageParserTest, ParsesAndRendersWithCustomFontFamily)
   ASSERT_TRUE(creator);
   EXPECT_NO_THROW(creator->create());
 
-  const auto output_path = std::filesystem::temp_directory_path() / "docraft_font_registry_test_output.pdf";
+  const auto output_path = docraft::test::utils::make_unique_temp_path(".pdf");
   EXPECT_NO_THROW(creator->render(output_path));
   ASSERT_TRUE(std::filesystem::exists(output_path));
   EXPECT_GT(std::filesystem::file_size(output_path), 0U);
