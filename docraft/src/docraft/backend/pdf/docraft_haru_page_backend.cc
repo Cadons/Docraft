@@ -25,28 +25,30 @@
 
 namespace docraft::backend::pdf {
     namespace {
-        HPDF_PageSizes to_hpdf_size(model::DocraftPageSize size) {
+        HPDF_PageSizes to_hpdf_size(DocraftPageSize size)
+        {
             switch (size) {
-                case model::DocraftPageSize::kA3:
-                    return HPDF_PAGE_SIZE_A3;
-                case model::DocraftPageSize::kA5:
-                    return HPDF_PAGE_SIZE_A5;
-                case model::DocraftPageSize::kLetter:
-                    return HPDF_PAGE_SIZE_LETTER;
-                case model::DocraftPageSize::kLegal:
-                    return HPDF_PAGE_SIZE_LEGAL;
-                case model::DocraftPageSize::kA4:
-                default:
+            case DocraftPageSize::kA3:
+                return HPDF_PAGE_SIZE_A3;
+            case DocraftPageSize::kA5:
+                return HPDF_PAGE_SIZE_A5;
+            case DocraftPageSize::kLetter:
+                return HPDF_PAGE_SIZE_LETTER;
+            case DocraftPageSize::kLegal:
+                return HPDF_PAGE_SIZE_LEGAL;
+            case DocraftPageSize::kA4:
+            default:
                     return HPDF_PAGE_SIZE_A4;
             }
         }
 
-        HPDF_PageDirection to_hpdf_direction(model::DocraftPageOrientation orientation) {
+        HPDF_PageDirection to_hpdf_direction(DocraftPageOrientation orientation)
+        {
             switch (orientation) {
-                case model::DocraftPageOrientation::kLandscape:
-                    return HPDF_PAGE_LANDSCAPE;
-                case model::DocraftPageOrientation::kPortrait:
-                default:
+            case DocraftPageOrientation::kLandscape:
+                return HPDF_PAGE_LANDSCAPE;
+            case DocraftPageOrientation::kPortrait:
+            default:
                     return HPDF_PAGE_PORTRAIT;
             }
         }
@@ -124,8 +126,9 @@ namespace docraft::backend::pdf {
         state_->edit_current_page_index() = state_->page_count() - 1;
     }
 
-    void DocraftHaruPageBackend::set_page_format(model::DocraftPageSize size,
-                                                 model::DocraftPageOrientation orientation) {
+    void DocraftHaruPageBackend::set_page_format(DocraftPageSize size,
+                                                 DocraftPageOrientation orientation)
+    {
         state_->edit_page_size() = to_hpdf_size(size);
         state_->edit_page_direction() = to_hpdf_direction(orientation);
         for (auto &page: state_->edit_pages()) {

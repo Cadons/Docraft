@@ -35,9 +35,12 @@ namespace docraft::backend::pdf {
 
     void DocraftHaruLineBackend::draw_line(float x1, float y1, float x2, float y2) const {
         auto *provider = state_->ensure_page_provider();
+        float px1, py1, px2, py2;
+        provider->compute_coordinate_system(x1, y1, px1, py1);
+        provider->compute_coordinate_system(x2, y2, px2, py2);
         HPDF_Page page = provider->current_page();
-        HPDF_Page_MoveTo(page, x1, y1);
-        HPDF_Page_LineTo(page, x2, y2);
+        HPDF_Page_MoveTo(page, px1, py1);
+        HPDF_Page_LineTo(page, px2, py2);
         HPDF_Page_Stroke(page);
     }
 } // namespace docraft::backend::pdf

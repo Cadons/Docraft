@@ -15,6 +15,29 @@ reference them with ``${name}`` syntax:
 
    <Text>Invoice for ${customer_name}</Text>
 
+Registering Variables from JSON
+--------------------------------
+
+``DocraftTemplateEngine::add_template_variables_from_json()`` registers every field of
+a JSON object as a template variable in one call, flattening nested objects into
+dot-notation keys — this is what the ``docraft_tool --data <data.json>`` CLI flag uses
+under the hood:
+
+.. code-block:: cpp
+
+   nlohmann::json data = {{"customer", {{"name", "Acme Corp"}}}, {"total", "€ 1,250.00"}};
+   engine->add_template_variables_from_json(data);
+
+.. code-block:: xml
+
+   <Text>Invoice for ${customer.name} — ${total}</Text>
+
+Strings are registered as-is; every other leaf value (numbers/bools/null/arrays) is
+registered as its compact JSON text — e.g. an array field becomes a JSON array string
+usable directly as a ``<Foreach model="${field}">`` attribute. The JSON passed in must
+be an object; a flattened key that collides with one already registered raises
+``TemplateVariableExistsException``.
+
 Foreach Loops
 -------------
 

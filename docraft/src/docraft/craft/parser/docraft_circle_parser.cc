@@ -18,24 +18,27 @@
 
 #include "docraft/craft/docraft_craft_language_tokens.h"
 #include "docraft/craft/parser/docraft_parser_helpers.h"
-#include "docraft/model/docraft_circle.h"
 
 namespace docraft::craft::parser {
-    std::shared_ptr<model::DocraftNode> DocraftCircleParser::parse(const pugi::xml_node &craft_language_source) {
-        auto circle = std::make_shared<model::DocraftCircle>();
+    std::any DocraftCircleParser::parse(const pugi::xml_node& craft_language_source)
+    {
+        ParsedCircleData data;
         if (auto background_color_attr = craft_language_source.attribute(
                 elements::circle::attribute::kBackgroundColor.data())) {
-            circle->set_background_color(detail::get_docraft_color(background_color_attr));
+            data.background_color = detail::get_color_attribute_raw(background_color_attr);
         }
         if (auto border_color_attr = craft_language_source.attribute(
                 elements::circle::attribute::kBorderColor.data())) {
-            circle->set_border_color(detail::get_docraft_color(border_color_attr));
+            data.border_color = detail::get_color_attribute_raw(border_color_attr);
         }
         if (auto border_width_attr = craft_language_source.attribute(
                 elements::circle::attribute::kBorderWidth.data())) {
-            circle->set_border_width(border_width_attr.as_float());
+            data.border_width = border_width_attr.as_float();
         }
-        detail::configure_docraft_node_attributes(circle, craft_language_source);
-        return circle;
+        if (auto radius_attr = craft_language_source.attribute(elements::circle::attribute::kRadius.data()))
+        {
+            data.radius = radius_attr.as_float();
+        }
+        return data;
     }
 } // namespace docraft::craft::parser

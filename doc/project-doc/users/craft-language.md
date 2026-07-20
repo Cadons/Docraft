@@ -319,7 +319,7 @@ This is useful when your app must enrich a static template with dynamic logic.
 
 ## 8. Ready templates
 
-Use the templates in `doc/users/templates/`:
+Use the templates in `doc/project-doc/users/templates/`:
 
 - `hello-world.craft`
 - `basic-report.craft`
@@ -333,10 +333,12 @@ Use the templates in `doc/users/templates/`:
 - invalid JSON in `Table model` or `Foreach model`,
 - using both `src` and `data` attributes on the same `Image`,
 - invalid enum values in attributes (`alignment`, `style`, `position`),
-- `weight` outside `0..1` (weights must always stay in the inclusive range `0` to `1`),
+- a `weight="0.6"` on a `vertical` `<Layout>` doing nothing (`weight` is only applied to
+  horizontal layouts today, see `doc/project-doc/craft-language.md`, §8.1),
 - using `<Title>` inside tables (use `<HTitle>` for horizontal headers or `<VTitle>` for vertical titles).
 
 ## 10. Related docs
 
-- Contributor architecture map: `doc/contributors/architecture.md`
-- Component deep-dives: `doc/contributors/components/`
+- Contributor architecture map (legacy pipeline): `doc/project-doc/contributors/architecture.md`
+- Contributor architecture map (loom pipeline): `doc/project-doc/contributors/loom-architecture.md`
+- Component deep-dives: `doc/project-doc/contributors/components/`

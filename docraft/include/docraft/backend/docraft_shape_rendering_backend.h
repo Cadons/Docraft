@@ -20,7 +20,7 @@
 
 #include <vector>
 
-#include "docraft/model/docraft_position.h"
+#include "docraft/docraft_position.h"
 
 namespace docraft::backend {
     /**
@@ -76,7 +76,7 @@ namespace docraft::backend {
          * @brief Defines a polygon path with the given points.
          * @param points Polygon points in document coordinates.
          */
-        virtual void draw_polygon(const std::vector<model::DocraftPoint> &points) const = 0;
+        virtual void draw_polygon(const std::vector<Position>& points) const = 0;
         /**
          * @brief Fills the current path.
          */

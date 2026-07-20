@@ -35,7 +35,9 @@ namespace docraft::backend::pdf {
             throw docraft::exception::RenderingFailedException("Failed to load PNG image: " + path);
         }
         auto *provider = state_->ensure_page_provider();
-        HPDF_Page_DrawImage(provider->current_page(), image, x, y, width, height);
+        float px, py;
+        provider->compute_coordinate_system(x, y + height, px, py);
+        HPDF_Page_DrawImage(provider->current_page(), image, px, py, width, height);
     }
 
     void DocraftHaruImageBackend::draw_png_image_from_memory(const unsigned char *data,
@@ -52,7 +54,9 @@ namespace docraft::backend::pdf {
             throw docraft::exception::RenderingFailedException("Failed to load PNG image from memory");
         }
         auto *provider = state_->ensure_page_provider();
-        HPDF_Page_DrawImage(provider->current_page(), image, x, y, width, height);
+        float px, py;
+        provider->compute_coordinate_system(x, y + height, px, py);
+        HPDF_Page_DrawImage(provider->current_page(), image, px, py, width, height);
     }
 
     void DocraftHaruImageBackend::draw_jpeg_image(const std::string &path,
@@ -65,7 +69,9 @@ namespace docraft::backend::pdf {
             throw docraft::exception::RenderingFailedException("Failed to load JPEG image: " + path);
         }
         auto *provider = state_->ensure_page_provider();
-        HPDF_Page_DrawImage(provider->current_page(), image, x, y, width, height);
+        float px, py;
+        provider->compute_coordinate_system(x, y + height, px, py);
+        HPDF_Page_DrawImage(provider->current_page(), image, px, py, width, height);
     }
 
     void DocraftHaruImageBackend::draw_jpeg_image_from_memory(const unsigned char *data,
@@ -82,7 +88,9 @@ namespace docraft::backend::pdf {
             throw docraft::exception::RenderingFailedException("Failed to load JPEG image from memory");
         }
         auto *provider = state_->ensure_page_provider();
-        HPDF_Page_DrawImage(provider->current_page(), image, x, y, width, height);
+        float px, py;
+        provider->compute_coordinate_system(x, y + height, px, py);
+        HPDF_Page_DrawImage(provider->current_page(), image, px, py, width, height);
     }
 
     void DocraftHaruImageBackend::draw_raw_rgb_image(const std::string &path,
@@ -102,7 +110,9 @@ namespace docraft::backend::pdf {
             throw docraft::exception::RenderingFailedException("Failed to load raw RGB image: " + path);
         }
         auto *provider = state_->ensure_page_provider();
-        HPDF_Page_DrawImage(provider->current_page(), image, x, y, width, height);
+        float px, py;
+        provider->compute_coordinate_system(x, y + height, px, py);
+        HPDF_Page_DrawImage(provider->current_page(), image, px, py, width, height);
     }
 
     void DocraftHaruImageBackend::draw_raw_rgb_image_from_memory(const unsigned char *data,
@@ -124,6 +134,8 @@ namespace docraft::backend::pdf {
             throw docraft::exception::RenderingFailedException("Failed to load raw RGB image from memory");
         }
         auto *provider = state_->ensure_page_provider();
-        HPDF_Page_DrawImage(provider->current_page(), image, x, y, width, height);
+        float px, py;
+        provider->compute_coordinate_system(x, y + height, px, py);
+        HPDF_Page_DrawImage(provider->current_page(), image, px, py, width, height);
     }
 } // namespace docraft::backend::pdf

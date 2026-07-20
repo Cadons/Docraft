@@ -95,8 +95,8 @@ namespace docraft::backend::pdf {
         /**
          * @brief Applies the page size and orientation to all existing pages.
          */
-        void set_page_format(model::DocraftPageSize size,
-                             model::DocraftPageOrientation orientation) override;
+        void set_page_format(DocraftPageSize size,
+                             DocraftPageOrientation orientation) override;
 
         /**
          * @brief Returns the current page number (1-based).

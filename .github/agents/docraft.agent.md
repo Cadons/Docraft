@@ -12,4 +12,6 @@ Use this document to understand the architecture, structure, and workflow for co
 
 ---
 
-See `doc/contributors/components/` for deep dives.
+See `doc/project-doc/contributors/loom-architecture.md` for the primary (loom) layout/render
+pipeline, `doc/project-doc/contributors/architecture.md` for the legacy pipeline, and
+`doc/project-doc/contributors/components/` for deep dives.

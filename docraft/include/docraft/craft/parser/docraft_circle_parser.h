@@ -16,11 +16,29 @@
 
 #pragma once
 
+#include <optional>
+#include <string>
+
 #include "docraft/docraft_lib.h"
 
 #include "docraft/craft/i_docraft_parser.h"
 
 namespace docraft::craft::parser {
+    /**
+     * @brief Tag-specific payload parsed from a `<Circle>` element. Circle has its own
+     * `radius` attribute -- the generic `common.width`/`common.height` attributes are
+     * deliberately not supported/used for sizing a circle (unlike the legacy shape, which
+     * used a width/height bounding box); `docraft::loom::nodes::DocraftLoomCircle` only
+     * ever has a single radius.
+     */
+    struct ParsedCircleData
+    {
+        std::optional<std::string> background_color;
+        std::optional<std::string> border_color;
+        std::optional<float> border_width;
+        std::optional<float> radius;
+    };
+
     /**
      * @brief Parser for circle nodes.
      */
@@ -29,8 +47,8 @@ namespace docraft::craft::parser {
         /**
          * @brief Parses a circle XML node.
          * @param craft_language_source XML node.
-         * @return Parsed circle node.
+         * @return `ParsedCircleData`.
          */
-        std::shared_ptr<model::DocraftNode> parse(const pugi::xml_node &craft_language_source) override;
+        std::any parse(const pugi::xml_node& craft_language_source) override;
     };
-} // docraft::craft::parser
+} // namespace docraft::craft::parser

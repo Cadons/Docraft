@@ -19,10 +19,9 @@
 #include <pugixml.hpp>
 
 #include "docraft/craft/docraft_craft_language_tokens.h"
+#include "docraft/craft/docraft_craft_parsed_element.h"
+#include "docraft/craft/parser/docraft_parser.h"
 #include "docraft/docraft_color.h"
-#include "docraft/model/docraft_node.h"
-#include "docraft/model/docraft_section.h"
-#include "docraft/model/docraft_settings.h"
 
 namespace docraft::craft::parser::detail {
     /**
@@ -34,40 +33,62 @@ namespace docraft::craft::parser::detail {
     bool is_hex_color(const std::string &color);
 
     /**
-     * @brief Parses a color attribute value into a DocraftColor object.
-     * Supports hex colors (e.g., \#RRGGBB or \#RRGGBBAA) and named colors (e.g., "red", "blue").
+     * @brief Extracts a color attribute's raw text, unresolved. The value may be a hex
+     * code, a named color, or a `${...}` template expression -- interpretation is
+     * deferred to `parse_docraft_color`, called after templating has resolved any
+     * expression (see `DocraftLoomTreeBuilder`), since this parser stage runs before
+     * templating and has no template engine to resolve against.
      * @param color_attr XML attribute containing the color value.
+     * @return The attribute's raw text.
+     * @throws docraft::exception::InvalidInputException if the attribute value is empty.
+     */
+    std::string get_color_attribute_raw(const pugi::xml_attribute &color_attr);
+
+    /**
+     * @brief Parses an already-resolved (template-free) color string into a DocraftColor.
+     * Supports hex colors (e.g., \#RRGGBB or \#RRGGBBAA) and named colors (e.g., "red",
+     * "blue").
+     * @param color_str The resolved color string.
      * @return A DocraftColor object representing the parsed color.
      * @throws docraft::exception::InvalidInputException if the color string is not in a valid format or is an unsupported named color.
      */
-    DocraftColor get_docraft_color(const pugi::xml_attribute &color_attr);
+    DocraftColor parse_docraft_color(const std::string &color_str);
 
     /**
-     * @brief Adds external fonts defined in the XML node to the DocraftFont object.
-     * Expects child nodes with the specified name containing font information.
-     * @param font_node XML node containing external font definitions.
-     * @param child_name Name of the child nodes that define external fonts.
-     * @param docraft_font DocraftFont object to which the external fonts will be added.
+     * @brief Parses the universal attributes (name/x/y/width/height/padding/weight/
+     * z_index/visible/position) shared by every Craft-language tag into a
+     * `DocraftCommonAttributes`. Generic and tag-agnostic -- called once per element by
+     * `DocraftCraftLanguageParser`, not by individual `IDocraftParser` implementations.
+     * @param craft_language_source The XML node to read attributes from.
+     * @return The parsed common attributes.
      */
-    void add_external_fonts_from_node(const pugi::xml_node &font_node,
-                                      const char *child_name,
-                                      model::setting::DocraftFont &docraft_font);
+    DocraftCommonAttributes parse_common_node_attributes(const pugi::xml_node& craft_language_source);
 
     /**
-     * @brief Configures common attributes for a DocraftNode based on the XML node.
-     * This includes attributes like id, visibility, and any other common properties.
-     * @param node The DocraftNode to configure.
-     * @param craft_language_source The XML node containing the attributes to apply.
+     * @brief Parses a `style` attribute value (e.g. "bold") into a `ParsedTextStyle`.
+     * Shared by every text-like parser (`Text`/`Title`/`Subtitle`, `PageNumber`,
+     * `Paragraph`).
+     * @param style_str The raw attribute string.
+     * @return The parsed style.
+     * @throws docraft::exception::InvalidInputException if the string is not a recognized style.
      */
-    void configure_docraft_node_attributes(const std::shared_ptr<model::DocraftNode> &node,
-                                           const pugi::xml_node &craft_language_source);
+    ParsedTextStyle parse_text_style(const std::string& style_str);
 
     /**
-     * @brief Configures section-specific attributes for a DocraftSection based on the XML node.
-     * This includes attributes like ratio, background color, and any other section-specific properties.
-     * @param node The DocraftSection to configure.
-     * @param craft_language_source The XML node containing the attributes to apply.
+     * @brief Parses an `alignment` attribute value (e.g. "center") into a
+     * `ParsedTextAlignment`. Shared by every text-like parser (`Text`/`Title`/
+     * `Subtitle`, `PageNumber`, `Paragraph`).
+     * @param alignment_str The raw attribute string.
+     * @return The parsed alignment.
+     * @throws docraft::exception::InvalidInputException if the string is not a recognized alignment.
      */
-    void configure_section_attributes(const std::shared_ptr<model::DocraftSection> &node,
-                                      const pugi::xml_node &craft_language_source);
-}
+    ParsedTextAlignment parse_text_alignment(const std::string& alignment_str);
+
+    /**
+     * @brief Trims leading/trailing whitespace (space, tab, newline, CR, form feed,
+     * vertical tab) from a string.
+     * @param text The string to trim.
+     * @return The trimmed string.
+     */
+    std::string trim_whitespace(const std::string& text);
+} // namespace docraft::craft::parser::detail

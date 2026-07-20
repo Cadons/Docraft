@@ -32,6 +32,11 @@ namespace docraft::craft {
         constexpr string kAutoFillHeight = "auto_fill_height";
         constexpr string kAutoFillWidth = "auto_fill_width";
         constexpr string kPadding = "padding";
+        constexpr string kMargin = "margin";
+        constexpr string kMarginTop = "margin_top";
+        constexpr string kMarginRight = "margin_right";
+        constexpr string kMarginBottom = "margin_bottom";
+        constexpr string kMarginLeft = "margin_left";
         constexpr string kWeight = "weight";
         constexpr string kPosition = "position";
         constexpr string kZIndex = "z_index";
@@ -48,11 +53,11 @@ namespace docraft::craft {
      * @brief Section-level tags and attributes.
      */
     namespace section {
-        constexpr string kDocument = "document";
-        constexpr string kHeader = "header";
-        constexpr string kBody = "body";
-        constexpr string kFooter = "footer";
-        constexpr string kMetadata = "metadata";
+        constexpr string kDocument = "Document";
+        constexpr string kHeader = "Header";
+        constexpr string kBody = "Body";
+        constexpr string kFooter = "Footer";
+        constexpr string kMetadata = "Metadata";
 
         namespace attribute {
             constexpr string kMarginTop = "margin_top";
@@ -79,7 +84,7 @@ namespace docraft::craft {
         constexpr string kSubtitle = "Subtitle";
         constexpr string kHTitle = "HTitle";
         constexpr string kVTitle = "VTitle";
-        constexpr string kLayout = "layout";
+        constexpr string kLayout = "Layout";
         constexpr string kBlankLine = "Blank";
         constexpr string kRectangle = "Rectangle";
         constexpr string kCircle = "Circle";
@@ -90,6 +95,8 @@ namespace docraft::craft {
         constexpr string kSettings = "Settings";
         constexpr string kList = "List";
         constexpr string kUList = "UList";
+        constexpr string kParagraph = "Paragraph";
+
         namespace metadata {
             constexpr string kDocumentTitle = "DocumentTitle";
             constexpr string kAuthor = "Author";
@@ -132,9 +139,11 @@ namespace docraft::craft {
             }
         }
         namespace templating {
-            constexpr string kForeach = "foreach";
+            constexpr string kForeach = "Foreach";
+
             namespace foreach::attribute {
                 constexpr string kModel = "model";
+                constexpr string kN = "n";
             }
         }
         namespace list {
@@ -158,10 +167,16 @@ namespace docraft::craft {
             }
         }
         namespace settings {
+            constexpr string kPage = "Page";
+            constexpr string kSectionRatios = "SectionRatios";
             constexpr string kFonts = "Fonts";
-            namespace attribute {
-                constexpr string kPageSize = "page_size";
-                constexpr string kPageOrientation = "page_orientation";
+
+            namespace page::attribute {
+                constexpr string kSize = "size";
+                constexpr string kOrientation = "orientation";
+            }
+
+            namespace section_ratios::attribute {
                 constexpr string kHeaderRatio = "header_ratio";
                 constexpr string kBodyRatio = "body_ratio";
                 constexpr string kFooterRatio = "footer_ratio";
@@ -190,6 +205,7 @@ namespace docraft::craft {
         }
         namespace table::attribute {
             constexpr string kModel = "model";
+            constexpr string kHeader = "header";
             constexpr string kBaselineOffset = "baseline_offset";
             constexpr string kTableTile = "TableTile";
         }
@@ -217,6 +233,14 @@ namespace docraft::craft {
         }
         namespace layout::attribute {
             constexpr string kOrientation = "orientation";
+            constexpr string kSpacing = "spacing";
+            constexpr string kWeights = "weights";
+        }
+
+        namespace paragraph::attribute {
+            constexpr string kLineSpacing = "line_spacing";
+            constexpr string kSpaceBefore = "space_before";
+            constexpr string kSpaceAfter = "space_after";
         }
         namespace rectangle::attribute {
             constexpr string kBackgroundColor = "background_color";
@@ -228,6 +252,7 @@ namespace docraft::craft {
             constexpr string kBackgroundColor = "background_color";
             constexpr string kBorderColor = "border_color";
             constexpr string kBorderWidth = "border_width";
+            constexpr string kRadius = "radius";
         }
         namespace triangle::attribute {
             constexpr string kBackgroundColor = "background_color";
@@ -256,6 +281,7 @@ namespace docraft::craft {
             constexpr string kStyle = "style";
             constexpr string kAlignment = "alignment";
             constexpr string kUnderline = "underline";
+            constexpr string kStrikeout = "strikeout";
         }
     }
 

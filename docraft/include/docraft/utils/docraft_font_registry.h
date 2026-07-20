@@ -26,7 +26,8 @@ namespace docraft::utils {
     /**
      * @brief Raw font data container.
      */
-    struct DocraftFontData {
+    struct DocraftFontData
+    {
         const unsigned char* data;
         size_t size;
     };
@@ -36,7 +37,8 @@ namespace docraft::utils {
      *
      * Stores raw font data so backends can register fonts without re-reading files.
      */
-    class DOCRAFT_LIB DocraftFontRegistry {
+    class DOCRAFT_LIB DocraftFontRegistry
+    {
     public:
         /**
          * @brief Returns the singleton instance.
@@ -65,16 +67,37 @@ namespace docraft::utils {
          * @param name Font family or variant name.
          * @return Pointer to font data, or nullptr if not found.
          */
-        const DocraftFontData *find_font(const std::string &name) const;
+        const DocraftFontData* find_font(const std::string& name) const;
 
         /**
-         * @brief Returns the list of registered font names.
+         * @brief Returns the list of registered font names, including aliases (see
+         * register_font_alias()) -- DocraftFontResolver builds its family/style index
+         * from this list, so an alias must appear here to be resolvable by family+style.
          * @return Vector of font names.
          */
         std::vector<std::string> registered_font_names() const;
 
+        /**
+         * @brief Registers an alias for a font name, e.g. mapping a craft-language family
+         * name like "OpenSans-Bold" to whatever internal name the backend actually loaded
+         * the font under (which the backend chooses, not the caller -- see
+         * IDocraftFontBackend::register_ttf_font_from_file()).
+         * @param alias Name callers will request (e.g. via `font_name` attributes).
+         * @param target_name Backend-internal name to resolve `alias` to.
+         */
+        void register_font_alias(const std::string& alias, const std::string& target_name);
+
+        /**
+         * @brief Resolves a font name through the alias table.
+         * @param name Requested name.
+         * @return The aliased target name if `name` is a registered alias, otherwise
+         * `name` itself unchanged.
+         */
+        std::string resolve_font_alias(const std::string& name) const;
+
     private:
         std::unordered_map<std::string, DocraftFontData> registry_;
+        std::unordered_map<std::string, std::string> aliases_;
         DocraftFontRegistry() = default;
     };
 }

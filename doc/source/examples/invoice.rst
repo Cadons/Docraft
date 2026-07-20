@@ -10,12 +10,13 @@ Template — ``invoice.craft``
 .. code-block:: xml
 
    <Document>
-       <Settings page_size="A4" page_orientation="portrait"/>
+       <Settings>
+           <Page size="A4" orientation="portrait"/>
+       </Settings>
 
        <Metadata>
            <Author>${company_name}</Author>
            <Subject>Invoice ${invoice_number}</Subject>
-           <AutoKeywords enabled="true" max_keywords="10" language="en"/>
        </Metadata>
 
        <Header margin_left="30" margin_right="30" margin_top="10">
@@ -148,7 +149,7 @@ Usage
 
 .. code-block:: bash
 
-   docraft_tool invoice.craft output/invoice.pdf -d invoice.json
+   docraft_tool invoice.craft output/invoice.pdf --data invoice.json
 
 Output Example
 --------------

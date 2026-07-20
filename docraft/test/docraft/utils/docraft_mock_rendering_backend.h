@@ -140,9 +140,38 @@ namespace docraft::test::utils {
             draw_text("", 0.0F, 0.0F); // Reuse checks from draw_text.
         }
 
-        float measure_text_width(const std::string &text) const override {
+        void set_font(const std::string& /*font_name*/, float /*font_size*/) const override
+        {
+            MockBackendSharedState::ensure_supported(state_->config.supports_text_backend,
+                                                     "Text backend capability not supported");
+        }
+
+        float measure_text_descent(const std::string& font_name, float font_size) const override
+        {
+            MockBackendSharedState::ensure_supported(state_->config.supports_text_backend,
+                                                     "Text backend capability not supported");
+            return font_size * 0.25F; // Example implementation, adjust as needed
+        }
+
+        float measure_text_width(const std::string& text, const std::string& /*font_name*/,
+                                 float /*font_size*/) const override
+        {
             MockBackendSharedState::ensure_supported(state_->config.supports_text_backend, "Text backend capability not supported");
             return static_cast<float>(text.size()) * state_->config.text_width_factor;
+        }
+
+        float measure_text_height(const std::string& /*font_name*/, float font_size) const override
+        {
+            MockBackendSharedState::ensure_supported(state_->config.supports_text_backend,
+                                                     "Text backend capability not supported");
+            return font_size;
+        }
+
+        float measure_text_ascent(const std::string& /*font_name*/, float font_size) const override
+        {
+            MockBackendSharedState::ensure_supported(state_->config.supports_text_backend,
+                                                     "Text backend capability not supported");
+            return font_size;
         }
 
     private:
@@ -161,7 +190,7 @@ namespace docraft::test::utils {
         void set_stroke_alpha(float) const override { require(); }
         void draw_rectangle(float, float, float, float) const override { require(); }
         void draw_circle(float, float, float) const override { require(); }
-        void draw_polygon(const std::vector<model::DocraftPoint> &) const override { require(); }
+        void draw_polygon(const std::vector<docraft::Position>&) const override { require(); }
         void fill() const override { require(); }
         void stroke() const override { require(); }
         void fill_stroke() const override { require(); }
@@ -270,7 +299,8 @@ namespace docraft::test::utils {
             state_->current_page = state_->pages - 1;
         }
 
-        void set_page_format(model::DocraftPageSize, model::DocraftPageOrientation) override {
+        void set_page_format(docraft::backend::DocraftPageSize, docraft::backend::DocraftPageOrientation) override
+        {
             MockBackendSharedState::ensure_supported(state_->config.supports_page_backend, "Page backend capability not supported");
         }
 

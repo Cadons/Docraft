@@ -1,5 +1,8 @@
 <Document>
-  <Settings page_size="A4" page_orientation="portrait" header_ratio="0.10" body_ratio="0.82" footer_ratio="0.08" />
+  <Settings>
+    <Page size="A4" orientation="portrait" />
+    <SectionRatios header_ratio="0.10" body_ratio="0.82" footer_ratio="0.08" />
+  </Settings>
 
   <Metadata>
     <DocumentTitle>Basic Report</DocumentTitle>

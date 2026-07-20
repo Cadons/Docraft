@@ -14,41 +14,48 @@
  * limitations under the License.
  */
 
-#include "docraft/craft/parser/docraft_parser.h"
+#include "docraft/craft/parser/docraft_section_parsers.h"
 
+#include "docraft/craft/docraft_craft_language_tokens.h"
 #include "docraft/craft/parser/docraft_parser_helpers.h"
-#include "docraft/model/docraft_body.h"
-#include "docraft/model/docraft_footer.h"
-#include "docraft/model/docraft_header.h"
 
 namespace docraft::craft::parser {
-    std::shared_ptr<model::DocraftNode> DocraftHeaderParser::parse(const pugi::xml_node &craft_language_source) {
-        auto header_node = std::make_shared<model::DocraftHeader>();
-        const auto rect = std::dynamic_pointer_cast<model::DocraftRectangle>(
-                DocraftRectangleParser::parse(craft_language_source));
-        apply_attributes_to(rect, header_node);
-        detail::configure_section_attributes(header_node, craft_language_source);
-        header_node->set_position_mode(model::DocraftPositionType::kBlock);
-        return header_node;
+    std::any DocraftSectionParser::parse(const pugi::xml_node& craft_language_source)
+    {
+        ParsedSectionData data;
+        // Reuses Rectangle's own attribute names -- a section's background/border are
+        // expressed identically to a plain <Rectangle>'s.
+        if (auto background_color_attr = craft_language_source.attribute(
+            elements::rectangle::attribute::kBackgroundColor.data()))
+        {
+            data.background_color = detail::get_color_attribute_raw(background_color_attr);
+        }
+        if (auto border_color_attr = craft_language_source.attribute(
+            elements::rectangle::attribute::kBorderColor.data()))
+        {
+            data.border_color = detail::get_color_attribute_raw(border_color_attr);
+        }
+        if (auto border_width_attr = craft_language_source.attribute(
+            elements::rectangle::attribute::kBorderWidth.data()))
+        {
+            data.border_width = border_width_attr.as_float();
+        }
+        if (auto margin_top_attr = craft_language_source.attribute(section::attribute::kMarginTop.data()))
+        {
+            data.margin_top = margin_top_attr.as_float();
+        }
+        if (auto margin_bottom_attr = craft_language_source.attribute(section::attribute::kMarginBottom.data()))
+        {
+            data.margin_bottom = margin_bottom_attr.as_float();
+        }
+        if (auto margin_left_attr = craft_language_source.attribute(section::attribute::kMarginLeft.data()))
+        {
+            data.margin_left = margin_left_attr.as_float();
+        }
+        if (auto margin_right_attr = craft_language_source.attribute(section::attribute::kMarginRight.data()))
+        {
+            data.margin_right = margin_right_attr.as_float();
+        }
+        return data;
     }
-
-    std::shared_ptr<model::DocraftNode> DocraftBodyParser::parse(const pugi::xml_node &craft_language_source) {
-        auto body_node = std::make_shared<model::DocraftBody>();
-        const auto rect = std::dynamic_pointer_cast<model::DocraftRectangle>(
-                DocraftRectangleParser::parse(craft_language_source));
-        apply_attributes_to(rect, body_node);
-        detail::configure_section_attributes(body_node, craft_language_source);
-        body_node->set_position_mode(model::DocraftPositionType::kBlock);
-        return body_node;
-    }
-
-    std::shared_ptr<model::DocraftNode> DocraftFooterParser::parse(const pugi::xml_node &craft_language_source) {
-        auto footer_node = std::make_shared<model::DocraftFooter>();
-        const auto rect = std::dynamic_pointer_cast<model::DocraftRectangle>(
-                DocraftRectangleParser::parse(craft_language_source));
-        apply_attributes_to(rect, footer_node);
-        detail::configure_section_attributes(footer_node, craft_language_source);
-        footer_node->set_position_mode(model::DocraftPositionType::kBlock);
-        return footer_node;
-    }
-}
+} // namespace docraft::craft::parser

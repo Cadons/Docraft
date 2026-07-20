@@ -48,6 +48,10 @@ Notes:
 
 - `Document`
 - `Settings`
+- `Page`
+- `SectionRatios`
+- `Fonts`
+- `Font`
 - `Metadata`
 - `Header`
 - `Body`
@@ -92,7 +96,7 @@ Most nodes call the shared attribute configurator and accept:
 | `auto_fill_width` | bool | `true` / `false`. |
 | `auto_fill_height` | bool | `true` / `false`. |
 | `padding` | float | Padding in points. |
-| `weight` | float | Must be `> 0` and `<= 1`. |
+| `weight` | float | Relative share among siblings; need not sum to `1`. Missing or `<= 0` defaults to an even share (`1.0`). |
 | `position` | string | `block` or `absolute`. |
 | `z_index` | int | Rendering order among siblings. |
 | `visible` | bool | Defaults to `true`. |
@@ -100,7 +104,7 @@ Most nodes call the shared attribute configurator and accept:
 Notes:
 
 - `id` exists as a token name but is not consumed by current parsers.
-- Invalid `position` or invalid `weight` raises an exception.
+- Invalid `position` raises an exception; there is no validation on `weight`'s value.
 
 ## 5. Colors
 
@@ -341,7 +345,8 @@ Notes:
 
 ### 8.2 `Blank`
 
-A spacer node, typically used with `height`.
+A spacer node. Defaults to `height="12"` (one default text line) when omitted;
+set `height` explicitly for a different gap.
 
 ```xml
 <Blank height="8" />
@@ -582,28 +587,37 @@ Point parsing notes:
 
 ## 13. Settings and Fonts
 
-### 13.1 `Settings` attributes
+`Settings` does not accept attributes directly -- it only accepts `Page`/`SectionRatios`/
+`Fonts` sub-tags. An attribute on `<Settings>` itself is rejected.
+
+### 13.1 `Page`
+
+| Attribute     | Type   | Accepted values                                                          |
+|---------------|--------|--------------------------------------------------------------------------|
+| `size`        | string | `A3`, `a3`, `A4`, `a4`, `A5`, `a5`, `Letter`, `letter`, `Legal`, `legal` |
+| `orientation` | string | `portrait`, `landscape`                                                  |
+
+If only `orientation` is provided, `size` defaults to `A4`.
+
+### 13.2 `SectionRatios`
 
 | Attribute | Type | Accepted values |
 | --- | --- | --- |
-| `page_size` | string | `A3`, `a3`, `A4`, `a4`, `A5`, `a5`, `Letter`, `letter`, `Legal`, `legal` |
-| `page_orientation` | string | `portrait`, `landscape` |
 | `header_ratio` | float | non-negative |
 | `body_ratio` | float | non-negative |
 | `footer_ratio` | float | non-negative |
 
-Rules:
+If any ratio is provided, missing ones default to `0.06 / 0.88 / 0.06`. Ratio sum must be
+`<= 1.0`.
 
-- if only `page_orientation` is provided, page size defaults to `A4`.
-- if any ratio is provided, missing ones default to `0.06 / 0.88 / 0.06`.
-- ratio sum must be `<= 1.0`.
-
-### 13.2 Fonts in settings
+### 13.3 Fonts in settings
 
 `Settings` may contain `Fonts`, with `Font` entries:
 
 ```xml
-<Settings page_size="A4" page_orientation="portrait">
+
+<Settings>
+  <Page size="A4" orientation="portrait"/>
   <Fonts>
     <Font name="OpenSans">
       <FontNormal src="OpenSans-Regular.ttf" />
@@ -617,50 +631,86 @@ Rules:
 
 Rules:
 
-- `Font` requires `name`.
-- `FontNormal`, `FontBold`, `FontItalic`, `FontBoldItalic` are optional.
-- each variant uses `src`.
+- `Font` requires `name`; use it as `Text`/`Title`/`Subtitle`'s `font_name` (e.g.
+  `font_name="OpenSans"`, `font_name="OpenSans"` + `style="bold"`) to use the registered
+  family.
+- `FontNormal`, `FontBold`, `FontItalic`, `FontBoldItalic` are each optional, but at least
+  one must be present; each uses a `src` file path (TTF), loaded and embedded into the PDF.
+- A style with no registered variant falls back to the closest available one (e.g. `bold`
+  falls back to the regular variant if no `FontBold` was given), or to the requested name
+  itself if the family is entirely unknown.
 
 ## 14. Templating and `Foreach`
 
-Docraft templating is handled by `DocraftTemplateEngine` before layout/render.
+`docraft::templating::DocraftTemplateEngine` resolves both kinds of `${...}` expression,
+and is wired into the loom pipeline via `DocraftLoomTreeBuilder`
+(`DocraftLoomCraftLanguageParser::set_template_engine()` supplies the engine before
+parsing; an empty engine with no registered variables is used if none is given):
 
-### 14.1 Variable replacement
+- `${variable_name}`: replaced with a value registered via
+  `DocraftTemplateEngine::add_template_variable(name, value)`. Applied to `Text`/`Title`/
+  `Subtitle` content, `Image src`, table cell/title text, and `Foreach`'s own `model`
+  attribute.
+- `${data("field")}`: only resolved inside a `<Foreach>` expansion (see §14.1), against
+  the current iteration's item.
 
-General placeholder format:
+An unresolvable expression (unknown variable, or `data(...)` outside a `Foreach`) is left
+in the output exactly as written, rather than substituted with anything else.
 
-- `${variable_name}`
+### 14.1 `Foreach`
 
-Used in:
+`Foreach` requires exactly one of:
 
-- `Text` content
-- `Image src` / raw image id
-- `Table model` and `Table header` when template strings are used
-- other string fields processed by the template engine
+- `model`: a JSON array, or a `${variable}`/`${data(...)}` expression that resolves to
+  one (e.g. `model="${employees}"`, with `employees` registered as
+  `'[{"name":"Alice"}]'`); its children (the repeat template) are built once per array
+  item, with `${data("field")}` resolved against that item's fields in any
+  `Text`/`Title`/`Subtitle` descendant. A `<Foreach>` nested inside another one can use
+  `${data("field")}` in its own `model` to pull a sub-array from the outer item (e.g.
+  `model='${data("members")}'`).
+- `n`: a non-negative integer; its children are built `n` times verbatim, with no `data()`
+  binding (there is no per-iteration item to bind) -- global `${variable}` substitution
+  still applies.
 
-### 14.2 `Foreach`
-
-`Foreach` requires attribute:
-
-- `model`: JSON array string or placeholder that resolves to a JSON array
-
-Example:
+Example (`model`, JSON literal):
 
 ```xml
-<Foreach model='${employees}'>
+<Foreach model='[{"name":"Alice","role":"Engineer"},{"name":"Bob","role":"Designer"}]'>
   <Text>${data("name")}</Text>
   <Text>${data("role")}</Text>
 </Foreach>
 ```
 
+Example (`model`, resolved from a registered variable):
+
+```xml
+<Foreach model="${employees}">
+  <Text>${data("name")}</Text>
+</Foreach>
+```
+
+Example (`n`, no data binding):
+
+```xml
+<Foreach n="3">
+  <Text>Repeated row</Text>
+</Foreach>
+```
+
 Rules:
 
-- `Foreach` without `model` raises an error.
-- Child nodes are stored as template nodes and expanded at template phase.
-- `data("field")` (or single-quoted variant) reads fields from current foreach item.
+- `Foreach` with both `model` and `n`, or with neither, raises an error.
+- `n` must be a non-negative integer.
+- `model` is resolved (`${variable}`/`${data(...)}`) first, then single-quote-normalized
+  (e.g. `model="[{'name':'Alice'}]"`), then parsed as JSON; it must resolve to a JSON
+  array.
+- `data("field")` (or single-quoted variant) reads fields from the current iteration's
+  item; any other `${...}` expression falls back to global `${variable}` resolution.
 - non-string field values are rendered as JSON text.
-
-Single-quoted JSON in `model` is normalized by the parser before evaluation.
+- `Foreach` cannot appear inside a `<Table>` -- table structure is parsed specially (see
+  §11) and does not recurse into arbitrary children. `Table` has its own separate
+  JSON-model-matrix mechanism (`Table model`/`header`) for populating rows/columns from
+  data (§11.3).
 
 ## 15. Validation Summary
 
@@ -675,8 +725,12 @@ Guaranteed parser validations:
 - **`Text` nodes cannot contain child `Text`, `Title`, `Subtitle`, or `PageNumber` nodes.**
 - `Image` cannot use both `src` and `data`.
 - base64 image payloads must match RGB byte size.
+- `Settings` rejects attributes directly on itself and any child tag other than `Page`/
+  `SectionRatios`/`Fonts`.
+- `Page`/`SectionRatios` may each appear at most once inside `Settings`.
 - table structural constraints (as documented above) are enforced.
-- `Foreach` requires `model`.
+- `Foreach` requires exactly one of `model`/`n` (both or neither raises an error); `n`
+  must be non-negative.
 
 Important non-validations:
 
@@ -687,7 +741,9 @@ Important non-validations:
 
 ```xml
 <Document>
-  <Settings page_size="A4" page_orientation="portrait" header_ratio="0.08" body_ratio="0.84" footer_ratio="0.08">
+  <Settings>
+    <Page size="A4" orientation="portrait" />
+    <SectionRatios header_ratio="0.08" body_ratio="0.84" footer_ratio="0.08" />
     <Fonts>
       <Font name="OpenSans">
         <FontNormal src="OpenSans-Regular.ttf" />
@@ -720,7 +776,7 @@ Important non-validations:
 
     <NewPage />
 
-    <Foreach model='${employees}'>
+    <Foreach model='[{"name":"Alice","role":"Engineer"},{"name":"Bob","role":"Designer"}]'>
       <Text>${data("name")} - ${data("role")}</Text>
     </Foreach>
   </Body>

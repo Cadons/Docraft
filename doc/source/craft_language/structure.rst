@@ -10,7 +10,7 @@ Minimal Example
 
 .. code-block:: xml
 
-   <Document path="output/">
+   <Document>
      <Body margin_left="20" margin_right="20">
        <Text font_size="24" style="bold">Hello, Docraft!</Text>
      </Body>
@@ -19,16 +19,14 @@ Minimal Example
 Root Element: ``<Document>``
 ----------------------------
 
-.. list-table::
-   :header-rows: 1
-   :widths: 20 15 65
-
-   * - Attribute
-     - Type
-     - Description
-   * - ``path``
-     - string
-     - Output directory for the rendered file.
+``<Document>`` carries no attributes of its own — the output path is not
+part of the ``.craft`` file at all; it's passed separately, either as the
+second CLI argument (``docraft_tool in.craft out.pdf``) or to
+``DocraftLoomPdfCreator::render(path)`` from C++ (see
+:doc:`../getting_started`). Its recognized children are
+``<Header>``/``<Body>``/``<Footer>`` (``<Body>`` required),
+``<Settings>`` (:doc:`settings`), and ``<Metadata>`` (:doc:`metadata`); any
+other direct child is silently ignored.
 
 Sections
 --------
@@ -88,28 +86,39 @@ Every content node supports these attributes:
      - Position in points (used with ``position="absolute"``).
    * - ``width``, ``height``
      - float
-     - Explicit size in points.
-   * - ``auto_fill_width``
-     - bool
-     - Auto-fill available width (default ``true``).
-   * - ``auto_fill_height``
-     - bool
-     - Auto-fill available height (default ``true``).
+     - Explicit size in points. Only applied to node types that declare a
+       setter for it (e.g. ``Rectangle``, ``Image``) — a no-op otherwise
+       (e.g. ``Text`` has no ``width``/``height``).
    * - ``padding``
      - float
-     - Inner padding in points.
+     - Inner padding in points, between a container's own box and its
+       children. A no-op for leaf nodes (``Text``, ``Image``, ``Circle``, ...).
+   * - ``margin``
+     - float
+     - Uniform outer spacing in points, reserved by the parent stack around
+       this node. Adjacent margins collapse via ``max()``, not sum (CSS-like).
+       Override per edge with ``margin_top``/``margin_right``/
+       ``margin_bottom``/``margin_left``.
    * - ``weight``
      - float
-     - Layout weight for proportional sizing inside ``<Layout>``.
+     - Proportional sizing share. Only meaningful for a direct child of a
+       **horizontal** ``<Layout>`` (see :doc:`layout`) or a table column —
+       every other node type ignores it.
    * - ``position``
      - ``block`` | ``absolute``
      - Positioning mode (default ``block``).
    * - ``z_index``
      - int
-     - Stacking order (higher renders on top).
+     - Paint order only (higher paints later/on top); does not affect layout.
    * - ``visible``
      - bool
-     - Whether the node is rendered (default ``true``).
+     - When ``false``, the subtree is never built at all (default ``true``).
+
+.. note::
+
+   ``auto_fill_width``/``auto_fill_height`` and a ``path`` attribute on
+   ``<Document>`` are recognized as XML tokens by the parser but are not
+   currently read anywhere — they have no effect on the rendered document.
 
 Color Values
 ------------

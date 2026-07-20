@@ -16,13 +16,11 @@
 
 #include "docraft/craft/parser/docraft_parser.h"
 
-#include "docraft/craft/parser/docraft_parser_helpers.h"
-#include "docraft/model/docraft_image.h"
-#include "docraft/utils/docraft_base64.h"
-
 #include <string_view>
 
+#include "docraft/craft/parser/docraft_parser_helpers.h"
 #include "docraft/exception/docraft_exceptions.h"
+#include "docraft/utils/docraft_base64.h"
 
 namespace docraft::craft::parser {
     namespace {
@@ -42,15 +40,19 @@ namespace docraft::craft::parser {
         }
     } // namespace
 
-    std::shared_ptr<model::DocraftNode> DocraftImageParser::parse(const pugi::xml_node &craft_language_source) {
-        auto image_node = std::make_shared<model::DocraftImage>();
-        //image cannot have path and data at the same time
-        if (auto src_attr = (craft_language_source.attribute(elements::image::attribute::kSrc.data()) != nullptr) &&
-            (craft_language_source.attribute(elements::image::attribute::kData.data()) != nullptr)) {
+    std::any DocraftImageParser::parse(const pugi::xml_node& craft_language_source)
+    {
+        ParsedImageData data;
+
+        const bool has_src = craft_language_source.attribute(elements::image::attribute::kSrc.data()) != nullptr;
+        const bool has_data = craft_language_source.attribute(elements::image::attribute::kData.data()) != nullptr;
+        if (has_src && has_data)
+        {
             throw docraft::exception::InvalidInputException("Image node cannot have both 'src' and 'data' attributes.");
         }
+
         if (auto src_attr = craft_language_source.attribute(elements::image::attribute::kSrc.data())) {
-            image_node->set_path(src_attr.as_string());
+            data.path = src_attr.as_string();
         }
         if (auto raw_data_attr = craft_language_source.attribute(elements::image::attribute::kData.data())) {
             std::string_view payload;
@@ -74,13 +76,16 @@ namespace docraft::craft::parser {
                     throw docraft::exception::InvalidInputException(
                         "Base64 image data size does not match dimensions (RGB expected).");
                 }
-                image_node->set_raw_data(decoded, pixel_width, pixel_height);
+                data.raw_data = std::move(decoded);
+                data.raw_pixel_width = pixel_width;
+                data.raw_pixel_height = pixel_height;
             } else {
-                image_node->set_has_raw_data(true);
-                image_node->set_path(raw_data_attr.as_string());//path is identified by the key in the template
+                // Not base64: the raw value is a data-binding key, resolved at templating
+                // time. Carried through as `path` (structural port only -- templating
+                // resolution itself is a later phase).
+                data.path = raw_data_attr.as_string();
             }
         }
-        detail::configure_docraft_node_attributes(image_node, craft_language_source);
-        return image_node;
+        return data;
     }
-}
+} // namespace docraft::craft::parser

@@ -63,10 +63,25 @@ namespace docraft::utils {
 
     std::vector<std::string> DocraftFontRegistry::registered_font_names() const {
         std::vector<std::string> names;
-        names.reserve(registry_.size());
+        names.reserve(registry_.size() + aliases_.size());
         for (const auto &pair : registry_) {
             names.push_back(pair.first);
         }
+        for (const auto& pair : aliases_)
+        {
+            names.push_back(pair.first);
+        }
         return names;
+    }
+
+    void DocraftFontRegistry::register_font_alias(const std::string& alias, const std::string& target_name)
+    {
+        aliases_[alias] = target_name;
+    }
+
+    std::string DocraftFontRegistry::resolve_font_alias(const std::string& name) const
+    {
+        const auto it = aliases_.find(name);
+        return it != aliases_.end() ? it->second : name;
     }
 } // namespace docraft::utils

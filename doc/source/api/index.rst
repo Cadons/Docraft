@@ -1,8 +1,9 @@
 API Reference
 =============
 
-Complete C++ API documentation for Docraft — auto-generated from source code comments.
-Explore the library's modules below to understand how to build, layout, and render PDF documents.
+Complete C++ API documentation for Docraft's **loom** engine — auto-generated
+from source code comments. See :doc:`../about` for how these pieces fit
+together as a pipeline.
 
 .. toctree::
    :maxdepth: 1
@@ -10,15 +11,12 @@ Explore the library's modules below to understand how to build, layout, and rend
    :hidden:
 
    document
-   context
    exceptions
    model_nodes
    model_shapes
    model_containers
    model_types
-   layout
-   renderer
-   painters
+   pipeline
    backend
    craft_parser
    templating
@@ -30,19 +28,12 @@ Core Components
 .. grid:: 2
    :gutter: 3
 
-   .. grid-item-card:: 📄 Document
+   .. grid-item-card:: 📄 Orchestrator
       :link: document
       :link-type: doc
 
-      The main entry point — ``DocraftDocument`` owns the document tree, metadata,
-      and drives the entire rendering pipeline.
-
-   .. grid-item-card:: 🎯 Context
-      :link: context
-      :link-type: doc
-
-      Runtime context and cursor management — tracks the current rendering position,
-      page boundaries, and layout state.
+      ``DocraftLoomPdfCreator`` — the entry point that owns the node tree and
+      drives Measure → Layout → Pagination → Rendering.
 
    .. grid-item-card:: ⚠️ Exceptions
       :link: exceptions
@@ -51,73 +42,60 @@ Core Components
       Domain-driven exception hierarchy used across parser, layout, rendering,
       backend, and templating subsystems.
 
-Document Model
---------------
+Node Tree
+---------
 
 .. grid:: 2
    :gutter: 3
 
-   .. grid-item-card:: 🧱 Core Nodes
+   .. grid-item-card:: 🧱 Node Tree — Base & Text
       :link: model_nodes
       :link-type: doc
 
-      Base classes for all document elements — ``DocraftNode``, ``DocraftText``,
-      ``DocraftImage``, and structural components like ``Header``, ``Body``, ``Footer``.
+      ``DocraftLoomNode``, ``LayoutBox``, and text-family nodes — ``Text``,
+      ``Title``, ``Subtitle``, ``PageNumber``, ``Paragraph``, ``Image``, ``Blank``, ``NewPage``.
 
    .. grid-item-card:: 🔷 Shapes
       :link: model_shapes
       :link-type: doc
 
       Geometric primitives — ``Rectangle``, ``Circle``, ``Triangle``, ``Line``,
-      ``Polygon`` with fill, stroke, and border styling.
+      ``Polygon`` with a composed ``DocraftLoomShapeStyle`` (fill/stroke/border).
 
    .. grid-item-card:: 📦 Containers
       :link: model_containers
       :link-type: doc
 
-      Layout containers — ``DocraftLayout`` (horizontal/vertical), ``DocraftTable``,
-      ``DocraftList`` (ordered/unordered) for composing complex structures.
+      Stacking layout — ``VStack``/``HStack``, ``Table``/``TableCell``,
+      ``List`` (ordered/unordered) for composing complex structures.
 
    .. grid-item-card:: 🏷️ Types & Enums
       :link: model_types
       :link-type: doc
 
-      Common types, enums, and data structures — ``TextStyle``, ``TextAlignment``,
-      ``PageFormat``, ``Orientation``, and more.
+      Shared geometry/color types, ``DocraftDocumentMetadata``, and loom
+      enums — ``TextAlignment``, ``ListKind``, ``ImageFormat``, page format, and more.
 
-Rendering Pipeline
-------------------
+Pipeline
+--------
 
 .. grid:: 2
    :gutter: 3
 
-   .. grid-item-card:: 📐 Layout Engine
-      :link: layout
+   .. grid-item-card:: 📐 Pipeline
+      :link: pipeline
       :link-type: doc
 
-      Flow-based layout system with automatic page breaking — calculates positions
-      and sizes for all document nodes before rendering.
-
-   .. grid-item-card:: 🎨 Renderer
-      :link: renderer
-      :link-type: doc
-
-      The rendering coordinator — traverses the document tree and delegates
-      drawing operations to specialized painters.
-
-   .. grid-item-card:: 🖌️ Painters
-      :link: painters
-      :link-type: doc
-
-      Specialized painters for each element type — ``TextPainter``, ``ShapePainter``,
-      ``ImagePainter``, ``TablePainter``, etc.
+      The four visitor passes — Measure, Layout, Pagination, Rendering — plus
+      the shared visitor interfaces and weighted-column helper.
 
    .. grid-item-card:: 🔌 Backend
       :link: backend
       :link-type: doc
 
-      Abstracted PDF backend interface — currently implemented with ``libharu``
-      but designed to be pluggable.
+      Capability-split rendering interfaces — currently implemented with
+      ``libharu`` (``DocraftHaruBackend``), consumed but not yet swappable
+      from the loom orchestrator.
 
 Template & Parsing
 ------------------
@@ -129,15 +107,16 @@ Template & Parsing
       :link: craft_parser
       :link-type: doc
 
-      XML parser for the Craft Language — converts ``.craft`` files into
-      a document object model using ``pugixml``.
+      Generic XML parsing (``docraft::craft``) plus the loom-specific bridge
+      (``DocraftLoomCraftLanguageParser``, ``DocraftLoomTreeBuilder``) that
+      builds the node tree.
 
    .. grid-item-card:: 🔄 Templating Engine
       :link: templating
       :link-type: doc
 
       Data binding and template expansion — ``${variables}``, ``<Foreach>`` loops,
-      conditional rendering, and JSON model integration.
+      and JSON model integration.
 
 Utilities
 ---------
@@ -149,6 +128,5 @@ Utilities
       :link: utilities
       :link-type: doc
 
-      Helper functions for color parsing, string manipulation, font management,
-      base64 decoding, and file operations.
-
+      Helper functions for color parsing, font registration/resolution,
+      logging, and base64 decoding.

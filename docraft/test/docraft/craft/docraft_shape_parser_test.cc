@@ -1,48 +1,51 @@
+#include <any>
+
 #include <gtest/gtest.h>
 #include <pugixml.hpp>
 
 #include "docraft/craft/parser/docraft_circle_parser.h"
 #include "docraft/craft/parser/docraft_line_parser.h"
+#include "docraft/craft/parser/docraft_parser.h"
+#include "docraft/craft/parser/docraft_parser_helpers.h"
 #include "docraft/craft/parser/docraft_polygon_parser.h"
 #include "docraft/craft/parser/docraft_triangle_parser.h"
-#include "docraft/craft/parser/docraft_parser.h"
 #include "docraft/docraft_color.h"
 #include "docraft/exception/docraft_exceptions.h"
-#include "docraft/model/docraft_circle.h"
-#include "docraft/model/docraft_line.h"
-#include "docraft/model/docraft_polygon.h"
-#include "docraft/model/docraft_rectangle.h"
-#include "docraft/model/docraft_triangle.h"
 
 namespace {
-    docraft::RGB to_rgb(const docraft::DocraftColor &color) {
-        return color.toRGB();
+    // The parser now only extracts a color attribute's raw text (see
+    // docraft_parser_helpers.h) -- interpretation is deferred to the loom tree builder,
+    // after templating. Parsing it here still exercises the same interpretation logic.
+    docraft::RGB to_rgb(const std::string &color) {
+        return docraft::craft::parser::detail::parse_docraft_color(color).toRGB();
     }
 }
 
 TEST(DocraftCircleParserTest, ParsesCircleAttributes) {
     const char *xml = R"XML(
-<Circle width="40" height="40" background_color="#FF0000" border_color="#00FF00" border_width="2" />
+<Circle radius="20" background_color="#FF0000" border_color="#00FF00" border_width="2" />
 )XML";
 
     pugi::xml_document doc;
     ASSERT_TRUE(doc.load_string(xml));
 
     docraft::craft::parser::DocraftCircleParser parser;
-    auto node = parser.parse(doc.child("Circle"));
-    auto circle = std::dynamic_pointer_cast<docraft::model::DocraftCircle>(node);
-    ASSERT_TRUE(circle);
+    const auto data = std::any_cast<docraft::craft::parser::ParsedCircleData>(parser.parse(doc.child("Circle")));
 
-    EXPECT_FLOAT_EQ(circle->width(), 40.0F);
-    EXPECT_FLOAT_EQ(circle->height(), 40.0F);
-    EXPECT_FLOAT_EQ(circle->border_width(), 2.0F);
+    ASSERT_TRUE(data.radius.has_value());
+    EXPECT_FLOAT_EQ(*data.radius, 20.0F);
 
-    auto bg = to_rgb(circle->background_color());
+    ASSERT_TRUE(data.border_width.has_value());
+    EXPECT_FLOAT_EQ(*data.border_width, 2.0F);
+
+    ASSERT_TRUE(data.background_color.has_value());
+    auto bg = to_rgb(*data.background_color);
     EXPECT_FLOAT_EQ(bg.r, 1.0F);
     EXPECT_FLOAT_EQ(bg.g, 0.0F);
     EXPECT_FLOAT_EQ(bg.b, 0.0F);
 
-    auto border = to_rgb(circle->border_color());
+    ASSERT_TRUE(data.border_color.has_value());
+    auto border = to_rgb(*data.border_color);
     EXPECT_FLOAT_EQ(border.r, 0.0F);
     EXPECT_FLOAT_EQ(border.g, 1.0F);
     EXPECT_FLOAT_EQ(border.b, 0.0F);
@@ -57,17 +60,21 @@ TEST(DocraftLineParserTest, ParsesLineAttributes) {
     ASSERT_TRUE(doc.load_string(xml));
 
     docraft::craft::parser::DocraftLineParser parser;
-    auto node = parser.parse(doc.child("Line"));
-    auto line = std::dynamic_pointer_cast<docraft::model::DocraftLine>(node);
-    ASSERT_TRUE(line);
+    const auto data = std::any_cast<docraft::craft::parser::ParsedLineData>(parser.parse(doc.child("Line")));
 
-    EXPECT_FLOAT_EQ(line->start().x, 0.0F);
-    EXPECT_FLOAT_EQ(line->start().y, 0.0F);
-    EXPECT_FLOAT_EQ(line->end().x, 10.0F);
-    EXPECT_FLOAT_EQ(line->end().y, 20.0F);
-    EXPECT_FLOAT_EQ(line->border_width(), 1.0F);
-    EXPECT_FLOAT_EQ(line->position().x, 5.0F);
-    EXPECT_FLOAT_EQ(line->position().y, 50.0F);
+    ASSERT_TRUE(data.x1.has_value());
+    EXPECT_FLOAT_EQ(*data.x1, 0.0F);
+    ASSERT_TRUE(data.y1.has_value());
+    EXPECT_FLOAT_EQ(*data.y1, 0.0F);
+    ASSERT_TRUE(data.x2.has_value());
+    EXPECT_FLOAT_EQ(*data.x2, 10.0F);
+    ASSERT_TRUE(data.y2.has_value());
+    EXPECT_FLOAT_EQ(*data.y2, 20.0F);
+    ASSERT_TRUE(data.border_width.has_value());
+    EXPECT_FLOAT_EQ(*data.border_width, 1.0F);
+
+    // x/y are common attributes, parsed separately by DocraftCraftLanguageParser -- not
+    // part of this parser's own ParsedLineData payload.
 }
 
 TEST(DocraftTriangleParserTest, ParsesTrianglePoints) {
@@ -79,14 +86,13 @@ TEST(DocraftTriangleParserTest, ParsesTrianglePoints) {
     ASSERT_TRUE(doc.load_string(xml));
 
     docraft::craft::parser::DocraftTriangleParser parser;
-    auto node = parser.parse(doc.child("Triangle"));
-    auto triangle = std::dynamic_pointer_cast<docraft::model::DocraftTriangle>(node);
-    ASSERT_TRUE(triangle);
+    const auto data = std::any_cast<docraft::craft::parser::ParsedTriangleData>(parser.parse(doc.child("Triangle")));
 
-    ASSERT_EQ(triangle->points().size(), 3U);
-    EXPECT_FLOAT_EQ(triangle->points()[2].x, 5.0F);
-    EXPECT_FLOAT_EQ(triangle->points()[2].y, 5.0F);
-    EXPECT_FLOAT_EQ(triangle->border_width(), 1.0F);
+    ASSERT_EQ(data.points.size(), 3U);
+    EXPECT_FLOAT_EQ(data.points[2].x, 5.0F);
+    EXPECT_FLOAT_EQ(data.points[2].y, 5.0F);
+    ASSERT_TRUE(data.border_width.has_value());
+    EXPECT_FLOAT_EQ(*data.border_width, 1.0F);
 }
 
 TEST(DocraftTriangleParserTest, RejectsInvalidPointCount) {
@@ -110,14 +116,13 @@ TEST(DocraftPolygonParserTest, ParsesPolygonPoints) {
     ASSERT_TRUE(doc.load_string(xml));
 
     docraft::craft::parser::DocraftPolygonParser parser;
-    auto node = parser.parse(doc.child("Polygon"));
-    auto polygon = std::dynamic_pointer_cast<docraft::model::DocraftPolygon>(node);
-    ASSERT_TRUE(polygon);
+    const auto data = std::any_cast<docraft::craft::parser::ParsedPolygonData>(parser.parse(doc.child("Polygon")));
 
-    ASSERT_EQ(polygon->points().size(), 4U);
-    EXPECT_FLOAT_EQ(polygon->points()[3].x, 0.0F);
-    EXPECT_FLOAT_EQ(polygon->points()[3].y, 10.0F);
-    EXPECT_FLOAT_EQ(polygon->border_width(), 0.5F);
+    ASSERT_EQ(data.points.size(), 4U);
+    EXPECT_FLOAT_EQ(data.points[3].x, 0.0F);
+    EXPECT_FLOAT_EQ(data.points[3].y, 10.0F);
+    ASSERT_TRUE(data.border_width.has_value());
+    EXPECT_FLOAT_EQ(*data.border_width, 0.5F);
 }
 
 TEST(DocraftRectangleParserTest, ParsesBorderWidth) {
@@ -129,9 +134,8 @@ TEST(DocraftRectangleParserTest, ParsesBorderWidth) {
     ASSERT_TRUE(doc.load_string(xml));
 
     docraft::craft::parser::DocraftRectangleParser parser;
-    auto node = parser.parse(doc.child("Rectangle"));
-    auto rect = std::dynamic_pointer_cast<docraft::model::DocraftRectangle>(node);
-    ASSERT_TRUE(rect);
+    const auto data = std::any_cast<docraft::craft::parser::ParsedRectangleData>(parser.parse(doc.child("Rectangle")));
 
-    EXPECT_FLOAT_EQ(rect->border_width(), 3.0F);
+    ASSERT_TRUE(data.border_width.has_value());
+    EXPECT_FLOAT_EQ(*data.border_width, 3.0F);
 }

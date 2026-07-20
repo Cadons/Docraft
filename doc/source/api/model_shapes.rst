@@ -1,50 +1,66 @@
-Model — Shapes
-==============
+Shapes
+======
 
-Geometric shape nodes that can be drawn in a document.
+Geometric primitives. Every shape except ``DocraftLoomLine`` derives from
+``DocraftLoomShape``, which composes one ``DocraftLoomShapeStyle`` member —
+style is composition, not a shared style base class across the node
+hierarchy (see :doc:`../about`).
 
-DocraftRectangle
-----------------
+DocraftLoomShapeStyle
+-----------------------
 
-Rectangle with background and border styling, often used as a container.
+Background color, border color, and border width shared by every shape.
 
-.. doxygenclass:: docraft::model::DocraftRectangle
+.. doxygenstruct:: docraft::loom::nodes::DocraftLoomShapeStyle
    :project: docraft
    :members:
 
-DocraftCircle
--------------
+DocraftLoomShape
+-------------------
 
-Circle node with background and border styling.
+Base class for Circle/Triangle/Polygon/Rectangle (via
+``DocraftLoomLayoutContainer``, see :doc:`model_containers`); composes
+``DocraftLoomShapeStyle``.
 
-.. doxygenclass:: docraft::model::DocraftCircle
+.. doxygenclass:: docraft::loom::nodes::DocraftLoomShape
    :project: docraft
    :members:
 
-DocraftTriangle
----------------
+DocraftLoomCircle
+--------------------
 
-Triangle node defined by three points.
+``<Circle>`` — a shape with a ``radius``.
 
-.. doxygenclass:: docraft::model::DocraftTriangle
+.. doxygenclass:: docraft::loom::nodes::DocraftLoomCircle
    :project: docraft
    :members:
 
-DocraftLine
------------
+DocraftLoomTriangle
+----------------------
 
-Line node defined by start and end points.
+``<Triangle>`` — exactly 3 points (Y-down offsets from the node's own
+origin); throws ``InvalidInputException`` otherwise.
 
-.. doxygenclass:: docraft::model::DocraftLine
+.. doxygenclass:: docraft::loom::nodes::DocraftLoomTriangle
    :project: docraft
    :members:
 
-DocraftPolygon
---------------
+DocraftLoomPolygon
+---------------------
 
-Polygon node defined by a list of points.
+``<Polygon>`` — an arbitrary-point-count shape (needs ≥3 points to render).
 
-.. doxygenclass:: docraft::model::DocraftPolygon
+.. doxygenclass:: docraft::loom::nodes::DocraftLoomPolygon
    :project: docraft
    :members:
 
+DocraftLoomLine
+------------------
+
+``<Line>`` — a stroke-only primitive with ``start``/``end`` points,
+``border_color``, and ``border_width``. Not a ``DocraftLoomShape`` (no
+background color).
+
+.. doxygenclass:: docraft::loom::nodes::DocraftLoomLine
+   :project: docraft
+   :members:

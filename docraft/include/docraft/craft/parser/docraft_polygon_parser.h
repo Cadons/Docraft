@@ -16,11 +16,27 @@
 
 #pragma once
 
+#include <optional>
+#include <string>
+#include <vector>
+
 #include "docraft/docraft_lib.h"
+#include "docraft/docraft_position.h"
 
 #include "docraft/craft/i_docraft_parser.h"
 
 namespace docraft::craft::parser {
+    /**
+     * @brief Tag-specific payload parsed from a `<Polygon>` element.
+     */
+    struct ParsedPolygonData
+    {
+        std::optional<std::string> background_color;
+        std::optional<std::string> border_color;
+        std::optional<float> border_width;
+        std::vector<docraft::Position> points;
+    };
+
     /**
      * @brief Parser for polygon nodes.
      */
@@ -29,8 +45,8 @@ namespace docraft::craft::parser {
         /**
          * @brief Parses a polygon XML node.
          * @param craft_language_source XML node.
-         * @return Parsed polygon node.
+         * @return `ParsedPolygonData`.
          */
-        std::shared_ptr<model::DocraftNode> parse(const pugi::xml_node &craft_language_source) override;
+        std::any parse(const pugi::xml_node& craft_language_source) override;
     };
-} // docraft::craft::parser
+} // namespace docraft::craft::parser

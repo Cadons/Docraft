@@ -16,97 +16,114 @@
 
 #pragma once
 
+#include <any>
+#include <optional>
+#include <string>
+#include <vector>
+
 #include "docraft/docraft_lib.h"
-#include "docraft/craft/docraft_craft_language_parser.h"
+
+#include "docraft/craft/docraft_craft_parsed_element.h"
 #include "docraft/craft/i_docraft_parser.h"
-#include "docraft/craft/parser/docraft_circle_parser.h"
-#include "docraft/craft/parser/docraft_line_parser.h"
-#include "docraft/craft/parser/docraft_polygon_parser.h"
-#include "docraft/craft/parser/docraft_triangle_parser.h"
-#include "docraft/model/docraft_rectangle.h"
-#include "docraft/model/docraft_settings.h"
 
 namespace docraft::craft::parser {
     /**
-     * @brief Base parser for rectangle-like nodes.
+     * @brief Tag-specific payload parsed from a `<Rectangle>` element.
+     */
+    struct ParsedRectangleData
+    {
+        std::optional<std::string> background_color;
+        std::optional<std::string> border_color;
+        std::optional<float> border_width;
+    };
+
+    /**
+     * @brief Parser for rectangle nodes.
      */
     class DOCRAFT_LIB DocraftRectangleParser : public IDocraftParser {
     public:
         /**
-         * @brief Parses a rectangle XML node into a DocraftRectangle.
+         * @brief Parses a rectangle XML node into a ParsedRectangleData.
          * @param craft_language_source XML node.
-         * @return Parsed rectangle node.
+         * @return `ParsedRectangleData`.
          */
-        std::shared_ptr<model::DocraftNode> parse(const pugi::xml_node &craft_language_source) override;
-        /**
-         * @brief Copies rectangle attributes from one node to another.
-         * @param from Source rectangle.
-         * @param to Destination rectangle.
-         */
-        static void apply_attributes_to(const std::shared_ptr<model::DocraftRectangle>& from, const std::shared_ptr<model::DocraftRectangle>& to);
-    };
-    /**
-     * @brief Parser for header sections.
-     */
-    class DOCRAFT_LIB DocraftHeaderParser : public DocraftRectangleParser {
-    public:
-        /**
-         * @brief Parses a header XML node.
-         * @param craft_language_source XML node.
-         * @return Parsed header node.
-         */
-        std::shared_ptr<model::DocraftNode> parse(const pugi::xml_node &craft_language_source) override;
+        std::any parse(const pugi::xml_node& craft_language_source) override;
     };
 
     /**
-     * @brief Parser for body sections.
+     * @brief Text style, duplicated from (rather than shared with) loom's own text style
+     * fields -- see `docraft::craft::PositionMode` for the same "duplicate a tiny enum
+     * and translate" rationale. `docraft::loom::nodes::DocraftLoomText` exposes bold()/
+     * italic() as independent booleans rather than a single style enum; the loom tree
+     * builder does that translation.
      */
-    class DOCRAFT_LIB DocraftBodyParser : public DocraftRectangleParser {
-    public:
-        /**
-         * @brief Parses a body XML node.
-         * @param craft_language_source XML node.
-         * @return Parsed body node.
-         */
-        std::shared_ptr<model::DocraftNode> parse(const pugi::xml_node &craft_language_source) override;
+    enum class ParsedTextStyle
+    {
+        kNormal,
+        kBold,
+        kItalic,
+        kBoldItalic
     };
 
     /**
-     * @brief Parser for footer sections.
+     * @brief Text alignment, duplicated for the same reason as `ParsedTextStyle`.
      */
-    class DOCRAFT_LIB DocraftFooterParser : public DocraftRectangleParser {
-    public:
-        /**
-         * @brief Parses a footer XML node.
-         * @param craft_language_source XML node.
-         * @return Parsed footer node.
-         */
-        std::shared_ptr<model::DocraftNode> parse(const pugi::xml_node &craft_language_source) override;
+    enum class ParsedTextAlignment
+    {
+        kLeft,
+        kCenter,
+        kRight,
+        kJustified
     };
+
     /**
-     * @brief Parser for layout nodes.
+     * @brief Tag-specific payload parsed from `<Text>`/`<Title>`/`<Subtitle>` elements.
+     * `Title`/`Subtitle` apply their heading-like defaults (font size/style) at parse
+     * time, exactly like the legacy parser did, before any explicit attribute overrides
+     * are applied.
      */
-    class DOCRAFT_LIB DocraftLayoutParser : public IDocraftParser {
-    public:
-        /**
-         * @brief Parses a layout XML node.
-         * @param craft_language_source XML node.
-         * @return Parsed layout node.
-         */
-        std::shared_ptr<model::DocraftNode> parse(const pugi::xml_node &craft_language_source) override;
+    struct ParsedTextData
+    {
+        std::string text;
+        std::optional<float> font_size;
+        std::optional<std::string> font_name;
+        std::optional<std::string> color;
+        std::optional<ParsedTextStyle> style;
+        std::optional<ParsedTextAlignment> alignment;
+        std::optional<bool> underline;
+        std::optional<bool> strikeout;
     };
+
     /**
-     * @brief Parser for text nodes.
+     * @brief Parser for `<Text>`, `<Title>` and `<Subtitle>` elements (all produce a
+     * `ParsedTextData`, differing only in the tag-based defaults applied).
      */
     class DOCRAFT_LIB DocraftTextParser : public IDocraftParser {
     public:
         /**
-         * @brief Parses a text XML node.
+         * @brief Parses a text-like XML node.
          * @param craft_language_source XML node.
-         * @return Parsed text node.
+         * @return `ParsedTextData`.
          */
-        std::shared_ptr<model::DocraftNode> parse(const pugi::xml_node &craft_language_source) override;
+        std::any parse(const pugi::xml_node& craft_language_source) override;
     };
+
+    /**
+     * @brief Tag-specific payload parsed from a `<PageNumber>` element. Shares every
+     * field with `ParsedTextData` except `text` -- the page number's text is generated
+     * at render time, not parsed from the source.
+     */
+    struct ParsedPageNumberData
+    {
+        std::optional<float> font_size;
+        std::optional<std::string> font_name;
+        std::optional<std::string> color;
+        std::optional<ParsedTextStyle> style;
+        std::optional<ParsedTextAlignment> alignment;
+        std::optional<bool> underline;
+        std::optional<bool> strikeout;
+    };
+
     /**
      * @brief Parser for page number nodes.
      */
@@ -115,10 +132,22 @@ namespace docraft::craft::parser {
         /**
          * @brief Parses a page number XML node.
          * @param craft_language_source XML node.
-         * @return Parsed page number node.
+         * @return `ParsedPageNumberData`.
          */
-        std::shared_ptr<model::DocraftNode> parse(const pugi::xml_node &craft_language_source) override;
+        std::any parse(const pugi::xml_node& craft_language_source) override;
     };
+
+    /**
+     * @brief Tag-specific payload parsed from an `<Image>` element.
+     */
+    struct ParsedImageData
+    {
+        std::optional<std::string> path; // from `src`, or from `data` when not base64-prefixed
+        std::optional<std::vector<unsigned char>> raw_data; // decoded base64 RGB pixels
+        std::optional<int> raw_pixel_width;
+        std::optional<int> raw_pixel_height;
+    };
+
     /**
      * @brief Parser for image nodes.
      */
@@ -127,10 +156,78 @@ namespace docraft::craft::parser {
         /**
          * @brief Parses an image XML node.
          * @param craft_language_source XML node.
-         * @return Parsed image node.
+         * @return `ParsedImageData`.
+         * @throws docraft::exception::InvalidInputException if both `src` and `data` are
+         * present, or if base64 `data` is missing/invalid dimensions.
          */
-        std::shared_ptr<model::DocraftNode> parse(const pugi::xml_node &craft_language_source) override;
+        std::any parse(const pugi::xml_node& craft_language_source) override;
     };
+
+    /**
+     * @brief Tag-specific payload parsed from a `<Table>` element's title/header cells
+     * (`HTitle`/`VTitle`), mirroring the legacy parser's shared title-node handling.
+     */
+    struct ParsedTableTitleData
+    {
+        std::string text;
+        ParsedTextAlignment alignment = ParsedTextAlignment::kCenter;
+        ParsedTextStyle style = ParsedTextStyle::kBold;
+        std::optional<std::string> color;
+        std::optional<std::string> background;
+    };
+
+    /**
+     * @brief A single `<Cell>`'s content -- either a `ParsedTextData` or a
+     * `ParsedImageData`, selected by `content_tag_name`.
+     */
+    struct ParsedTableCellData
+    {
+        std::string content_tag_name; // "Text" or "Image"
+        std::any content;
+        docraft::craft::DocraftCommonAttributes content_common;
+        std::optional<std::string> background;
+        std::optional<float> width;
+    };
+
+    /**
+     * @brief A single `<Row>`.
+     */
+    struct ParsedTableRowData
+    {
+        std::vector<ParsedTableCellData> cells;
+        std::optional<std::string> background;
+        std::optional<ParsedTableTitleData> row_title; // vertical orientation's <VTitle>
+    };
+
+    enum class ParsedTableOrientation
+    {
+        kHorizontal,
+        kVertical
+    };
+
+    /**
+     * @brief Tag-specific payload parsed from a `<Table>` element.
+     *
+     * Covers explicit `<THead>`/`<TBody>` markup (both orientations) as well as the
+     * JSON-matrix/template form of `model`/`header` (horizontal only): when `model` isn't
+     * the literal `horizontal`/`vertical` keyword, it is stored verbatim in
+     * `model_data_template` for the loom builder to resolve (`${...}` substitution, then
+     * JSON-parse as a rectangular string matrix) at build time, mirroring how `<Foreach
+     * model="...">` defers resolution. Loom's own `DocraftLoomTable` is a plain grid with
+     * no separate header/title bookkeeping, so unlike the legacy struct this carries no
+     * `cols`/`content_cols` counters -- the builder derives geometry from the grid itself.
+     */
+    struct ParsedTableData
+    {
+        ParsedTableOrientation orientation = ParsedTableOrientation::kHorizontal;
+        std::optional<float> baseline_offset;
+        std::optional<std::string> default_cell_background;
+        std::vector<ParsedTableTitleData> header_titles; // <THead><HTitle>
+        std::vector<ParsedTableRowData> rows; // <TBody><Row>
+        std::optional<std::string> model_data_template; // `model`, when a JSON matrix/`${...}` rather than a keyword
+        std::optional<std::string> header_data_template; // `header`, JSON string array/`${...}`
+    };
+
     /**
      * @brief Parser for table nodes.
      */
@@ -139,22 +236,58 @@ namespace docraft::craft::parser {
         /**
          * @brief Parses a table XML node.
          * @param craft_language_source XML node.
-         * @return Parsed table node.
+         * @return `ParsedTableData`.
          */
-        std::shared_ptr<model::DocraftNode> parse(const pugi::xml_node &craft_language_source) override;
+        std::any parse(const pugi::xml_node& craft_language_source) override;
     };
+
     /**
-     * @brief Parser for list nodes.
+     * @brief Ordered/unordered list kind, duplicated for the same reason as
+     * `ParsedTextStyle`.
+     */
+    enum class ParsedListKind
+    {
+        kOrdered,
+        kUnordered
+    };
+
+    enum class ParsedOrderedListStyle
+    {
+        kNumber,
+        kRoman
+    };
+
+    enum class ParsedUnorderedListDot
+    {
+        kDash,
+        kStar,
+        kCircle,
+        kBox
+    };
+
+    /**
+     * @brief Tag-specific payload parsed from `<List>`/`<UList>` elements.
+     */
+    struct ParsedListData
+    {
+        ParsedListKind kind = ParsedListKind::kUnordered;
+        std::optional<ParsedOrderedListStyle> ordered_style;
+        std::optional<ParsedUnorderedListDot> unordered_dot;
+    };
+
+    /**
+     * @brief Parser for ordered list nodes.
      */
     class DOCRAFT_LIB DocraftListParser : public IDocraftParser {
     public:
         /**
          * @brief Parses a list XML node.
          * @param craft_language_source XML node.
-         * @return Parsed list node.
+         * @return `ParsedListData` with kind = kOrdered.
          */
-        std::shared_ptr<model::DocraftNode> parse(const pugi::xml_node &craft_language_source) override;
+        std::any parse(const pugi::xml_node& craft_language_source) override;
     };
+
     /**
      * @brief Parser for unordered list nodes.
      */
@@ -163,9 +296,17 @@ namespace docraft::craft::parser {
         /**
          * @brief Parses an unordered list XML node.
          * @param craft_language_source XML node.
-         * @return Parsed unordered list node.
+         * @return `ParsedListData` with kind = kUnordered.
          */
-        std::shared_ptr<model::DocraftNode> parse(const pugi::xml_node &craft_language_source) override;
+        std::any parse(const pugi::xml_node& craft_language_source) override;
+    };
+
+    /**
+     * @brief Tag-specific payload parsed from a `<Blank>` element. Empty: the blank
+     * line's height is carried entirely by the generic `common.height` attribute.
+     */
+    struct ParsedBlankLineData
+    {
     };
 
     /**
@@ -176,51 +317,69 @@ namespace docraft::craft::parser {
         /**
          * @brief Parses a blank line XML node.
          * @param craft_language_source XML node.
-         * @return Parsed blank line node.
+         * @return `ParsedBlankLineData`.
          */
-        std::shared_ptr<model::DocraftNode> parse(const pugi::xml_node &craft_language_source) override;
-    };
-    /**
-     * @brief Parser for manual page break nodes.
-     */
-    class DOCRAFT_LIB DocraftNewPageParser : public IDocraftParser {
-    public:
-        /**
-         * @brief Parses a NewPage XML node.
-         * @param craft_language_source XML node.
-         * @return Parsed NewPage node.
-         */
-        std::shared_ptr<model::DocraftNode> parse(const pugi::xml_node &craft_language_source) override;
-    };
-    /**
-     * @brief Parser for settings nodes.
-     */
-    class DOCRAFT_LIB DocraftSettingsParser : public IDocraftParser {
-    public:
-        /**
-         * @brief Parses a settings XML node.
-         * @param craft_language_source XML node.
-         * @return Parsed settings node.
-         */
-        std::shared_ptr<model::DocraftNode> parse(const pugi::xml_node &craft_language_source) override;
-    };
-    /**
-     * @brief Parser for foreach nodes.
-     * @param craft_language_source XML node.
-     * @return Parsed foreach node.
-     */
-    class DOCRAFT_LIB DocraftForeachParser : public IDocraftParser {
-    public:
-        explicit DocraftForeachParser(DocraftCraftLanguageParser *craft_language_parser);
-
-        /**
-         * @brief Parses a foreach XML node.
-         * @param craft_language_source XML node.
-         * @return Parsed foreach node.
-         */
-        std::shared_ptr<model::DocraftNode> parse(const pugi::xml_node &craft_language_source) override;
-    private:
-        DocraftCraftLanguageParser* craft_language_parser_;
+        std::any parse(const pugi::xml_node& craft_language_source) override;
     };
 
-} // docraft
+    /**
+     * @brief Tag-specific payload parsed from a `<NewPage>` element. Empty: `<NewPage>` is
+     * a pure forced-page-break marker with no attributes of its own.
+     */
+    struct ParsedNewPageData
+    {
+    };
+
+    /**
+     * @brief Parser for forced-page-break nodes.
+     */
+    class DOCRAFT_LIB DocraftNewPageParser : public IDocraftParser
+    {
+    public:
+        /**
+         * @brief Parses a `<NewPage>` XML node.
+         * @param craft_language_source XML node.
+         * @return `ParsedNewPageData`.
+         */
+        std::any parse(const pugi::xml_node& craft_language_source) override;
+    };
+
+    /**
+     * @brief Layout orientation, duplicated for the same reason as `ParsedTextStyle`.
+     */
+    enum class ParsedLayoutOrientation
+    {
+        kHorizontal,
+        kVertical
+    };
+
+    /**
+     * @brief Tag-specific payload parsed from a `<layout>` element.
+     *
+     * `weights` carries the single comma-separated `weights="1,2,1"` attribute on
+     * `<layout>` itself, if present. Per-child `weight` attributes (already parsed
+     * generically into each child's `DocraftCommonAttributes::weight`) are collected by
+     * `DocraftLoomTreeBuilder` at build time instead, not here -- this struct only owns
+     * what is specific to the `<layout>` tag itself.
+     */
+    struct ParsedLayoutData
+    {
+        ParsedLayoutOrientation orientation = ParsedLayoutOrientation::kVertical;
+        std::optional<float> spacing;
+        std::optional<std::vector<float>> weights;
+    };
+
+    /**
+     * @brief Parser for layout nodes.
+     */
+    class DOCRAFT_LIB DocraftLayoutParser : public IDocraftParser
+    {
+    public:
+        /**
+         * @brief Parses a layout XML node.
+         * @param craft_language_source XML node.
+         * @return `ParsedLayoutData`.
+         */
+        std::any parse(const pugi::xml_node& craft_language_source) override;
+    };
+} // namespace docraft::craft::parser

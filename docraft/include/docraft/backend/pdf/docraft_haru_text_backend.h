@@ -25,7 +25,8 @@ namespace docraft::backend::pdf {
     /**
      * @brief Haru implementation of text rendering operations.
      */
-    class DocraftHaruTextBackend : public docraft::backend::IDocraftTextRenderingBackend {
+    class DocraftHaruTextBackend : public docraft::backend::IDocraftTextRenderingBackend
+    {
     public:
         /**
          * @brief Creates a text backend bound to a Haru document owner.
@@ -33,7 +34,7 @@ namespace docraft::backend::pdf {
          * LIFETIME: The shared state must have a registered page operations provider.
          * This is guaranteed if the device is used through DocraftHaruBackend.
          */
-        explicit DocraftHaruTextBackend(const std::shared_ptr<DocraftHaruSharedState> &state);
+        explicit DocraftHaruTextBackend(const std::shared_ptr<DocraftHaruSharedState>& state);
 
         /**
          * @brief Begins a text object on the current page.
@@ -48,7 +49,7 @@ namespace docraft::backend::pdf {
         /**
          * @brief Draws plain text at the given page coordinates.
          */
-        void draw_text(const std::string &text, float x, float y) const override;
+        void draw_text(const std::string& text, float x, float y) const override;
 
         /**
          * @brief Sets the text fill color for subsequent text drawing.
@@ -58,7 +59,7 @@ namespace docraft::backend::pdf {
         /**
          * @brief Draws text using an explicit text transformation matrix.
          */
-        void draw_text_matrix(const std::string &text,
+        void draw_text_matrix(const std::string& text,
                               float scale_x,
                               float skew_x,
                               float skew_y,
@@ -67,12 +68,40 @@ namespace docraft::backend::pdf {
                               float translate_y) const override;
 
         /**
-         * @brief Measures the width of a text string using current font settings.
+         * @brief Sets the active font and size for subsequent text drawing on the current page.
          */
-        float measure_text_width(const std::string &text) const override;
+        void set_font(const std::string& font_name, float font_size) const override;
+
+        /**
+         * @brief Measures the width of a text string using the specified font.
+         * Stateless: does not modify page state.
+         */
+        float measure_text_width(const std::string& text, const std::string& font_name, float font_size) const override;
+
+        /**
+         * @brief Measures the line height (ascent − descent) for the specified font.
+         * Stateless: does not modify page state.
+         */
+        float measure_text_height(const std::string& font_name, float font_size) const override;
+        /**
+         * @brief Measures the descent (baseline to bottom of line box) for the specified font.
+         * Stateless: does not modify page state.
+         * @param font_name
+         * @param font_size
+         * @return
+         */
+        float measure_text_descent(const std::string& font_name, float font_size) const override;
+
+        /**
+         * @brief Measures the ascent (baseline to top of line box) for the specified font.
+         * Stateless: does not modify page state.
+         */
+        float measure_text_ascent(const std::string& font_name, float font_size) const override;
 
     private:
+        HPDF_Font resolve_font(const std::string& font_name) const;
         std::shared_ptr<DocraftHaruSharedState> state_;
+        static constexpr std::string kDefaultFont = "Helvetica";
     };
 } // namespace docraft::backend::pdf
 

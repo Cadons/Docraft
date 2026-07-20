@@ -20,6 +20,16 @@
 #include <cctype>
 
 namespace docraft::utils {
+    std::vector<std::string> DocraftFontResolver::builtin_font_names()
+    {
+        return {
+            "Courier", "Courier-Bold", "Courier-Oblique", "Courier-BoldOblique",
+            "Helvetica", "Helvetica-Bold", "Helvetica-Oblique", "Helvetica-BoldOblique",
+            "Times-Roman", "Times-Bold", "Times-Italic", "Times-BoldItalic",
+            "Symbol", "ZapfDingbats"
+        };
+    }
+
     void DocraftFontResolver::rebuild_index(const std::vector<std::string> &builtin_fonts,
                                             const std::vector<std::string> &registered_fonts) {
         index_.clear();
@@ -41,7 +51,8 @@ namespace docraft::utils {
     }
 
     std::string DocraftFontResolver::resolve(const std::string &requested,
-                                             docraft::model::TextStyle style) const {
+                                             TextStyle style) const
+    {
         const auto parsed_request = parse_font_name(requested);
         auto it = index_.find(parsed_request.family);
         if (it == index_.end()) {
@@ -50,18 +61,18 @@ namespace docraft::utils {
         const auto &variants = it->second;
 
         switch (style) {
-            case docraft::model::TextStyle::kBoldItalic:
-                if (!variants.bold_italic.empty()) return variants.bold_italic;
+        case TextStyle::kBoldItalic:
+            if (!variants.bold_italic.empty()) return variants.bold_italic;
                 if (!variants.bold.empty()) return variants.bold;
                 if (!variants.italic.empty()) return variants.italic;
                 if (!variants.regular.empty()) return variants.regular;
                 break;
-            case docraft::model::TextStyle::kBold:
-                if (!variants.bold.empty()) return variants.bold;
+        case TextStyle::kBold:
+            if (!variants.bold.empty()) return variants.bold;
                 if (!variants.regular.empty()) return variants.regular;
                 break;
-            case docraft::model::TextStyle::kItalic:
-                if (!variants.italic.empty()) return variants.italic;
+        case TextStyle::kItalic:
+            if (!variants.italic.empty()) return variants.italic;
                 if (!variants.regular.empty()) return variants.regular;
                 break;
             default:

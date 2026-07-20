@@ -50,24 +50,32 @@ namespace docraft::backend::pdf {
 
     void DocraftHaruShapeBackend::draw_rectangle(float x, float y, float width, float height) const {
         auto *provider = state_->ensure_page_provider();
-        HPDF_Page_Rectangle(provider->current_page(), x, y, width, height);
+        float px, py;
+        provider->compute_coordinate_system(x, y + height, px, py);
+        HPDF_Page_Rectangle(provider->current_page(), px, py, width, height);
     }
 
     void DocraftHaruShapeBackend::draw_circle(float center_x, float center_y, float radius) const {
         auto *provider = state_->ensure_page_provider();
-        HPDF_Page_Circle(provider->current_page(), center_x, center_y, radius);
+        float px, py;
+        provider->compute_coordinate_system(center_x, center_y, px, py);
+        HPDF_Page_Circle(provider->current_page(), px, py, radius);
     }
 
-    void DocraftHaruShapeBackend::draw_polygon(const std::vector<model::DocraftPoint> &points) const {
+    void DocraftHaruShapeBackend::draw_polygon(const std::vector<Position>& points) const
+    {
         if (points.size() < 2U) {
             return;
         }
 
         auto *provider = state_->ensure_page_provider();
         HPDF_Page page = provider->current_page();
-        HPDF_Page_MoveTo(page, points[0].x, points[0].y);
+        float px, py;
+        provider->compute_coordinate_system(points[0].x, points[0].y, px, py);
+        HPDF_Page_MoveTo(page, px, py);
         for (size_t i = 1; i < points.size(); ++i) {
-            HPDF_Page_LineTo(page, points[i].x, points[i].y);
+            provider->compute_coordinate_system(points[i].x, points[i].y, px, py);
+            HPDF_Page_LineTo(page, px, py);
         }
         HPDF_Page_ClosePath(page);
     }

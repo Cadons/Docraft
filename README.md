@@ -125,14 +125,18 @@ ctest --test-dir build -C Release --output-on-failure
 ```
 bash
 ./build/artifacts/bin/docraft_tool <file.craft> <output.pdf>
-./build/artifacts/bin/docraft_tool <file.craft> <output.pdf> -d <data.txt>
+./build/artifacts/bin/docraft_tool <file.craft> <output.pdf> --data <data.json>
 ```
 
-`data.txt` format:
-```
-invoice_number: INV-2026-0008
-customer_name: Alice Rossi
-items: [{"name":"Keyboard","qty":1,"price":"49.99"}]
+`data.json` must be a JSON object at the top level. Each field becomes a `${field}`
+template variable; nested objects are flattened to dot-notation keys (`{"customer":
+{"name":"Alice"}}` registers `${customer.name}`):
+```json
+{
+  "invoice_number": "INV-2026-0008",
+  "customer": { "name": "Alice Rossi" },
+  "items": [{"name":"Keyboard","qty":1,"price":"49.99"}]
+}
 ```
 ---
 
@@ -206,7 +210,7 @@ docker build -f docker/Dockerfile -t docraft_tool:latest .
 Run:
 ```bash
 docker run --rm -v "$PWD:/work" -w /work docraft_tool:latest test.craft out.pdf
-docker run --rm -v "$PWD:/work" -w /work docraft_tool:latest test.craft out.pdf -d data.txt
+docker run --rm -v "$PWD:/work" -w /work docraft_tool:latest test.craft out.pdf --data data.json
 ```
 ---
 

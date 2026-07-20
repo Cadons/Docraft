@@ -19,7 +19,7 @@
 #include "docraft/docraft_lib.h"
 #include <stack>
 
-#include "docraft/model/docraft_position.h"
+#include "docraft/docraft_position.h"
 
 namespace docraft {
 
@@ -122,7 +122,7 @@ namespace docraft {
 
 
     private:
-        model::DocraftPoint point_;
+        Position point_;
         std::stack<DocraftCursorDirection> direction_stack_;
     };
 } // docraft

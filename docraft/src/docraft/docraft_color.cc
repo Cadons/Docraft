@@ -56,14 +56,6 @@ namespace docraft {
     }
 
     DocraftColor::DocraftColor(const std::string &hex_code) {
-        // Support template expressions: ${data("fieldname")} or ${variable_name}
-        if (docraft::utils::DocraftParserUtilis::is_data_request(hex_code)|| docraft::utils::DocraftParserUtilis::is_template_variable(hex_code)){
-            // Store as template expression and use default black color
-            template_expression_ = hex_code;
-            color_name_ = ColorName::kBlack;
-            convert_known_color(ColorName::kBlack);
-            return;
-        }
 
         if ((hex_code.size() != 7 && hex_code.size() != 9) || hex_code[0] != '#') {
             throw docraft::exception::InvalidInputException("Invalid hex code: " + hex_code);
@@ -78,12 +70,12 @@ namespace docraft {
         unsigned int g = std::stoul(std::string(hex_code.substr(3, 2)), nullptr, 16);
         unsigned int b = std::stoul(std::string(hex_code.substr(5, 2)), nullptr, 16);
         if (hex_code.size() == 7) {
-            rgb_ = RGB(r / 255.0F, g / 255.0F, b / 255.0F, 1.0F);
+            rgb_ = RGB{r / 255.0F, g / 255.0F, b / 255.0F, 1.0F};
             return;
         }
         //handle alpha
         unsigned int a = std::stoul(std::string(hex_code.substr(7, 2)), nullptr, 16);
-        rgb_ = RGB(r / 255.0F, g / 255.0F, b / 255.0F, a / 255.0F);
+        rgb_ = RGB{r / 255.0F, g / 255.0F, b / 255.0F, a / 255.0F};
     }
 
     RGB DocraftColor::toRGB() const {
@@ -100,13 +92,5 @@ namespace docraft {
 
     DocraftColor DocraftColor::fromRGB(float r, float g, float b, float a) {
         return DocraftColor(r, g, b, a);
-    }
-
-    bool DocraftColor::is_template_expression() const {
-        return !template_expression_.empty();
-    }
-
-    const std::string& DocraftColor::template_expression() const {
-        return template_expression_;
     }
 } // docraft

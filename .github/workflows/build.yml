@@ -38,7 +38,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y cmake ninja-build g++-14 \
-            libhpdf-dev libpugixml-dev nlohmann-json3-dev libgtest-dev libfmt-dev ccache
+            libhpdf-dev libpugixml-dev nlohmann-json3-dev libgtest-dev libgmock-dev libfmt-dev ccache
 
       - name: Setup ccache
         uses: actions/cache@v3

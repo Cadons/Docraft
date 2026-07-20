@@ -19,7 +19,7 @@
 #include "docraft/docraft_lib.h"
 #include <cstddef>
 
-#include "docraft/model/docraft_page_format.h"
+#include "docraft/backend/docraft_page_format.h"
 
 namespace docraft::backend {
     /**
@@ -80,8 +80,8 @@ namespace docraft::backend {
          * @param size Page size.
          * @param orientation Page orientation.
          */
-        virtual void set_page_format(model::DocraftPageSize size,
-                                     model::DocraftPageOrientation orientation) = 0;
+        virtual void set_page_format(DocraftPageSize size,
+                                     DocraftPageOrientation orientation) = 0;
 
         /**
          * @brief Returns the current page number.

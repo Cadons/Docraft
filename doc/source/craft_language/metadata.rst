@@ -2,7 +2,19 @@ Document Metadata
 =================
 
 The ``<Metadata>`` section inside ``<Document>`` sets PDF information fields
-(author, title, dates, etc.) that are embedded in the output file.
+that are embedded in the output file.
+
+.. note::
+
+   Only the six string fields below are currently wired up from Craft
+   Language XML. ``<CreationDate>``/``<ModificationDate>``/``<Trapped>``/
+   ``<GtsPdfx>``/``<AutoKeywords>`` are silently skipped by the parser today
+   — they are not parse errors, they simply have no effect. The underlying
+   ``DocraftDocumentMetadata`` C++ type does support dates, trapping, and
+   GTS-PDFX (see :doc:`../api/model_types`); there is currently no automatic
+   keyword extraction utility in the codebase at all. If you need any of
+   these, set them from C++ via ``DocraftLoomPdfCreator::set_metadata()``
+   (see :doc:`../getting_started`) rather than from the ``.craft`` file.
 
 Example
 -------
@@ -17,13 +29,6 @@ Example
        <Keywords>finance, report, 2025</Keywords>
        <Creator>Docraft 1.0</Creator>
        <Producer>Docraft/libharu</Producer>
-       <CreationDate>
-         <Year>2025</Year>
-         <Month>12</Month>
-         <Day>31</Day>
-       </CreationDate>
-       <AutoKeywords enabled="true" max_keywords="15"
-                     min_length="4" language="en"/>
      </Metadata>
      <Body>
        <!-- content -->
@@ -51,73 +56,3 @@ Metadata Fields
      - Document subject.
    * - ``<Keywords>``
      - Comma-separated keyword list.
-   * - ``<Trapped>``
-     - Trapping flag (``True``, ``False``, ``Unknown``).
-   * - ``<GtsPdfx>``
-     - GTS_PDFXVersion string.
-
-Date Elements
--------------
-
-``<CreationDate>`` and ``<ModificationDate>`` contain sub-elements:
-
-.. list-table::
-   :header-rows: 1
-   :widths: 20 15 65
-
-   * - Element
-     - Type
-     - Description
-   * - ``<Year>``
-     - int
-     - Four-digit year.
-   * - ``<Month>``
-     - int
-     - Month (1–12).
-   * - ``<Day>``
-     - int
-     - Day (1–31).
-   * - ``<Hour>``
-     - int
-     - Hour (0–23).
-   * - ``<Minutes>``
-     - int
-     - Minutes (0–59).
-   * - ``<Seconds>``
-     - int
-     - Seconds (0–59).
-   * - ``<Ind>``
-     - char
-     - UTC indicator (``+``, ``-``, or ``Z``).
-   * - ``<OffHour>``
-     - int
-     - UTC offset hours.
-   * - ``<OffMinutes>``
-     - int
-     - UTC offset minutes.
-
-Automatic Keywords
-------------------
-
-Enable ``<AutoKeywords>`` to have the library automatically extract keywords
-from text nodes using term-frequency analysis.
-
-.. list-table::
-   :header-rows: 1
-   :widths: 20 15 65
-
-   * - Attribute
-     - Type
-     - Description
-   * - ``enabled``
-     - bool
-     - Enable/disable extraction.
-   * - ``max_keywords``
-     - int
-     - Maximum number of keywords (default ``10``).
-   * - ``min_length``
-     - int
-     - Minimum word length (default ``4``).
-   * - ``language``
-     - string
-     - Stop-word languages, comma-separated (``en,it,fr,de,es``).
