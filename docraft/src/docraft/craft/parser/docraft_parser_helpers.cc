@@ -160,4 +160,48 @@ namespace docraft::craft::parser::detail {
 
         return common;
     }
+
+    ParsedTextStyle parse_text_style(const std::string& style_str) {
+        if (style_str == std::string{style::kBold}) {
+            return ParsedTextStyle::kBold;
+        }
+        if (style_str == std::string{style::kItalic}) {
+            return ParsedTextStyle::kItalic;
+        }
+        if (style_str == std::string{style::kBoldItalic}) {
+            return ParsedTextStyle::kBoldItalic;
+        }
+        if (style_str == std::string{style::kNormal}) {
+            return ParsedTextStyle::kNormal;
+        }
+        throw docraft::exception::InvalidInputException("Invalid text style: " + style_str);
+    }
+
+    ParsedTextAlignment parse_text_alignment(const std::string& alignment_str) {
+        if (alignment_str == std::string{alignment::kCenter}) {
+            return ParsedTextAlignment::kCenter;
+        }
+        if (alignment_str == std::string{alignment::kRight}) {
+            return ParsedTextAlignment::kRight;
+        }
+        if (alignment_str == std::string{alignment::kJustified}) {
+            return ParsedTextAlignment::kJustified;
+        }
+        if (alignment_str == std::string{alignment::kLeft}) {
+            return ParsedTextAlignment::kLeft;
+        }
+        throw docraft::exception::InvalidInputException("Invalid text alignment: " + alignment_str);
+    }
+
+    std::string trim_whitespace(const std::string& text) {
+        constexpr auto whitespace = " \t\n\r\f\v";
+
+        const auto first = text.find_first_not_of(whitespace);
+        if (first == std::string::npos) {
+            return {};
+        }
+
+        const auto last = text.find_last_not_of(whitespace);
+        return text.substr(first, last - first + 1);
+    }
 } // namespace docraft::craft::parser::detail

@@ -20,6 +20,7 @@
 
 #include "docraft/craft/docraft_craft_language_tokens.h"
 #include "docraft/craft/docraft_craft_parsed_element.h"
+#include "docraft/craft/parser/docraft_parser.h"
 #include "docraft/docraft_color.h"
 
 namespace docraft::craft::parser::detail {
@@ -62,4 +63,32 @@ namespace docraft::craft::parser::detail {
      * @return The parsed common attributes.
      */
     DocraftCommonAttributes parse_common_node_attributes(const pugi::xml_node& craft_language_source);
+
+    /**
+     * @brief Parses a `style` attribute value (e.g. "bold") into a `ParsedTextStyle`.
+     * Shared by every text-like parser (`Text`/`Title`/`Subtitle`, `PageNumber`,
+     * `Paragraph`).
+     * @param style_str The raw attribute string.
+     * @return The parsed style.
+     * @throws docraft::exception::InvalidInputException if the string is not a recognized style.
+     */
+    ParsedTextStyle parse_text_style(const std::string& style_str);
+
+    /**
+     * @brief Parses an `alignment` attribute value (e.g. "center") into a
+     * `ParsedTextAlignment`. Shared by every text-like parser (`Text`/`Title`/
+     * `Subtitle`, `PageNumber`, `Paragraph`).
+     * @param alignment_str The raw attribute string.
+     * @return The parsed alignment.
+     * @throws docraft::exception::InvalidInputException if the string is not a recognized alignment.
+     */
+    ParsedTextAlignment parse_text_alignment(const std::string& alignment_str);
+
+    /**
+     * @brief Trims leading/trailing whitespace (space, tab, newline, CR, form feed,
+     * vertical tab) from a string.
+     * @param text The string to trim.
+     * @return The trimmed string.
+     */
+    std::string trim_whitespace(const std::string& text);
 } // namespace docraft::craft::parser::detail

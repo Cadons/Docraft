@@ -235,6 +235,27 @@ namespace docraft::loom::craft {
             }
         }
 
+        // Applies the background_color/border_color/border_width fields shared by every
+        // shape's parsed data (Rectangle/Circle/Triangle/Polygon) onto node's own composed
+        // DocraftLoomShapeStyle. Templated on the resolver rather than taking a
+        // DocraftLoomTreeBuilder& since resolve_color() is private to it.
+        template <typename NodeT, typename ShapeDataT, typename ColorResolver>
+        void apply_shape_style(NodeT& node, const ShapeDataT& data, const ColorResolver& resolve_color)
+        {
+            if (data.background_color)
+            {
+                node.edit_style().background_color = resolve_color(*data.background_color);
+            }
+            if (data.border_color)
+            {
+                node.edit_style().border_color = resolve_color(*data.border_color);
+            }
+            if (data.border_width)
+            {
+                node.edit_style().border_width = *data.border_width;
+            }
+        }
+
         std::shared_ptr<nodes::DocraftLoomTableCell> build_matrix_cell(const std::string& text)
         {
             auto cell = std::make_shared<nodes::DocraftLoomTableCell>();
@@ -745,18 +766,7 @@ namespace docraft::loom::craft {
     {
         const auto& data = std::any_cast<const parser::ParsedRectangleData&>(element.data);
         auto node = std::make_shared<nodes::DocraftLoomRectangle>();
-        if (data.background_color)
-        {
-            node->edit_style().background_color = resolve_color(*data.background_color);
-        }
-        if (data.border_color)
-        {
-            node->edit_style().border_color = resolve_color(*data.border_color);
-        }
-        if (data.border_width)
-        {
-            node->edit_style().border_width = *data.border_width;
-        }
+        apply_shape_style(*node, data, [this](const std::string& c) { return resolve_color(c); });
         apply_common_attributes(*node, element.common);
         add_children(node, element.children);
         return node;
@@ -766,18 +776,7 @@ namespace docraft::loom::craft {
     {
         const auto& data = std::any_cast<const parser::ParsedCircleData&>(element.data);
         auto node = std::make_shared<nodes::DocraftLoomCircle>();
-        if (data.background_color)
-        {
-            node->edit_style().background_color = resolve_color(*data.background_color);
-        }
-        if (data.border_color)
-        {
-            node->edit_style().border_color = resolve_color(*data.border_color);
-        }
-        if (data.border_width)
-        {
-            node->edit_style().border_width = *data.border_width;
-        }
+        apply_shape_style(*node, data, [this](const std::string& c) { return resolve_color(c); });
         if (data.radius)
         {
             node->set_radius(*data.radius);
@@ -793,18 +792,7 @@ namespace docraft::loom::craft {
     {
         const auto& data = std::any_cast<const parser::ParsedTriangleData&>(element.data);
         auto node = std::make_shared<nodes::DocraftLoomTriangle>();
-        if (data.background_color)
-        {
-            node->edit_style().background_color = resolve_color(*data.background_color);
-        }
-        if (data.border_color)
-        {
-            node->edit_style().border_color = resolve_color(*data.border_color);
-        }
-        if (data.border_width)
-        {
-            node->edit_style().border_width = *data.border_width;
-        }
+        apply_shape_style(*node, data, [this](const std::string& c) { return resolve_color(c); });
         if (!data.points.empty())
         {
             node->set_points(data.points);
@@ -817,18 +805,7 @@ namespace docraft::loom::craft {
     {
         const auto& data = std::any_cast<const parser::ParsedPolygonData&>(element.data);
         auto node = std::make_shared<nodes::DocraftLoomPolygon>();
-        if (data.background_color)
-        {
-            node->edit_style().background_color = resolve_color(*data.background_color);
-        }
-        if (data.border_color)
-        {
-            node->edit_style().border_color = resolve_color(*data.border_color);
-        }
-        if (data.border_width)
-        {
-            node->edit_style().border_width = *data.border_width;
-        }
+        apply_shape_style(*node, data, [this](const std::string& c) { return resolve_color(c); });
         if (!data.points.empty())
         {
             node->set_points(data.points);
@@ -1186,18 +1163,7 @@ namespace docraft::loom::craft {
         // DocraftLoomVStack::style()) is a closer fit than Rectangle and reuses the
         // vertical-stacking flow instead of duplicating it.
         auto node = std::make_shared<nodes::DocraftLoomVStack>();
-        if (data.background_color)
-        {
-            node->edit_style().background_color = resolve_color(*data.background_color);
-        }
-        if (data.border_color)
-        {
-            node->edit_style().border_color = resolve_color(*data.border_color);
-        }
-        if (data.border_width)
-        {
-            node->edit_style().border_width = *data.border_width;
-        }
+        apply_shape_style(*node, data, [this](const std::string& c) { return resolve_color(c); });
         // Margins (margin_top/bottom/left/right) are not a rectangle concept -- they are
         // consumed directly from ParsedSectionData by DocraftLoomCraftLanguageParser to
         // build a DocraftLoomPdfCreator::Margins, not applied here.

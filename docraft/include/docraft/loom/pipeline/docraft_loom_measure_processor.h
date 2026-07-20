@@ -52,45 +52,21 @@ namespace docraft::loom::pipeline {
          */
         ~DocraftLoomMeasureProcessor() override = default;
 
-        /**
-         * @brief Visits a doccraft::loom::nodes::DocraftLoomText node during the measurement process.
-         *
-         * This method computes any necessary measurements for the DocraftLoomText node, such as its width and height, or
-         * adjusts layout properties based on the text content. It is called when visiting a DocraftLoomText node in the Loom graph.
-         *
-         * @param text_node Pointer to the doccraft::loom::nodes::DocraftLoomText node being visited.
-         */
         void visit(docraft::loom::nodes::DocraftLoomText*) override;
 
         /**
          * @brief Measured exactly like ordinary text (see visit(DocraftLoomText*)) --
-         * DocraftLoomTitle only differs in its constructor's default font/style/margin.
+         * DocraftLoomTitle/DocraftLoomSubtitle only differ in their constructor's
+         * default font/style/margin.
          */
         void visit(docraft::loom::nodes::DocraftLoomTitle*) override;
-
-        /**
-         * @brief Measured exactly like ordinary text (see visit(DocraftLoomText*)) --
-         * DocraftLoomSubtitle only differs in its constructor's default font/style/margin.
-         */
         void visit(docraft::loom::nodes::DocraftLoomSubtitle*) override;
 
-        /**
-         * @brief Visits a doccraft::loom::nodes::DocraftLoomRectangle node during the measurement process.
-         *
-         * This method computes any necessary measurements for the DocraftLoomRectangle node, such as its width and height, or
-         * adjusts layout properties based on the rectangle's content. It is called when visiting a DocraftLoomRectangle node in the Loom graph.
-         *
-         * @param rect_node Pointer to the doccraft::loom::nodes::DocraftLoomRectangle node being visited.
-         */
         void visit(docraft::loom::nodes::DocraftLoomRectangle*) override;
 
         /**
-         * @brief Visits a DocraftLoomParagraph node during the measurement process.
-         *
-         * Measures the paragraph as the sum of its children's heights plus inter-line spacing,
-         * plus space_before and space_after.
-         *
-         * @param paragraph Pointer to the DocraftLoomParagraph node being visited.
+         * @brief Measures the paragraph as the sum of its children's heights plus
+         * inter-line spacing, plus space_before and space_after.
          */
         void visit(docraft::loom::nodes::DocraftLoomParagraph*) override;
         void visit(docraft::loom::nodes::DocraftLoomVStack*) override;
