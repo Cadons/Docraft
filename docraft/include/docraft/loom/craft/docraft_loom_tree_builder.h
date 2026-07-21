@@ -17,6 +17,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -89,6 +90,14 @@ namespace docraft::loom::craft {
          */
         std::shared_ptr<nodes::DocraftLoomNode> build(
             const std::shared_ptr<docraft::craft::DocraftParsedElement>& element);
+
+        /**
+         * @brief Sets the font family applied to Text/Title/Subtitle/PageNumber/table-cell
+         * nodes built afterwards that don't carry their own `font_name` attribute (from
+         * `<Settings><Fonts default="...">`). Unset by default, in which case such nodes
+         * keep DocraftLoomText's own hardcoded fallback.
+         */
+        void set_default_font_family(const std::string& font_family);
 
     private:
         using ParsedElement = docraft::craft::DocraftParsedElement;
@@ -228,5 +237,6 @@ namespace docraft::loom::craft {
         const nlohmann::json* current_foreach_item_ = nullptr;
 
         std::shared_ptr<docraft::templating::DocraftTemplateEngine> template_engine_;
+        std::optional<std::string> default_font_family_;
     };
 } // namespace docraft::loom::craft

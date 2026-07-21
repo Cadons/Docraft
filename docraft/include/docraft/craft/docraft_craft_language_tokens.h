@@ -185,6 +185,7 @@ namespace docraft::craft {
                 constexpr string kFont = "Font";
                 namespace attribute {
                     constexpr string kName = "name";
+                    constexpr string kDefault = "default";
                 }
                 namespace font_type {
                     constexpr string kFontNormal ="FontNormal";

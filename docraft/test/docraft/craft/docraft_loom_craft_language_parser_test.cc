@@ -4,6 +4,7 @@
 
 #include "docraft/craft/docraft_loom_craft_language_parser.h"
 #include "docraft/exception/docraft_exceptions.h"
+#include "docraft/loom/nodes/docraft_loom_text.h"
 #include "docraft/loom/nodes/docraft_loom_vstack.h"
 #include "docraft/utils/docraft_test_temp_file.h"
 
@@ -196,6 +197,63 @@ TEST(DocraftLoomCraftLanguageParserTest, ThrowsWhenFontHasNoVariants)
     <Fonts>
       <Font name="Empty" />
     </Fonts>
+  </Settings>
+  <Body>
+    <Text>Body</Text>
+  </Body>
+</Document>
+)XML";
+
+  docraft::craft::DocraftLoomCraftLanguageParser parser;
+  EXPECT_THROW(parser.parse(xml), docraft::exception::InvalidInputException);
+}
+
+TEST(DocraftLoomCraftLanguageParserTest, FontsDefaultAttributeAppliesToNodesWithoutFontName)
+{
+  const std::string fonts_dir = DOCRAFT_TEST_FONTS_DIR;
+  const std::string xml = R"XML(
+<Document>
+  <Settings>
+    <Fonts default="TestOpenSans">
+      <Font name="TestOpenSans">
+        <FontNormal src=")XML" + fonts_dir + R"XML(/OpenSans/OpenSans.ttf" />
+      </Font>
+    </Fonts>
+  </Settings>
+  <Body>
+    <Text>Uses the default</Text>
+    <Text font_name="Times-Roman">Uses its own font</Text>
+  </Body>
+</Document>
+)XML";
+
+  docraft::craft::DocraftLoomCraftLanguageParser parser;
+  EXPECT_NO_THROW(parser.parse(xml));
+
+  const auto creator = parser.edit_creator();
+  ASSERT_TRUE(creator);
+
+  const auto body_vstack = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomVStack>(creator->root_node());
+  ASSERT_TRUE(body_vstack);
+  ASSERT_EQ(body_vstack->children_count(), 2);
+
+  const auto default_text = std::dynamic_pointer_cast<const docraft::loom::nodes::DocraftLoomText>(
+      body_vstack->child(0));
+  ASSERT_TRUE(default_text);
+  EXPECT_EQ(default_text->font_family(), "TestOpenSans");
+
+  const auto explicit_text = std::dynamic_pointer_cast<const docraft::loom::nodes::DocraftLoomText>(
+      body_vstack->child(1));
+  ASSERT_TRUE(explicit_text);
+  EXPECT_EQ(explicit_text->font_family(), "Times-Roman");
+}
+
+TEST(DocraftLoomCraftLanguageParserTest, ThrowsWhenFontsDefaultAttributeIsEmpty)
+{
+  const char* xml = R"XML(
+<Document>
+  <Settings>
+    <Fonts default="" />
   </Settings>
   <Body>
     <Text>Body</Text>

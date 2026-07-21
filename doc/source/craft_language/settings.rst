@@ -75,3 +75,29 @@ variant files:
 
 Each variant requires a ``src`` attribute pointing to a ``.ttf`` file.
 
+Default Font
+------------
+
+``<Fonts default="...">`` sets the font family applied to any ``<Text>``,
+``<Title>``, ``<Subtitle>``, ``<PageNumber>``, or table cell that doesn't
+specify its own ``font_name`` attribute. It can name either a custom family
+declared alongside it or a built-in PDF font:
+
+.. code-block:: xml
+
+   <Settings>
+     <Fonts default="MyFont">
+       <Font name="MyFont">
+         <FontNormal src="fonts/MyFont-Regular.ttf"/>
+         <FontBold src="fonts/MyFont-Bold.ttf"/>
+       </Font>
+     </Fonts>
+   </Settings>
+   <Body>
+     <Text>Uses MyFont</Text>
+     <Text font_name="Times-Roman">Uses Times-Roman instead</Text>
+   </Body>
+
+A node's own ``font_name`` attribute always takes precedence over the
+document default. When neither is set, nodes fall back to ``Helvetica``.
+
