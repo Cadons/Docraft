@@ -150,6 +150,25 @@ TEST_F(DocraftHaruBackendTest, SupportsBuiltInFontAndTextMeasure) {
     EXPECT_GT(text_backend().measure_text_width("Hello backend", "Helvetica", 12.0F), 0.0F);
 }
 
+TEST_F(DocraftHaruBackendTest, TranscodesUtf8AccentedCharactersForBuiltInFontMeasurement) {
+    // Helvetica (a base-14 built-in) only ever resolves to WinAnsiEncoding, which
+    // interprets each byte of the string as its own glyph -- if raw UTF-8 bytes for an
+    // accented letter (e.g. "\xC3\xA0" for "a") leaked through untranscoded, "a" would
+    // measure as two mojibake glyphs (roughly double the width of a single letter)
+    // instead of the one accented glyph WinAnsiEncoding actually has for it.
+    const float plain_width = text_backend().measure_text_width("a", "Helvetica", 12.0F);
+    const float accented_width = text_backend().measure_text_width("\xC3\xA0", "Helvetica", 12.0F);
+    EXPECT_GT(accented_width, 0.0F);
+    EXPECT_NEAR(accented_width, plain_width, plain_width * 0.5F);
+}
+
+TEST_F(DocraftHaruBackendTest, DrawsUtf8AccentedTextWithBuiltInFontWithoutThrowing) {
+    edit_text_backend().set_font("Helvetica", 12.0F);
+    edit_text_backend().begin_text();
+    EXPECT_NO_THROW(edit_text_backend().draw_text("Validit\xC3\xA0, citt\xC3\xA0, perch\xC3\xA9", 20.0F, 20.0F));
+    edit_text_backend().end_text();
+}
+
 TEST_F(DocraftHaruBackendTest, ReportsPdfFileExtension) {
     ASSERT_NE(backend().output_backend(), nullptr);
     EXPECT_EQ(backend().output_backend()->file_extension(), ".pdf");
