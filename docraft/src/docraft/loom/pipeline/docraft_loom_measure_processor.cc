@@ -282,18 +282,20 @@ namespace docraft::loom::pipeline {
     {
         if (!node) return;
 
-        // A VStack has no width/padding of its own, so it neither narrows nor owns the
-        // constraint -- it just relays whatever width is available straight through to
-        // each child, mirroring DocraftLoomRectangle.
+        // A VStack has no explicit width of its own -- it shrink-wraps to its widest
+        // child (plus 2x padding()) rather than owning a fixed width like Rectangle --
+        // but it does narrow the width relayed to children by its own padding(), the
+        // same inset Rectangle already applies around its children.
         const float incoming_width = inherited_wrap_width_ > 0.0F ? inherited_wrap_width_ : content_width_;
         inherited_wrap_width_ = 0.0F;
+        const float children_wrap_width = std::max(0.0F, incoming_width - (2.0F * node->padding()));
 
         float total_height = node->resolve_outer_margin(*node, /*leading=*/true);
         float max_width = 0.0F;
         const int n = node->children_count();
         for (int i = 0; i < n; ++i)
         {
-            inherited_wrap_width_ = incoming_width;
+            inherited_wrap_width_ = children_wrap_width;
             auto child = node->edit_child(i);
             child->accept(*this);
             const auto& sz = child->layout_box().measured_size;
@@ -308,8 +310,8 @@ namespace docraft::loom::pipeline {
         }
         total_height += node->resolve_outer_margin(*node, /*leading=*/false);
         auto& ms = node->edit_layout_box().measured_size;
-        ms.width = max_width;
-        ms.height = total_height;
+        ms.width = n > 0 ? max_width + (2.0F * node->padding()) : 0.0F;
+        ms.height = total_height + (n > 0 ? (2.0F * node->padding()) : 0.0F);
     }
 
     void DocraftLoomMeasureProcessor::visit(docraft::loom::nodes::DocraftLoomHStack* node)
@@ -359,7 +361,8 @@ namespace docraft::loom::pipeline {
         std::vector<float> resolved_widths;
         if (!weights.empty() && n > 0 && incoming_width > 0.0F)
         {
-            const float available_width = incoming_width - total_gap - leading_margin - trailing_margin;
+            const float available_width = std::max(0.0F,
+                incoming_width - total_gap - leading_margin - trailing_margin - (2.0F * node->padding()));
             resolved_widths = distribute_weighted_widths(available_width, weights, n);
         }
 
@@ -380,8 +383,8 @@ namespace docraft::loom::pipeline {
             max_height = std::max(max_height, sz.height);
         }
         auto& ms = node->edit_layout_box().measured_size;
-        ms.width = total_width + leading_margin + trailing_margin;
-        ms.height = max_height;
+        ms.width = total_width + leading_margin + trailing_margin + (n > 0 ? (2.0F * node->padding()) : 0.0F);
+        ms.height = max_height + (n > 0 ? (2.0F * node->padding()) : 0.0F);
     }
 
     void DocraftLoomMeasureProcessor::visit(docraft::loom::nodes::DocraftLoomBlankLine* node)

@@ -6,6 +6,7 @@ namespace docraft::loom::nodes {
     DocraftLoomLayoutContainer::DocraftLoomLayoutContainer(float default_spacing)
         : spacing_(default_spacing)
     {
+        set_padding(kDefaultPadding);
     }
 
     float DocraftLoomLayoutContainer::spacing() const

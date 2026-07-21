@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include "docraft/loom/nodes/docraft_loom_layout_container.h"
 #include "docraft/loom/nodes/docraft_loom_rectangle.h"
 #include "docraft/loom/nodes/docraft_loom_text.h"
 #include "docraft/loom/pipeline/docraft_loom_layout_processor.h"
@@ -27,6 +28,12 @@ namespace docraft::test {
         std::unique_ptr<loom::pipeline::DocraftLoomMeasureProcessor> measure_;
         std::unique_ptr<loom::pipeline::DocraftLoomLayoutProcessor> layout_;
     };
+
+    TEST_F(DocraftLoomRectangleTest, DefaultsToNonZeroPaddingSoContentDoesNotTouchBorder)
+    {
+        loom::nodes::DocraftLoomRectangle rect;
+        EXPECT_FLOAT_EQ(rect.padding(), loom::nodes::DocraftLoomLayoutContainer::kDefaultPadding);
+    }
 
     TEST_F(DocraftLoomRectangleTest, MeasureWithoutChildrenUsesExplicitDimensions)
     {

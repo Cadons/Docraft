@@ -72,8 +72,10 @@ namespace docraft::test {
 
         auto rectangle = std::make_shared<docraft::loom::nodes::DocraftLoomRectangle>();
         rectangle->set_width(200.0F);
+        rectangle->set_padding(0.0F); // isolate width-narrowing from the container's own default padding
 
         auto hstack = std::make_shared<docraft::loom::nodes::DocraftLoomHStack>();
+        hstack->set_padding(0.0F); // isolate width-narrowing from the container's own default padding
         hstack->set_weights({1.0F, 1.0F});
 
         auto first = std::make_shared<docraft::loom::nodes::DocraftLoomText>("hello");

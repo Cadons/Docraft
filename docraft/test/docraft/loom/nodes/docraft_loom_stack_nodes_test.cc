@@ -52,6 +52,7 @@ namespace docraft::test {
         EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillOnce(Return(14.0F));
 
         auto vstack = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        vstack->set_padding(0.0F); // isolate stacking math from the container's own default padding
         vstack->add_child(make_text("single"));
         vstack->accept(*measure_);
 
@@ -70,6 +71,7 @@ namespace docraft::test {
         .WillOnce(Return(10.0F));
 
         auto vstack = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        vstack->set_padding(0.0F); // isolate stacking math from the container's own default padding
         vstack->set_spacing(5.0F);
         vstack->add_child(make_text("a"));
         vstack->add_child(make_text("b"));
@@ -89,6 +91,7 @@ namespace docraft::test {
         .WillRepeatedly(Return(10.0F));
 
         auto vstack = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        vstack->set_padding(0.0F); // isolate stacking math from the container's own default padding
         vstack->add_child(make_text("narrow"));
         vstack->add_child(make_text("very wide text"));
         vstack->add_child(make_text("medium"));
@@ -114,6 +117,7 @@ namespace docraft::test {
         EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillOnce(Return(14.0F));
 
         auto hstack = std::make_shared<loom::nodes::DocraftLoomHStack>();
+        hstack->set_padding(0.0F); // isolate stacking math from the container's own default padding
         hstack->add_child(make_text("single"));
         hstack->accept(*measure_);
 
@@ -132,6 +136,7 @@ namespace docraft::test {
         .WillOnce(Return(16.0F));
 
         auto hstack = std::make_shared<loom::nodes::DocraftLoomHStack>();
+        hstack->set_padding(0.0F); // isolate stacking math from the container's own default padding
         hstack->set_spacing(8.0F);
         hstack->add_child(make_text("a"));
         hstack->add_child(make_text("b"));
@@ -151,6 +156,7 @@ namespace docraft::test {
         .WillOnce(Return(12.0F));
 
         auto hstack = std::make_shared<loom::nodes::DocraftLoomHStack>();
+        hstack->set_padding(0.0F); // isolate stacking math from the container's own default padding
         hstack->add_child(make_text("a"));
         hstack->add_child(make_text("b"));
         hstack->add_child(make_text("c"));
@@ -168,6 +174,7 @@ namespace docraft::test {
         EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
 
         auto vstack = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        vstack->set_padding(0.0F); // isolate stacking math from the container's own default padding
         vstack->set_spacing(4.0F);
         auto t1 = make_text("a");
         auto t2 = make_text("b");
@@ -207,6 +214,7 @@ namespace docraft::test {
         EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
 
         auto hstack = std::make_shared<loom::nodes::DocraftLoomHStack>();
+        hstack->set_padding(0.0F); // isolate stacking math from the container's own default padding
         hstack->set_spacing(6.0F);
         auto t1 = make_text("a");
         auto t2 = make_text("b");

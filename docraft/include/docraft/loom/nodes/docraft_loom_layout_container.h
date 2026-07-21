@@ -17,6 +17,14 @@ namespace docraft::loom::nodes {
     class DOCRAFT_LIB DocraftLoomLayoutContainer : public DocraftLoomShape
     {
     public:
+        /**
+         * @brief Default inset (points) applied to padding() by the constructor below,
+         * so a Rectangle/VStack/HStack that paints a border/background doesn't have its
+         * children's content sit flush against that border unless the craft document
+         * explicitly overrides it via a `padding` attribute (set_padding()).
+         */
+        static constexpr float kDefaultPadding = 10.0F;
+
         ~DocraftLoomLayoutContainer() override = default;
 
         float spacing() const;
