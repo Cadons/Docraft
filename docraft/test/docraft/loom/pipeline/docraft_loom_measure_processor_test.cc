@@ -129,4 +129,42 @@ namespace docraft::test {
         // column width leaked from the header.
         EXPECT_FLOAT_EQ(footer_text->edit_layout_box().measured_size.width, 42.0F);
     }
+
+    // The word-wrap char-split fallback (for a single word too wide to fit max_width
+    // on its own) used to advance one byte at a time, which could split a multi-byte
+    // UTF-8 character (e.g. an accented letter) in half. This word is five 2-byte
+    // UTF-8 characters with no spaces -- "a e i o u" -- forcing that fallback path.
+    TEST_F(DocraftLoomMeasureProcessorTest, WordWrapForceSplitDoesNotCorruptMultiByteUtf8Characters)
+    {
+        const std::string word = "\xC3\xA0\xC3\xA8\xC3\xAC\xC3\xB2\xC3\xB9"; // "àèìòù"
+        auto text_node = std::make_unique<docraft::loom::nodes::DocraftLoomText>(word);
+        text_node->set_font_size(12.0F);
+        // 2.9, not a round 2.0/3.0: picked so the old byte-by-byte advance's greedy
+        // growth stops right after accepting an *odd* byte offset (2.5 width, i.e. one
+        // full character plus a lone lead byte of the next) instead of happening to
+        // land back on a character boundary -- with a round width, both the buggy and
+        // fixed advance produce the same (accidentally valid) split, and this test
+        // would pass either way.
+        text_node->set_wrap_width(2.9F);
+
+        ON_CALL(*text_backend_mock(), measure_text_width(::testing::_, ::testing::_, ::testing::_))
+            .WillByDefault(::testing::Invoke([](const std::string& text, const std::string&, float)
+            {
+                // 1.0 width unit per UTF-8 codepoint (2 bytes each, here) -- a candidate
+                // that split a codepoint in half would have an odd byte count, exactly
+                // what the codepoint-aware advance must never produce.
+                return static_cast<float>(text.size()) / 2.0F;
+            }));
+        ON_CALL(*text_backend_mock(), measure_text_height(::testing::_, ::testing::_)).WillByDefault(::testing::Return(12.0F));
+
+        text_node->accept(*processor());
+
+        std::string reassembled;
+        for (const auto& line : text_node->wrapped_lines())
+        {
+            EXPECT_EQ(line.size() % 2, 0U) << "line \"" << line << "\" split a UTF-8 character in half";
+            reassembled += line;
+        }
+        EXPECT_EQ(reassembled, word);
+    }
 }
