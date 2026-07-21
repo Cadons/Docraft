@@ -61,7 +61,7 @@ namespace docraft::backend::pdf {
             if (pos + extra_bytes >= text.size())
             {
                 pos = text.size();
-                return 0xFFFD;
+                return 0xFFFD; // truncated sequence
             }
             for (std::size_t i = 1; i <= extra_bytes; ++i)
             {
