@@ -4,10 +4,12 @@
 
 #include "docraft/loom/docraft_loom_pdf_creator.h"
 
+#include <algorithm>
 #include <cstddef>
 
 #include "docraft/backend/pdf/docraft_haru_backend.h"
 #include "docraft/exception/docraft_exceptions.h"
+#include "docraft/loom/pipeline/docraft_loom_measure_processor.h"
 #include "docraft/loom/pipeline/docraft_loom_pagination_processor.h"
 #include "docraft/loom/pipeline/docraft_loom_pipeline_executor.h"
 #include "docraft/loom/pipeline/docraft_loom_rendering_processor.h"
@@ -144,10 +146,12 @@ namespace docraft::loom {
         const float page_width = page_backend->page_width();
         const float page_height = page_backend->page_height();
 
-        const float header_height = page_height * header_ratio_;
-        const float footer_height = page_height * footer_ratio_;
-        body_top_y_ = header_height + body_margins_.top;
-        body_height_ = page_height - header_height - footer_height - body_margins_.top - body_margins_.bottom;
+        // header_ratio_/footer_ratio_ only set a *minimum* reserved space -- if a
+        // region's actual content (now that padding()/margins genuinely inset it, see
+        // DocraftLoomLayoutContainer::kDefaultPadding) needs more room than its ratio
+        // allocates, that region grows instead of letting the body/footer overlap it.
+        const float header_ratio_height = page_height * header_ratio_;
+        const float footer_ratio_height = page_height * footer_ratio_;
 
         // Runs Measure -> Layout (and, for header/footer, the fixed page-index stamp)
         // for one region at a time, each with its own fresh pair of processor instances --
@@ -157,17 +161,39 @@ namespace docraft::loom {
 
         // Header/footer are laid out once and stamped to render on every page -- the
         // real per-page split only applies to the body.
+        float header_extent = header_ratio_height;
         if (header_)
         {
+            // Header's own top edge is always header_margins_.top from the page top --
+            // unlike the footer, its position doesn't depend on its own height -- so it
+            // can be measured and laid out in one pass, then extent read back after.
             executor.run(*header_, page_width - header_margins_.left - header_margins_.right,
                          header_margins_.left, header_margins_.top, /*assign_fixed_page_index=*/true);
+            const float header_content_extent =
+                header_margins_.top + header_->layout_box().frame.size.height + header_margins_.bottom;
+            header_extent = std::max(header_extent, header_content_extent);
         }
+
+        float footer_extent = footer_ratio_height;
         if (footer_)
         {
+            // The footer is anchored to the page bottom, so its top position depends on
+            // its own height -- measure it alone first (layout needs a resolved
+            // position, which isn't known yet) to learn how much room it actually needs.
+            auto footer_measure = pipeline::DocraftLoomMeasureProcessor(text_backend);
+            footer_measure.set_content_width(page_width - footer_margins_.left - footer_margins_.right);
+            footer_->accept(footer_measure);
+            const float footer_content_extent = footer_->layout_box().measured_size.height
+                + footer_margins_.top + footer_margins_.bottom;
+            footer_extent = std::max(footer_extent, footer_content_extent);
+
+            const float footer_top = page_height - footer_extent + footer_margins_.top;
             executor.run(*footer_, page_width - footer_margins_.left - footer_margins_.right,
-                         footer_margins_.left, page_height - footer_height + footer_margins_.top,
-                         /*assign_fixed_page_index=*/true);
+                         footer_margins_.left, footer_top, /*assign_fixed_page_index=*/true);
         }
+
+        body_top_y_ = header_extent + body_margins_.top;
+        body_height_ = page_height - header_extent - footer_extent - body_margins_.top - body_margins_.bottom;
 
         executor.run(*root_node_, page_width - body_margins_.left - body_margins_.right, body_margins_.left,
                      body_top_y_);

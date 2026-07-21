@@ -43,9 +43,14 @@ Page Format
      - Footer height fraction (default ``0.06``).
 
 Ratios must each be ≥ 0 and sum to at most ``1.0`` (with a small epsilon
-tolerance) — an invalid combination is a parse error. The body's own height
-is always ``page_height - header_height - footer_height``, so it never
-overlaps the other two regions even if the ratios don't sum to exactly 1.
+tolerance) — an invalid combination is a parse error. Each ratio sets a
+*minimum* reserved height, not a fixed one: if a ``<Header>``/``<Footer>``'s
+actual content (including its own padding/margins) needs more room than its
+ratio allocates, that region grows to fit it instead of overlapping the body,
+and the footer is pushed up so it still fits fully on the page. The body's
+own height is always ``page_height - header_extent - footer_extent``, using
+each region's actual (ratio-or-larger) extent, so it never overlaps the
+other two regions.
 
 Custom Fonts
 ------------

@@ -128,6 +128,72 @@ TEST(DocraftLoomCraftLanguageParserTest, AppliesSettingsPageAndRatios)
   EXPECT_FLOAT_EQ(creator->footer_ratio(), 0.1F);
 }
 
+TEST(DocraftLoomCraftLanguageParserTest, HeaderTallerThanRatioPushesBodyDownInsteadOfOverlapping)
+{
+  const char* xml = R"XML(
+<Document>
+  <Settings>
+    <SectionRatios header_ratio="0.01" body_ratio="0.9" footer_ratio="0.01" />
+  </Settings>
+  <Header>
+    <Text font_size="20">A tall header that needs more than 1 percent of the page</Text>
+  </Header>
+  <Body>
+    <Text>Body</Text>
+  </Body>
+</Document>
+)XML";
+
+  docraft::craft::DocraftLoomCraftLanguageParser parser;
+  EXPECT_NO_THROW(parser.parse(xml));
+
+  const auto creator = parser.edit_creator();
+  ASSERT_TRUE(creator);
+  EXPECT_NO_THROW(creator->create());
+
+  ASSERT_TRUE(creator->header());
+  const auto& header_frame = creator->header()->layout_box().frame;
+  const float header_bottom = header_frame.position.y + header_frame.size.height;
+
+  const auto body_vstack = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomVStack>(creator->root_node());
+  ASSERT_TRUE(body_vstack);
+  // Body must start below the header's actual bottom edge -- not at the tiny
+  // header_ratio-allocated position, which would overlap this header's real content.
+  EXPECT_GT(body_vstack->layout_box().frame.position.y, header_bottom);
+}
+
+TEST(DocraftLoomCraftLanguageParserTest, FooterTallerThanRatioStaysFullyOnThePage)
+{
+  const char* xml = R"XML(
+<Document>
+  <Settings>
+    <Page size="A4" orientation="portrait" />
+    <SectionRatios header_ratio="0.06" body_ratio="0.9" footer_ratio="0.01" />
+  </Settings>
+  <Body>
+    <Text>Body</Text>
+  </Body>
+  <Footer>
+    <Text font_size="20">A tall footer that needs more than 1 percent of the page</Text>
+  </Footer>
+</Document>
+)XML";
+
+  docraft::craft::DocraftLoomCraftLanguageParser parser;
+  EXPECT_NO_THROW(parser.parse(xml));
+
+  const auto creator = parser.edit_creator();
+  ASSERT_TRUE(creator);
+  EXPECT_NO_THROW(creator->create());
+
+  ASSERT_TRUE(creator->footer());
+  const auto& footer_frame = creator->footer()->layout_box().frame;
+  // The footer's whole box must still fit on the (portrait A4, ~841.89pt-tall) page --
+  // not overflow past the bottom edge just because footer_ratio's allocation was too
+  // small for its real content.
+  EXPECT_LE(footer_frame.position.y + footer_frame.size.height, 842.0F);
+}
+
 TEST(DocraftLoomCraftLanguageParserTest, AppliesMetadataAndRenders)
 {
   const char* xml = R"XML(
