@@ -35,7 +35,10 @@ Sections
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Each section is a rectangle with configurable margins. Content nodes are
-placed inside a section and flow top-to-bottom.
+placed inside a section and flow top-to-bottom. A ``header_ratio``/
+``footer_ratio`` (see :doc:`settings`) only sets a *minimum* reserved
+height — if a section's actual content needs more room, it grows instead
+of overlapping the body.
 
 .. list-table::
    :header-rows: 1
@@ -46,16 +49,17 @@ placed inside a section and flow top-to-bottom.
      - Description
    * - ``margin_top``
      - float
-     - Top margin in points.
+     - Top margin in points (default ``20``), inset from the page edge (or,
+       for the body, from the header).
    * - ``margin_bottom``
      - float
-     - Bottom margin in points.
+     - Bottom margin in points (default ``20``).
    * - ``margin_left``
      - float
-     - Left margin in points (default ``10``).
+     - Left margin in points (default ``20``).
    * - ``margin_right``
      - float
-     - Right margin in points (default ``10``).
+     - Right margin in points (default ``20``).
    * - ``background_color``
      - color
      - Section background (hex ``#RRGGBB`` or named color).
@@ -65,6 +69,12 @@ placed inside a section and flow top-to-bottom.
    * - ``border_width``
      - float
      - Border width in points.
+
+A section also accepts the common ``padding`` attribute below — unlike
+``margin_*`` (space outside the section, from the page/adjacent section),
+``padding`` insets the section's own content from *its own* border/background
+box, so a bordered ``<Header>`` doesn't render its first line of text flush
+against that border.
 
 Common Node Attributes
 ----------------------
@@ -92,7 +102,10 @@ Every content node supports these attributes:
    * - ``padding``
      - float
      - Inner padding in points, between a container's own box and its
-       children. A no-op for leaf nodes (``Text``, ``Image``, ``Circle``, ...).
+       children (default ``10`` for ``Rectangle``, ``<Layout>``/``<Header>``/
+       ``<Body>``/``<Footer>`` — anything stacking children vertically or
+       horizontally). A no-op for leaf nodes (``Text``, ``Image``,
+       ``Circle``, ...), which have no children to inset.
    * - ``margin``
      - float
      - Uniform outer spacing in points, reserved by the parent stack around
