@@ -46,6 +46,40 @@ TEST(DocraftLoomCraftLanguageParserTest, ParsesFullDocumentWithHeaderBodyFooter)
   EXPECT_FLOAT_EQ(creator->footer_margins().bottom, 5.0F);
 }
 
+TEST(DocraftLoomCraftLanguageParserTest, HeaderBodyFooterFallBackToDefaultMarginWhenUnspecified)
+{
+  const char* xml = R"XML(
+<Document>
+  <Header>
+    <Text>Header text</Text>
+  </Header>
+  <Body>
+    <Text>Body copy</Text>
+  </Body>
+  <Footer>
+    <PageNumber />
+  </Footer>
+</Document>
+)XML";
+
+  docraft::craft::DocraftLoomCraftLanguageParser parser;
+  EXPECT_NO_THROW(parser.parse(xml));
+
+  const auto creator = parser.edit_creator();
+  ASSERT_TRUE(creator);
+
+  // No margin_* attribute given anywhere -- every edge must fall back to
+  // DocraftLoomPdfCreator::Margins::kDefaultMarginPt, so content never sits flush
+  // against its region's own edge.
+  constexpr float kExpectedDefaultMargin = docraft::loom::DocraftLoomPdfCreator::Margins::kDefaultMarginPt;
+  EXPECT_FLOAT_EQ(creator->header_margins().top, kExpectedDefaultMargin);
+  EXPECT_FLOAT_EQ(creator->header_margins().left, kExpectedDefaultMargin);
+  EXPECT_FLOAT_EQ(creator->body_margins().top, kExpectedDefaultMargin);
+  EXPECT_FLOAT_EQ(creator->body_margins().left, kExpectedDefaultMargin);
+  EXPECT_FLOAT_EQ(creator->footer_margins().bottom, kExpectedDefaultMargin);
+  EXPECT_FLOAT_EQ(creator->footer_margins().left, kExpectedDefaultMargin);
+}
+
 TEST(DocraftLoomCraftLanguageParserTest, ParsesDocumentWithOnlyRequiredBody)
 {
   const char* xml = R"XML(

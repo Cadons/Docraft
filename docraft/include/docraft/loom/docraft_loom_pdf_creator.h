@@ -32,10 +32,19 @@ namespace docraft::loom {
          */
         struct Margins
         {
-            float top = 10.0F;
-            float bottom = 10.0F;
-            float left = 10.0F;
-            float right = 10.0F;
+            /**
+             * @brief Default per-edge margin (points) applied when a section (or the
+             * <Header>/<Body>/<Footer> element parsed from craft language) doesn't
+             * override it via an explicit margin_top/margin_bottom/margin_left/
+             * margin_right attribute -- keeps content from sitting flush against its
+             * region's own edge.
+             */
+            static constexpr float kDefaultMarginPt = 20.0F;
+
+            float top = kDefaultMarginPt;
+            float bottom = kDefaultMarginPt;
+            float left = kDefaultMarginPt;
+            float right = kDefaultMarginPt;
         };
 
         explicit DocraftLoomPdfCreator(std::shared_ptr<interfaces::DocraftLoomIVisitorNode> root_node);
