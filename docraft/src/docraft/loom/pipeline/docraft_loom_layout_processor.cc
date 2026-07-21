@@ -195,16 +195,17 @@ namespace docraft::loom::pipeline {
         // this container's real footprint instead of a zero-initialized default.
         layout_box.frame.size = layout_box.measured_size;
 
-        // A VStack has no width/padding of its own, so it neither narrows nor owns the
-        // constraint -- it just relays whatever width is available straight through to
-        // each child
-        const float relay_width = incoming_width();
+        // A VStack has no explicit width of its own, so it neither narrows to a fixed
+        // width nor owns the constraint like Rectangle does -- but it does narrow the
+        // width relayed to children by its own padding(), the same inset Rectangle
+        // already applies around its children.
+        const float relay_width = std::max(0.0F, incoming_width() - (2.0F * node->padding()));
 
-        const float start_x = position.x;
+        const float start_x = position.x + node->padding();
         const int n = node->children_count();
         // Mirrors the measure pass: the first/last child's own margin is reserved
         // outright, with no sibling on that side to combine it with.
-        float current_y = position.y + node->resolve_outer_margin(*node, /*leading=*/true);
+        float current_y = position.y + node->padding() + node->resolve_outer_margin(*node, /*leading=*/true);
         for (int i = 0; i < n; ++i)
         {
             inherited_width_ = relay_width;
@@ -219,8 +220,7 @@ namespace docraft::loom::pipeline {
                     node->spacing(), child->margin().bottom, next->margin().top);
             }
         }
-        current_y += node->resolve_outer_margin(*node, /*leading=*/false);
-        cursor_.set_position(start_x, current_y);
+        cursor_.set_position(position.x, position.y + layout_box.frame.size.height);
     }
 
     void DocraftLoomLayoutProcessor::visit(docraft::loom::nodes::DocraftLoomHStack* node)
@@ -239,7 +239,7 @@ namespace docraft::loom::pipeline {
         const float width_budget = incoming_width();
         inherited_width_ = 0.0F;
 
-        const float start_y = position.y;
+        const float start_y = position.y + node->padding();
         const int n = node->children_count();
         const auto& weights = node->weights();
 
@@ -270,7 +270,8 @@ namespace docraft::loom::pipeline {
         std::vector<float> resolved_widths;
         if (!weights.empty() && n > 0)
         {
-            const float available_width = width_budget - total_gap - leading_margin - trailing_margin;
+            const float available_width = std::max(0.0F,
+                width_budget - total_gap - leading_margin - trailing_margin - (2.0F * node->padding()));
             std::vector<float> natural_widths(static_cast<std::size_t>(n));
             for (int i = 0; i < n; ++i)
             {
@@ -279,7 +280,7 @@ namespace docraft::loom::pipeline {
             resolved_widths = distribute_weighted_widths(available_width, weights, n, natural_widths);
         }
 
-        float current_x = position.x + leading_margin;
+        float current_x = position.x + node->padding() + leading_margin;
         for (int i = 0; i < n; ++i)
         {
             cursor_.set_position(current_x, start_y);
@@ -301,6 +302,7 @@ namespace docraft::loom::pipeline {
                 current_x += trailing_margin;
             }
         }
+        current_x += node->padding();
         cursor_.set_position(current_x, start_y);
         if (!resolved_widths.empty())
         {

@@ -99,9 +99,21 @@ namespace docraft::backend::pdf {
         float measure_text_ascent(const std::string& font_name, float font_size) const override;
 
     private:
-        HPDF_Font resolve_font(const std::string& font_name) const;
+        /**
+         * @brief Resolves `font_name` to an HPDF_Font, same as before, but also reports
+         * (via `needs_win_ansi_transcode`, if non-null) whether the winning encoding was
+         * WinAnsiEncoding rather than UTF-8 -- callers that draw/measure raw text need
+         * this to transcode it first (see docraft_haru_text_backend.cc's anonymous
+         * namespace), since a WinAnsiEncoding-selected font interprets each byte as its
+         * own glyph and would otherwise split a multi-byte UTF-8 sequence into mojibake.
+         */
+        HPDF_Font resolve_font(const std::string& font_name, bool* needs_win_ansi_transcode = nullptr) const;
         std::shared_ptr<DocraftHaruSharedState> state_;
         static constexpr std::string kDefaultFont = "Helvetica";
+        // Sticky across draw_text()/draw_text_matrix() calls that don't take a font_name
+        // of their own -- set by the preceding set_font() call, which does know which
+        // encoding resolve_font() picked for the font it just activated.
+        mutable bool current_needs_win_ansi_transcode_ = true;
     };
 } // namespace docraft::backend::pdf
 

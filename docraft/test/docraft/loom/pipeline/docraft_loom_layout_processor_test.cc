@@ -22,9 +22,11 @@ namespace docraft::test {
     {
         auto rectangle = std::make_shared<loom::nodes::DocraftLoomRectangle>();
         rectangle->set_width(200.0F);
+        rectangle->set_padding(0.0F); // isolate width-narrowing from the container's own default padding
         rectangle->edit_layout_box().measured_size = {.width = 200.0F, .height = 50.0F};
 
         auto hstack = std::make_shared<loom::nodes::DocraftLoomHStack>();
+        hstack->set_padding(0.0F); // isolate width-narrowing from the container's own default padding
         hstack->set_weights({1.0F, 1.0F});
         hstack->edit_layout_box().measured_size = {.width = 20.0F, .height = 10.0F};
 

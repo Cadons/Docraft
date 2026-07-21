@@ -149,6 +149,51 @@ TEST(DocraftLoomTreeBuilderTest, BuildsPageNumber)
     EXPECT_TRUE(page_number->italic());
 }
 
+TEST(DocraftLoomTreeBuilderTest, DefaultFontFamilyAppliesToTextWithoutFontNameAttribute)
+{
+    const char* xml = R"XML(<Text>hello</Text>)XML";
+
+    docraft::craft::DocraftCraftLanguageParser parser;
+    const auto element = parser.parse(xml);
+    docraft::loom::craft::DocraftLoomTreeBuilder builder;
+    builder.set_default_font_family("Roboto");
+    const auto node = builder.build(element);
+
+    const auto text = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomText>(node);
+    ASSERT_TRUE(text);
+    EXPECT_EQ(text->font_family(), "Roboto");
+}
+
+TEST(DocraftLoomTreeBuilderTest, ExplicitFontNameAttributeOverridesDefaultFontFamily)
+{
+    const char* xml = R"XML(<Text font_name="Times-Roman">hello</Text>)XML";
+
+    docraft::craft::DocraftCraftLanguageParser parser;
+    const auto element = parser.parse(xml);
+    docraft::loom::craft::DocraftLoomTreeBuilder builder;
+    builder.set_default_font_family("Roboto");
+    const auto node = builder.build(element);
+
+    const auto text = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomText>(node);
+    ASSERT_TRUE(text);
+    EXPECT_EQ(text->font_family(), "Times-Roman");
+}
+
+TEST(DocraftLoomTreeBuilderTest, DefaultFontFamilyAppliesToPageNumberWithoutFontNameAttribute)
+{
+    const char* xml = R"XML(<PageNumber />)XML";
+
+    docraft::craft::DocraftCraftLanguageParser parser;
+    const auto element = parser.parse(xml);
+    docraft::loom::craft::DocraftLoomTreeBuilder builder;
+    builder.set_default_font_family("Roboto");
+    const auto node = builder.build(element);
+
+    const auto page_number = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomPageNumber>(node);
+    ASSERT_TRUE(page_number);
+    EXPECT_EQ(page_number->font_family(), "Roboto");
+}
+
 TEST(DocraftLoomTreeBuilderTest, BuildsImageFromSrc)
 {
     const char* xml = R"XML(<Image src="assets/logo.png" width="30" height="30" />)XML";

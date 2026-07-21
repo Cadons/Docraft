@@ -47,6 +47,11 @@ namespace docraft::loom::craft {
     {
     }
 
+    void DocraftLoomTreeBuilder::set_default_font_family(const std::string& font_family)
+    {
+        default_font_family_ = font_family;
+    }
+
     namespace tokens = docraft::craft;
     namespace parser = docraft::craft::parser;
 
@@ -460,6 +465,10 @@ namespace docraft::loom::craft {
         {
             node.set_font_family(*data.font_name);
         }
+        else if (default_font_family_)
+        {
+            node.set_font_family(*default_font_family_);
+        }
         if (data.color)
         {
             node.set_color(resolve_color(*data.color));
@@ -492,6 +501,10 @@ namespace docraft::loom::craft {
         if (data.font_name)
         {
             node.set_font_family(*data.font_name);
+        }
+        else if (default_font_family_)
+        {
+            node.set_font_family(*default_font_family_);
         }
         if (data.color)
         {

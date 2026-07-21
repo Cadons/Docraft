@@ -37,6 +37,22 @@ namespace docraft::loom::pipeline {
         // visit(DocraftLoomTableCell*)), never to a single natural-width line, whose
         // own height feeds into inter-node spacing/margin instead (a separate concern).
         constexpr float kWrappedLineHeightMultiplier = 1.2F;
+
+        // Returns the byte length of the UTF-8 codepoint starting with `lead_byte`, so
+        // add_char_split_word() below can advance through a word one glyph at a time
+        // instead of one byte at a time -- a plain byte-by-byte advance can split a
+        // multi-byte UTF-8 sequence (e.g. an accented letter) mid-character, corrupting
+        // it into two invalid fragments. Doesn't need to decode the codepoint itself,
+        // just its span; a stray continuation byte or invalid lead falls back to 1 so
+        // the caller still always makes forward progress.
+        std::size_t utf8_codepoint_byte_length(unsigned char lead_byte)
+        {
+            if ((lead_byte & 0x80U) == 0x00U) return 1; // ASCII
+            if ((lead_byte & 0xE0U) == 0xC0U) return 2;
+            if ((lead_byte & 0xF0U) == 0xE0U) return 3;
+            if ((lead_byte & 0xF8U) == 0xF0U) return 4;
+            return 1;
+        }
     }
 
     DocraftLoomMeasureProcessor::DocraftLoomMeasureProcessor(
@@ -74,9 +90,10 @@ namespace docraft::loom::pipeline {
             std::size_t start = 0;
             while (start < word.length())
             {
-                std::size_t probe_end = start + 1;
+                std::size_t probe_end = std::min(
+                    start + utf8_codepoint_byte_length(static_cast<unsigned char>(word[start])), word.length());
                 std::size_t last_fit_end = start;
-                while (probe_end <= word.length())
+                while (true)
                 {
                     const std::string candidate = word.substr(start, probe_end - start);
                     if (text_backend_->measure_text_width(candidate, font_name, font_size) > max_width)
@@ -84,12 +101,20 @@ namespace docraft::loom::pipeline {
                         break;
                     }
                     last_fit_end = probe_end;
-                    ++probe_end;
+                    if (probe_end >= word.length())
+                    {
+                        break;
+                    }
+                    probe_end = std::min(
+                        probe_end + utf8_codepoint_byte_length(static_cast<unsigned char>(word[probe_end])),
+                        word.length());
                 }
                 if (last_fit_end == start)
                 {
-                    // Not even one character fits -- take one anyway to guarantee progress.
-                    last_fit_end = std::min(start + 1, word.length());
+                    // Not even one glyph fits -- take one full codepoint anyway to
+                    // guarantee progress, without splitting a multi-byte UTF-8 sequence.
+                    last_fit_end = std::min(
+                        start + utf8_codepoint_byte_length(static_cast<unsigned char>(word[start])), word.length());
                 }
                 lines.push_back(word.substr(start, last_fit_end - start));
                 start = last_fit_end;
@@ -282,18 +307,20 @@ namespace docraft::loom::pipeline {
     {
         if (!node) return;
 
-        // A VStack has no width/padding of its own, so it neither narrows nor owns the
-        // constraint -- it just relays whatever width is available straight through to
-        // each child, mirroring DocraftLoomRectangle.
+        // A VStack has no explicit width of its own -- it shrink-wraps to its widest
+        // child (plus 2x padding()) rather than owning a fixed width like Rectangle --
+        // but it does narrow the width relayed to children by its own padding(), the
+        // same inset Rectangle already applies around its children.
         const float incoming_width = inherited_wrap_width_ > 0.0F ? inherited_wrap_width_ : content_width_;
         inherited_wrap_width_ = 0.0F;
+        const float children_wrap_width = std::max(0.0F, incoming_width - (2.0F * node->padding()));
 
         float total_height = node->resolve_outer_margin(*node, /*leading=*/true);
         float max_width = 0.0F;
         const int n = node->children_count();
         for (int i = 0; i < n; ++i)
         {
-            inherited_wrap_width_ = incoming_width;
+            inherited_wrap_width_ = children_wrap_width;
             auto child = node->edit_child(i);
             child->accept(*this);
             const auto& sz = child->layout_box().measured_size;
@@ -308,8 +335,8 @@ namespace docraft::loom::pipeline {
         }
         total_height += node->resolve_outer_margin(*node, /*leading=*/false);
         auto& ms = node->edit_layout_box().measured_size;
-        ms.width = max_width;
-        ms.height = total_height;
+        ms.width = n > 0 ? max_width + (2.0F * node->padding()) : 0.0F;
+        ms.height = total_height + (n > 0 ? (2.0F * node->padding()) : 0.0F);
     }
 
     void DocraftLoomMeasureProcessor::visit(docraft::loom::nodes::DocraftLoomHStack* node)
@@ -359,7 +386,8 @@ namespace docraft::loom::pipeline {
         std::vector<float> resolved_widths;
         if (!weights.empty() && n > 0 && incoming_width > 0.0F)
         {
-            const float available_width = incoming_width - total_gap - leading_margin - trailing_margin;
+            const float available_width = std::max(0.0F,
+                incoming_width - total_gap - leading_margin - trailing_margin - (2.0F * node->padding()));
             resolved_widths = distribute_weighted_widths(available_width, weights, n);
         }
 
@@ -380,8 +408,8 @@ namespace docraft::loom::pipeline {
             max_height = std::max(max_height, sz.height);
         }
         auto& ms = node->edit_layout_box().measured_size;
-        ms.width = total_width + leading_margin + trailing_margin;
-        ms.height = max_height;
+        ms.width = total_width + leading_margin + trailing_margin + (n > 0 ? (2.0F * node->padding()) : 0.0F);
+        ms.height = max_height + (n > 0 ? (2.0F * node->padding()) : 0.0F);
     }
 
     void DocraftLoomMeasureProcessor::visit(docraft::loom::nodes::DocraftLoomBlankLine* node)

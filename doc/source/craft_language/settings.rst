@@ -43,9 +43,14 @@ Page Format
      - Footer height fraction (default ``0.06``).
 
 Ratios must each be ≥ 0 and sum to at most ``1.0`` (with a small epsilon
-tolerance) — an invalid combination is a parse error. The body's own height
-is always ``page_height - header_height - footer_height``, so it never
-overlaps the other two regions even if the ratios don't sum to exactly 1.
+tolerance) — an invalid combination is a parse error. Each ratio sets a
+*minimum* reserved height, not a fixed one: if a ``<Header>``/``<Footer>``'s
+actual content (including its own padding/margins) needs more room than its
+ratio allocates, that region grows to fit it instead of overlapping the body,
+and the footer is pushed up so it still fits fully on the page. The body's
+own height is always ``page_height - header_extent - footer_extent``, using
+each region's actual (ratio-or-larger) extent, so it never overlaps the
+other two regions.
 
 Custom Fonts
 ------------
@@ -74,4 +79,53 @@ variant files:
 - ``<FontBoldItalic>`` — bold italic
 
 Each variant requires a ``src`` attribute pointing to a ``.ttf`` file.
+
+.. _document-default-font:
+
+Default Font
+------------
+
+``<Fonts default="...">`` sets the font family applied to any ``<Text>``,
+``<Title>``, ``<Subtitle>``, ``<PageNumber>``, or table cell that doesn't
+specify its own ``font_name`` attribute. It can name either a custom family
+declared alongside it or a built-in PDF font:
+
+.. code-block:: xml
+
+   <Settings>
+     <Fonts default="MyFont">
+       <Font name="MyFont">
+         <FontNormal src="fonts/MyFont-Regular.ttf"/>
+         <FontBold src="fonts/MyFont-Bold.ttf"/>
+       </Font>
+     </Fonts>
+   </Settings>
+   <Body>
+     <Text>Uses MyFont</Text>
+     <Text font_name="Times-Roman">Uses Times-Roman instead</Text>
+   </Body>
+
+A node's own ``font_name`` attribute always takes precedence over the
+document default. When neither is set, nodes fall back to ``Helvetica``.
+
+Text Encoding
+-------------
+
+Text content, ``${...}`` template values, and JSON data are all read as
+UTF-8. What happens to a non-ASCII character (e.g. accented Western
+European letters — à, è, é, ì, ò, ù, ç — or “smart” punctuation) at render
+time depends on which font resolves for that text:
+
+- A **custom TTF** registered via ``<Font>`` above supports UTF-8 directly
+  — any character the font itself contains renders correctly.
+- A **built-in PDF font** (``Helvetica``, ``Times-Roman``, ``Courier``, and
+  their bold/italic variants — the default when no ``font_name``/document
+  default names a custom family) only supports the single-byte
+  Windows-1252 (WinAnsi) code page. Docraft transcodes UTF-8 to
+  Windows-1252 automatically for these, so every accented Western European
+  letter and common typographic character (curly quotes, en/em dash,
+  ellipsis, €, ™, ...) still renders correctly. A character with no
+  Windows-1252 representation at all (e.g. CJK, Cyrillic, Greek, emoji)
+  renders as ``?`` — use a custom TTF that covers the needed script/range
+  instead.
 

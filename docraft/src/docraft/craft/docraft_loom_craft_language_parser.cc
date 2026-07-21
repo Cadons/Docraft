@@ -186,6 +186,37 @@ namespace docraft::craft {
             }
         }
 
+        // Reads <Settings><Fonts default="..."> (if present), the family name applied to
+        // Text/Title/Subtitle/PageNumber/table-cell nodes that don't specify their own
+        // `font_name`. Must run -- and its result be handed to the tree builder -- before
+        // build_from_document() builds any of Header/Body/Footer, since that's the only
+        // point where each node's font_family is decided.
+        std::optional<std::string> extract_default_font(const pugi::xml_node& settings_node)
+        {
+            if (!settings_node)
+            {
+                return std::nullopt;
+            }
+            const auto fonts_node = settings_node.child(elements::settings::kFonts.data());
+            if (!fonts_node)
+            {
+                return std::nullopt;
+            }
+            const auto default_attr = fonts_node.attribute(
+                elements::settings::fonts::attribute::kDefault.data());
+            if (!default_attr)
+            {
+                return std::nullopt;
+            }
+            const std::string default_font = default_attr.as_string();
+            if (default_font.empty())
+            {
+                throw docraft::exception::InvalidInputException(
+                    "<" + std::string{elements::settings::kFonts} + "> 'default' attribute must not be empty");
+            }
+            return default_font;
+        }
+
         // Applies a <Metadata> element's simple string subtags to the creator. Only the
         // plain text fields are wired -- CreationDate/ModificationDate/Trapped/GtsPdfx/
         // AutoKeywords are left unrecognized (silently skipped) for now.
@@ -366,6 +397,11 @@ namespace docraft::craft {
         {
             throw docraft::exception::DataFormatException(
                 "Invalid .craft document: missing required <" + std::string{section::kBody} + "> element");
+        }
+
+        if (const auto default_font = extract_default_font(settings_node))
+        {
+            tree_builder.set_default_font_family(*default_font);
         }
 
         auto body_node = tree_builder.build(body_element);
