@@ -427,7 +427,15 @@ namespace docraft::loom::pipeline {
         }
 
         const auto& pos = line->layout_box().frame.position;
-        const float mid_y = line->layout_box().measured_size.height / 2.0F;
+        // start()/end() are the line's own local geometry and may not start at (0,0)
+        // (e.g. a vertical line has start().x == end().x, both possibly nonzero), while
+        // pos anchors the *bounding box's* top-left corner (min.x, min.y) -- so both
+        // points are shifted by that same box origin before being placed at pos, mirroring
+        // how Polygon/Triangle place their own local points relative to frame.position.
+        const float origin_x = std::min(line->start().x, line->end().x);
+        const float origin_y = std::min(line->start().y, line->end().y);
+        const nodes::Position p1 = {.x = pos.x + (line->start().x - origin_x), .y = pos.y + (line->start().y - origin_y)};
+        const nodes::Position p2 = {.x = pos.x + (line->end().x - origin_x), .y = pos.y + (line->end().y - origin_y)};
 
         shape_backend_->save_state();
         if (rgba.a < 1.0F)
@@ -436,7 +444,7 @@ namespace docraft::loom::pipeline {
         }
         line_backend_->set_line_width(line->border_width());
         line_backend_->set_stroke_color(rgba.r, rgba.g, rgba.b);
-        line_backend_->draw_line(pos.x, pos.y + mid_y, pos.x + line->layout_box().measured_size.width, pos.y + mid_y);
+        line_backend_->draw_line(p1.x, p1.y, p2.x, p2.y);
         shape_backend_->restore_state();
     }
 

@@ -66,6 +66,14 @@ namespace docraft::test::utils {
             float height;
         };
 
+        struct DrawLineCall
+        {
+            float x1;
+            float y1;
+            float x2;
+            float y2;
+        };
+
         Config config;
         std::size_t pages = 1;
         std::size_t current_page = 0;
@@ -73,6 +81,7 @@ namespace docraft::test::utils {
         mutable int line_count = 0;
         mutable std::string last_saved_path;
         mutable std::vector<ClipCall> clip_calls;
+        mutable std::vector<DrawLineCall> draw_line_calls;
 
         // Simple hash set to track registered fonts by their internal names.
         struct StringHash {
@@ -101,11 +110,12 @@ namespace docraft::test::utils {
             state_->ensure_page_available();
         }
 
-        void draw_line(float, float, float, float) const override {
+        void draw_line(float x1, float y1, float x2, float y2) const override {
             MockBackendSharedState::ensure_supported(state_->config.supports_line_backend,
                                                      "Line backend capability not supported");
             state_->ensure_page_available();
             ++state_->line_count;
+            state_->draw_line_calls.push_back({.x1 = x1, .y1 = y1, .x2 = x2, .y2 = y2});
         }
 
     private:
@@ -519,6 +529,11 @@ namespace docraft::test::utils {
         [[nodiscard]] const std::vector<MockBackendSharedState::ClipCall>& clip_calls() const
         {
             return state_->clip_calls;
+        }
+
+        [[nodiscard]] const std::vector<MockBackendSharedState::DrawLineCall>& draw_line_calls() const
+        {
+            return state_->draw_line_calls;
         }
 
         [[nodiscard]] const std::string &last_saved_path() const {

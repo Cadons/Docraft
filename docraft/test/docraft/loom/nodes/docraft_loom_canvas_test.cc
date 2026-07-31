@@ -160,4 +160,34 @@ namespace docraft::test {
         EXPECT_FLOAT_EQ(backend.clip_calls()[0].width, 80.0F);
         EXPECT_FLOAT_EQ(backend.clip_calls()[0].height, 60.0F);
     }
+
+    TEST_F(DocraftLoomCanvasTest, RenderingDrawsDiagonalLineChildAtItsActualEndpoints)
+    {
+        // Regression test: a Line's own geometry used to be discarded at render time in
+        // favor of a horizontal segment derived only from measured width, so a vertical
+        // or diagonal Line placed inside a Canvas (a natural, expected use case for
+        // free-form graphics) rendered as an invisible/wrong segment.
+        utils::MockRenderingBackend backend;
+        loom::pipeline::DocraftLoomRenderingProcessor rendering(&backend);
+
+        auto canvas = std::make_shared<loom::nodes::DocraftLoomCanvas>();
+        canvas->set_width(100.0F);
+        canvas->set_height(100.0F);
+        auto diagonal = std::make_shared<loom::nodes::DocraftLoomLine>();
+        diagonal->set_start({.x = 0.0F, .y = 0.0F});
+        diagonal->set_end({.x = 30.0F, .y = 40.0F});
+        diagonal->set_explicit_position({.x = 5.0F, .y = 5.0F}); // canvas-local
+        canvas->add_child(diagonal);
+
+        canvas->accept(*measure_);
+        canvas->accept(*layout_);
+        canvas->accept(rendering);
+
+        ASSERT_EQ(backend.draw_line_calls().size(), 1U);
+        const auto& call = backend.draw_line_calls()[0];
+        EXPECT_FLOAT_EQ(call.x1, canvas->layout_box().frame.position.x + 5.0F);
+        EXPECT_FLOAT_EQ(call.y1, canvas->layout_box().frame.position.y + 5.0F);
+        EXPECT_FLOAT_EQ(call.x2, canvas->layout_box().frame.position.x + 5.0F + 30.0F);
+        EXPECT_FLOAT_EQ(call.y2, canvas->layout_box().frame.position.y + 5.0F + 40.0F);
+    }
 } // namespace docraft::test
