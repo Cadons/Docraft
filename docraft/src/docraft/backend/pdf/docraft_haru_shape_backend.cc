@@ -55,6 +55,20 @@ namespace docraft::backend::pdf {
         HPDF_Page_Rectangle(provider->current_page(), px, py, width, height);
     }
 
+    void DocraftHaruShapeBackend::clip_rectangle(float x, float y, float width, float height) const
+    {
+        auto* provider = state_->ensure_page_provider();
+        float px, py;
+        provider->compute_coordinate_system(x, y + height, px, py);
+        HPDF_Page page = provider->current_page();
+        HPDF_Page_Rectangle(page, px, py, width, height); //define the clipping rectangle
+        HPDF_Page_Clip(page);
+        // HPDF_Page_Clip only marks the current path as the clipping path; a
+        // path-painting operator must follow to apply it. HPDF_Page_EndPath ("n") does
+        // so without filling or stroking.
+        HPDF_Page_EndPath(page);
+    }
+
     void DocraftHaruShapeBackend::draw_circle(float center_x, float center_y, float radius) const {
         auto *provider = state_->ensure_page_provider();
         float px, py;

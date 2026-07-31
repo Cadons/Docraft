@@ -4,6 +4,7 @@
 #include "docraft/exception/docraft_exceptions.h"
 #include "docraft/loom/craft/docraft_loom_tree_builder.h"
 #include "docraft/loom/nodes/docraft_loom_blank_line.h"
+#include "docraft/loom/nodes/docraft_loom_canvas.h"
 #include "docraft/loom/nodes/docraft_loom_circle.h"
 #include "docraft/loom/nodes/docraft_loom_hstack.h"
 #include "docraft/loom/nodes/docraft_loom_image.h"
@@ -60,6 +61,36 @@ TEST(DocraftLoomTreeBuilderTest, BuildsRectangleWithStyleAndCommonAttributes)
     const auto text = std::dynamic_pointer_cast<const docraft::loom::nodes::DocraftLoomText>(rectangle->child(0));
     ASSERT_TRUE(text);
     EXPECT_EQ(text->text(), "inside");
+}
+
+TEST(DocraftLoomTreeBuilderTest, BuildsCanvasWithStyleCommonAttributesAndChildLocalPosition)
+{
+    const char* xml = R"XML(
+<Canvas name="art" width="200" height="150" background_color="#00FF00">
+  <Text x="10" y="20">inside</Text>
+</Canvas>
+)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto canvas = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomCanvas>(node);
+    ASSERT_TRUE(canvas);
+
+    EXPECT_FLOAT_EQ(canvas->width(), 200.0F);
+    EXPECT_FLOAT_EQ(canvas->height(), 150.0F);
+    EXPECT_EQ(canvas->name(), "art");
+    EXPECT_FLOAT_EQ(canvas->style().background_color.toRGB().g, 1.0F);
+
+    ASSERT_EQ(canvas->children_count(), 1);
+    const auto text = std::dynamic_pointer_cast<const docraft::loom::nodes::DocraftLoomText>(canvas->child(0));
+    ASSERT_TRUE(text);
+    EXPECT_FLOAT_EQ(text->explicit_position().x, 10.0F);
+    EXPECT_FLOAT_EQ(text->explicit_position().y, 20.0F);
+}
+
+TEST(DocraftLoomTreeBuilderTest, CanvasWithoutWidthOrHeightThrows)
+{
+    EXPECT_THROW(parse_and_build(R"XML(<Canvas height="150" />)XML"), docraft::exception::InvalidInputException);
+    EXPECT_THROW(parse_and_build(R"XML(<Canvas width="200" />)XML"), docraft::exception::InvalidInputException);
 }
 
 TEST(DocraftLoomTreeBuilderTest, BuildsCircleRadius)

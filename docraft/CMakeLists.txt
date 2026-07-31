@@ -63,6 +63,8 @@ set(DOCRAFT_SOURCES
         include/docraft/loom/nodes/docraft_loom_subtitle.h
         src/docraft/loom/nodes/docraft_loom_rectangle.cc
         include/docraft/loom/nodes/docraft_loom_rectangle.h
+        src/docraft/loom/nodes/docraft_loom_canvas.cc
+        include/docraft/loom/nodes/docraft_loom_canvas.h
         include/docraft/loom/nodes/docraft_loom_shape_style.h
         src/docraft/loom/nodes/docraft_loom_shape.cc
         include/docraft/loom/nodes/docraft_loom_shape.h

@@ -15,6 +15,7 @@
 #include "docraft/loom/nodes/docraft_loom_triangle.h"
 #include "docraft/loom/nodes/docraft_loom_page_number.h"
 #include "docraft/loom/nodes/docraft_loom_paragraph.h"
+#include "docraft/loom/nodes/docraft_loom_canvas.h"
 #include "docraft/loom/nodes/docraft_loom_rectangle.h"
 #include "docraft/loom/nodes/docraft_loom_subtitle.h"
 #include "docraft/loom/nodes/docraft_loom_table.h"
@@ -157,6 +158,32 @@ namespace docraft::loom::pipeline {
             }
         }
         cursor_.set_position(layout_box.frame.position.x, layout_box.frame.position.y + layout_box.frame.size.height);
+    }
+
+    void DocraftLoomLayoutProcessor::visit(docraft::loom::nodes::DocraftLoomCanvas* node)
+    {
+        if (!node)
+            return;
+        PositionScope scope(*this, *node);
+        auto& layout_box = node->edit_layout_box();
+        layout_box.frame.size = layout_box.measured_size;
+
+        // Every direct child is positioned by its own x/y relative to the canvas's own
+        // origin (defaulting to (0,0) when omitted), never block-stacked. Forcing
+        // kAbsolute and pre-translating explicit_position() to page-space lets the
+        // child's own PositionScope (entered inside accept()) resolve to exactly that
+        // page coordinate unchanged -- the same mechanism any other kAbsolute node
+        // already uses, just computed here instead of by the Craft author.
+        const auto& origin = layout_box.frame.position;
+        for (int i = 0; i < node->children_count(); ++i)
+        {
+            auto child = node->edit_child(i);
+            const auto local = child->explicit_position();
+            child->set_position_mode(nodes::DocraftPositionType::kAbsolute);
+            child->set_explicit_position({.x = origin.x + local.x, .y = origin.y + local.y});
+            child->accept(*this);
+        }
+        cursor_.set_position(origin.x, origin.y + layout_box.frame.size.height);
     }
 
     void DocraftLoomLayoutProcessor::visit(docraft::loom::nodes::DocraftLoomParagraph* node)

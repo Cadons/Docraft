@@ -13,6 +13,7 @@
 #include "docraft/loom/nodes/docraft_loom_hstack.h"
 #include "docraft/loom/nodes/docraft_loom_list.h"
 #include "docraft/loom/nodes/docraft_loom_new_page.h"
+#include "docraft/loom/nodes/docraft_loom_canvas.h"
 #include "docraft/loom/nodes/docraft_loom_rectangle.h"
 #include "docraft/loom/nodes/docraft_loom_table.h"
 #include "docraft/loom/nodes/docraft_loom_vstack.h"
@@ -32,17 +33,12 @@ namespace docraft::loom::pipeline {
 
     void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomRectangle* node)
     {
-        if (!node)
-        {
-            return;
-        }
-        for (int i = 0; i < node->children_count(); ++i)
-        {
-            if (auto child = node->edit_child(i))
-            {
-                child->accept(*this);
-            }
-        }
+        recurse_into_children(node);
+    }
+
+    void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomCanvas* node)
+    {
+        recurse_into_children(node);
     }
 
     void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomParagraph*)
@@ -51,32 +47,12 @@ namespace docraft::loom::pipeline {
 
     void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomVStack* node)
     {
-        if (!node)
-        {
-            return;
-        }
-        for (int i = 0; i < node->children_count(); ++i)
-        {
-            if (auto child = node->edit_child(i))
-            {
-                child->accept(*this);
-            }
-        }
+        recurse_into_children(node);
     }
 
     void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomHStack* node)
     {
-        if (!node)
-        {
-            return;
-        }
-        for (int i = 0; i < node->children_count(); ++i)
-        {
-            if (auto child = node->edit_child(i))
-            {
-                child->accept(*this);
-            }
-        }
+        recurse_into_children(node);
     }
 
     void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomBlankLine*)
@@ -105,17 +81,7 @@ namespace docraft::loom::pipeline {
 
     void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomList* node)
     {
-        if (!node)
-        {
-            return;
-        }
-        for (int i = 0; i < node->children_count(); ++i)
-        {
-            if (auto child = node->edit_child(i))
-            {
-                child->accept(*this);
-            }
-        }
+        recurse_into_children(node);
     }
 
     void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomTableCell* cell)
@@ -156,6 +122,21 @@ namespace docraft::loom::pipeline {
     {
         // The actual forced break is handled directly in paginate_body(), which needs to
         // special-case it before the normal fits-on-this-page check runs.
+    }
+
+    void DocraftLoomPaginationProcessor::recurse_into_children(nodes::DocraftLoomNode* node)
+    {
+        if (!node)
+        {
+            return;
+        }
+        for (int i = 0; i < node->children_count(); ++i)
+        {
+            if (auto child = node->edit_child(i))
+            {
+                child->accept(*this);
+            }
+        }
     }
 
     void DocraftLoomPaginationProcessor::assign_page_index_recursive(nodes::DocraftLoomNode& node, int page_index)

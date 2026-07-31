@@ -21,6 +21,7 @@
 #include "docraft/loom/nodes/docraft_loom_polygon.h"
 #include "docraft/loom/nodes/docraft_loom_triangle.h"
 #include "docraft/loom/nodes/docraft_loom_page_number.h"
+#include "docraft/loom/nodes/docraft_loom_canvas.h"
 #include "docraft/loom/nodes/docraft_loom_rectangle.h"
 #include "docraft/loom/nodes/docraft_loom_subtitle.h"
 #include "docraft/loom/nodes/docraft_loom_table.h"
@@ -271,6 +272,32 @@ namespace docraft::loom::pipeline {
         measured_size.width = node->width() > 0.0F
                                   ? node->width()
                                   : (has_children ? child_width + (2.0F * node->padding()) : 0.0F);
+    }
+
+    void DocraftLoomMeasureProcessor::visit(docraft::loom::nodes::DocraftLoomCanvas* node)
+    {
+        if (!node)
+            return;
+
+        // Unlike Rectangle, Canvas's own size never derives from its children -- they are
+        // free-positioned and may legitimately sit partially or fully outside its bounds
+        // by design (see visit(DocraftLoomCanvas*) in the layout/rendering processors).
+        // Children are still measured (recursed into) so each gets its own natural
+        // measured_size, needed for rendering geometry (e.g. a Line's width from its
+        // start/end points, a Circle's diameter). Relay the canvas's own width as the
+        // wrap width, mirroring Rectangle's children_wrap_width relay, so a Text/
+        // Paragraph child wraps within the canvas bounds instead of the page width.
+        const int n = node->children_count();
+        for (int i = 0; i < n; ++i)
+        {
+            inherited_wrap_width_ = node->width();
+            auto child = node->edit_child(i);
+            child->accept(*this);
+        }
+
+        auto& measured_size = node->edit_layout_box().measured_size;
+        measured_size.width = node->width();
+        measured_size.height = node->height();
     }
 
     void DocraftLoomMeasureProcessor::visit(docraft::loom::nodes::DocraftLoomParagraph* paragraph)

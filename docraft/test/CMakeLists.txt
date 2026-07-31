@@ -21,6 +21,7 @@ set(TEST_SOURCES
         docraft/loom/nodes/docraft_loom_image_test.cc
         docraft/loom/nodes/docraft_loom_line_test.cc
         docraft/loom/nodes/docraft_loom_rectangle_test.cc
+        docraft/loom/nodes/docraft_loom_canvas_test.cc
         docraft/loom/nodes/docraft_loom_shape_nodes_test.cc
         docraft/loom/nodes/docraft_loom_list_test.cc
         docraft/loom/nodes/docraft_loom_table_test.cc

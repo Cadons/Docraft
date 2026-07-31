@@ -38,6 +38,7 @@
 #include "docraft/loom/nodes/docraft_loom_page_number.h"
 #include "docraft/loom/nodes/docraft_loom_paragraph.h"
 #include "docraft/loom/nodes/docraft_loom_polygon.h"
+#include "docraft/loom/nodes/docraft_loom_canvas.h"
 #include "docraft/loom/nodes/docraft_loom_rectangle.h"
 #include "docraft/loom/nodes/docraft_loom_table.h"
 #include "docraft/loom/nodes/docraft_loom_text.h"
@@ -103,6 +104,7 @@ namespace docraft::loom::craft {
         using ParsedElement = docraft::craft::DocraftParsedElement;
 
         std::shared_ptr<nodes::DocraftLoomRectangle> build_rectangle(const ParsedElement& element);
+        std::shared_ptr<nodes::DocraftLoomCanvas> build_canvas(const ParsedElement& element);
         std::shared_ptr<nodes::DocraftLoomCircle> build_circle(const ParsedElement& element);
         std::shared_ptr<nodes::DocraftLoomTriangle> build_triangle(const ParsedElement& element);
         std::shared_ptr<nodes::DocraftLoomPolygon> build_polygon(const ParsedElement& element);

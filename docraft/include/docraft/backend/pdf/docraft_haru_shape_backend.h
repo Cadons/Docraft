@@ -75,6 +75,11 @@ namespace docraft::backend::pdf {
         void draw_rectangle(float x, float y, float width, float height) const override;
 
         /**
+         * @brief Restricts subsequent painting to the given rectangle.
+         */
+        void clip_rectangle(float x, float y, float width, float height) const override;
+
+        /**
          * @brief Appends a circle path to the current page path.
          */
         void draw_circle(float center_x, float center_y, float radius) const override;

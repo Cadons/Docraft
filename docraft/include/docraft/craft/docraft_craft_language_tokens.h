@@ -87,6 +87,7 @@ namespace docraft::craft {
         constexpr string kLayout = "Layout";
         constexpr string kBlankLine = "Blank";
         constexpr string kRectangle = "Rectangle";
+        constexpr string kCanvas = "Canvas";
         constexpr string kCircle = "Circle";
         constexpr string kTriangle = "Triangle";
         constexpr string kLine = "Line";

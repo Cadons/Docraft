@@ -58,12 +58,21 @@ namespace docraft::test::utils {
             }
         }
 
+        struct ClipCall
+        {
+            float x;
+            float y;
+            float width;
+            float height;
+        };
+
         Config config;
         std::size_t pages = 1;
         std::size_t current_page = 0;
         mutable bool text_scope_active = false;
         mutable int line_count = 0;
         mutable std::string last_saved_path;
+        mutable std::vector<ClipCall> clip_calls;
 
         // Simple hash set to track registered fonts by their internal names.
         struct StringHash {
@@ -189,6 +198,13 @@ namespace docraft::test::utils {
         void set_fill_alpha(float) const override { require(); }
         void set_stroke_alpha(float) const override { require(); }
         void draw_rectangle(float, float, float, float) const override { require(); }
+
+        void clip_rectangle(float x, float y, float width, float height) const override
+        {
+            require();
+            state_->clip_calls.push_back({.x = x, .y = y, .width = width, .height = height});
+        }
+
         void draw_circle(float, float, float) const override { require(); }
         void draw_polygon(const std::vector<docraft::Position>&) const override { require(); }
         void fill() const override { require(); }
@@ -498,6 +514,11 @@ namespace docraft::test::utils {
 
         [[nodiscard]] int line_count() const {
             return state_->line_count;
+        }
+
+        [[nodiscard]] const std::vector<MockBackendSharedState::ClipCall>& clip_calls() const
+        {
+            return state_->clip_calls;
         }
 
         [[nodiscard]] const std::string &last_saved_path() const {

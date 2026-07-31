@@ -309,6 +309,10 @@ namespace docraft::loom::craft {
         {
             return build_rectangle(*element);
         }
+        if (tag == std::string{tokens::elements::kCanvas})
+        {
+            return build_canvas(*element);
+        }
         if (tag == std::string{tokens::elements::kCircle})
         {
             return build_circle(*element);
@@ -779,6 +783,24 @@ namespace docraft::loom::craft {
     {
         const auto& data = std::any_cast<const parser::ParsedRectangleData&>(element.data);
         auto node = std::make_shared<nodes::DocraftLoomRectangle>();
+        apply_shape_style(*node, data, [this](const std::string& c) { return resolve_color(c); });
+        apply_common_attributes(*node, element.common);
+        add_children(node, element.children);
+        return node;
+    }
+
+    std::shared_ptr<nodes::DocraftLoomCanvas> DocraftLoomTreeBuilder::build_canvas(const ParsedElement& element)
+    {
+        // Canvas has no auto-sizing (its children are free-positioned, not stacked), so
+        // it needs an explicit bound to clip against -- unlike Rectangle, an unset
+        // width/height is a configuration error, not a "shrink to content" default.
+        if (!element.common.width || !element.common.height)
+        {
+            throw docraft::exception::InvalidInputException(
+                "<Canvas> requires explicit 'width' and 'height' attributes");
+        }
+        const auto& data = std::any_cast<const parser::ParsedRectangleData&>(element.data);
+        auto node = std::make_shared<nodes::DocraftLoomCanvas>();
         apply_shape_style(*node, data, [this](const std::string& c) { return resolve_color(c); });
         apply_common_attributes(*node, element.common);
         add_children(node, element.children);

@@ -19,6 +19,7 @@
 #include "docraft/loom/nodes/docraft_loom_page_number.h"
 #include "docraft/loom/nodes/docraft_loom_paragraph.h"
 #include "docraft/loom/nodes/docraft_loom_polygon.h"
+#include "docraft/loom/nodes/docraft_loom_canvas.h"
 #include "docraft/loom/nodes/docraft_loom_rectangle.h"
 #include "docraft/loom/nodes/docraft_loom_subtitle.h"
 #include "docraft/loom/nodes/docraft_loom_table.h"
@@ -334,6 +335,23 @@ namespace docraft::loom::pipeline {
         for (int i = 0; i < node->children_count(); ++i)
             if (auto child = node->edit_child(i))
                 child->accept(*this);
+    }
+
+    void DocraftLoomRenderingProcessor::visit(docraft::loom::nodes::DocraftLoomCanvas* node)
+    {
+        if (!node || !should_render(*node))
+            return;
+        const auto& frame = node->layout_box().frame;
+        draw_container_background(node->style(), frame.position, frame.size);
+        // Clips children to the canvas bounds, trimming anything that overflows -- see
+        // visit(DocraftLoomCanvas*) in the layout processor for how children are
+        // positioned relative to this origin in the first place.
+        shape_backend_->save_state();
+        shape_backend_->clip_rectangle(frame.position.x, frame.position.y, frame.size.width, frame.size.height);
+        for (int i = 0; i < node->children_count(); ++i)
+            if (auto child = node->edit_child(i))
+                child->accept(*this);
+        shape_backend_->restore_state();
     }
 
     void DocraftLoomRenderingProcessor::visit(docraft::loom::nodes::DocraftLoomParagraph* paragraph)
