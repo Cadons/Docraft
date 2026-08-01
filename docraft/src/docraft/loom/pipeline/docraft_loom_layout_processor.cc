@@ -173,15 +173,21 @@ namespace docraft::loom::pipeline {
         // kAbsolute and pre-translating explicit_position() to page-space lets the
         // child's own PositionScope (entered inside accept()) resolve to exactly that
         // page coordinate unchanged -- the same mechanism any other kAbsolute node
-        // already uses, just computed here instead of by the Craft author.
+        // already uses, just computed here instead of by the Craft author. The child's
+        // original mode/position are restored right after accept() so a second layout
+        // pass over the same tree (e.g. after set_page_format()) re-translates from the
+        // same local coordinates instead of compounding the previous pass's translation.
         const auto& origin = layout_box.frame.position;
         for (int i = 0; i < node->children_count(); ++i)
         {
             auto child = node->edit_child(i);
             const auto local = child->explicit_position();
+            const auto original_mode = child->position_mode();
             child->set_position_mode(nodes::DocraftPositionType::kAbsolute);
             child->set_explicit_position({.x = origin.x + local.x, .y = origin.y + local.y});
             child->accept(*this);
+            child->set_position_mode(original_mode);
+            child->set_explicit_position(local);
         }
         cursor_.set_position(origin.x, origin.y + layout_box.frame.size.height);
     }

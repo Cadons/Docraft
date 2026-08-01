@@ -45,6 +45,7 @@ namespace docraft::loom::craft {
                                ? std::move(template_engine)
                                : std::make_shared<docraft::templating::DocraftTemplateEngine>())
     {
+        charts::register_builtin_chart_styles();
     }
 
     void DocraftLoomTreeBuilder::set_default_font_family(const std::string& font_family)
@@ -168,6 +169,20 @@ namespace docraft::loom::craft {
             default:
                 return nodes::TextAlignment::kCenter;
             }
+        }
+
+        charts::DocraftChartAxisPosition parse_chart_axis_position(const std::string& raw)
+        {
+            if (raw == "left") return charts::DocraftChartAxisPosition::kLeft;
+            if (raw == "right") return charts::DocraftChartAxisPosition::kRight;
+            if (raw == "top-left") return charts::DocraftChartAxisPosition::kTopLeft;
+            if (raw == "top-right") return charts::DocraftChartAxisPosition::kTopRight;
+            if (raw == "bottom-left") return charts::DocraftChartAxisPosition::kBottomLeft;
+            if (raw == "bottom-right") return charts::DocraftChartAxisPosition::kBottomRight;
+            if (raw == "center") return charts::DocraftChartAxisPosition::kCenter;
+            throw docraft::exception::InvalidInputException(
+                "<Chart> 'axis_position' must be one of left/right/center/top-left/top-right/"
+                "bottom-left/bottom-right, got '" + raw + "'");
         }
 
         template <typename NodeT>
@@ -312,6 +327,10 @@ namespace docraft::loom::craft {
         if (tag == std::string{tokens::elements::kCanvas})
         {
             return build_canvas(*element);
+        }
+        if (tag == std::string{tokens::elements::kChart})
+        {
+            return build_chart(*element);
         }
         if (tag == std::string{tokens::elements::kCircle})
         {
@@ -779,6 +798,55 @@ namespace docraft::loom::craft {
         return header;
     }
 
+    std::vector<nodes::Position> DocraftLoomTreeBuilder::resolve_series_points(const std::string& raw) const
+    {
+        if (raw.empty())
+        {
+            return {};
+        }
+        const std::string normalized = normalize_single_quoted_json(render_template_text(raw));
+
+        nlohmann::json parsed;
+        try
+        {
+            parsed = nlohmann::json::parse(normalized);
+        }
+        catch (const nlohmann::json::exception& e)
+        {
+            throw docraft::exception::DataFormatException(
+                std::string{"<Series> 'model' is not valid JSON: "} + e.what());
+        }
+        if (!parsed.is_array())
+        {
+            throw docraft::exception::DataFormatException("<Series> 'model' must resolve to a JSON array");
+        }
+
+        std::vector<nodes::Position> points;
+        points.reserve(parsed.size());
+        for (const auto& item : parsed)
+        {
+            float x, y;
+            if (item.is_array() && item.size() == 2 && item[0].is_number() && item[1].is_number())
+            {
+                x = item[0].get<float>();
+                y = item[1].get<float>();
+            }
+            else if (item.is_object() && item.contains("x") && item.contains("y")
+                     && item["x"].is_number() && item["y"].is_number())
+            {
+                x = item["x"].get<float>();
+                y = item["y"].get<float>();
+            }
+            else
+            {
+                throw docraft::exception::DataFormatException(
+                    "<Series> 'model' entries must be [x,y] pairs or {\"x\":..,\"y\":..} objects");
+            }
+            points.push_back({.x = x, .y = y});
+        }
+        return points;
+    }
+
     std::shared_ptr<nodes::DocraftLoomRectangle> DocraftLoomTreeBuilder::build_rectangle(const ParsedElement& element)
     {
         const auto& data = std::any_cast<const parser::ParsedRectangleData&>(element.data);
@@ -805,6 +873,66 @@ namespace docraft::loom::craft {
         apply_common_attributes(*node, element.common);
         add_children(node, element.children);
         return node;
+    }
+
+    std::shared_ptr<nodes::DocraftLoomCanvas> DocraftLoomTreeBuilder::build_chart(const ParsedElement& element)
+    {
+        const auto& data = std::any_cast<const parser::ParsedChartData&>(element.data);
+
+        if (!data.style)
+        {
+            throw docraft::exception::InvalidInputException("<Chart> requires a 'style' attribute");
+        }
+        if (!element.common.width || !element.common.height)
+        {
+            throw docraft::exception::InvalidInputException(
+                "<Chart> requires explicit 'width' and 'height' attributes");
+        }
+
+        const auto* builder = charts::DocraftChartBuilderRegistry::instance().find(*data.style);
+        if (!builder)
+        {
+            throw docraft::exception::InvalidInputException("<Chart> unknown style: '" + *data.style + "'");
+        }
+
+        charts::DocraftChartBuildContext context;
+        context.width = *element.common.width;
+        context.height = *element.common.height;
+        context.axis_position = parse_chart_axis_position(data.axis_position.value_or("left"));
+        if (data.title)
+        {
+            context.title = render_template_text(*data.title);
+        }
+        if (data.x_label)
+        {
+            context.x_label = render_template_text(*data.x_label);
+        }
+        if (data.y_label)
+        {
+            context.y_label = render_template_text(*data.y_label);
+        }
+
+        context.series.reserve(element.children.size());
+        for (const auto& child : element.children)
+        {
+            if (child->tag_name != std::string{tokens::elements::kSeries})
+            {
+                throw docraft::exception::InvalidInputException("<Chart> only accepts <Series> children, got <"
+                                                                  + child->tag_name + ">");
+            }
+            const auto& series_data = std::any_cast<const parser::ParsedSeriesData&>(child->data);
+            charts::DocraftChartSeries series;
+            series.name = child->common.name.value_or("");
+            series.color = series_data.color ? resolve_color(*series_data.color)
+                                              : charts::default_series_color(context.series.size());
+            series.points = resolve_series_points(series_data.model.value_or(""));
+            context.series.push_back(std::move(series));
+        }
+
+        auto canvas = (*builder)(context);
+        apply_shape_style(*canvas, data, [this](const std::string& c) { return resolve_color(c); });
+        apply_common_attributes(*canvas, element.common);
+        return canvas;
     }
 
     std::shared_ptr<nodes::DocraftLoomCircle> DocraftLoomTreeBuilder::build_circle(const ParsedElement& element)

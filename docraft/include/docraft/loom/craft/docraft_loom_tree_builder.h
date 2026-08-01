@@ -38,6 +38,7 @@
 #include "docraft/loom/nodes/docraft_loom_page_number.h"
 #include "docraft/loom/nodes/docraft_loom_paragraph.h"
 #include "docraft/loom/nodes/docraft_loom_polygon.h"
+#include "docraft/loom/charts/docraft_chart_types.h"
 #include "docraft/loom/nodes/docraft_loom_canvas.h"
 #include "docraft/loom/nodes/docraft_loom_rectangle.h"
 #include "docraft/loom/nodes/docraft_loom_table.h"
@@ -105,6 +106,7 @@ namespace docraft::loom::craft {
 
         std::shared_ptr<nodes::DocraftLoomRectangle> build_rectangle(const ParsedElement& element);
         std::shared_ptr<nodes::DocraftLoomCanvas> build_canvas(const ParsedElement& element);
+        std::shared_ptr<nodes::DocraftLoomCanvas> build_chart(const ParsedElement& element);
         std::shared_ptr<nodes::DocraftLoomCircle> build_circle(const ParsedElement& element);
         std::shared_ptr<nodes::DocraftLoomTriangle> build_triangle(const ParsedElement& element);
         std::shared_ptr<nodes::DocraftLoomPolygon> build_polygon(const ParsedElement& element);
@@ -183,6 +185,18 @@ namespace docraft::loom::craft {
          * non-empty JSON array of strings.
          */
         std::vector<std::string> resolve_table_header(const std::string& raw) const;
+
+        /**
+         * @brief Resolves a `<Series model="...">` attribute into numeric data points:
+         * `${...}` substitution, single-quote-JSON normalization (same helpers Table's
+         * own model resolution uses), then JSON-parse. Each array entry must be either a
+         * 2-element numeric array (`[x,y]`) or an object with numeric `x`/`y` keys. This
+         * is a separate resolver from `to_string_matrix()` (Table's own model matrix,
+         * which requires string cells) rather than a variant of it.
+         * @throws docraft::exception::DataFormatException if `raw` doesn't resolve to a
+         * JSON array, or any entry doesn't match one of the two accepted shapes.
+         */
+        std::vector<nodes::Position> resolve_series_points(const std::string& raw) const;
 
         /**
          * @brief Builds and appends the header row for a JSON/template `model` table (either

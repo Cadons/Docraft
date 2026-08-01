@@ -382,4 +382,66 @@ namespace docraft::craft::parser {
          */
         std::any parse(const pugi::xml_node& craft_language_source) override;
     };
+
+    /**
+     * @brief Tag-specific payload parsed from a `<Chart>` element. `style` selects which
+     * registered `docraft::loom::charts::DocraftChartBuilderFn` builds the chart's
+     * content (e.g. "scatter") -- required, validated by the loom builder, not here.
+     * `axis_position` defaults to "left" when absent. background/border mirror
+     * `ParsedRectangleData` so the loom builder can reuse `apply_shape_style()` as-is.
+     */
+    struct ParsedChartData
+    {
+        std::optional<std::string> style;
+        std::optional<std::string> axis_position;
+        std::optional<std::string> title;
+        std::optional<std::string> x_label;
+        std::optional<std::string> y_label;
+        std::optional<std::string> background_color;
+        std::optional<std::string> border_color;
+        std::optional<float> border_width;
+    };
+
+    /**
+     * @brief Parser for chart nodes.
+     */
+    class DOCRAFT_LIB DocraftChartParser : public IDocraftParser
+    {
+    public:
+        /**
+         * @brief Parses a chart XML node.
+         * @param craft_language_source XML node.
+         * @return `ParsedChartData`.
+         */
+        std::any parse(const pugi::xml_node& craft_language_source) override;
+    };
+
+    /**
+     * @brief Tag-specific payload parsed from a `<Series>` element (a `<Chart>` child).
+     * `model` is carried raw/unresolved -- like `<Table model="...">` -- and resolved
+     * into numeric points by the loom builder (`${...}` substitution, then JSON-parse
+     * as an array of `[x,y]` pairs or `{"x":..,"y":..}` objects). The series' display
+     * `name` is not parsed here -- it's already available generically via
+     * `DocraftCommonAttributes::name`, since every tag's common attributes are parsed
+     * unconditionally by `DocraftCraftLanguageParser`.
+     */
+    struct ParsedSeriesData
+    {
+        std::optional<std::string> color;
+        std::optional<std::string> model;
+    };
+
+    /**
+     * @brief Parser for chart series nodes.
+     */
+    class DOCRAFT_LIB DocraftSeriesParser : public IDocraftParser
+    {
+    public:
+        /**
+         * @brief Parses a series XML node.
+         * @param craft_language_source XML node.
+         * @return `ParsedSeriesData`.
+         */
+        std::any parse(const pugi::xml_node& craft_language_source) override;
+    };
 } // namespace docraft::craft::parser

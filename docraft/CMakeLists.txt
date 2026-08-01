@@ -27,10 +27,12 @@ set(DOCRAFT_SOURCES
         src/docraft/utils/docraft_font_resolver.cc
         src/docraft/utils/docraft_font_registry.cc
         src/docraft/utils/docraft_parser_utilis.cc
+        src/docraft/utils/docraft_utf8.cc
         include/docraft/utils/docraft_logger.h
         include/docraft/utils/docraft_base64.h
         include/docraft/utils/docraft_font_resolver.h
         include/docraft/utils/docraft_parser_utilis.h
+        include/docraft/utils/docraft_utf8.h
         src/docraft/backend/pdf/docraft_haru_backend.cc
         include/docraft/backend/pdf/docraft_haru_backend.h
         src/docraft/backend/pdf/docraft_haru_backend_providers_factory.cc
@@ -130,6 +132,8 @@ set(DOCRAFT_SOURCES
         include/docraft/craft/parser/docraft_shape_parser_utils.h
         include/docraft/craft/parser/docraft_parser.h
         src/docraft/craft/parser/docraft_rectangle_parser.cc
+        src/docraft/craft/parser/docraft_chart_parser.cc
+        src/docraft/craft/parser/docraft_series_parser.cc
         src/docraft/craft/parser/docraft_text_parser.cc
         src/docraft/craft/parser/docraft_page_number_parser.cc
         src/docraft/craft/parser/docraft_image_parser.cc
@@ -157,6 +161,18 @@ set(DOCRAFT_SOURCES
         # docraft/loom (translates DocraftParsedElement trees into loom nodes).
         include/docraft/loom/craft/docraft_loom_tree_builder.h
         src/docraft/loom/craft/docraft_loom_tree_builder.cc
+
+        # docraft/loom/charts (Chart/Series craft tags expand into a populated Canvas via
+        # a style registry -- Docraft's "chart plugin" mechanism; see DocraftChartBuilderRegistry).
+        include/docraft/loom/charts/docraft_chart_types.h
+        src/docraft/loom/charts/docraft_chart_types.cc
+        include/docraft/loom/charts/docraft_chart_axis_helpers.h
+        src/docraft/loom/charts/docraft_chart_axis_helpers.cc
+        include/docraft/loom/charts/docraft_chart_builder.h
+        src/docraft/loom/charts/docraft_chart_builder.cc
+        include/docraft/loom/charts/docraft_scatter_chart_builder.h
+        src/docraft/loom/charts/docraft_scatter_chart_builder.cc
+        src/docraft/loom/charts/docraft_builtin_charts.cc
 
         # Top-level driver (Phase 3): walks a full <Document> and builds a fully-wired
         # DocraftLoomPdfCreator from its Header/Body/Footer children.

@@ -93,6 +93,127 @@ TEST(DocraftLoomTreeBuilderTest, CanvasWithoutWidthOrHeightThrows)
     EXPECT_THROW(parse_and_build(R"XML(<Canvas width="200" />)XML"), docraft::exception::InvalidInputException);
 }
 
+TEST(DocraftLoomTreeBuilderTest, BuildsScatterChartWithSeriesData)
+{
+    const char* xml = R"XML(
+<Chart name="c1" style="scatter" width="300" height="200" title="My Chart">
+  <Series name="A" color="blue" model='[[1,2],[3,4]]' />
+</Chart>
+)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto canvas = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomCanvas>(node);
+    ASSERT_TRUE(canvas);
+    EXPECT_FLOAT_EQ(canvas->width(), 300.0F);
+    EXPECT_FLOAT_EQ(canvas->height(), 200.0F);
+    EXPECT_EQ(canvas->name(), "c1");
+
+    int circle_count = 0;
+    for (int i = 0; i < canvas->children_count(); ++i)
+    {
+        if (std::dynamic_pointer_cast<const docraft::loom::nodes::DocraftLoomCircle>(canvas->child(i)))
+        {
+            ++circle_count;
+        }
+    }
+    EXPECT_EQ(circle_count, 2);
+}
+
+TEST(DocraftLoomTreeBuilderTest, ChartMissingStyleThrows)
+{
+    EXPECT_THROW(parse_and_build(R"XML(<Chart width="100" height="100"><Series model='[[1,2]]'/></Chart>)XML"),
+                 docraft::exception::InvalidInputException);
+}
+
+TEST(DocraftLoomTreeBuilderTest, ChartMissingWidthOrHeightThrows)
+{
+    EXPECT_THROW(
+        parse_and_build(R"XML(<Chart style="scatter" height="100"><Series model='[[1,2]]'/></Chart>)XML"),
+        docraft::exception::InvalidInputException);
+    EXPECT_THROW(
+        parse_and_build(R"XML(<Chart style="scatter" width="100"><Series model='[[1,2]]'/></Chart>)XML"),
+        docraft::exception::InvalidInputException);
+}
+
+TEST(DocraftLoomTreeBuilderTest, ChartUnknownStyleThrows)
+{
+    EXPECT_THROW(
+        parse_and_build(
+            R"XML(<Chart style="not-a-style" width="100" height="100"><Series model='[[1,2]]'/></Chart>)XML"),
+        docraft::exception::InvalidInputException);
+}
+
+TEST(DocraftLoomTreeBuilderTest, ChartNonSeriesChildThrows)
+{
+    EXPECT_THROW(
+        parse_and_build(R"XML(<Chart style="scatter" width="100" height="100"><Text>oops</Text></Chart>)XML"),
+        docraft::exception::InvalidInputException);
+}
+
+TEST(DocraftLoomTreeBuilderTest, SeriesModelSupportsArrayOfPairsAndArrayOfObjects)
+{
+    const char* xml_pairs = R"XML(
+<Chart style="scatter" width="100" height="100">
+  <Series model='[[1,2],[3,4]]' />
+</Chart>
+)XML";
+    const char* xml_objects = R"XML(
+<Chart style="scatter" width="100" height="100">
+  <Series model='[{"x":1,"y":2},{"x":3,"y":4}]' />
+</Chart>
+)XML";
+
+    for (const char* xml : {xml_pairs, xml_objects})
+    {
+        const auto node = parse_and_build(xml);
+        const auto canvas = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomCanvas>(node);
+        ASSERT_TRUE(canvas);
+        int circle_count = 0;
+        for (int i = 0; i < canvas->children_count(); ++i)
+        {
+            if (std::dynamic_pointer_cast<const docraft::loom::nodes::DocraftLoomCircle>(canvas->child(i)))
+            {
+                ++circle_count;
+            }
+        }
+        EXPECT_EQ(circle_count, 2);
+    }
+}
+
+TEST(DocraftLoomTreeBuilderTest, SeriesModelMalformedEntryThrows)
+{
+    EXPECT_THROW(
+        parse_and_build(R"XML(<Chart style="scatter" width="100" height="100"><Series model='[[1]]'/></Chart>)XML"),
+        docraft::exception::DataFormatException);
+}
+
+TEST(DocraftLoomTreeBuilderTest, SeriesNameReusesCommonNameAttribute)
+{
+    const char* xml = R"XML(
+<Chart style="scatter" width="100" height="100">
+  <Series name="Alpha" model='[[1,2]]' />
+  <Series name="Beta" model='[[3,4]]' />
+</Chart>
+)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto canvas = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomCanvas>(node);
+    ASSERT_TRUE(canvas);
+
+    bool found_alpha = false;
+    bool found_beta = false;
+    for (int i = 0; i < canvas->children_count(); ++i)
+    {
+        if (auto text = std::dynamic_pointer_cast<const docraft::loom::nodes::DocraftLoomText>(canvas->child(i)))
+        {
+            if (text->text() == "Alpha") found_alpha = true;
+            if (text->text() == "Beta") found_beta = true;
+        }
+    }
+    EXPECT_TRUE(found_alpha);
+    EXPECT_TRUE(found_beta);
+}
+
 TEST(DocraftLoomTreeBuilderTest, BuildsCircleRadius)
 {
     const char* xml = R"XML(<Circle radius="20" background_color="red" />)XML";

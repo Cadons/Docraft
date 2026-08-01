@@ -82,6 +82,34 @@ namespace docraft::test {
         EXPECT_FLOAT_EQ(child->layout_box().frame.position.y, 50.0F);
     }
 
+    TEST_F(DocraftLoomCanvasTest, LayoutIsIdempotentAcrossRepeatedPasses)
+    {
+        // Regression test: visit(DocraftLoomCanvas*) used to permanently overwrite each
+        // child's explicit_position()/position_mode() with an absolute page coordinate,
+        // so a second layout pass over the same tree (e.g. DocraftLoomPdfCreator::create()
+        // invoked again after set_page_format()) re-added the canvas origin to the
+        // already-translated child position, silently doubling the offset.
+        auto canvas = std::make_shared<loom::nodes::DocraftLoomCanvas>();
+        canvas->set_position_mode(loom::nodes::DocraftPositionType::kAbsolute);
+        canvas->set_explicit_position({.x = 20.0F, .y = 30.0F});
+        canvas->set_width(200.0F);
+        canvas->set_height(150.0F);
+
+        auto child = std::make_shared<loom::nodes::DocraftLoomLine>();
+        child->set_explicit_position({.x = 10.0F, .y = 20.0F});
+        canvas->add_child(child);
+
+        canvas->accept(*measure_);
+        canvas->accept(*layout_);
+        EXPECT_FLOAT_EQ(child->layout_box().frame.position.x, 30.0F);
+        EXPECT_FLOAT_EQ(child->layout_box().frame.position.y, 50.0F);
+
+        canvas->accept(*measure_);
+        canvas->accept(*layout_);
+        EXPECT_FLOAT_EQ(child->layout_box().frame.position.x, 30.0F);
+        EXPECT_FLOAT_EQ(child->layout_box().frame.position.y, 50.0F);
+    }
+
     TEST_F(DocraftLoomCanvasTest, LayoutComposesForNestedCanvas)
     {
         auto outer = std::make_shared<loom::nodes::DocraftLoomCanvas>();

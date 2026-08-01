@@ -29,6 +29,7 @@
 #include "docraft/loom/nodes/docraft_loom_title.h"
 #include "docraft/loom/nodes/docraft_loom_vstack.h"
 #include "docraft/loom/pipeline/docraft_loom_weighted_distribution.h"
+#include "docraft/utils/docraft_utf8.h"
 
 namespace docraft::loom::pipeline {
     namespace {
@@ -38,22 +39,6 @@ namespace docraft::loom::pipeline {
         // visit(DocraftLoomTableCell*)), never to a single natural-width line, whose
         // own height feeds into inter-node spacing/margin instead (a separate concern).
         constexpr float kWrappedLineHeightMultiplier = 1.2F;
-
-        // Returns the byte length of the UTF-8 codepoint starting with `lead_byte`, so
-        // add_char_split_word() below can advance through a word one glyph at a time
-        // instead of one byte at a time -- a plain byte-by-byte advance can split a
-        // multi-byte UTF-8 sequence (e.g. an accented letter) mid-character, corrupting
-        // it into two invalid fragments. Doesn't need to decode the codepoint itself,
-        // just its span; a stray continuation byte or invalid lead falls back to 1 so
-        // the caller still always makes forward progress.
-        std::size_t utf8_codepoint_byte_length(unsigned char lead_byte)
-        {
-            if ((lead_byte & 0x80U) == 0x00U) return 1; // ASCII
-            if ((lead_byte & 0xE0U) == 0xC0U) return 2;
-            if ((lead_byte & 0xF0U) == 0xE0U) return 3;
-            if ((lead_byte & 0xF8U) == 0xF0U) return 4;
-            return 1;
-        }
     }
 
     DocraftLoomMeasureProcessor::DocraftLoomMeasureProcessor(
@@ -92,7 +77,7 @@ namespace docraft::loom::pipeline {
             while (start < word.length())
             {
                 std::size_t probe_end = std::min(
-                    start + utf8_codepoint_byte_length(static_cast<unsigned char>(word[start])), word.length());
+                    start + docraft::utils::utf8_codepoint_byte_length(static_cast<unsigned char>(word[start])), word.length());
                 std::size_t last_fit_end = start;
                 while (true)
                 {
@@ -107,7 +92,7 @@ namespace docraft::loom::pipeline {
                         break;
                     }
                     probe_end = std::min(
-                        probe_end + utf8_codepoint_byte_length(static_cast<unsigned char>(word[probe_end])),
+                        probe_end + docraft::utils::utf8_codepoint_byte_length(static_cast<unsigned char>(word[probe_end])),
                         word.length());
                 }
                 if (last_fit_end == start)
@@ -115,7 +100,7 @@ namespace docraft::loom::pipeline {
                     // Not even one glyph fits -- take one full codepoint anyway to
                     // guarantee progress, without splitting a multi-byte UTF-8 sequence.
                     last_fit_end = std::min(
-                        start + utf8_codepoint_byte_length(static_cast<unsigned char>(word[start])), word.length());
+                        start + docraft::utils::utf8_codepoint_byte_length(static_cast<unsigned char>(word[start])), word.length());
                 }
                 lines.push_back(word.substr(start, last_fit_end - start));
                 start = last_fit_end;

@@ -33,6 +33,8 @@ namespace docraft::craft {
 DocraftCraftLanguageParser::DocraftCraftLanguageParser() {
     parsers_[std::string{elements::kRectangle}] = std::make_unique<parser::DocraftRectangleParser>();
     parsers_[std::string{elements::kCanvas}] = std::make_unique<parser::DocraftRectangleParser>();
+    parsers_[std::string{elements::kChart}] = std::make_unique<parser::DocraftChartParser>();
+    parsers_[std::string{elements::kSeries}] = std::make_unique<parser::DocraftSeriesParser>();
     parsers_[std::string{elements::kCircle}] = std::make_unique<parser::DocraftCircleParser>();
     parsers_[std::string{elements::kTriangle}] = std::make_unique<parser::DocraftTriangleParser>();
     parsers_[std::string{elements::kLine}] = std::make_unique<parser::DocraftLineParser>();
