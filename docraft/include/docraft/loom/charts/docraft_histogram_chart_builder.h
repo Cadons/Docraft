@@ -29,17 +29,24 @@ namespace docraft::loom::charts {
      * range if 0 falls outside it (see the existing std::clamp() in draw_series()).
      * Because a bar flush against a non-zero baseline can misread as "starts at zero",
      * every bar leaves a small gap at whichever edge touches the baseline instead of
-     * sitting directly on the axis line. A `<Series model='[{"label": value}, ...]'>`
-     * entry (the shape pie/histogram model data always uses) places its bar at that
-     * entry's ordinal index and shows its key as that bar's X-axis tick label, via
-     * format_x_tick_label(); plain `[x,y]` entries keep the numeric tick label.
-     * Registered under kHistogramStyleName by register_builtin_chart_styles().
+     * sitting directly on the axis line. Unlike the y-axis, the x-axis is categorical
+     * (each x is a bar slot, not a continuous coordinate), so adjust_mapped_bounds()
+     * pads it by half a slot on each side -- otherwise the first/last category's bar
+     * group centers exactly on the plot edge, spilling half its width out past it. A
+     * `<Series model='[{"label": value}, ...]'>` entry (the shape pie/histogram model
+     * data always uses) places its bar at that entry's ordinal index and shows its key
+     * as that bar's X-axis tick label, via format_x_tick_label(); plain `[x,y]` entries
+     * keep the numeric tick label. Registered under kHistogramStyleName by
+     * register_builtin_chart_styles().
      */
     class DOCRAFT_LIB DocraftHistogramChartBuilder : public DocraftChartBuilder
     {
     protected:
         void draw_series(nodes::DocraftLoomCanvas& canvas, const DocraftChartBuildContext& ctx, const PlotRect& plot,
-                          const DataBounds& mapped_bounds) const override;
+                         const DataBounds& mapped_bounds) const override;
+
+        DataBounds adjust_mapped_bounds(const DataBounds& mapped_bounds,
+                                        const DocraftChartBuildContext& ctx) const override;
 
         std::string format_x_tick_label(float value, const DocraftChartBuildContext& ctx) const override;
     };

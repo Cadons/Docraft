@@ -30,6 +30,37 @@ namespace docraft::loom::charts {
         // imprecision from map_x()/nice-tick rounding, well under the smallest possible
         // gap between two distinct integer indices.
         constexpr float kTickLabelMatchEpsilon = 0.01F;
+        // Fallback category spacing used to size the half-slot padding in
+        // adjust_mapped_bounds() when there's only one category (no consecutive pair of
+        // ticks to measure a spacing from) -- mirrors compute_data_bounds()'s and
+        // compute_nice_ticks()'s own 0.5 widening for a degenerate single-value range.
+        constexpr float kDefaultCategorySpacing = 1.0F;
+    }
+
+    DataBounds DocraftHistogramChartBuilder::adjust_mapped_bounds(const DataBounds& mapped_bounds,
+                                                                  const DocraftChartBuildContext& ctx) const
+    {
+        std::size_t max_points = 0;
+        for (const auto& series : ctx.series)
+        {
+            max_points = std::max(max_points, series.points.size());
+        }
+        if (max_points == 0)
+        {
+            return mapped_bounds;
+        }
+        // Half a category's slot width, in data space -- padding the mapped domain by
+        // this on each side moves every category (including the first/last) a full slot
+        // away from the plot edge, matching the slot_width/group_width layout draw_series()
+        // itself uses (see there for why bar_left is centered on map_x(point.x, ...)).
+        const float spacing = max_points > 1
+                                  ? (mapped_bounds.max_x - mapped_bounds.min_x) / static_cast<float>(max_points - 1)
+                                  : kDefaultCategorySpacing;
+        const float half_slot = spacing / 2.0F;
+        DataBounds padded = mapped_bounds;
+        padded.min_x -= half_slot;
+        padded.max_x += half_slot;
+        return padded;
     }
 
     std::string DocraftHistogramChartBuilder::format_x_tick_label(float value, const DocraftChartBuildContext& ctx) const

@@ -6,6 +6,7 @@
 
 #include "docraft/loom/charts/docraft_chart_types.h"
 #include "docraft/loom/charts/docraft_histogram_chart_builder.h"
+#include "docraft/loom/charts/docraft_line_chart_builder.h"
 #include "docraft/loom/charts/docraft_pie_chart_builder.h"
 #include "docraft/loom/charts/docraft_scatter_chart_builder.h"
 #include "docraft/loom/charts/docraft_spline_chart_builder.h"
@@ -23,6 +24,11 @@ namespace docraft::loom::charts {
                                 [](const DocraftChartBuildContext& ctx)
                                 {
                                     return DocraftSplineChartBuilder{}.build(ctx);
+                                });
+        registry.register_style(std::string(kLineStyleName),
+                                [](const DocraftChartBuildContext& ctx)
+                                {
+                                    return DocraftLineChartBuilder{}.build(ctx);
                                 });
         registry.register_style(std::string(kHistogramStyleName),
                                 [](const DocraftChartBuildContext& ctx)

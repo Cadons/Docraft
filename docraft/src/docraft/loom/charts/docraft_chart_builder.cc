@@ -261,6 +261,7 @@ namespace docraft::loom::charts {
         {
             mapped_bounds.max_y += 1.0F;
         }
+        mapped_bounds = adjust_mapped_bounds(mapped_bounds, ctx);
 
         const nodes::Position axis_origin_data = compute_axis_origin_data_space(ctx.axis_position, mapped_bounds);
         const float axis_x_px = map_x(axis_origin_data.x, plot, mapped_bounds);

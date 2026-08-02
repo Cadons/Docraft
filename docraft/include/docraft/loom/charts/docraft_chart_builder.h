@@ -78,6 +78,25 @@ namespace docraft::loom::charts {
         virtual DataBounds adjust_data_bounds(const DataBounds& bounds) const { return bounds; }
 
         /**
+         * @brief Widens the already tick-snapped X mapping range (the domain map_x()
+         * actually uses, computed from the nice-ticks after adjust_data_bounds()) --
+         * the default is a no-op, right for a continuous axis (scatter/spline), where a
+         * point sitting exactly at the plot's left/right edge is the correct, expected
+         * look. A style whose X positions are discrete category slots (histogram) needs
+         * every category -- including the first/last -- to have a full slot on both
+         * sides, or the outermost bar group ends up centered exactly on the plot edge
+         * with half its width spilling out past it into the axis-label gutter. Unlike
+         * adjust_data_bounds(), this doesn't feed nice-tick computation (so tick values
+         * stay at the clean category positions, e.g. 0/1/2/3); it only widens the pixel
+         * mapping those same ticks -- and draw_series()'s bars -- are placed against.
+         */
+        virtual DataBounds adjust_mapped_bounds(const DataBounds& mapped_bounds,
+                                                const DocraftChartBuildContext& ctx) const
+        {
+            return mapped_bounds;
+        }
+
+        /**
          * @brief Adds a line segment at the given absolute canvas-local pixel
          * coordinates. DocraftLoomLine's own start()/end() are local to its bounding box
          * (whose top-left anchor is explicit_position()) -- normalizing to the min

@@ -38,6 +38,7 @@ set(TEST_SOURCES
         docraft/loom/charts/docraft_chart_axis_helpers_test.cc
         docraft/loom/charts/docraft_scatter_chart_builder_test.cc
         docraft/loom/charts/docraft_spline_chart_builder_test.cc
+        docraft/loom/charts/docraft_line_chart_builder_test.cc
         docraft/loom/charts/docraft_histogram_chart_builder_test.cc
         docraft/loom/charts/docraft_pie_chart_builder_test.cc
 )

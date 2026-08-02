@@ -174,6 +174,8 @@ set(DOCRAFT_SOURCES
         src/docraft/loom/charts/docraft_scatter_chart_builder.cc
         include/docraft/loom/charts/docraft_spline_chart_builder.h
         src/docraft/loom/charts/docraft_spline_chart_builder.cc
+        include/docraft/loom/charts/docraft_line_chart_builder.h
+        src/docraft/loom/charts/docraft_line_chart_builder.cc
         include/docraft/loom/charts/docraft_histogram_chart_builder.h
         src/docraft/loom/charts/docraft_histogram_chart_builder.cc
         include/docraft/loom/charts/docraft_pie_chart_builder.h

@@ -159,6 +159,47 @@ namespace docraft::test {
         EXPECT_LT(bar->explicit_position().y + bar->height(), kPlotBottomEdge);
     }
 
+    TEST(DocraftHistogramChartBuilderTest, EdgeCategoryBarsStayFullyInsidePlotBounds)
+    {
+        // Regression test: the first/last category's bar group used to be centered
+        // exactly on the plot's left/right edge (map_x(0)==plot.left, map_x(3)==
+        // plot.right), so half its width spilled out past the plot into the Y-axis
+        // tick-label gutter -- visually clipping the bar and, depending on the data,
+        // painting over a tick label that happened to sit at the same height (since
+        // bars are drawn after tick labels). adjust_mapped_bounds() now pads the mapped
+        // X domain by half a category slot on each side so every bar -- including the
+        // first/last -- has a full slot inside the plot.
+        DocraftChartBuildContext ctx;
+        ctx.width = 300.0F;
+        ctx.height = 200.0F;
+        DocraftChartSeries series;
+        series.points = {
+            {.x = 0.0F, .y = 3.0F}, {.x = 1.0F, .y = 5.0F}, {.x = 2.0F, .y = 2.0F},
+            {.x = 3.0F, .y = 4.0F}
+        };
+        ctx.series = {series};
+
+        const auto canvas = build_histogram_chart(ctx);
+        std::vector<std::shared_ptr<const DocraftLoomRectangle>> bars;
+        for (int i = 0; i < canvas->children_count(); ++i)
+        {
+            if (auto rect = std::dynamic_pointer_cast<const DocraftLoomRectangle>(canvas->child(i)))
+            {
+                bars.push_back(rect);
+            }
+        }
+        ASSERT_EQ(bars.size(), 4U);
+        // No legend for a single unnamed series, so the plot's right edge is just
+        // ctx.width minus the outer edge padding (10px) reserved in docraft_chart_builder.cc;
+        // its left edge is the fixed left-axis band width (40px).
+        constexpr float kPlotLeftEdge = 40.0F;
+        constexpr float kPlotRightEdge = 300.0F - 10.0F;
+        // bars[0] is the x=0 (first) category, bars[3] is the x=3 (last) category --
+        // exactly the two edge cases the fix targets.
+        EXPECT_GE(bars.front()->explicit_position().x, kPlotLeftEdge);
+        EXPECT_LE(bars.back()->explicit_position().x + bars.back()->width(), kPlotRightEdge);
+    }
+
     TEST(DocraftHistogramChartBuilderTest, HandlesEmptySeriesWithoutCrashing)
     {
         DocraftChartBuildContext ctx;
