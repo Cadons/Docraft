@@ -21,6 +21,7 @@
 #include "docraft/loom/nodes/docraft_loom_polygon.h"
 #include "docraft/loom/nodes/docraft_loom_triangle.h"
 #include "docraft/loom/nodes/docraft_loom_page_number.h"
+#include "docraft/loom/nodes/docraft_loom_canvas.h"
 #include "docraft/loom/nodes/docraft_loom_rectangle.h"
 #include "docraft/loom/nodes/docraft_loom_subtitle.h"
 #include "docraft/loom/nodes/docraft_loom_table.h"
@@ -28,6 +29,7 @@
 #include "docraft/loom/nodes/docraft_loom_title.h"
 #include "docraft/loom/nodes/docraft_loom_vstack.h"
 #include "docraft/loom/pipeline/docraft_loom_weighted_distribution.h"
+#include "docraft/utils/docraft_utf8.h"
 
 namespace docraft::loom::pipeline {
     namespace {
@@ -37,22 +39,6 @@ namespace docraft::loom::pipeline {
         // visit(DocraftLoomTableCell*)), never to a single natural-width line, whose
         // own height feeds into inter-node spacing/margin instead (a separate concern).
         constexpr float kWrappedLineHeightMultiplier = 1.2F;
-
-        // Returns the byte length of the UTF-8 codepoint starting with `lead_byte`, so
-        // add_char_split_word() below can advance through a word one glyph at a time
-        // instead of one byte at a time -- a plain byte-by-byte advance can split a
-        // multi-byte UTF-8 sequence (e.g. an accented letter) mid-character, corrupting
-        // it into two invalid fragments. Doesn't need to decode the codepoint itself,
-        // just its span; a stray continuation byte or invalid lead falls back to 1 so
-        // the caller still always makes forward progress.
-        std::size_t utf8_codepoint_byte_length(unsigned char lead_byte)
-        {
-            if ((lead_byte & 0x80U) == 0x00U) return 1; // ASCII
-            if ((lead_byte & 0xE0U) == 0xC0U) return 2;
-            if ((lead_byte & 0xF0U) == 0xE0U) return 3;
-            if ((lead_byte & 0xF8U) == 0xF0U) return 4;
-            return 1;
-        }
     }
 
     DocraftLoomMeasureProcessor::DocraftLoomMeasureProcessor(
@@ -91,7 +77,7 @@ namespace docraft::loom::pipeline {
             while (start < word.length())
             {
                 std::size_t probe_end = std::min(
-                    start + utf8_codepoint_byte_length(static_cast<unsigned char>(word[start])), word.length());
+                    start + docraft::utils::utf8_codepoint_byte_length(static_cast<unsigned char>(word[start])), word.length());
                 std::size_t last_fit_end = start;
                 while (true)
                 {
@@ -106,7 +92,7 @@ namespace docraft::loom::pipeline {
                         break;
                     }
                     probe_end = std::min(
-                        probe_end + utf8_codepoint_byte_length(static_cast<unsigned char>(word[probe_end])),
+                        probe_end + docraft::utils::utf8_codepoint_byte_length(static_cast<unsigned char>(word[probe_end])),
                         word.length());
                 }
                 if (last_fit_end == start)
@@ -114,7 +100,7 @@ namespace docraft::loom::pipeline {
                     // Not even one glyph fits -- take one full codepoint anyway to
                     // guarantee progress, without splitting a multi-byte UTF-8 sequence.
                     last_fit_end = std::min(
-                        start + utf8_codepoint_byte_length(static_cast<unsigned char>(word[start])), word.length());
+                        start + docraft::utils::utf8_codepoint_byte_length(static_cast<unsigned char>(word[start])), word.length());
                 }
                 lines.push_back(word.substr(start, last_fit_end - start));
                 start = last_fit_end;
@@ -243,8 +229,9 @@ namespace docraft::loom::pipeline {
         const float incoming_width = inherited_wrap_width_ > 0.0F ? inherited_wrap_width_ : content_width_;
         inherited_wrap_width_ = 0.0F;
         const float own_width = node->width() > 0.0F ? node->width() : incoming_width;
+        const float padding = node->effective_padding();
         const float children_wrap_width =
-            own_width > 0.0F ? std::max(0.0F, own_width - (2.0F * node->padding())) : 0.0F;
+            own_width > 0.0F ? std::max(0.0F, own_width - (2.0F * padding)) : 0.0F;
 
         float child_width = 0.0F;
         float child_height = node->resolve_outer_margin(*node, /*leading=*/true);
@@ -267,10 +254,36 @@ namespace docraft::loom::pipeline {
         child_height += node->resolve_outer_margin(*node, /*leading=*/false);
         const bool has_children = n > 0;
         auto& measured_size = node->edit_layout_box().measured_size;
-        measured_size.height = has_children ? (child_height + (2.0F * node->padding())) : node->height();
+        measured_size.height = has_children ? (child_height + (2.0F * padding)) : node->height();
         measured_size.width = node->width() > 0.0F
                                   ? node->width()
-                                  : (has_children ? child_width + (2.0F * node->padding()) : 0.0F);
+                                  : (has_children ? child_width + (2.0F * padding) : 0.0F);
+    }
+
+    void DocraftLoomMeasureProcessor::visit(docraft::loom::nodes::DocraftLoomCanvas* node)
+    {
+        if (!node)
+            return;
+
+        // Unlike Rectangle, Canvas's own size never derives from its children -- they are
+        // free-positioned and may legitimately sit partially or fully outside its bounds
+        // by design (see visit(DocraftLoomCanvas*) in the layout/rendering processors).
+        // Children are still measured (recursed into) so each gets its own natural
+        // measured_size, needed for rendering geometry (e.g. a Line's width from its
+        // start/end points, a Circle's diameter). Relay the canvas's own width as the
+        // wrap width, mirroring Rectangle's children_wrap_width relay, so a Text/
+        // Paragraph child wraps within the canvas bounds instead of the page width.
+        const int n = node->children_count();
+        for (int i = 0; i < n; ++i)
+        {
+            inherited_wrap_width_ = node->width();
+            auto child = node->edit_child(i);
+            child->accept(*this);
+        }
+
+        auto& measured_size = node->edit_layout_box().measured_size;
+        measured_size.width = node->width();
+        measured_size.height = node->height();
     }
 
     void DocraftLoomMeasureProcessor::visit(docraft::loom::nodes::DocraftLoomParagraph* paragraph)
@@ -313,7 +326,8 @@ namespace docraft::loom::pipeline {
         // same inset Rectangle already applies around its children.
         const float incoming_width = inherited_wrap_width_ > 0.0F ? inherited_wrap_width_ : content_width_;
         inherited_wrap_width_ = 0.0F;
-        const float children_wrap_width = std::max(0.0F, incoming_width - (2.0F * node->padding()));
+        const float padding = node->effective_padding();
+        const float children_wrap_width = std::max(0.0F, incoming_width - (2.0F * padding));
 
         float total_height = node->resolve_outer_margin(*node, /*leading=*/true);
         float max_width = 0.0F;
@@ -335,8 +349,8 @@ namespace docraft::loom::pipeline {
         }
         total_height += node->resolve_outer_margin(*node, /*leading=*/false);
         auto& ms = node->edit_layout_box().measured_size;
-        ms.width = n > 0 ? max_width + (2.0F * node->padding()) : 0.0F;
-        ms.height = total_height + (n > 0 ? (2.0F * node->padding()) : 0.0F);
+        ms.width = n > 0 ? max_width + (2.0F * padding) : 0.0F;
+        ms.height = total_height + (n > 0 ? (2.0F * padding) : 0.0F);
     }
 
     void DocraftLoomMeasureProcessor::visit(docraft::loom::nodes::DocraftLoomHStack* node)
@@ -383,11 +397,13 @@ namespace docraft::loom::pipeline {
         // incoming_width (the ancestor's constraint, or content_width_ at the root) --
         // not content_width_ unconditionally -- so a weighted HStack nested inside a
         // narrower Rectangle/VStack divides that narrower budget, not the full page.
+        const float padding = node->effective_padding();
         std::vector<float> resolved_widths;
         if (!weights.empty() && n > 0 && incoming_width > 0.0F)
         {
             const float available_width = std::max(0.0F,
-                incoming_width - total_gap - leading_margin - trailing_margin - (2.0F * node->padding()));
+                                                   incoming_width - total_gap - leading_margin - trailing_margin - (2.0F
+                                                       * padding));
             resolved_widths = distribute_weighted_widths(available_width, weights, n);
         }
 
@@ -408,8 +424,8 @@ namespace docraft::loom::pipeline {
             max_height = std::max(max_height, sz.height);
         }
         auto& ms = node->edit_layout_box().measured_size;
-        ms.width = total_width + leading_margin + trailing_margin + (n > 0 ? (2.0F * node->padding()) : 0.0F);
-        ms.height = max_height + (n > 0 ? (2.0F * node->padding()) : 0.0F);
+        ms.width = total_width + leading_margin + trailing_margin + (n > 0 ? (2.0F * padding) : 0.0F);
+        ms.height = max_height + (n > 0 ? (2.0F * padding) : 0.0F);
     }
 
     void DocraftLoomMeasureProcessor::visit(docraft::loom::nodes::DocraftLoomBlankLine* node)
@@ -437,7 +453,12 @@ namespace docraft::loom::pipeline {
             return;
         auto& measured_size = node->edit_layout_box().measured_size;
         measured_size.width = std::abs(node->end().x - node->start().x);
-        measured_size.height = std::max(node->border_width(), 4.0F);
+        // The bounding box must cover the line's actual vertical extent too, not just
+        // border_width -- otherwise a vertical/diagonal line's box collapses to the
+        // border-width floor and the line gets clipped/pushed against following content
+        // (see visit(DocraftLoomLine*) in the rendering processor for how start()/end()
+        // are drawn relative to this same box).
+        measured_size.height = std::max({std::abs(node->end().y - node->start().y), node->border_width(), 4.0F});
     }
 
     void DocraftLoomMeasureProcessor::visit(docraft::loom::nodes::DocraftLoomCircle* node)

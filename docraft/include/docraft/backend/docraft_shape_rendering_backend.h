@@ -66,6 +66,16 @@ namespace docraft::backend {
          */
         virtual void draw_rectangle(float x, float y, float width, float height) const = 0;
         /**
+         * @brief Restricts subsequent painting to the given rectangle until the next
+         * restore_state(). Callers are responsible for bracketing this with
+         * save_state()/restore_state() so the clip doesn't leak past its intended scope.
+         * @param x The x-coordinate of the bottom-left corner.
+         * @param y The y-coordinate of the bottom-left corner.
+         * @param width The rectangle width.
+         * @param height The rectangle height.
+         */
+        virtual void clip_rectangle(float x, float y, float width, float height) const = 0;
+        /**
          * @brief Defines a circle path with the given center and radius.
          * @param center_x The x-coordinate of the center.
          * @param center_y The y-coordinate of the center.

@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include "docraft/docraft_color.h"
 #include "docraft/loom/nodes/docraft_loom_hstack.h"
 #include "docraft/loom/nodes/docraft_loom_text.h"
 #include "docraft/loom/nodes/docraft_loom_vstack.h"
@@ -314,5 +315,123 @@ namespace docraft::test {
         // the absolutely-positioned VStack (and its two children) had never been visited.
         EXPECT_FLOAT_EQ(next_sibling->layout_box().frame.position.x, 0.0F);
         EXPECT_FLOAT_EQ(next_sibling->layout_box().frame.position.y, 10.0F);
+    }
+
+    // Regression tests: an HStack/VStack with no background/border (a purely
+    // structural <Layout>, the common case in real .craft documents) used to still
+    // reserve 2x kDefaultPadding of invisible space around its content -- inflating
+    // its measured/laid-out height with a buffer nothing ever paints into. Stacked
+    // across a few nested unstyled Layouts, that invisible padding could add up to
+    // enough height that Pagination decided a block didn't fit anywhere and fell
+    // back to accepting it as unsplittable overflow, even though the content it
+    // actually painted fit comfortably on a fresh page. effective_padding() fixes
+    // this by only reserving the default inset once the container has something to
+    // keep content clear of (a visible background or border).
+
+    TEST_F(DocraftLoomStackNodesTest, VStack_NoDefaultPaddingWithoutBackgroundOrBorder)
+    {
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(50.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto vstack = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        vstack->add_child(make_text("a"));
+
+        vstack->accept(*measure_);
+
+        // No 2x kDefaultPadding (20pt) inflation: just the one 10pt-tall text line.
+        EXPECT_FLOAT_EQ(vstack->layout_box().measured_size.height, 10.0F);
+    }
+
+    TEST_F(DocraftLoomStackNodesTest, VStack_DefaultPaddingAppliesWhenBackgroundColorSet)
+    {
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(50.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto vstack = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        vstack->edit_style().background_color = DocraftColor(ColorName::kWhite);
+        vstack->add_child(make_text("a"));
+
+        vstack->accept(*measure_);
+
+        // A VStack that actually paints a background keeps its default 2x10pt inset,
+        // so content doesn't sit flush against that painted edge.
+        EXPECT_FLOAT_EQ(vstack->layout_box().measured_size.height, 30.0F);
+    }
+
+    TEST_F(DocraftLoomStackNodesTest, VStack_DefaultPaddingAppliesWhenBorderSet)
+    {
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(50.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto vstack = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        vstack->edit_style().border_color = DocraftColor(ColorName::kBlack);
+        vstack->edit_style().border_width = 1.0F;
+        vstack->add_child(make_text("a"));
+
+        vstack->accept(*measure_);
+
+        EXPECT_FLOAT_EQ(vstack->layout_box().measured_size.height, 30.0F);
+    }
+
+    TEST_F(DocraftLoomStackNodesTest, VStack_ExplicitPaddingAlwaysHonoredEvenWithoutChrome)
+    {
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(50.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto vstack = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        vstack->set_padding(4.0F); // an author-chosen value, still no background/border
+        vstack->add_child(make_text("a"));
+
+        vstack->accept(*measure_);
+
+        // An explicit padding is never zeroed out, chrome or not.
+        EXPECT_FLOAT_EQ(vstack->layout_box().measured_size.height, 18.0F);
+    }
+
+    TEST_F(DocraftLoomStackNodesTest, HStack_NoDefaultPaddingWithoutBackgroundOrBorder)
+    {
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(50.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto hstack = std::make_shared<loom::nodes::DocraftLoomHStack>();
+        hstack->add_child(make_text("a"));
+
+        hstack->accept(*measure_);
+
+        EXPECT_FLOAT_EQ(hstack->layout_box().measured_size.height, 10.0F);
+    }
+
+    TEST_F(DocraftLoomStackNodesTest, HStack_DefaultPaddingAppliesWhenBackgroundColorSet)
+    {
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(50.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto hstack = std::make_shared<loom::nodes::DocraftLoomHStack>();
+        hstack->edit_style().background_color = DocraftColor(ColorName::kWhite);
+        hstack->add_child(make_text("a"));
+
+        hstack->accept(*measure_);
+
+        EXPECT_FLOAT_EQ(hstack->layout_box().measured_size.height, 30.0F);
+    }
+
+    // End-to-end (Measure + Layout): a nested, unstyled VStack's children must be
+    // positioned using zero padding in the *laid-out* frame too, not just in
+    // measured_size -- Pagination's fits-on-this-page check reads frame.size, which
+    // Layout computes independently of Measure.
+    TEST_F(DocraftLoomStackNodesTest, VStack_LayoutFrameHeightMatchesZeroPaddingWithoutChrome)
+    {
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(50.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto vstack = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        vstack->set_spacing(0.0F); // isolate padding from VStack's own default inter-child spacing
+        vstack->add_child(make_text("a"));
+        vstack->add_child(make_text("b"));
+
+        vstack->accept(*measure_);
+        vstack->accept(*layout_);
+
+        EXPECT_FLOAT_EQ(vstack->layout_box().frame.size.height, 20.0F);
     }
 } // namespace docraft::test

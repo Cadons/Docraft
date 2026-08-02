@@ -87,6 +87,9 @@ namespace docraft::craft {
         constexpr string kLayout = "Layout";
         constexpr string kBlankLine = "Blank";
         constexpr string kRectangle = "Rectangle";
+        constexpr string kCanvas = "Canvas";
+        constexpr string kChart = "Chart";
+        constexpr string kSeries = "Series";
         constexpr string kCircle = "Circle";
         constexpr string kTriangle = "Triangle";
         constexpr string kLine = "Line";
@@ -283,6 +286,21 @@ namespace docraft::craft {
             constexpr string kAlignment = "alignment";
             constexpr string kUnderline = "underline";
             constexpr string kStrikeout = "strikeout";
+        }
+        namespace chart::attribute {
+            constexpr string kStyle = "style";
+            constexpr string kAxisPosition = "axis_position";
+            constexpr string kTitle = "title";
+            constexpr string kXLabel = "x_label";
+            constexpr string kYLabel = "y_label";
+            constexpr string kBackgroundColor = "background_color";
+            constexpr string kBorderColor = "border_color";
+            constexpr string kBorderWidth = "border_width";
+            constexpr string kShowPercentage = "show_percentage";
+        }
+        namespace series::attribute {
+            constexpr string kColor = "color";
+            constexpr string kModel = "model";
         }
     }
 

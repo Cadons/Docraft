@@ -38,6 +38,8 @@
 #include "docraft/loom/nodes/docraft_loom_page_number.h"
 #include "docraft/loom/nodes/docraft_loom_paragraph.h"
 #include "docraft/loom/nodes/docraft_loom_polygon.h"
+#include "docraft/loom/charts/docraft_chart_types.h"
+#include "docraft/loom/nodes/docraft_loom_canvas.h"
 #include "docraft/loom/nodes/docraft_loom_rectangle.h"
 #include "docraft/loom/nodes/docraft_loom_table.h"
 #include "docraft/loom/nodes/docraft_loom_text.h"
@@ -103,6 +105,8 @@ namespace docraft::loom::craft {
         using ParsedElement = docraft::craft::DocraftParsedElement;
 
         std::shared_ptr<nodes::DocraftLoomRectangle> build_rectangle(const ParsedElement& element);
+        std::shared_ptr<nodes::DocraftLoomCanvas> build_canvas(const ParsedElement& element);
+        std::shared_ptr<nodes::DocraftLoomCanvas> build_chart(const ParsedElement& element);
         std::shared_ptr<nodes::DocraftLoomCircle> build_circle(const ParsedElement& element);
         std::shared_ptr<nodes::DocraftLoomTriangle> build_triangle(const ParsedElement& element);
         std::shared_ptr<nodes::DocraftLoomPolygon> build_polygon(const ParsedElement& element);
@@ -181,6 +185,33 @@ namespace docraft::loom::craft {
          * non-empty JSON array of strings.
          */
         std::vector<std::string> resolve_table_header(const std::string& raw) const;
+
+        /**
+         * @brief Result of resolve_series_points(): `points` and `labels` are parallel
+         * arrays (same size, same index).
+         * @details See `charts::DocraftChartSeries::point_labels` for how the label side
+         * is consumed downstream.
+         */
+        struct ResolvedSeriesPoints
+        {
+            std::vector<nodes::Position> points;
+            std::vector<std::optional<std::string>> labels;
+        };
+
+        /**
+         * @brief Resolves a `<Series model="...">` attribute into numeric data points.
+         * @details Applies `${...}` substitution, single-quote-JSON normalization (same
+         * helpers Table's own model resolution uses), then JSON-parses the result. Each
+         * array entry must be one of: a 2-element numeric array (`[x,y]`); an object with
+         * numeric `x`/`y` keys; or a single-key object (`{"label": value}`, the shape
+         * pie/histogram model data always uses) -- which becomes `x` = the entry's
+         * ordinal index (0-based), `y` = the value, and `label` = the key. This is a
+         * separate resolver from `to_string_matrix()` (Table's own model matrix, which
+         * requires string cells) rather than a variant of it.
+         * @throws docraft::exception::DataFormatException if `raw` doesn't resolve to a
+         * JSON array, or any entry doesn't match one of the three accepted shapes.
+         */
+        ResolvedSeriesPoints resolve_series_points(const std::string& raw) const;
 
         /**
          * @brief Builds and appends the header row for a JSON/template `model` table (either

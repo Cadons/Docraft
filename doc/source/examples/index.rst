@@ -14,6 +14,7 @@ starting points for your own documents.
    medical_report
    shipping_label
    industrial_report
+   sales_report
 
 Business Documents
 ------------------
@@ -54,4 +55,17 @@ Healthcare & Industrial
 
       Technical inspection report with company header, machine diagnostics,
       measurement tables, and compliance certification.
+
+Analytics
+---------
+
+.. grid:: 2
+   :gutter: 3
+
+   .. grid-item-card:: 📈 Sales Performance Report
+      :link: sales_report
+      :link-type: doc
+
+      KPI stat cards, a pie + histogram dashboard on one Canvas, a
+      year-over-year trend chart, and a top-accounts table.
 

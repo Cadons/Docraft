@@ -1,6 +1,7 @@
 #include "docraft/loom/nodes/docraft_loom_layout_container.h"
 
 #include <algorithm>
+#include <cmath>
 
 namespace docraft::loom::nodes {
     DocraftLoomLayoutContainer::DocraftLoomLayoutContainer(float default_spacing)
@@ -33,5 +34,20 @@ namespace docraft::loom::nodes {
             return 0.0F;
         }
         return leading ? node.child(0)->margin().top : node.child(n - 1)->margin().bottom;
+    }
+
+    float DocraftLoomLayoutContainer::effective_padding() const
+    {
+        const bool is_untouched_default = std::abs(padding() - kDefaultPadding) < 0.001F;
+        if (!is_untouched_default)
+        {
+            return padding();
+        }
+        // Mirrors DocraftLoomRenderingProcessor's own has_fill/has_stroke check, so
+        // "paints nothing" here means the same thing it means at paint time.
+        const auto& s = style();
+        const bool has_fill = s.background_color.toRGB().a > 0.0F;
+        const bool has_stroke = s.border_width > 0.0F && s.border_color.toRGB().a > 0.0F;
+        return (has_fill || has_stroke) ? padding() : 0.0F;
     }
 } // namespace docraft::loom::nodes

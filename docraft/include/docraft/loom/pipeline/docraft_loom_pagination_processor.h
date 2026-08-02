@@ -17,6 +17,7 @@ namespace docraft::loom::pipeline {
         void visit(docraft::loom::nodes::DocraftLoomTitle*) override;
         void visit(docraft::loom::nodes::DocraftLoomSubtitle*) override;
         void visit(docraft::loom::nodes::DocraftLoomRectangle*) override;
+        void visit(docraft::loom::nodes::DocraftLoomCanvas*) override;
         void visit(docraft::loom::nodes::DocraftLoomParagraph*) override;
         void visit(docraft::loom::nodes::DocraftLoomVStack*) override;
         void visit(docraft::loom::nodes::DocraftLoomHStack*) override;
@@ -69,6 +70,15 @@ namespace docraft::loom::pipeline {
         static void assign_page_index_recursive(nodes::DocraftLoomNode& node, int page_index);
 
     private:
+        /**
+         * @brief Recurses into every child of node, in order, via the visitor
+         * (child->accept(*this)) -- the shared body of every visit() overload for a node
+         * type that isn't itself pagination-aware (Rectangle/Canvas/VStack/HStack/List):
+         * pagination only ever splits body_root's direct children (see paginate_body()),
+         * so nested containers just walk their children through unchanged.
+         */
+        void recurse_into_children(nodes::DocraftLoomNode* node);
+
         static void shift_subtree_position(nodes::DocraftLoomNode& node, float dy);
 
         /**

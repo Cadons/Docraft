@@ -15,6 +15,7 @@ Write declarative, readable document templates without touching low-level drawin
    text
    shapes
    images
+   charts
    tables
    lists
    layout
@@ -61,6 +62,13 @@ Visual Elements
 
       Embed PNG and JPEG images from files, or inject raw pixel data at runtime
       via the template engine (including base64).
+
+   .. grid-item-card:: 📈 Charts
+      :link: charts
+      :link-type: doc
+
+      Scatter, spline, line, histogram, and pie charts, drawn directly on the
+      page from ``<Series model="...">`` JSON data.
 
 Complex Structures
 ------------------

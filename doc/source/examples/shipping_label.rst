@@ -2,7 +2,9 @@ Shipping Label
 ==============
 
 A compact shipping label for logistics and warehouse operations, with
-sender/receiver details, barcode area, and package information.
+sender/receiver details, a QR/barcode area, and package information. Sender
+details appear once, in the ``FROM`` box on the right -- the left column is
+reserved for the scan code, so nothing is duplicated.
 
 Template — ``shipping_label.craft``
 ------------------------------------
@@ -31,20 +33,11 @@ Template — ``shipping_label.craft``
            <Layout orientation="horizontal">
                <Rectangle weight="0.5" >
                    <Layout orientation="vertical">
-                       <Layout orientation="horizontal">
-                           <Text weight="0.45" font_size="8" style="bold" color="#7F8C8D">SHIPMENT DATE: ${ship_date}
-                           </Text>
-                           <Text weight="0.55"  font_size="8" style="bold" color="#7F8C8D">BILL OF LADING: ${tracking_number}
-                           </Text>
-                       </Layout>
-                       <Text font_size="8" style="bold" color="#7F8C8D">SHIP FROM</Text>
-                       <Text font_size="9" style="bold">${sender_name}</Text>
-                       <Text font_size="8">${sender_address}</Text>
-                       <Text font_size="8">${sender_city}</Text>
-                       <Text font_size="8">${sender_phone}</Text>
-
-
-                       <Image src="${qr_code}" width="290" height="250"/>
+                       <Text font_size="8" style="bold" color="#7F8C8D">SHIPMENT DATE: ${ship_date}</Text>
+                       <Blank/>
+                       <Text font_size="8" style="bold" color="#7F8C8D">TRACKING / SCAN TO FOLLOW SHIPMENT</Text>
+                       <Image src="${qr_code}" width="180" height="180"/>
+                       <Text font_size="9" style="bold">${tracking_number}</Text>
                    </Layout>
                </Rectangle>
                <Rectangle padding="5" weight="0.5" background_color="#ECF0F1" border_color="#BDC3C7">
@@ -139,4 +132,16 @@ Output Example
    :alt: Shipping Label Example Output
    :align: center
    :width: 600px
+
+.. note::
+
+   The right-hand column nests a vertical stack of four bordered/padded
+   ``<Rectangle>`` boxes inside a horizontal ``<Layout>`` column. The current
+   pagination pass moves that whole ``<Layout>`` onto a second PDF page rather
+   than keeping it on page 1 with the header above it, even though the content
+   itself fits well within one page's height -- the image above is composited
+   from both pages to show the label as it's designed to read. If you hit the
+   same "block moves to the next page even though it fits" pattern with your
+   own nested Layouts, that's this same pagination behavior, not a mistake in
+   your markup.
 

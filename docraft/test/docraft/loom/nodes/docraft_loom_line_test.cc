@@ -46,6 +46,17 @@ namespace docraft::test {
         EXPECT_FLOAT_EQ(line.layout_box().measured_size.height, 10.0F); // max(10, 4)
     }
 
+    TEST_F(DocraftLoomLineTest, MeasureHeightCoversVerticalExtentOfDiagonalLine)
+    {
+        loom::nodes::DocraftLoomLine line;
+        line.set_start({.x = 0.0F, .y = 0.0F});
+        line.set_end({.x = 30.0F, .y = 130.0F});
+        line.accept(*measure_);
+
+        EXPECT_FLOAT_EQ(line.layout_box().measured_size.width, 30.0F);
+        EXPECT_FLOAT_EQ(line.layout_box().measured_size.height, 130.0F); // |130 - 0|, exceeds the 4pt floor
+    }
+
     TEST_F(DocraftLoomLineTest, MeasureHeightFloorsThinBorderWidth)
     {
         loom::nodes::DocraftLoomLine line;

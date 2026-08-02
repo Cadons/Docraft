@@ -19,6 +19,7 @@
 #include "docraft/loom/nodes/docraft_loom_page_number.h"
 #include "docraft/loom/nodes/docraft_loom_paragraph.h"
 #include "docraft/loom/nodes/docraft_loom_polygon.h"
+#include "docraft/loom/nodes/docraft_loom_canvas.h"
 #include "docraft/loom/nodes/docraft_loom_rectangle.h"
 #include "docraft/loom/nodes/docraft_loom_subtitle.h"
 #include "docraft/loom/nodes/docraft_loom_table.h"
@@ -112,6 +113,41 @@ namespace docraft::loom::pipeline {
             apply_shape_paint_state(shape_backend, line_backend, style, flags);
             shape_backend->draw_polygon(transformed);
             finish_shape_path(shape_backend, flags);
+            shape_backend->restore_state();
+        }
+
+        // Mirrors draw_shape_polygon() above, but for an open stroked curve (Spline)
+        // rather than a closed fillable path -- draw_curve() only ever strokes, never
+        // fills, so there is no ShapeDrawFlags/fill branch to consider here.
+        void draw_shape_curve(backend::IDocraftShapeRenderingBackend* shape_backend,
+                              backend::IDocraftLineRenderingBackend* line_backend, const DocraftColor& border_color,
+                              float border_width, const nodes::Position& origin,
+                              const std::vector<nodes::Position>& points)
+        {
+            if (points.size() < 2)
+            {
+                return;
+            }
+            const auto rgba = border_color.toRGB();
+            if (border_width <= 0.0F || rgba.a <= 0.0F)
+            {
+                return;
+            }
+            std::vector<nodes::Position> transformed;
+            transformed.reserve(points.size());
+            for (const auto& pt : points)
+            {
+                transformed.push_back({.x = origin.x + pt.x, .y = origin.y + pt.y});
+            }
+
+            shape_backend->save_state();
+            if (rgba.a < 1.0F)
+            {
+                shape_backend->set_stroke_alpha(rgba.a);
+            }
+            line_backend->set_line_width(border_width);
+            line_backend->set_stroke_color(rgba.r, rgba.g, rgba.b);
+            line_backend->draw_curve(transformed);
             shape_backend->restore_state();
         }
     }
@@ -336,6 +372,23 @@ namespace docraft::loom::pipeline {
                 child->accept(*this);
     }
 
+    void DocraftLoomRenderingProcessor::visit(docraft::loom::nodes::DocraftLoomCanvas* node)
+    {
+        if (!node || !should_render(*node))
+            return;
+        const auto& frame = node->layout_box().frame;
+        draw_container_background(node->style(), frame.position, frame.size);
+        // Clips children to the canvas bounds, trimming anything that overflows -- see
+        // visit(DocraftLoomCanvas*) in the layout processor for how children are
+        // positioned relative to this origin in the first place.
+        shape_backend_->save_state();
+        shape_backend_->clip_rectangle(frame.position.x, frame.position.y, frame.size.width, frame.size.height);
+        for (int i = 0; i < node->children_count(); ++i)
+            if (auto child = node->edit_child(i))
+                child->accept(*this);
+        shape_backend_->restore_state();
+    }
+
     void DocraftLoomRenderingProcessor::visit(docraft::loom::nodes::DocraftLoomParagraph* paragraph)
     {
         if (!paragraph || !should_render(*paragraph))
@@ -409,7 +462,15 @@ namespace docraft::loom::pipeline {
         }
 
         const auto& pos = line->layout_box().frame.position;
-        const float mid_y = line->layout_box().measured_size.height / 2.0F;
+        // start()/end() are the line's own local geometry and may not start at (0,0)
+        // (e.g. a vertical line has start().x == end().x, both possibly nonzero), while
+        // pos anchors the *bounding box's* top-left corner (min.x, min.y) -- so both
+        // points are shifted by that same box origin before being placed at pos, mirroring
+        // how Polygon/Triangle place their own local points relative to frame.position.
+        const float origin_x = std::min(line->start().x, line->end().x);
+        const float origin_y = std::min(line->start().y, line->end().y);
+        const nodes::Position p1 = {.x = pos.x + (line->start().x - origin_x), .y = pos.y + (line->start().y - origin_y)};
+        const nodes::Position p2 = {.x = pos.x + (line->end().x - origin_x), .y = pos.y + (line->end().y - origin_y)};
 
         shape_backend_->save_state();
         if (rgba.a < 1.0F)
@@ -418,7 +479,7 @@ namespace docraft::loom::pipeline {
         }
         line_backend_->set_line_width(line->border_width());
         line_backend_->set_stroke_color(rgba.r, rgba.g, rgba.b);
-        line_backend_->draw_line(pos.x, pos.y + mid_y, pos.x + line->layout_box().measured_size.width, pos.y + mid_y);
+        line_backend_->draw_line(p1.x, p1.y, p2.x, p2.y);
         shape_backend_->restore_state();
     }
 
@@ -454,8 +515,19 @@ namespace docraft::loom::pipeline {
     {
         if (!node || !should_render(*node))
             return;
-        draw_shape_polygon(shape_backend_, line_backend_, node->style(), node->layout_box().frame.position,
-                           node->points());
+        // A smooth polygon is an open curve (e.g. a spline chart's line), not a closed
+        // fillable shape -- draw_shape_curve() strokes a Bezier interpolation through
+        // the points instead of draw_shape_polygon()'s closed fill/stroke path.
+        if (node->smooth())
+        {
+            draw_shape_curve(shape_backend_, line_backend_, node->style().border_color, node->style().border_width,
+                             node->layout_box().frame.position, node->points());
+        }
+        else
+        {
+            draw_shape_polygon(shape_backend_, line_backend_, node->style(), node->layout_box().frame.position,
+                               node->points());
+        }
     }
 
     void DocraftLoomRenderingProcessor::visit(docraft::loom::nodes::DocraftLoomList* node)

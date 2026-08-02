@@ -47,6 +47,11 @@ namespace docraft::loom::nodes {
          */
         virtual float resolve_outer_margin(const DocraftLoomNode& node, bool leading);
 
+        /**
+         * @brief The padding actually used for measurement/layout.
+         */
+        float effective_padding() const;
+
     protected:
         explicit DocraftLoomLayoutContainer(float default_spacing);
 

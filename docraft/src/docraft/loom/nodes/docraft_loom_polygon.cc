@@ -15,4 +15,14 @@ namespace docraft::loom::nodes {
     {
         points_ = points;
     }
+
+    bool DocraftLoomPolygon::smooth() const
+    {
+        return smooth_;
+    }
+
+    void DocraftLoomPolygon::set_smooth(bool smooth)
+    {
+        smooth_ = smooth;
+    }
 } // docraft

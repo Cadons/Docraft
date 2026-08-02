@@ -63,6 +63,7 @@ namespace docraft::loom::pipeline {
         void visit(docraft::loom::nodes::DocraftLoomSubtitle*) override;
 
         void visit(docraft::loom::nodes::DocraftLoomRectangle*) override;
+        void visit(docraft::loom::nodes::DocraftLoomCanvas*) override;
 
         /**
          * @brief Measures the paragraph as the sum of its children's heights plus

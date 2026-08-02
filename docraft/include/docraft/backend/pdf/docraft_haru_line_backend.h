@@ -50,6 +50,13 @@ namespace docraft::backend::pdf {
          */
         void draw_line(float x1, float y1, float x2, float y2) const override;
 
+        /**
+         * @brief Draws a smooth curve through every point in `points`, via a piecewise
+         * cubic Bezier path derived from a uniform Catmull-Rom spline through the same
+         * points (see the .cc for the control-point derivation).
+         */
+        void draw_curve(const std::vector<Position>& points) const override;
+
     private:
         std::shared_ptr<DocraftHaruSharedState> state_;
     };

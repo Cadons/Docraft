@@ -1,11 +1,14 @@
 #include <gtest/gtest.h>
 
+#include "docraft/docraft_color.h"
 #include "docraft/exception/docraft_input_exceptions.h"
 #include "docraft/loom/nodes/docraft_loom_circle.h"
 #include "docraft/loom/nodes/docraft_loom_polygon.h"
 #include "docraft/loom/nodes/docraft_loom_triangle.h"
 #include "docraft/loom/pipeline/docraft_loom_layout_processor.h"
 #include "docraft/loom/pipeline/docraft_loom_measure_processor.h"
+#include "docraft/loom/pipeline/docraft_loom_rendering_processor.h"
+#include "docraft/utils/docraft_mock_rendering_backend.h"
 
 namespace docraft::test {
     class DocraftLoomShapeNodesTest : public ::testing::Test
@@ -120,6 +123,38 @@ namespace docraft::test {
 
         EXPECT_FLOAT_EQ(polygon.layout_box().measured_size.width, 20.0F);
         EXPECT_FLOAT_EQ(polygon.layout_box().measured_size.height, 8.0F);
+    }
+
+    TEST_F(DocraftLoomShapeNodesTest, PolygonDefaultsToNotSmooth)
+    {
+        loom::nodes::DocraftLoomPolygon polygon;
+        EXPECT_FALSE(polygon.smooth());
+        polygon.set_smooth(true);
+        EXPECT_TRUE(polygon.smooth());
+    }
+
+    TEST_F(DocraftLoomShapeNodesTest, SmoothPolygonRendersAsCurveThroughItsPoints)
+    {
+        // Regression coverage for the smooth() flag: a spline chart's curve is composed
+        // from this same Polygon node/visitor (see DocraftLoomPolygon's class doc) rather
+        // than a dedicated node type, so rendering must route a smooth polygon to
+        // IDocraftLineRenderingBackend::draw_curve() instead of the closed
+        // fill/stroke polygon path.
+        utils::MockRenderingBackend backend;
+        loom::pipeline::DocraftLoomRenderingProcessor rendering(&backend);
+
+        auto polygon = std::make_shared<loom::nodes::DocraftLoomPolygon>();
+        polygon->set_points({{.x = 0.0F, .y = 0.0F}, {.x = 10.0F, .y = 5.0F}, {.x = 20.0F, .y = 0.0F}});
+        polygon->set_smooth(true);
+        polygon->edit_style().border_color = DocraftColor::fromRGB(0.0F, 0.0F, 1.0F, 1.0F);
+        polygon->edit_style().border_width = 2.0F;
+
+        polygon->accept(*measure_);
+        polygon->accept(*layout_);
+        polygon->accept(rendering);
+
+        ASSERT_EQ(backend.draw_curve_calls().size(), 1U);
+        EXPECT_EQ(backend.draw_curve_calls()[0].points.size(), 3U);
     }
 
     // ── Absolute positioning (one representative shape is enough per the plan) ────

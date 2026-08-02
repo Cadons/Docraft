@@ -52,6 +52,55 @@ namespace docraft::test {
         EXPECT_LE(first_width + second_width, 200.0F + 0.01F);
     }
 
+    // Newly discovered bug (this session, same family as #2): visit(HStack) never
+    // arms inherited_width_ to a resolved column's width before recursing into that
+    // column via child->accept(*this) -- unlike the Measure pass, which does. The
+    // column's own frame.size.width gets force-corrected after accept() returns, so
+    // the previous test (which only checks a column's own direct Text children)
+    // still passes -- but whatever that column laid out *during* accept() (its own
+    // nested content, e.g. an unstyled Rectangle with no explicit width holding a
+    // further-nested weighted HStack) used incoming_width() straight from this
+    // HStack's own ancestor page width instead of its actual resolved share.
+    TEST(DocraftLoomLayoutProcessorTest, WeightedHStackColumnPropagatesResolvedWidthToNestedContentDuringLayout)
+    {
+        auto outer = std::make_shared<loom::nodes::DocraftLoomHStack>();
+        outer->set_padding(0.0F);
+        outer->set_weights({1.0F, 1.0F});
+        outer->edit_layout_box().measured_size = {.width = 600.0F, .height = 20.0F};
+
+        auto column = std::make_shared<loom::nodes::DocraftLoomRectangle>();
+        column->set_padding(0.0F); // no explicit width -- must take its share from outer
+        column->edit_layout_box().measured_size = {.width = 300.0F, .height = 20.0F};
+
+        auto inner = std::make_shared<loom::nodes::DocraftLoomHStack>();
+        inner->set_padding(0.0F);
+        inner->set_weights({1.0F, 1.0F});
+        inner->edit_layout_box().measured_size = {.width = 300.0F, .height = 20.0F};
+
+        auto a = std::make_shared<loom::nodes::DocraftLoomText>("a");
+        a->edit_layout_box().measured_size = {.width = 10.0F, .height = 10.0F};
+        auto b = std::make_shared<loom::nodes::DocraftLoomText>("b");
+        b->edit_layout_box().measured_size = {.width = 10.0F, .height = 10.0F};
+        inner->add_child(a);
+        inner->add_child(b);
+        column->add_child(inner);
+
+        auto other_column = std::make_shared<loom::nodes::DocraftLoomText>("x");
+        other_column->edit_layout_box().measured_size = {.width = 10.0F, .height = 10.0F};
+
+        outer->add_child(column);
+        outer->add_child(other_column);
+
+        loom::pipeline::DocraftLoomLayoutProcessor processor(600.0F);
+        outer->accept(processor);
+
+        // The inner HStack must divide `column`'s ~300pt resolved share (150 each),
+        // not the outer HStack's own 600pt page width (which is what it would divide
+        // if `column` were laid out against the wrong incoming width).
+        EXPECT_NEAR(a->layout_box().frame.size.width, 150.0F, 0.01F);
+        EXPECT_NEAR(b->layout_box().frame.size.width, 150.0F, 0.01F);
+    }
+
     // Review bug #2 (Layout side, Table): same nesting bug for a weighted Table --
     // its columns must be resolved against the enclosing Rectangle's width, not
     // the full page width.
