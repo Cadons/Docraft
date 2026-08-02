@@ -70,8 +70,8 @@ Key Features
   any element can opt into exact (x, y) placement with ``position="absolute"``.
 - **Margin & padding** — CSS-like per-edge ``margin`` (adjacent margins
   collapse via ``max()``, not sum) plus ``padding`` for inset content.
-- **Z-index stacking** — Control paint order with ``z_index`` (layout is
-  unaffected).
+- **Charts and canvas** — Draw bar, line, and pie charts with JSON data; draw arbitrary
+  shapes and lines on a canvas with a simple DSL.
 - **CLI tool** — The ``docraft_tool`` executable renders ``.craft`` files
   to PDF from the command line, with optional JSON data files.
 
