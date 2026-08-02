@@ -64,6 +64,8 @@ Key Features
 - **Z-index stacking** — Control rendering order with ``z_index``.
 - **DOM traversal & lookup** — Query the document tree by name or type after
   parsing, before rendering.
+- **Charts and canvas** — Render bar, line, and pie charts with data binding; draw arbitrary
+  shapes and paths on a canvas.
 - **Pluggable backend** — The rendering backend is abstracted behind
   interfaces; swap or extend it without changing the document model.
 - **CLI tool** — The ``docraft_tool`` executable renders ``.craft`` files
