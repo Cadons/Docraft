@@ -17,8 +17,10 @@
 
 namespace docraft::loom::charts {
     /**
-     * @brief The plot area's canvas-local pixel rectangle, after title/legend/axis-label
-     * chrome bands have been reserved around it.
+     * @brief The plot area's canvas-local pixel rectangle.
+     * @details Computed after title/legend/axis-label chrome bands have been reserved
+     * around it, so it covers only the region where gridlines, axes and data series are
+     * actually drawn.
      */
     struct PlotRect
     {
@@ -28,17 +30,16 @@ namespace docraft::loom::charts {
     };
 
     /**
-     * @brief Template-method base for chart-style builders.
-     *
-     * build() implements every piece of chart "chrome" that is shared across chart
-     * styles -- reserving title/legend/axis-label bands, computing the plot area and
-     * data-to-pixel mapping, and drawing gridlines/axis lines/tick marks+labels/title/
-     * legend/axis labels -- and defers only the data-series content itself (e.g. circles
-     * for a scatter chart, bars for a bar chart) to draw_series(). A new chart style
-     * subclasses this and implements draw_series() alone; it never needs to reimplement
-     * the chrome. The drawing/measurement primitives below are `protected`, not
-     * `private`, specifically so subclasses can call them -- a `private` base member is
-     * invisible to derived classes and would defeat the point of sharing them.
+     * @brief Template-method base class for chart-style builders.
+     * @details build() implements every piece of chart "chrome" that is shared across
+     * chart styles -- reserving title/legend/axis-label bands, computing the plot area
+     * and data-to-pixel mapping, and drawing gridlines/axis lines/tick marks+labels/
+     * title/legend/axis labels -- and defers only the data-series content itself (e.g.
+     * circles for a scatter chart, bars for a bar chart) to draw_series(). A new chart
+     * style subclasses this and implements draw_series() alone; it never needs to
+     * reimplement the chrome. The drawing/measurement primitives below are `protected`,
+     * not `private`, specifically so subclasses can call them -- a `private` base member
+     * is invisible to derived classes and would defeat the point of sharing them.
      *
      * build() itself is virtual, not just draw_series(), because not every chart style
      * fits the Cartesian gridlines/axes/ticks chrome this base class implements -- a pie
@@ -52,43 +53,45 @@ namespace docraft::loom::charts {
         virtual ~DocraftChartBuilder() = default;
 
         /**
-         * @brief Builds the full chart: chrome (gridlines/axes/ticks/title/legend/axis
-         * labels) plus this style's own data-series content via draw_series().
+         * @brief Builds the full chart: chrome plus this style's own data-series content.
+         * @details Draws gridlines/axes/ticks/title/legend/axis labels first, then calls
+         * draw_series() to let the concrete style add its own content on top.
          */
         virtual std::shared_ptr<nodes::DocraftLoomCanvas> build(const DocraftChartBuildContext& ctx) const;
 
     protected:
         /**
-         * @brief Draws this chart style's own data-series content into `canvas`, on top
-         * of the gridlines/axes already drawn by build(). Convert data-space coordinates
-         * to canvas-local pixels via map_x()/map_y() with the given `plot`/`mapped_bounds`.
+         * @brief Draws this chart style's own data-series content into `canvas`.
+         * @details Called by build() after the gridlines/axes are already drawn. Convert
+         * data-space coordinates to canvas-local pixels via map_x()/map_y() with the
+         * given `plot`/`mapped_bounds`.
          */
         virtual void draw_series(nodes::DocraftLoomCanvas& canvas, const DocraftChartBuildContext& ctx,
                                   const PlotRect& plot, const DataBounds& mapped_bounds) const = 0;
 
         /**
-         * @brief Widens the raw data bounds before nice-tick computation -- the default
-         * is a no-op (auto-zoomed range, right for a scatter/spline chart, where the
-         * bounds should track only the actual data). A style whose visual meaning
-         * depends on a fixed reference point (e.g. a bar/histogram chart, where bar
-         * height reads as "distance from zero") overrides this to fold that reference
-         * value into the range, so build() never computes a baseline outside the
-         * visible plot.
+         * @brief Widens the raw data bounds before nice-tick computation.
+         * @details The default is a no-op (auto-zoomed range, right for a scatter/spline
+         * chart, where the bounds should track only the actual data). A style whose
+         * visual meaning depends on a fixed reference point (e.g. a bar/histogram chart,
+         * where bar height reads as "distance from zero") overrides this to fold that
+         * reference value into the range, so build() never computes a baseline outside
+         * the visible plot.
          */
         virtual DataBounds adjust_data_bounds(const DataBounds& bounds) const { return bounds; }
 
         /**
-         * @brief Widens the already tick-snapped X mapping range (the domain map_x()
-         * actually uses, computed from the nice-ticks after adjust_data_bounds()) --
-         * the default is a no-op, right for a continuous axis (scatter/spline), where a
-         * point sitting exactly at the plot's left/right edge is the correct, expected
-         * look. A style whose X positions are discrete category slots (histogram) needs
-         * every category -- including the first/last -- to have a full slot on both
-         * sides, or the outermost bar group ends up centered exactly on the plot edge
-         * with half its width spilling out past it into the axis-label gutter. Unlike
-         * adjust_data_bounds(), this doesn't feed nice-tick computation (so tick values
-         * stay at the clean category positions, e.g. 0/1/2/3); it only widens the pixel
-         * mapping those same ticks -- and draw_series()'s bars -- are placed against.
+         * @brief Widens the already tick-snapped X mapping range that map_x() uses.
+         * @details The default is a no-op, right for a continuous axis (scatter/spline),
+         * where a point sitting exactly at the plot's left/right edge is the correct,
+         * expected look. A style whose X positions are discrete category slots
+         * (histogram) needs every category -- including the first/last -- to have a full
+         * slot on both sides, or the outermost bar group ends up centered exactly on the
+         * plot edge with half its width spilling out past it into the axis-label gutter.
+         * Unlike adjust_data_bounds(), this doesn't feed nice-tick computation (so tick
+         * values stay at the clean category positions, e.g. 0/1/2/3); it only widens the
+         * pixel mapping those same ticks -- and draw_series()'s bars -- are placed
+         * against.
          */
         virtual DataBounds adjust_mapped_bounds(const DataBounds& mapped_bounds,
                                                 const DocraftChartBuildContext& ctx) const
@@ -98,7 +101,8 @@ namespace docraft::loom::charts {
 
         /**
          * @brief Adds a line segment at the given absolute canvas-local pixel
-         * coordinates. DocraftLoomLine's own start()/end() are local to its bounding box
+         * coordinates.
+         * @details DocraftLoomLine's own start()/end() are local to its bounding box
          * (whose top-left anchor is explicit_position()) -- normalizing to the min
          * corner here keeps every caller simple regardless of which endpoint is "first".
          */
@@ -107,8 +111,9 @@ namespace docraft::loom::charts {
 
         /**
          * @brief Adds a smooth curve through the given absolute canvas-local pixel
-         * points (at least 2), rendered via
-         * IDocraftLineRenderingBackend::draw_curve() -- see DocraftLoomSpline.
+         * points (at least 2).
+         * @details Rendered via IDocraftLineRenderingBackend::draw_curve() -- see
+         * DocraftLoomSpline.
          */
         static void add_curve(nodes::DocraftLoomCanvas& canvas, const std::vector<nodes::Position>& points,
                                const DocraftColor& color, float width);
@@ -121,36 +126,39 @@ namespace docraft::loom::charts {
 
         /**
          * @brief Adds a filled (optionally outlined) polygon at the given absolute
-         * canvas-local pixel points -- used directly for a bar/rectangle-shaped series
-         * as well as for a pie chart's slice, which approximates its curved edge as a
-         * many-point fan (center + a dense sampling of arc points) rather than needing a
-         * dedicated arc-drawing rendering-backend primitive.
+         * canvas-local pixel points.
+         * @details Used directly for a bar/rectangle-shaped series as well as for a pie
+         * chart's slice, which approximates its curved edge as a many-point fan (center +
+         * a dense sampling of arc points) rather than needing a dedicated arc-drawing
+         * rendering-backend primitive.
          */
         static void add_polygon(nodes::DocraftLoomCanvas& canvas, const std::vector<nodes::Position>& points,
                                  const DocraftColor& fill_color, const DocraftColor& border_color = DocraftColor(),
                                  float border_width = 0.0F);
 
         /**
-         * @brief Creates a Canvas node sized to ctx.width x ctx.height -- the entry point
-         * every chart style's build() starts from.
+         * @brief Creates a Canvas node sized to ctx.width x ctx.height.
+         * @details The entry point every chart style's build() starts from.
          */
         static std::shared_ptr<nodes::DocraftLoomCanvas> create_canvas(const DocraftChartBuildContext& ctx);
 
         /**
-         * @brief Approximates a text's rendered width for centering/right-aligning
-         * labels -- see the .cc for why an exact measurement isn't available here.
+         * @brief Approximates a text's rendered width, for centering/right-aligning
+         * labels.
+         * @details See the .cc for why an exact measurement isn't available here.
          */
         static float estimate_text_width(const std::string& text, float font_size);
 
         /**
-         * @brief Formats a tick's numeric value, trimming trailing zeros/the decimal
-         * point when the value is a whole number.
+         * @brief Formats a tick's numeric value.
+         * @details Trims trailing zeros/the decimal point when the value is a whole
+         * number.
          */
         static std::string format_tick_label(float value);
 
         /**
          * @brief Formats an X-axis tick's label for the given data-space tick value.
-         * Default falls back to format_tick_label() (plain numeric), right for a
+         * @details Default falls back to format_tick_label() (plain numeric), right for a
          * continuous axis (scatter/spline). A style whose X positions are categorical
          * indices with author-supplied labels (histogram's `{"label": value}` model
          * entries, via DocraftChartSeries::point_labels) overrides this to substitute
@@ -166,17 +174,19 @@ namespace docraft::loom::charts {
 
         /**
          * @brief Maps a data-space Y coordinate to a canvas-local pixel Y within `plot`.
-         * Y is inverted: canvas-local pixel Y grows downward, but chart data Y should
-         * read upward on the page, matching every conventional chart's orientation.
+         * @details Y is inverted: canvas-local pixel Y grows downward, but chart data Y
+         * should read upward on the page, matching every conventional chart's
+         * orientation.
          */
         static float map_y(float value, const PlotRect& plot, const DataBounds& mapped_bounds);
 
         /**
          * @brief Draws a vertical column of legend rows (a color swatch + label per
-         * entry) starting at (x, top_y), one row per `entries` item, in order -- shared
-         * by the Cartesian chrome's own per-series legend (build()'s step 6) and any
-         * chart style that needs a differently-keyed legend instead (e.g. a pie chart's
-         * per-slice legend, which has no notion of "series" to key off of).
+         * entry) starting at (x, top_y), one row per `entries` item, in order.
+         * @details Shared by the Cartesian chrome's own per-series legend (build()'s
+         * step 6) and any chart style that needs a differently-keyed legend instead
+         * (e.g. a pie chart's per-slice legend, which has no notion of "series" to key
+         * off of).
          */
         static void draw_legend_column(nodes::DocraftLoomCanvas& canvas, float x, float top_y,
                                         const std::vector<std::pair<DocraftColor, std::string>>& entries,

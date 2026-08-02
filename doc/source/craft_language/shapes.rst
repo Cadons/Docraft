@@ -106,6 +106,24 @@ Line
      - float
      - Stroke width in points.
 
+Canvas
+------
+
+``<Canvas>`` is a free-form graphics container: unlike every other container node,
+its children are not block-stacked -- each positions itself by its own ``x``/``y``,
+relative to the canvas's own top-left origin, and painting is clipped to the canvas's
+bounds. It's the building block :doc:`charts` are drawn on top of.
+
+.. code-block:: xml
+
+   <Canvas width="200" height="150" background_color="#F5F5F5">
+     <Circle x="20" y="20" width="30" height="30" background_color="blue"/>
+     <Line x1="0" y1="100" x2="200" y2="100" border_color="black"/>
+   </Canvas>
+
+``width``/``height`` are required. Otherwise accepts the same
+``background_color``/``border_color``/``border_width`` attributes as ``<Rectangle>``.
+
 Polygon
 -------
 

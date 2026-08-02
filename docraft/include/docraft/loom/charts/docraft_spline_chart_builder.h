@@ -19,11 +19,11 @@ namespace docraft::loom::charts {
 
     /**
      * @brief Spline chart style: draws one smooth curve per series through its (mapped)
-     * data points -- via IDocraftLineRenderingBackend::draw_curve(), a Catmull-Rom-
-     * derived Bezier interpolation -- plus a small circle marker at each point, on top
-     * of the chrome (gridlines/axes/ticks/title/legend/labels) implemented by the
-     * DocraftChartBuilder base class. Registered under kSplineStyleName by
-     * register_builtin_chart_styles().
+     * data points, plus a small circle marker at each point.
+     * @details The curve is rendered via IDocraftLineRenderingBackend::draw_curve(), a
+     * Catmull-Rom-derived Bezier interpolation, drawn on top of the chrome
+     * (gridlines/axes/ticks/title/legend/labels) implemented by the DocraftChartBuilder
+     * base class. Registered under kSplineStyleName by register_builtin_chart_styles().
      */
     class DOCRAFT_LIB DocraftSplineChartBuilder : public DocraftChartBuilder
     {

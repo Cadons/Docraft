@@ -16,11 +16,11 @@
 
 namespace docraft::loom::charts {
     /**
-     * @brief Where the two axis lines cross within the plot area. `kLeft`/`kRight` pin
-     * only the Y-axis edge (X-axis stays at the bottom, the classic chart look) and are
-     * equivalent to `kBottomLeft`/`kBottomRight`; the four corner values additionally
-     * flip the X-axis to the top; `kCenter` crosses at the data-space origin (clamped to
-     * the data range if 0 falls outside it).
+     * @brief Where the two axis lines cross within the plot area.
+     * @details `kLeft`/`kRight` pin only the Y-axis edge (X-axis stays at the bottom,
+     * the classic chart look) and are equivalent to `kBottomLeft`/`kBottomRight`; the
+     * four corner values additionally flip the X-axis to the top; `kCenter` crosses at
+     * the data-space origin (clamped to the data range if 0 falls outside it).
      */
     enum class DocraftChartAxisPosition
     {
@@ -35,10 +35,11 @@ namespace docraft::loom::charts {
 
     /**
      * @brief A single data series: a name (for the legend), a color, and its points in
-     * data space (not yet mapped to canvas-local pixel coordinates -- each chart
-     * builder does that mapping itself, since it depends on the chart's own plot area).
+     * data space.
+     * @details Points are not yet mapped to canvas-local pixel coordinates -- each chart
+     * builder does that mapping itself, since it depends on the chart's own plot area.
      * `point_labels`, when non-empty, is parallel to `points` (same size, same index)
-     * and carries the per-point category label from a `<Series model="[{\"label\":
+     * and carries the per-point category label from a `<Series model="[{\"label":
      * value}, ...]">` entry -- `std::nullopt` at an index whose entry was instead a
      * plain `[x,y]`/`{"x":..,"y":..}` pair. Only pie (per-slice label) and histogram
      * (per-bar X-axis tick label) consult it; scatter/spline ignore it.
@@ -53,7 +54,8 @@ namespace docraft::loom::charts {
 
     /**
      * @brief Everything a chart-style builder function needs to construct a chart's
-     * content. Does not carry the chart's own background/border style -- that's applied
+     * content.
+     * @details Does not carry the chart's own background/border style -- that's applied
      * to the returned Canvas afterward by the tree builder, via the same
      * `apply_shape_style()` helper every other shape node already uses.
      */
@@ -73,17 +75,16 @@ namespace docraft::loom::charts {
 
     /**
      * @brief Builds a chart style's content: a `DocraftLoomCanvas` populated with
-     * ordinary, already-visitable primitive nodes (Line/Circle/Rectangle/Text). This is
-     * the whole "plugin" contract -- no new DocraftLoomNode subclass or visitor overload
-     * is ever required, since loom's visitor pattern is closed at compile time (see
-     * DocraftChartBuilderRegistry's class doc for the full rationale).
+     * ordinary, already-visitable primitive nodes (Line/Circle/Rectangle/Text).
+     * @details This is the whole "plugin" contract -- no new DocraftLoomNode subclass or
+     * visitor overload is ever required, since loom's visitor pattern is closed at
+     * compile time (see DocraftChartBuilderRegistry's class doc for the full rationale).
      */
     using DocraftChartBuilderFn = std::function<std::shared_ptr<nodes::DocraftLoomCanvas>(const DocraftChartBuildContext&)>;
 
     /**
      * @brief Maps a `<Chart style="...">` value to the C++ function that builds it.
-     *
-     * This is Docraft's "chart plugin" mechanism: compile-time/link-time C++
+     * @details This is Docraft's "chart plugin" mechanism: compile-time/link-time C++
      * registration, not runtime `.so`/`.dll` loading (no such infrastructure exists
      * anywhere in the codebase, and building one is a separate, much larger effort).
      * Built-in styles (e.g. "scatter") register explicitly via
@@ -115,15 +116,17 @@ namespace docraft::loom::charts {
     };
 
     /**
-     * @brief Returns a color from a small fixed categorical palette, cycled by index --
-     * used for a `<Series>` that doesn't specify its own `color`.
+     * @brief Returns a color from a small fixed categorical palette, cycled by index.
+     * @details Used for a `<Series>` that doesn't specify its own `color`.
      */
     DOCRAFT_LIB DocraftColor default_series_color(std::size_t index);
 
     /**
-     * @brief Registers every chart style Docraft ships out of the box (currently just
-     * "scatter") into DocraftChartBuilderRegistry::instance(). Safe to call more than
-     * once (re-registering a style just overwrites it with the same function).
+     * @brief Registers every chart style Docraft ships out of the box into
+     * DocraftChartBuilderRegistry::instance().
+     * @details Currently registers "scatter", "spline", "line", "histogram" and "pie"
+     * (see docraft_builtin_charts.cc). Safe to call more than once (re-registering a
+     * style just overwrites it with the same function).
      */
     DOCRAFT_LIB void register_builtin_chart_styles();
 } // namespace docraft::loom::charts

@@ -19,15 +19,15 @@ namespace docraft::loom::charts {
 
     /**
      * @brief Line chart style: draws one straight polyline per series connecting its
-     * (mapped) data points in order -- via consecutive add_line() segments, since
-     * DocraftLoomPolygon's non-smooth mode is a closed, fillable shape (see its class
-     * doc), not the open stroked polyline a line chart needs -- plus a small circle
-     * marker at each point, on top of the chrome (gridlines/axes/ticks/title/legend/
-     * labels) implemented by the DocraftChartBuilder base class. Same `<Series
-     * model="[[x,y],...]">` point model and marker styling as DocraftSplineChartBuilder;
-     * differs only in connecting points with straight segments instead of an
-     * interpolated curve. Registered under kLineStyleName by
-     * register_builtin_chart_styles().
+     * (mapped) data points in order, plus a small circle marker at each point.
+     * @details Draws on top of the chrome (gridlines/axes/ticks/title/legend/labels)
+     * implemented by the DocraftChartBuilder base class. The polyline is built from
+     * consecutive add_line() segments rather than a single DocraftLoomPolygon, since
+     * Polygon's non-smooth mode is a closed, fillable shape (see its class doc), not the
+     * open stroked polyline a line chart needs. Same `<Series model="[[x,y],...]">`
+     * point model and marker styling as DocraftSplineChartBuilder; differs only in
+     * connecting points with straight segments instead of an interpolated curve.
+     * Registered under kLineStyleName by register_builtin_chart_styles().
      */
     class DOCRAFT_LIB DocraftLineChartBuilder : public DocraftChartBuilder
     {

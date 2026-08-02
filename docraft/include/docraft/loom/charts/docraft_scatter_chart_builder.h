@@ -18,10 +18,10 @@ namespace docraft::loom::charts {
     constexpr std::string_view kScatterStyleName = "scatter";
 
     /**
-     * @brief Scatter chart style: draws one circle per data point (per series) on top
-     * of the chrome (gridlines/axes/ticks/title/legend/labels) implemented by the
-     * DocraftChartBuilder base class. Registered under kScatterStyleName by
-     * register_builtin_chart_styles().
+     * @brief Scatter chart style: draws one circle per data point (per series).
+     * @details Draws on top of the chrome (gridlines/axes/ticks/title/legend/labels)
+     * implemented by the DocraftChartBuilder base class. Registered under
+     * kScatterStyleName by register_builtin_chart_styles().
      */
     class DOCRAFT_LIB DocraftScatterChartBuilder : public DocraftChartBuilder
     {

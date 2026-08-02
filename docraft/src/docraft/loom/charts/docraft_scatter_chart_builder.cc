@@ -14,6 +14,10 @@ namespace docraft::loom::charts {
     void DocraftScatterChartBuilder::draw_series(nodes::DocraftLoomCanvas& canvas, const DocraftChartBuildContext& ctx,
                                                   const PlotRect& plot, const DataBounds& mapped_bounds) const
     {
+        // A scatter chart has no notion of point order or connection between points --
+        // every (x,y) pair in every series is simply mapped from data space to plot
+        // pixels via map_x()/map_y() (base class) and drawn as an independent dot,
+        // colored by its own series.
         for (const auto& series : ctx.series)
         {
             for (const auto& point : series.points)

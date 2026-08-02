@@ -19,13 +19,14 @@ namespace docraft::loom::charts {
     constexpr std::string_view kPieStyleName = "pie";
 
     /**
-     * @brief Pie chart style. Unlike every other built-in style, a pie chart has no
-     * Cartesian plot at all (no axes, gridlines, or ticks), so this overrides build()
-     * outright instead of draw_series() -- see DocraftChartBuilder's class doc for why
-     * build() is virtual. Still reuses add_text()/estimate_text_width()/
-     * draw_legend_column() and the shared chrome constants (title band, legend layout)
-     * from the base class, and add_polygon() to approximate each slice's curved edge as
-     * a many-point fan (no dedicated arc rendering-backend primitive is needed).
+     * @brief Pie chart style: renders each data point as a proportional circular slice.
+     * @details Unlike every other built-in style, a pie chart has no Cartesian plot at
+     * all (no axes, gridlines, or ticks), so this overrides build() outright instead of
+     * draw_series() -- see DocraftChartBuilder's class doc for why build() is virtual.
+     * Still reuses add_text()/estimate_text_width()/draw_legend_column() and the shared
+     * chrome constants (title band, legend layout) from the base class, and
+     * add_polygon() to approximate each slice's curved edge as a many-point fan (no
+     * dedicated arc rendering-backend primitive is needed).
      *
      * Every point across every `<Series>` becomes one slice, in order: a slice's value
      * is its point's y (x is unused -- there's no x-axis). A series contributing more

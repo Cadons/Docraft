@@ -193,12 +193,18 @@ namespace docraft::loom::charts {
 
     float DocraftChartBuilder::map_x(float value, const PlotRect& plot, const DataBounds& mapped_bounds)
     {
+        // Linear interpolation: normalize `value` to a 0..1 fraction of the mapped X
+        // range, then scale it across the plot's pixel width, offset by the plot's left
+        // edge. min_x -> plot.left, max_x -> plot.right, everything else in between.
         return plot.left
              + (value - mapped_bounds.min_x) / (mapped_bounds.max_x - mapped_bounds.min_x) * plot.width();
     }
 
     float DocraftChartBuilder::map_y(float value, const PlotRect& plot, const DataBounds& mapped_bounds)
     {
+        // Same linear interpolation as map_x(), but with the 0..1 fraction flipped
+        // (1.0F - ...) before scaling: min_y -> plot.bottom, max_y -> plot.top, so a
+        // larger data value lands higher on the page even though pixel Y grows downward.
         return plot.top
              + (1.0F - (value - mapped_bounds.min_y) / (mapped_bounds.max_y - mapped_bounds.min_y)) * plot.height();
     }
