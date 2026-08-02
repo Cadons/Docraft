@@ -62,9 +62,10 @@ namespace docraft::loom::charts {
         const float nice_max = std::ceil(max / step) * step;
 
         std::vector<float> ticks;
-        for (float v = nice_min; v <= nice_max + (step * 0.5F); v += step)
+        const int tick_count = static_cast<int>(std::round((nice_max - nice_min) / step)) + 1;
+        for (int i = 0; i < tick_count; ++i)
         {
-            ticks.push_back(v);
+            ticks.push_back(nice_min + (static_cast<float>(i) * step));
         }
         return ticks;
     }
