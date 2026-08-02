@@ -112,6 +112,15 @@ Template — ``quality_report.craft``
            </Table>
            <Blank/>
 
+           <!-- Defect Rate Trend -->
+           <Text font_size="11" style="bold" color="#1B2631">
+               Defect Rate Trend — Last 6 Batches
+           </Text>
+           <Chart style="histogram" width="495" height="170" y_label="Defect Rate (%)">
+               <Series color="#1B2631" model="${defect_rate_trend}"/>
+           </Chart>
+           <Blank/>
+
            <!-- Summary -->
            <Layout orientation="horizontal">
                <Rectangle weight="0.33" padding="10"
@@ -192,7 +201,7 @@ Data — ``quality_report.json``
        ["Width",        "120.00 mm", "± 0.05 mm", "119.97 mm", "PASS"],
        ["Height",       "45.00 mm",  "± 0.10 mm", "45.08 mm",  "PASS"],
        ["Bore Ø",       "18.00 mm",  "± 0.02 mm", "18.01 mm",  "PASS"],
-       ["Surface Ra",   "0.80 µm",   "≤ 1.60 µm", "0.72 µm",   "PASS"],
+       ["Surface Ra",   "0.80 µm",   "max 1.60 µm", "0.72 µm",   "PASS"],
        ["Thread M6",    "6.00 mm",   "ISO 2 class","5.98 mm",   "PASS"]
      ],
      "visual_checks": [
@@ -201,6 +210,8 @@ Data — ``quality_report.json``
        ["Marking legible", "OK",   "Laser-engraved batch ID visible"],
        ["Packaging",       "OK",   "Anti-static wrap applied"]
      ],
+     "defect_rate_trend": [{"B-038":1.2},{"B-039":0.8},{"B-040":1.5},
+       {"B-041":0.0},{"B-042":0.4},{"BP-042":0.0}],
      "overall_result": "PASS",
      "result_color": "#27AE60",
      "defect_count": "0",
@@ -220,7 +231,15 @@ Usage
 Output Example
 --------------
 
-.. image:: ../_static/industrial_report.png
-   :alt: Industrial Quality Report Example Output
+The measurement tables and inspection checklist fill page 1; the defect-rate trend
+chart, PASS/FAIL summary, and sign-off carry onto page 2:
+
+.. image:: ../_static/industrial_report_page1.png
+   :alt: Industrial Quality Report Example Output — page 1
    :align: center
-   :width: 600px
+   :width: 550px
+
+.. image:: ../_static/industrial_report_page2.png
+   :alt: Industrial Quality Report Example Output — page 2
+   :align: center
+   :width: 550px

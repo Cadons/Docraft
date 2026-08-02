@@ -171,7 +171,15 @@ Usage
 Output Example
 --------------
 
-.. image:: ../_static/medical_report.png
-   :alt: Medical Report Example Output
+Patient information, diagnosis, vital signs, and prescriptions fill page 1;
+clinical notes and the physician's signature carry onto page 2:
+
+.. image:: ../_static/medical_report_page1.png
+   :alt: Medical Report Example Output — page 1
    :align: center
-   :width: 600px
+   :width: 550px
+
+.. image:: ../_static/medical_report_page2.png
+   :alt: Medical Report Example Output — page 2
+   :align: center
+   :width: 550px
