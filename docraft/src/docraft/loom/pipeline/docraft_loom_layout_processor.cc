@@ -130,17 +130,18 @@ namespace docraft::loom::pipeline {
         PositionScope scope(*this, *node);
         auto& layout_box = node->edit_layout_box();
         layout_box.frame.size = layout_box.measured_size;
+        const float padding = node->effective_padding();
         const float own_width = node->width() > 0.0F ? node->width() : incoming_width();
         const float children_width =
-            own_width > 0.0F ? std::max(0.0F, own_width - (2.0F * node->padding())) : 0.0F;
+            own_width > 0.0F ? std::max(0.0F, own_width - (2.0F * padding)) : 0.0F;
 
         const int n = node->children_count();
         if (n > 0)
         {
-            const float start_x = layout_box.frame.position.x + node->padding();
+            const float start_x = layout_box.frame.position.x + padding;
             // Mirrors the measure pass: the first child's own top margin is reserved
             // outright, with no preceding sibling to combine it with.
-            float current_y = layout_box.frame.position.y + node->padding()
+            float current_y = layout_box.frame.position.y + padding
                 + node->resolve_outer_margin(*node, /*leading=*/true);
             for (int i = 0; i < n; ++i)
             {
@@ -232,13 +233,14 @@ namespace docraft::loom::pipeline {
         // width nor owns the constraint like Rectangle does -- but it does narrow the
         // width relayed to children by its own padding(), the same inset Rectangle
         // already applies around its children.
-        const float relay_width = std::max(0.0F, incoming_width() - (2.0F * node->padding()));
+        const float padding = node->effective_padding();
+        const float relay_width = std::max(0.0F, incoming_width() - (2.0F * padding));
 
-        const float start_x = position.x + node->padding();
+        const float start_x = position.x + padding;
         const int n = node->children_count();
         // Mirrors the measure pass: the first/last child's own margin is reserved
         // outright, with no sibling on that side to combine it with.
-        float current_y = position.y + node->padding() + node->resolve_outer_margin(*node, /*leading=*/true);
+        float current_y = position.y + padding + node->resolve_outer_margin(*node, /*leading=*/true);
         for (int i = 0; i < n; ++i)
         {
             inherited_width_ = relay_width;
@@ -272,7 +274,8 @@ namespace docraft::loom::pipeline {
         const float width_budget = incoming_width();
         inherited_width_ = 0.0F;
 
-        const float start_y = position.y + node->padding();
+        const float padding = node->effective_padding();
+        const float start_y = position.y + padding;
         const int n = node->children_count();
         const auto& weights = node->weights();
 
@@ -304,7 +307,8 @@ namespace docraft::loom::pipeline {
         if (!weights.empty() && n > 0)
         {
             const float available_width = std::max(0.0F,
-                width_budget - total_gap - leading_margin - trailing_margin - (2.0F * node->padding()));
+                                                   width_budget - total_gap - leading_margin - trailing_margin - (2.0F *
+                                                       padding));
             std::vector<float> natural_widths(static_cast<std::size_t>(n));
             for (int i = 0; i < n; ++i)
             {
@@ -313,9 +317,20 @@ namespace docraft::loom::pipeline {
             resolved_widths = distribute_weighted_widths(available_width, weights, n, natural_widths);
         }
 
-        float current_x = position.x + node->padding() + leading_margin;
+        float current_x = position.x + padding + leading_margin;
         for (int i = 0; i < n; ++i)
         {
+            // Mirrors DocraftLoomMeasureProcessor::visit(DocraftLoomHStack*): a resolved
+            // column width must be armed as this child's own incoming width *before*
+            // accept() recurses into it, or a weighted column's content (e.g. a nested
+            // Rectangle/VStack with no explicit width of its own) lays out against
+            // whatever this HStack's own ancestor pushed down instead of its actual
+            // resolved share -- silently diverging from what Measure already assumed
+            // that content would be narrowed to.
+            if (!resolved_widths.empty())
+            {
+                inherited_width_ = resolved_widths[static_cast<std::size_t>(i)];
+            }
             cursor_.set_position(current_x, start_y);
             auto child = node->edit_child(i);
             child->accept(*this);
@@ -335,7 +350,7 @@ namespace docraft::loom::pipeline {
                 current_x += trailing_margin;
             }
         }
-        current_x += node->padding();
+        current_x += padding;
         cursor_.set_position(current_x, start_y);
         if (!resolved_widths.empty())
         {

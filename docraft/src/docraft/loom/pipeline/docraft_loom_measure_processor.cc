@@ -229,8 +229,9 @@ namespace docraft::loom::pipeline {
         const float incoming_width = inherited_wrap_width_ > 0.0F ? inherited_wrap_width_ : content_width_;
         inherited_wrap_width_ = 0.0F;
         const float own_width = node->width() > 0.0F ? node->width() : incoming_width;
+        const float padding = node->effective_padding();
         const float children_wrap_width =
-            own_width > 0.0F ? std::max(0.0F, own_width - (2.0F * node->padding())) : 0.0F;
+            own_width > 0.0F ? std::max(0.0F, own_width - (2.0F * padding)) : 0.0F;
 
         float child_width = 0.0F;
         float child_height = node->resolve_outer_margin(*node, /*leading=*/true);
@@ -253,10 +254,10 @@ namespace docraft::loom::pipeline {
         child_height += node->resolve_outer_margin(*node, /*leading=*/false);
         const bool has_children = n > 0;
         auto& measured_size = node->edit_layout_box().measured_size;
-        measured_size.height = has_children ? (child_height + (2.0F * node->padding())) : node->height();
+        measured_size.height = has_children ? (child_height + (2.0F * padding)) : node->height();
         measured_size.width = node->width() > 0.0F
                                   ? node->width()
-                                  : (has_children ? child_width + (2.0F * node->padding()) : 0.0F);
+                                  : (has_children ? child_width + (2.0F * padding) : 0.0F);
     }
 
     void DocraftLoomMeasureProcessor::visit(docraft::loom::nodes::DocraftLoomCanvas* node)
@@ -325,7 +326,8 @@ namespace docraft::loom::pipeline {
         // same inset Rectangle already applies around its children.
         const float incoming_width = inherited_wrap_width_ > 0.0F ? inherited_wrap_width_ : content_width_;
         inherited_wrap_width_ = 0.0F;
-        const float children_wrap_width = std::max(0.0F, incoming_width - (2.0F * node->padding()));
+        const float padding = node->effective_padding();
+        const float children_wrap_width = std::max(0.0F, incoming_width - (2.0F * padding));
 
         float total_height = node->resolve_outer_margin(*node, /*leading=*/true);
         float max_width = 0.0F;
@@ -347,8 +349,8 @@ namespace docraft::loom::pipeline {
         }
         total_height += node->resolve_outer_margin(*node, /*leading=*/false);
         auto& ms = node->edit_layout_box().measured_size;
-        ms.width = n > 0 ? max_width + (2.0F * node->padding()) : 0.0F;
-        ms.height = total_height + (n > 0 ? (2.0F * node->padding()) : 0.0F);
+        ms.width = n > 0 ? max_width + (2.0F * padding) : 0.0F;
+        ms.height = total_height + (n > 0 ? (2.0F * padding) : 0.0F);
     }
 
     void DocraftLoomMeasureProcessor::visit(docraft::loom::nodes::DocraftLoomHStack* node)
@@ -395,11 +397,13 @@ namespace docraft::loom::pipeline {
         // incoming_width (the ancestor's constraint, or content_width_ at the root) --
         // not content_width_ unconditionally -- so a weighted HStack nested inside a
         // narrower Rectangle/VStack divides that narrower budget, not the full page.
+        const float padding = node->effective_padding();
         std::vector<float> resolved_widths;
         if (!weights.empty() && n > 0 && incoming_width > 0.0F)
         {
             const float available_width = std::max(0.0F,
-                incoming_width - total_gap - leading_margin - trailing_margin - (2.0F * node->padding()));
+                                                   incoming_width - total_gap - leading_margin - trailing_margin - (2.0F
+                                                       * padding));
             resolved_widths = distribute_weighted_widths(available_width, weights, n);
         }
 
@@ -420,8 +424,8 @@ namespace docraft::loom::pipeline {
             max_height = std::max(max_height, sz.height);
         }
         auto& ms = node->edit_layout_box().measured_size;
-        ms.width = total_width + leading_margin + trailing_margin + (n > 0 ? (2.0F * node->padding()) : 0.0F);
-        ms.height = max_height + (n > 0 ? (2.0F * node->padding()) : 0.0F);
+        ms.width = total_width + leading_margin + trailing_margin + (n > 0 ? (2.0F * padding) : 0.0F);
+        ms.height = max_height + (n > 0 ? (2.0F * padding) : 0.0F);
     }
 
     void DocraftLoomMeasureProcessor::visit(docraft::loom::nodes::DocraftLoomBlankLine* node)

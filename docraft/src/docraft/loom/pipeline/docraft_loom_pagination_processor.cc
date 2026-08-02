@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <cstdio>
 #include <unordered_map>
 #include <vector>
 
@@ -384,9 +385,7 @@ namespace docraft::loom::pipeline {
 
             const auto& frame = child->layout_box().frame;
             const float bottom = frame.position.y + frame.size.height;
-            const bool fits = bottom <= page_bottom_y + 0.01F;
-
-            if (fits)
+            if (const bool fits = bottom <= page_bottom_y + 0.01F)
             {
                 assign_page_index_recursive(*child, current_page);
                 next_y = bottom + gap_after(child.get());
