@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include <string>
 #include <string_view>
 
 #include "docraft/docraft_lib.h"
@@ -22,9 +23,17 @@ namespace docraft::loom::charts {
      * side-by-side by series at each shared x, on top of the chrome (gridlines/axes/
      * ticks/title/legend/labels) implemented by the DocraftChartBuilder base class. Uses
      * the same `<Series model="[[x,y],...]">` (x,y) point model as every other chart
-     * style -- x positions the bar, y is its height from the baseline (data-space 0,
-     * clamped into range if 0 falls outside it). Registered under kHistogramStyleName by
-     * register_builtin_chart_styles().
+     * style -- x positions the bar, y is its height from the baseline. The y-axis
+     * auto-zooms to the real data range (no adjust_data_bounds() override, same as
+     * scatter/spline), so the baseline is data-space 0 clamped into that auto-zoomed
+     * range if 0 falls outside it (see the existing std::clamp() in draw_series()).
+     * Because a bar flush against a non-zero baseline can misread as "starts at zero",
+     * every bar leaves a small gap at whichever edge touches the baseline instead of
+     * sitting directly on the axis line. A `<Series model='[{"label": value}, ...]'>`
+     * entry (the shape pie/histogram model data always uses) places its bar at that
+     * entry's ordinal index and shows its key as that bar's X-axis tick label, via
+     * format_x_tick_label(); plain `[x,y]` entries keep the numeric tick label.
+     * Registered under kHistogramStyleName by register_builtin_chart_styles().
      */
     class DOCRAFT_LIB DocraftHistogramChartBuilder : public DocraftChartBuilder
     {
@@ -32,11 +41,6 @@ namespace docraft::loom::charts {
         void draw_series(nodes::DocraftLoomCanvas& canvas, const DocraftChartBuildContext& ctx, const PlotRect& plot,
                           const DataBounds& mapped_bounds) const override;
 
-        /**
-         * @brief Widens the y range to always include 0 -- a bar's height reads as "how
-         * far from zero", so a range that excludes 0 (e.g. every value happens to be
-         * >= 5) would make bar heights visually meaningless relative to each other.
-         */
-        DataBounds adjust_data_bounds(const DataBounds& bounds) const override;
+        std::string format_x_tick_label(float value, const DocraftChartBuildContext& ctx) const override;
     };
 } // namespace docraft::loom::charts

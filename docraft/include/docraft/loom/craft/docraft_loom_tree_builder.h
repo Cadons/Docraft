@@ -187,16 +187,29 @@ namespace docraft::loom::craft {
         std::vector<std::string> resolve_table_header(const std::string& raw) const;
 
         /**
+         * @brief Result of resolve_series_points(): `points` and `labels` are parallel
+         * (same size, same index) -- see `charts::DocraftChartSeries::point_labels`.
+         */
+        struct ResolvedSeriesPoints
+        {
+            std::vector<nodes::Position> points;
+            std::vector<std::optional<std::string>> labels;
+        };
+
+        /**
          * @brief Resolves a `<Series model="...">` attribute into numeric data points:
          * `${...}` substitution, single-quote-JSON normalization (same helpers Table's
-         * own model resolution uses), then JSON-parse. Each array entry must be either a
-         * 2-element numeric array (`[x,y]`) or an object with numeric `x`/`y` keys. This
-         * is a separate resolver from `to_string_matrix()` (Table's own model matrix,
-         * which requires string cells) rather than a variant of it.
+         * own model resolution uses), then JSON-parse. Each array entry must be one of:
+         * a 2-element numeric array (`[x,y]`); an object with numeric `x`/`y` keys; or a
+         * single-key object (`{"label": value}`, the shape pie/histogram model data
+         * always uses) -- which becomes `x` = the entry's ordinal index (0-based),
+         * `y` = the value, and `label` = the key. This is a separate resolver from
+         * `to_string_matrix()` (Table's own model matrix, which requires string cells)
+         * rather than a variant of it.
          * @throws docraft::exception::DataFormatException if `raw` doesn't resolve to a
-         * JSON array, or any entry doesn't match one of the two accepted shapes.
+         * JSON array, or any entry doesn't match one of the three accepted shapes.
          */
-        std::vector<nodes::Position> resolve_series_points(const std::string& raw) const;
+        ResolvedSeriesPoints resolve_series_points(const std::string& raw) const;
 
         /**
          * @brief Builds and appends the header row for a JSON/template `model` table (either

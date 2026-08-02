@@ -118,6 +118,39 @@ namespace docraft::test {
         EXPECT_EQ(count_polygons(*canvas), 0);
     }
 
+    TEST(DocraftPieChartBuilderTest, ShowsPercentageLabelsByDefault)
+    {
+        DocraftChartBuildContext ctx;
+        ctx.width = 300.0F;
+        ctx.height = 200.0F;
+        DocraftChartSeries a;
+        a.points = {{.x = 0.0F, .y = 10.0F}};
+        DocraftChartSeries b;
+        b.points = {{.x = 0.0F, .y = 30.0F}};
+        ctx.series = {a, b};
+
+        const auto canvas = build_pie_chart(ctx);
+        EXPECT_TRUE(any_text_equals(*canvas, "25%"));
+        EXPECT_TRUE(any_text_equals(*canvas, "75%"));
+    }
+
+    TEST(DocraftPieChartBuilderTest, HidesPercentageLabelsWhenShowPercentageIsFalse)
+    {
+        DocraftChartBuildContext ctx;
+        ctx.width = 300.0F;
+        ctx.height = 200.0F;
+        ctx.show_percentage = false;
+        DocraftChartSeries a;
+        a.points = {{.x = 0.0F, .y = 10.0F}};
+        DocraftChartSeries b;
+        b.points = {{.x = 0.0F, .y = 30.0F}};
+        ctx.series = {a, b};
+
+        const auto canvas = build_pie_chart(ctx);
+        EXPECT_FALSE(any_text_equals(*canvas, "25%"));
+        EXPECT_FALSE(any_text_equals(*canvas, "75%"));
+    }
+
     TEST(DocraftPieChartBuilderTest, HandlesAllNonPositiveValuesWithoutCrashing)
     {
         DocraftChartBuildContext ctx;

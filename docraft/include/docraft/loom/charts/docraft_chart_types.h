@@ -37,12 +37,18 @@ namespace docraft::loom::charts {
      * @brief A single data series: a name (for the legend), a color, and its points in
      * data space (not yet mapped to canvas-local pixel coordinates -- each chart
      * builder does that mapping itself, since it depends on the chart's own plot area).
+     * `point_labels`, when non-empty, is parallel to `points` (same size, same index)
+     * and carries the per-point category label from a `<Series model="[{\"label\":
+     * value}, ...]">` entry -- `std::nullopt` at an index whose entry was instead a
+     * plain `[x,y]`/`{"x":..,"y":..}` pair. Only pie (per-slice label) and histogram
+     * (per-bar X-axis tick label) consult it; scatter/spline ignore it.
      */
     struct DocraftChartSeries
     {
         std::string name;
         DocraftColor color;
         std::vector<nodes::Position> points;
+        std::vector<std::optional<std::string>> point_labels;
     };
 
     /**

@@ -5,7 +5,9 @@
 #include "docraft/loom/charts/docraft_histogram_chart_builder.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
+#include <string>
 
 #include "docraft/loom/nodes/docraft_loom_rectangle.h"
 
@@ -15,14 +17,35 @@ namespace docraft::loom::charts {
         // leaving a visual gap between adjacent groups -- mirrors how most bar-chart
         // libraries reserve ~20-30% of each slot as inter-group spacing.
         constexpr float kGroupWidthFraction = 0.7F;
+        // The y-axis now auto-zooms to the real data range (no adjust_data_bounds()
+        // override), so the baseline a bar grows from is not necessarily true zero --
+        // it may just be wherever the auto-zoomed range happens to clamp 0, or the
+        // bottom/top of the plot. A bar's edge sitting flush against that baseline line
+        // would misleadingly read as "this value starts at zero" even when it doesn't,
+        // so every bar leaves this small pixel gap at whichever edge touches the
+        // baseline instead.
+        constexpr float kAxisSplitGap = 3.0F;
+        // Tolerance for matching an X-tick's data-space value back to a labeled data
+        // point's own x (an ordinal index) in format_x_tick_label() -- guards float
+        // imprecision from map_x()/nice-tick rounding, well under the smallest possible
+        // gap between two distinct integer indices.
+        constexpr float kTickLabelMatchEpsilon = 0.01F;
     }
 
-    DataBounds DocraftHistogramChartBuilder::adjust_data_bounds(const DataBounds& bounds) const
+    std::string DocraftHistogramChartBuilder::format_x_tick_label(float value, const DocraftChartBuildContext& ctx) const
     {
-        DataBounds widened = bounds;
-        widened.min_y = std::min(widened.min_y, 0.0F);
-        widened.max_y = std::max(widened.max_y, 0.0F);
-        return widened;
+        for (const auto& series : ctx.series)
+        {
+            for (std::size_t i = 0; i < series.points.size(); ++i)
+            {
+                if (i < series.point_labels.size() && series.point_labels[i]
+                    && std::abs(series.points[i].x - value) < kTickLabelMatchEpsilon)
+                {
+                    return *series.point_labels[i];
+                }
+            }
+        }
+        return format_tick_label(value);
     }
 
     void DocraftHistogramChartBuilder::draw_series(nodes::DocraftLoomCanvas& canvas,
@@ -63,8 +86,24 @@ namespace docraft::loom::charts {
                 const float center_x = map_x(point.x, plot, mapped_bounds);
                 const float bar_left = center_x - (group_width / 2.0F) + (static_cast<float>(series_index) * bar_width);
                 const float value_px = map_y(point.y, plot, mapped_bounds);
-                const float bar_top = std::min(value_px, baseline_px);
-                const float bar_height = std::abs(value_px - baseline_px);
+                const float raw_top = std::min(value_px, baseline_px);
+                const float raw_bottom = std::max(value_px, baseline_px);
+                // Pull in the baseline-side edge by kAxisSplitGap, clamped to the bar's
+                // own extent so a very short bar can't invert into negative height.
+                const float gap = std::min(kAxisSplitGap, raw_bottom - raw_top);
+                float bar_top = raw_top;
+                float bar_height = raw_bottom - raw_top;
+                if (value_px < baseline_px)
+                {
+                    // Bar grows upward from the baseline -- baseline is the bottom edge.
+                    bar_height -= gap;
+                }
+                else
+                {
+                    // Bar hangs downward from the baseline -- baseline is the top edge.
+                    bar_top += gap;
+                    bar_height -= gap;
+                }
 
                 auto bar = std::make_shared<nodes::DocraftLoomRectangle>();
                 bar->set_width(bar_width);

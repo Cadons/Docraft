@@ -1,13 +1,18 @@
 #include <gtest/gtest.h>
 
+#include <memory>
+#include <vector>
+
 #include "docraft/loom/charts/docraft_histogram_chart_builder.h"
 #include "docraft/loom/nodes/docraft_loom_rectangle.h"
+#include "docraft/loom/nodes/docraft_loom_text.h"
 
 namespace docraft::test {
     using docraft::loom::charts::DocraftChartBuildContext;
     using docraft::loom::charts::DocraftChartSeries;
     using docraft::loom::charts::DocraftHistogramChartBuilder;
     using docraft::loom::nodes::DocraftLoomRectangle;
+    using docraft::loom::nodes::DocraftLoomText;
 
     namespace {
         int count_rectangles(const loom::nodes::DocraftLoomCanvas& canvas)
@@ -21,6 +26,19 @@ namespace docraft::test {
                 }
             }
             return count;
+        }
+
+        bool any_text_equals(const loom::nodes::DocraftLoomCanvas& canvas, const std::string& expected)
+        {
+            for (int i = 0; i < canvas.children_count(); ++i)
+            {
+                if (auto text = std::dynamic_pointer_cast<const DocraftLoomText>(canvas.child(i));
+                    text && text->text() == expected)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         std::shared_ptr<loom::nodes::DocraftLoomCanvas> build_histogram_chart(const DocraftChartBuildContext& ctx)
@@ -58,18 +76,72 @@ namespace docraft::test {
         EXPECT_EQ(count_rectangles(*canvas), 6);
     }
 
-    TEST(DocraftHistogramChartBuilderTest, BarsGrowFromZeroEvenWhenAllValuesAreFarFromIt)
+    TEST(DocraftHistogramChartBuilderTest, LabeledPointsShowCategoryLabelAsXTickInsteadOfIndex)
     {
-        // Regression test: bars used to grow from a baseline clamped to the auto-zoomed
-        // data range, so a series entirely far from 0 (e.g. all values >= 5) rendered
-        // bars starting from that range's own minimum instead of 0 -- making bar height
-        // meaningless relative to the axis. adjust_data_bounds() now folds 0 into the
-        // range before ticks are computed, so the baseline is always exactly 0.
+        // {"label": value} model entries (the shape pie/histogram model data always
+        // uses) place a bar at their ordinal index, and format_x_tick_label() shows
+        // their key as that bar's X-axis tick label instead of the raw numeric index.
         DocraftChartBuildContext ctx;
         ctx.width = 300.0F;
         ctx.height = 200.0F;
         DocraftChartSeries series;
-        series.points = {{.x = 0.0F, .y = 10.0F}};
+        series.points = {{.x = 0.0F, .y = 3.0F}, {.x = 1.0F, .y = 5.0F}};
+        series.point_labels = {"Jan", "Feb"};
+        ctx.series = {series};
+
+        const auto canvas = build_histogram_chart(ctx);
+        EXPECT_TRUE(any_text_equals(*canvas, "Jan"));
+        EXPECT_TRUE(any_text_equals(*canvas, "Feb"));
+        EXPECT_FALSE(any_text_equals(*canvas, "0"));
+        EXPECT_FALSE(any_text_equals(*canvas, "1"));
+    }
+
+    TEST(DocraftHistogramChartBuilderTest, YAxisAutoZoomsInsteadOfForcingBaselineToZero)
+    {
+        // The y-axis no longer forces 0 into its range (no adjust_data_bounds()
+        // override) -- a series entirely far from 0 (900-1000, this test's own version
+        // of the motivating example) gets an auto-zoomed tick range tight around its
+        // real values ([900,1000] here -- nice-ticking lands exactly on the data since
+        // both ends are already multiples of the chosen 20-unit step) instead of a
+        // range stretched all the way down to real 0. The baseline (0) clamps to the
+        // bottom of that tight range (900), so a point close to 900 -- still far from
+        // real 0 -- renders a small bar; if 0 were still being forced into the range
+        // (the old, now-removed behavior), that same point would render a bar spanning
+        // most of the ~160px plot height instead.
+        DocraftChartBuildContext ctx;
+        ctx.width = 300.0F;
+        ctx.height = 200.0F;
+        DocraftChartSeries series;
+        series.points = {{.x = 0.0F, .y = 900.0F}, {.x = 1.0F, .y = 920.0F}, {.x = 2.0F, .y = 1000.0F}};
+        ctx.series = {series};
+
+        const auto canvas = build_histogram_chart(ctx);
+        std::vector<std::shared_ptr<const DocraftLoomRectangle>> bars;
+        for (int i = 0; i < canvas->children_count(); ++i)
+        {
+            if (auto rect = std::dynamic_pointer_cast<const DocraftLoomRectangle>(canvas->child(i)))
+            {
+                bars.push_back(rect);
+            }
+        }
+        ASSERT_EQ(bars.size(), 3U);
+        // bars[1] is the y=920 point's bar -- close to the auto-zoomed baseline (900).
+        EXPECT_LT(bars[1]->height(), 50.0F);
+    }
+
+    TEST(DocraftHistogramChartBuilderTest, BarLeavesAGapAtTheBaselineEdge)
+    {
+        // Same far-from-zero scenario as YAxisAutoZoomsInsteadOfForcingBaselineToZero --
+        // the bar's bottom edge (where it meets the baseline) must sit strictly above
+        // the plot's own bottom edge, proving a visible gap exists instead of the bar
+        // touching the axis line. The plot's bottom edge is ctx.height minus the fixed
+        // bottom-axis band (30px, no x_label here) reserved by the Cartesian chrome in
+        // docraft_chart_builder.cc.
+        DocraftChartBuildContext ctx;
+        ctx.width = 300.0F;
+        ctx.height = 200.0F;
+        DocraftChartSeries series;
+        series.points = {{.x = 0.0F, .y = 1000.0F}};
         ctx.series = {series};
 
         const auto canvas = build_histogram_chart(ctx);
@@ -83,12 +155,8 @@ namespace docraft::test {
             }
         }
         ASSERT_TRUE(bar);
-        // A single-point series's own data range is a tiny sliver around its one value
-        // (compute_data_bounds() widens a degenerate range by only +/-0.5). If the
-        // baseline were still clamped into that sliver (the old bug), the bar would be a
-        // few pixels tall; with 0 folded into the range, it spans most of the ~150px
-        // plot height instead.
-        EXPECT_GT(bar->height(), 50.0F);
+        constexpr float kPlotBottomEdge = 200.0F - 30.0F;
+        EXPECT_LT(bar->explicit_position().y + bar->height(), kPlotBottomEdge);
     }
 
     TEST(DocraftHistogramChartBuilderTest, HandlesEmptySeriesWithoutCrashing)

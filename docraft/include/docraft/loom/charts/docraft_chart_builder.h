@@ -130,6 +130,17 @@ namespace docraft::loom::charts {
         static std::string format_tick_label(float value);
 
         /**
+         * @brief Formats an X-axis tick's label for the given data-space tick value.
+         * Default falls back to format_tick_label() (plain numeric), right for a
+         * continuous axis (scatter/spline). A style whose X positions are categorical
+         * indices with author-supplied labels (histogram's `{"label": value}` model
+         * entries, via DocraftChartSeries::point_labels) overrides this to substitute
+         * the matching category label when a tick lines up with a labeled data point,
+         * keeping the numeric fallback otherwise.
+         */
+        virtual std::string format_x_tick_label(float value, const DocraftChartBuildContext& ctx) const;
+
+        /**
          * @brief Maps a data-space X coordinate to a canvas-local pixel X within `plot`.
          */
         static float map_x(float value, const PlotRect& plot, const DataBounds& mapped_bounds);

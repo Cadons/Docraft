@@ -180,6 +180,36 @@ TEST(DocraftLoomTreeBuilderTest, SeriesModelSupportsArrayOfPairsAndArrayOfObject
     }
 }
 
+TEST(DocraftLoomTreeBuilderTest, SeriesModelSupportsLabeledValueObjects)
+{
+    // The shape pie/histogram model data always uses: an array of single-key
+    // {"label": value} objects rather than [x,y] pairs/{"x":..,"y":..} objects.
+    const char* xml = R"XML(
+<Chart style="pie" width="300" height="200">
+  <Series model='[{"a":10},{"b":30}]' />
+</Chart>
+)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto canvas = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomCanvas>(node);
+    ASSERT_TRUE(canvas);
+
+    bool found_a = false;
+    bool found_b = false;
+    for (int i = 0; i < canvas->children_count(); ++i)
+    {
+        if (auto text = std::dynamic_pointer_cast<const docraft::loom::nodes::DocraftLoomText>(canvas->child(i)))
+        {
+            found_a = found_a || text->text() == "a";
+            found_b = found_b || text->text() == "b";
+        }
+    }
+    // Each labeled entry's key becomes its slice's legend label, proving the
+    // {"label": value} model shape resolves and its label reaches the pie builder.
+    EXPECT_TRUE(found_a);
+    EXPECT_TRUE(found_b);
+}
+
 TEST(DocraftLoomTreeBuilderTest, SeriesModelMalformedEntryThrows)
 {
     EXPECT_THROW(

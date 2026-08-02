@@ -798,7 +798,8 @@ namespace docraft::loom::craft {
         return header;
     }
 
-    std::vector<nodes::Position> DocraftLoomTreeBuilder::resolve_series_points(const std::string& raw) const
+    DocraftLoomTreeBuilder::ResolvedSeriesPoints DocraftLoomTreeBuilder::resolve_series_points(
+        const std::string& raw) const
     {
         if (raw.empty())
         {
@@ -821,11 +822,13 @@ namespace docraft::loom::craft {
             throw docraft::exception::DataFormatException("<Series> 'model' must resolve to a JSON array");
         }
 
-        std::vector<nodes::Position> points;
-        points.reserve(parsed.size());
+        ResolvedSeriesPoints resolved;
+        resolved.points.reserve(parsed.size());
+        resolved.labels.reserve(parsed.size());
         for (const auto& item : parsed)
         {
             float x, y;
+            std::optional<std::string> label;
             if (item.is_array() && item.size() == 2 && item[0].is_number() && item[1].is_number())
             {
                 x = item[0].get<float>();
@@ -837,14 +840,26 @@ namespace docraft::loom::craft {
                 x = item["x"].get<float>();
                 y = item["y"].get<float>();
             }
+            else if (item.is_object() && item.size() == 1 && item.begin().value().is_number())
+            {
+                // The shape pie/histogram model data always uses: a single "label":
+                // value entry. There's no explicit x, so its ordinal position in the
+                // array becomes x (a category index) -- histogram/pie map that back to
+                // an X-axis tick label / slice label via the parallel `label` below.
+                x = static_cast<float>(resolved.points.size());
+                y = item.begin().value().get<float>();
+                label = item.begin().key();
+            }
             else
             {
                 throw docraft::exception::DataFormatException(
-                    "<Series> 'model' entries must be [x,y] pairs or {\"x\":..,\"y\":..} objects");
+                    "<Series> 'model' entries must be [x,y] pairs, {\"x\":..,\"y\":..} objects, or "
+                    "{\"label\":value} objects");
             }
-            points.push_back({.x = x, .y = y});
+            resolved.points.push_back({.x = x, .y = y});
+            resolved.labels.push_back(std::move(label));
         }
-        return points;
+        return resolved;
     }
 
     std::shared_ptr<nodes::DocraftLoomRectangle> DocraftLoomTreeBuilder::build_rectangle(const ParsedElement& element)
@@ -926,7 +941,9 @@ namespace docraft::loom::craft {
             series.name = child->common.name.value_or("");
             series.color = series_data.color ? resolve_color(*series_data.color)
                                               : charts::default_series_color(context.series.size());
-            series.points = resolve_series_points(series_data.model.value_or(""));
+            ResolvedSeriesPoints resolved = resolve_series_points(series_data.model.value_or(""));
+            series.points = std::move(resolved.points);
+            series.point_labels = std::move(resolved.labels);
             context.series.push_back(std::move(series));
         }
 

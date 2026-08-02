@@ -167,6 +167,11 @@ namespace docraft::loom::charts {
         return static_cast<float>(docraft::utils::utf8_codepoint_count(text)) * font_size * kGlyphWidthFactor;
     }
 
+    std::string DocraftChartBuilder::format_x_tick_label(float value, const DocraftChartBuildContext&) const
+    {
+        return format_tick_label(value);
+    }
+
     std::string DocraftChartBuilder::format_tick_label(float value)
     {
         std::ostringstream oss;
@@ -286,7 +291,7 @@ namespace docraft::loom::charts {
         {
             const float px = map_x(xt, plot, mapped_bounds);
             add_line(*canvas, px, plot.bottom, px, plot.bottom + kTickLength, axis_color, kAxisLineWidth);
-            const std::string label = format_tick_label(xt);
+            const std::string label = format_x_tick_label(xt, ctx);
             const float label_w = estimate_text_width(label, kTickLabelFontSize);
             add_text(*canvas, label, px - (label_w / 2.0F), plot.bottom + kTickLength + kTickLabelGap,
                      kTickLabelFontSize, text_color);

@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cmath>
 #include <numbers>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -65,24 +66,40 @@ namespace docraft::loom::charts {
         std::vector<Slice> slices;
         for (const auto& series : ctx.series)
         {
-            for (const auto& point : series.points)
+            // A series with more than one point is the `<Series model='[{"label":
+            // value}, ...]'>` shape -- one series holding a whole category breakdown,
+            // rather than one series per slice -- so series.color (a single color for
+            // the whole series) can't distinguish its slices; cycle default_series_color
+            // per slice instead. A series with exactly one point keeps using
+            // series.color, respecting an explicit <Series color="..."> in the common
+            // one-point-per-series case (series index and slice index coincide there).
+            const bool cycle_slice_colors = series.points.size() > 1;
+            for (std::size_t i = 0; i < series.points.size(); ++i)
             {
+                const auto& point = series.points[i];
                 if (point.y <= 0.0F)
                 {
                     continue;
                 }
-                // series.color is already resolved by the tree builder -- either the
-                // author's explicit <Series color="..."> or, if unset, a default
-                // palette color keyed by that series' own index. Re-deriving a color
-                // from slice position here would silently discard an explicit color
-                // choice; using series.color directly respects it, and still gives
-                // visually distinct slices in the common one-point-per-series case
-                // (series index and slice index coincide).
                 const auto slice_index = slices.size();
+                const std::optional<std::string> point_label =
+                    i < series.point_labels.size() ? series.point_labels[i] : std::nullopt;
+                std::string label;
+                if (point_label)
+                {
+                    label = *point_label;
+                }
+                else if (!series.name.empty())
+                {
+                    label = series.name;
+                }
+                else
+                {
+                    label = "Slice " + std::to_string(slice_index + 1);
+                }
                 slices.push_back({.value = point.y,
-                                   .color = series.color,
-                                   .label = series.name.empty() ? ("Slice " + std::to_string(slice_index + 1))
-                                                                 : series.name});
+                                   .color = cycle_slice_colors ? default_series_color(slice_index) : series.color,
+                                   .label = std::move(label)});
             }
         }
 
@@ -134,6 +151,18 @@ namespace docraft::loom::charts {
                 fan.push_back(point_on_circle(center_x, center_y, radius, angle));
             }
             add_polygon(*canvas, fan, slice.color, separator_color, kBorderWidth);
+
+            if (ctx.show_percentage)
+            {
+                const float mid_angle = current_angle + (sweep_deg / 2.0F);
+                const nodes::Position label_pos =
+                    point_on_circle(center_x, center_y, radius * kPercentageLabelRadiusFraction, mid_angle);
+                const std::string percentage = format_percentage(slice.value, total);
+                const float label_w = estimate_text_width(percentage, kPercentageLabelFontSize);
+                add_text(*canvas, percentage, label_pos.x - (label_w / 2.0F),
+                         label_pos.y - (kPercentageLabelFontSize / 2.0F), kPercentageLabelFontSize,
+                         percentage_label_color);
+            }
 
             legend_entries.emplace_back(slice.color, slice.label);
             current_angle += sweep_deg;
