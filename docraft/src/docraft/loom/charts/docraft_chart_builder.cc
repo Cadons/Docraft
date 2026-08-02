@@ -10,14 +10,18 @@
 #include <string_view>
 
 #include "docraft/loom/nodes/docraft_loom_line.h"
+#include "docraft/loom/nodes/docraft_loom_polygon.h"
 #include "docraft/loom/nodes/docraft_loom_rectangle.h"
 #include "docraft/loom/nodes/docraft_loom_text.h"
 #include "docraft/utils/docraft_utf8.h"
 
 namespace docraft::loom::charts {
     namespace {
-        constexpr float kTitleBandHeight = 24.0F;
-        constexpr float kLegendBandWidth = 110.0F;
+        // Constants relevant only to the Cartesian chrome (gridlines/axes/ticks) --
+        // kTitleBandHeight, kLegendBandWidth, kOuterEdgePadding, the legend row layout,
+        // kInkColorHex and kDefaultSeriesLabelPrefix live as protected static members on
+        // DocraftChartBuilder itself instead, since a non-Cartesian style (e.g. pie)
+        // still needs them to match the same visual language.
         constexpr float kBottomAxisBandHeight = 30.0F;
         constexpr float kXLabelHeight = 16.0F;
         constexpr float kLeftAxisBandWidth = 40.0F;
@@ -26,10 +30,6 @@ namespace docraft::loom::charts {
         constexpr float kAxisLineWidth = 1.0F;
         constexpr float kGridlineWidth = 0.5F;
         constexpr float kTickLabelFontSize = 7.0F;
-        constexpr float kTitleFontSize = 12.0F;
-        constexpr float kLegendFontSize = 8.0F;
-        constexpr float kLegendSwatchSize = 8.0F;
-        constexpr float kLegendRowHeight = 14.0F;
         constexpr float kAxisTickTargetCount = 5;
         // The topmost Y tick and the rightmost X tick map to exactly plot.top/plot.right
         // by construction (see mapped_bounds below); their labels are centered on that
@@ -37,7 +37,6 @@ namespace docraft::loom::charts {
         // number gets clipped by the canvas whenever there's no title/y_label band above
         // it, and likewise the right-most tick's number whenever there's no legend to its
         // right. This padding is reserved unconditionally, unlike the other bands.
-        constexpr float kOuterEdgePadding = 10.0F;
         // Rough average glyph width for Helvetica-like fonts -- there is no font backend
         // available at tree-build time (only Measure/Rendering have one), so exact text
         // width can't be queried here; this heuristic is only used to *approximately*
@@ -46,21 +45,9 @@ namespace docraft::loom::charts {
         // Gap between a tick mark's end and the start of its numeric label, applied on
         // both axes (below the X ticks, left of the Y ticks).
         constexpr float kTickLabelGap = 2.0F;
-        constexpr float kTitleTopMargin = 4.0F;
-        // Horizontal gap between the plot's right edge and the legend swatches.
-        constexpr float kLegendLeftGap = 10.0F;
-        // Gap between a legend swatch and its label.
-        constexpr float kLegendLabelGap = 4.0F;
-        // Nudges a legend label up slightly so its baseline reads as centered against
-        // its swatch, since DocraftLoomText positions from its own top, not its baseline.
-        constexpr float kLegendLabelVerticalNudge = 1.0F;
         constexpr float kYLabelTopMargin = 1.0F;
 
         constexpr std::string_view kGridColorHex = "#E0E0E0";
-        // Shared by both axis lines and label text -- kept as a single source of truth
-        // even though the two currently happen to use the same shade.
-        constexpr std::string_view kInkColorHex = "#333333";
-        constexpr std::string_view kDefaultSeriesLabelPrefix = "Series ";
     } // namespace
 
     void DocraftChartBuilder::add_line(nodes::DocraftLoomCanvas& canvas, float x1, float y1, float x2, float y2,
@@ -77,6 +64,37 @@ namespace docraft::loom::charts {
         canvas.add_child(line);
     }
 
+    void DocraftChartBuilder::add_curve(nodes::DocraftLoomCanvas& canvas, const std::vector<nodes::Position>& points,
+                                         const DocraftColor& color, float width)
+    {
+        if (points.size() < 2)
+        {
+            return;
+        }
+        float min_x = points[0].x, min_y = points[0].y;
+        for (const auto& pt : points)
+        {
+            min_x = std::min(min_x, pt.x);
+            min_y = std::min(min_y, pt.y);
+        }
+        // A smooth Polygon is an open curve rather than a closed fillable shape -- see
+        // DocraftLoomPolygon's own doc comment. No dedicated node/visitor for a curve is
+        // needed since the existing Polygon visit() already branches on smooth().
+        auto polygon = std::make_shared<nodes::DocraftLoomPolygon>();
+        std::vector<nodes::Position> local;
+        local.reserve(points.size());
+        for (const auto& pt : points)
+        {
+            local.push_back({.x = pt.x - min_x, .y = pt.y - min_y});
+        }
+        polygon->set_points(local);
+        polygon->set_smooth(true);
+        polygon->edit_style().border_color = color;
+        polygon->edit_style().border_width = width;
+        polygon->set_explicit_position({.x = min_x, .y = min_y});
+        canvas.add_child(polygon);
+    }
+
     void DocraftChartBuilder::add_text(nodes::DocraftLoomCanvas& canvas, const std::string& text, float x, float y,
                                         float font_size, const DocraftColor& color, bool bold)
     {
@@ -86,6 +104,62 @@ namespace docraft::loom::charts {
         node->set_bold(bold);
         node->set_explicit_position({.x = x, .y = y});
         canvas.add_child(node);
+    }
+
+    void DocraftChartBuilder::add_polygon(nodes::DocraftLoomCanvas& canvas, const std::vector<nodes::Position>& points,
+                                           const DocraftColor& fill_color, const DocraftColor& border_color,
+                                           float border_width)
+    {
+        if (points.size() < 3)
+        {
+            return;
+        }
+        float min_x = points[0].x, min_y = points[0].y;
+        for (const auto& pt : points)
+        {
+            min_x = std::min(min_x, pt.x);
+            min_y = std::min(min_y, pt.y);
+        }
+        auto polygon = std::make_shared<nodes::DocraftLoomPolygon>();
+        std::vector<nodes::Position> local;
+        local.reserve(points.size());
+        for (const auto& pt : points)
+        {
+            local.push_back({.x = pt.x - min_x, .y = pt.y - min_y});
+        }
+        polygon->set_points(local);
+        polygon->edit_style().background_color = fill_color;
+        polygon->edit_style().border_color = border_color;
+        polygon->edit_style().border_width = border_width;
+        polygon->set_explicit_position({.x = min_x, .y = min_y});
+        canvas.add_child(polygon);
+    }
+
+    std::shared_ptr<nodes::DocraftLoomCanvas> DocraftChartBuilder::create_canvas(const DocraftChartBuildContext& ctx)
+    {
+        auto canvas = std::make_shared<nodes::DocraftLoomCanvas>();
+        canvas->set_width(ctx.width);
+        canvas->set_height(ctx.height);
+        return canvas;
+    }
+
+    void DocraftChartBuilder::draw_legend_column(nodes::DocraftLoomCanvas& canvas, float x, float top_y,
+                                                  const std::vector<std::pair<DocraftColor, std::string>>& entries,
+                                                  const DocraftColor& text_color)
+    {
+        for (std::size_t i = 0; i < entries.size(); ++i)
+        {
+            const float row_y = top_y + (static_cast<float>(i) * kLegendRowHeight);
+            auto swatch = std::make_shared<nodes::DocraftLoomRectangle>();
+            swatch->set_width(kLegendSwatchSize);
+            swatch->set_height(kLegendSwatchSize);
+            swatch->edit_style().background_color = entries[i].first;
+            swatch->set_explicit_position({.x = x, .y = row_y});
+            canvas.add_child(swatch);
+
+            add_text(canvas, entries[i].second, x + kLegendSwatchSize + kLegendLabelGap,
+                     row_y - kLegendLabelVerticalNudge, kLegendFontSize, text_color);
+        }
     }
 
     float DocraftChartBuilder::estimate_text_width(const std::string& text, float font_size)
@@ -126,9 +200,7 @@ namespace docraft::loom::charts {
 
     std::shared_ptr<nodes::DocraftLoomCanvas> DocraftChartBuilder::build(const DocraftChartBuildContext& ctx) const
     {
-        auto canvas = std::make_shared<nodes::DocraftLoomCanvas>();
-        canvas->set_width(ctx.width);
-        canvas->set_height(ctx.height);
+        auto canvas = create_canvas(ctx);
 
         const DocraftColor grid_color{std::string(kGridColorHex)};
         const DocraftColor axis_color{std::string(kInkColorHex)};
@@ -166,7 +238,7 @@ namespace docraft::loom::charts {
             plot.bottom = plot.top + 1.0F;
         }
 
-        const DataBounds data_bounds = compute_data_bounds(ctx.series);
+        const DataBounds data_bounds = adjust_data_bounds(compute_data_bounds(ctx.series));
         const auto x_ticks = compute_nice_ticks(data_bounds.min_x, data_bounds.max_x, kAxisTickTargetCount);
         const auto y_ticks = compute_nice_ticks(data_bounds.min_y, data_bounds.max_y, kAxisTickTargetCount);
         // The mapped data range spans exactly the tick range (which nice-ticks usually
@@ -243,23 +315,16 @@ namespace docraft::loom::charts {
         // 6. Legend.
         if (show_legend)
         {
-            const float legend_x = plot.right + kLegendLeftGap;
+            std::vector<std::pair<DocraftColor, std::string>> entries;
+            entries.reserve(ctx.series.size());
             for (std::size_t i = 0; i < ctx.series.size(); ++i)
             {
-                const float row_y = plot.top + (static_cast<float>(i) * kLegendRowHeight);
-                auto swatch = std::make_shared<nodes::DocraftLoomRectangle>();
-                swatch->set_width(kLegendSwatchSize);
-                swatch->set_height(kLegendSwatchSize);
-                swatch->edit_style().background_color = ctx.series[i].color;
-                swatch->set_explicit_position({.x = legend_x, .y = row_y});
-                canvas->add_child(swatch);
-
-                const std::string label = ctx.series[i].name.empty()
-                                               ? (std::string(kDefaultSeriesLabelPrefix) + std::to_string(i + 1))
-                                               : ctx.series[i].name;
-                add_text(*canvas, label, legend_x + kLegendSwatchSize + kLegendLabelGap,
-                         row_y - kLegendLabelVerticalNudge, kLegendFontSize, text_color);
+                entries.emplace_back(ctx.series[i].color,
+                                      ctx.series[i].name.empty()
+                                          ? (std::string(kDefaultSeriesLabelPrefix) + std::to_string(i + 1))
+                                          : ctx.series[i].name);
             }
+            draw_legend_column(*canvas, plot.right + kLegendLeftGap, plot.top, entries, text_color);
         }
 
         // 7. x_label/y_label. y_label is placed horizontally (above the Y axis rail)

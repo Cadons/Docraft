@@ -296,6 +296,7 @@ namespace docraft::craft {
             constexpr string kBackgroundColor = "background_color";
             constexpr string kBorderColor = "border_color";
             constexpr string kBorderWidth = "border_width";
+            constexpr string kShowPercentage = "show_percentage";
         }
         namespace series::attribute {
             constexpr string kColor = "color";

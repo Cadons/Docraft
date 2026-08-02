@@ -16,7 +16,10 @@
 
 #pragma once
 
+#include <vector>
+
 #include "docraft/docraft_lib.h"
+#include "docraft/docraft_position.h"
 
 namespace docraft::backend {
     /**
@@ -51,5 +54,16 @@ namespace docraft::backend {
          * @param y2 The y-coordinate of the line end.
          */
         virtual void draw_line(float x1, float y1, float x2, float y2) const = 0;
+
+        /**
+         * @brief Draws a single smooth curve passing through every point in `points`, in
+         * order, using the current stroke settings. Unlike draw_line(), this is not a
+         * sequence of straight segments -- the backend is responsible for interpolating
+         * a smooth path between consecutive points (e.g. via Catmull-Rom-derived cubic
+         * Bezier segments). Requires at least 2 points; a 2-point call degenerates to a
+         * straight line.
+         * @param points The points the curve passes through, in document coordinates.
+         */
+        virtual void draw_curve(const std::vector<Position>& points) const = 0;
     };
 } // docraft::backend

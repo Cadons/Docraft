@@ -60,6 +60,9 @@ namespace docraft::loom::charts {
         std::optional<std::string> x_label;
         std::optional<std::string> y_label;
         std::vector<DocraftChartSeries> series;
+        // Only meaningful for the "pie" style -- whether each slice draws its centered
+        // percentage-of-total label. Ignored by Cartesian styles.
+        bool show_percentage = true;
     };
 
     /**

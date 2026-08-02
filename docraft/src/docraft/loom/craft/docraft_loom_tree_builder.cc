@@ -911,6 +911,7 @@ namespace docraft::loom::craft {
         {
             context.y_label = render_template_text(*data.y_label);
         }
+        context.show_percentage = data.show_percentage.value_or(true);
 
         context.series.reserve(element.children.size());
         for (const auto& child : element.children)

@@ -58,6 +58,11 @@ namespace docraft::craft::parser {
         {
             data.border_width = border_width_attr.as_float();
         }
+        if (auto show_percentage_attr = craft_language_source.attribute(
+                elements::chart::attribute::kShowPercentage.data()))
+        {
+            data.show_percentage = show_percentage_attr.as_bool();
+        }
         return data;
     }
 } // namespace docraft::craft::parser

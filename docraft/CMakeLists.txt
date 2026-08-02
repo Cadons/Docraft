@@ -172,6 +172,12 @@ set(DOCRAFT_SOURCES
         src/docraft/loom/charts/docraft_chart_builder.cc
         include/docraft/loom/charts/docraft_scatter_chart_builder.h
         src/docraft/loom/charts/docraft_scatter_chart_builder.cc
+        include/docraft/loom/charts/docraft_spline_chart_builder.h
+        src/docraft/loom/charts/docraft_spline_chart_builder.cc
+        include/docraft/loom/charts/docraft_histogram_chart_builder.h
+        src/docraft/loom/charts/docraft_histogram_chart_builder.cc
+        include/docraft/loom/charts/docraft_pie_chart_builder.h
+        src/docraft/loom/charts/docraft_pie_chart_builder.cc
         src/docraft/loom/charts/docraft_builtin_charts.cc
 
         # Top-level driver (Phase 3): walks a full <Document> and builds a fully-wired

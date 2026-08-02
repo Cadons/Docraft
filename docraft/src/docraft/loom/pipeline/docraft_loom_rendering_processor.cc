@@ -115,6 +115,41 @@ namespace docraft::loom::pipeline {
             finish_shape_path(shape_backend, flags);
             shape_backend->restore_state();
         }
+
+        // Mirrors draw_shape_polygon() above, but for an open stroked curve (Spline)
+        // rather than a closed fillable path -- draw_curve() only ever strokes, never
+        // fills, so there is no ShapeDrawFlags/fill branch to consider here.
+        void draw_shape_curve(backend::IDocraftShapeRenderingBackend* shape_backend,
+                              backend::IDocraftLineRenderingBackend* line_backend, const DocraftColor& border_color,
+                              float border_width, const nodes::Position& origin,
+                              const std::vector<nodes::Position>& points)
+        {
+            if (points.size() < 2)
+            {
+                return;
+            }
+            const auto rgba = border_color.toRGB();
+            if (border_width <= 0.0F || rgba.a <= 0.0F)
+            {
+                return;
+            }
+            std::vector<nodes::Position> transformed;
+            transformed.reserve(points.size());
+            for (const auto& pt : points)
+            {
+                transformed.push_back({.x = origin.x + pt.x, .y = origin.y + pt.y});
+            }
+
+            shape_backend->save_state();
+            if (rgba.a < 1.0F)
+            {
+                shape_backend->set_stroke_alpha(rgba.a);
+            }
+            line_backend->set_line_width(border_width);
+            line_backend->set_stroke_color(rgba.r, rgba.g, rgba.b);
+            line_backend->draw_curve(transformed);
+            shape_backend->restore_state();
+        }
     }
 
     DocraftLoomRenderingProcessor::DocraftLoomRenderingProcessor(
@@ -480,8 +515,19 @@ namespace docraft::loom::pipeline {
     {
         if (!node || !should_render(*node))
             return;
-        draw_shape_polygon(shape_backend_, line_backend_, node->style(), node->layout_box().frame.position,
-                           node->points());
+        // A smooth polygon is an open curve (e.g. a spline chart's line), not a closed
+        // fillable shape -- draw_shape_curve() strokes a Bezier interpolation through
+        // the points instead of draw_shape_polygon()'s closed fill/stroke path.
+        if (node->smooth())
+        {
+            draw_shape_curve(shape_backend_, line_backend_, node->style().border_color, node->style().border_width,
+                             node->layout_box().frame.position, node->points());
+        }
+        else
+        {
+            draw_shape_polygon(shape_backend_, line_backend_, node->style(), node->layout_box().frame.position,
+                               node->points());
+        }
     }
 
     void DocraftLoomRenderingProcessor::visit(docraft::loom::nodes::DocraftLoomList* node)

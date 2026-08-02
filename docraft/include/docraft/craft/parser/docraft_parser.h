@@ -389,6 +389,8 @@ namespace docraft::craft::parser {
      * content (e.g. "scatter") -- required, validated by the loom builder, not here.
      * `axis_position` defaults to "left" when absent. background/border mirror
      * `ParsedRectangleData` so the loom builder can reuse `apply_shape_style()` as-is.
+     * `show_percentage` only affects the "pie" style (each slice's centered percentage
+     * label) and defaults to shown when absent.
      */
     struct ParsedChartData
     {
@@ -400,6 +402,7 @@ namespace docraft::craft::parser {
         std::optional<std::string> background_color;
         std::optional<std::string> border_color;
         std::optional<float> border_width;
+        std::optional<bool> show_percentage;
     };
 
     /**
