@@ -116,6 +116,10 @@ tables supports:
    * - ``style``
      - string
      - ``normal`` | ``bold`` | ``italic`` | ``bold_italic``.
+   * - ``font_size``
+     - float
+     - Title font size in points. Must be ``> 0``. Omitted, the title keeps the
+       default text size.
    * - ``color``
      - color
      - Title text color.

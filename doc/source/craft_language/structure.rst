@@ -133,6 +133,8 @@ Every content node supports these attributes:
    ``<Document>`` are recognized as XML tokens by the parser but are not
    currently read anywhere — they have no effect on the rendered document.
 
+.. _color-values:
+
 Color Values
 ------------
 
@@ -140,7 +142,8 @@ Colors can be specified as:
 
 - **Hex**: ``#RRGGBB`` or ``#RRGGBBAA``
 - **Named**: ``black``, ``white``, ``red``, ``green``, ``blue``, ``yellow``,
-  ``magenta``, ``cyan``, ``purple``
+  ``magenta``, ``cyan``, ``purple`` — this list is exhaustive; any other name
+  (``orange``, ``grey``, ...) is a parse error, use a hex value instead
 - **Template**: ``${variable}`` or ``${data("field")}``
 
 Page Break

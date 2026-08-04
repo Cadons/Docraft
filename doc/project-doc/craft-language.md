@@ -111,9 +111,11 @@ Notes:
 Color attributes accept:
 
 - named colors: `black`, `white`, `red`, `green`, `blue`, `yellow`, `magenta`, `cyan`, `purple`
+  -- the list is exhaustive, any other name (`orange`, `grey`, ...) is rejected
 - hex: `#RRGGBB` or `#RRGGBBAA`
 
-Invalid color strings raise `invalid_argument`.
+Invalid color strings raise `InvalidInputException`; the message lists the accepted
+names.
 
 ## 6. Sections: `Header`, `Body`, `Footer`
 
@@ -531,6 +533,7 @@ Title styling attributes (`HTitle`, `VTitle`):
 
 - `alignment`: `left`, `center`, `right`, `justified`
 - `style`: `normal`, `bold`, `italic`, `bold_italic`
+- `font_size` (float, `> 0`)
 - `color`
 - `background_color`
 
