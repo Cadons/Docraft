@@ -94,6 +94,20 @@ namespace docraft::backend {
          */
         virtual void draw_ellipse(float center_x, float center_y, float radius_x, float radius_y) const = 0;
         /**
+         * @brief Defines a circular arc path between two angles.
+         *
+         * Angles are in degrees, measured from 12 o'clock and increasing clockwise on
+         * the page; `end_angle` is expected to be greater than `start_angle`, callers
+         * adding a full turn to it when the arc wraps past 12 o'clock.
+         * @param center_x The x-coordinate of the center.
+         * @param center_y The y-coordinate of the center.
+         * @param radius The arc radius.
+         * @param start_angle Angle the arc starts at.
+         * @param end_angle Angle the arc ends at.
+         */
+        virtual void draw_arc(float center_x, float center_y, float radius, float start_angle,
+                              float end_angle) const = 0;
+        /**
          * @brief Defines a polygon path with the given points.
          * @param points Polygon points in document coordinates.
          */

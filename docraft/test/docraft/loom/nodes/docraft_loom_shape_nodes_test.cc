@@ -126,6 +126,61 @@ namespace docraft::test {
         EXPECT_TRUE(backend.draw_ellipse_calls().empty());
     }
 
+    TEST_F(DocraftLoomShapeNodesTest, ArcRendersAsAnArcInsteadOfTheWholeOutline)
+    {
+        utils::MockRenderingBackend backend;
+        loom::pipeline::DocraftLoomRenderingProcessor rendering(&backend);
+
+        auto circle = std::make_shared<loom::nodes::DocraftLoomCircle>();
+        circle->set_position_mode(loom::nodes::DocraftPositionType::kAbsolute);
+        circle->set_explicit_position({.x = 10.0F, .y = 20.0F});
+        circle->set_radius(50.0F);
+        circle->set_arc(270.0F, 450.0F);
+        circle->edit_style().border_color = DocraftColor::fromRGB(1.0F, 0.0F, 0.0F, 1.0F);
+        circle->edit_style().border_width = 2.0F;
+
+        circle->accept(*measure_);
+        circle->accept(*layout_);
+        circle->accept(rendering);
+
+        ASSERT_EQ(backend.draw_arc_calls().size(), 1U);
+        const auto& call = backend.draw_arc_calls()[0];
+        EXPECT_FLOAT_EQ(call.center_x, 60.0F); // 10 + radius
+        EXPECT_FLOAT_EQ(call.center_y, 70.0F); // 20 + radius
+        EXPECT_FLOAT_EQ(call.radius, 50.0F);
+        EXPECT_FLOAT_EQ(call.start_angle, 270.0F);
+        EXPECT_FLOAT_EQ(call.end_angle, 450.0F);
+        // The closed outline must not also be drawn underneath the arc.
+        EXPECT_TRUE(backend.draw_ellipse_calls().empty());
+    }
+
+    TEST_F(DocraftLoomShapeNodesTest, ArcIsSkippedWhenItWouldHaveNoStroke)
+    {
+        utils::MockRenderingBackend backend;
+        loom::pipeline::DocraftLoomRenderingProcessor rendering(&backend);
+
+        auto circle = std::make_shared<loom::nodes::DocraftLoomCircle>();
+        circle->set_radius(50.0F);
+        circle->set_arc(0.0F, 90.0F);
+        circle->edit_style().border_width = 0.0F;
+
+        circle->accept(*measure_);
+        circle->accept(*layout_);
+        circle->accept(rendering);
+
+        EXPECT_TRUE(backend.draw_arc_calls().empty());
+    }
+
+    TEST_F(DocraftLoomShapeNodesTest, ClearArcRestoresTheClosedOutline)
+    {
+        loom::nodes::DocraftLoomCircle circle;
+        circle.set_radius(20.0F);
+        circle.set_arc(0.0F, 180.0F);
+        ASSERT_TRUE(circle.has_arc());
+        circle.clear_arc();
+        EXPECT_FALSE(circle.has_arc());
+    }
+
     TEST_F(DocraftLoomShapeNodesTest, CircleStyleIsInheritedFromShapeBase)
     {
         loom::nodes::DocraftLoomCircle circle;

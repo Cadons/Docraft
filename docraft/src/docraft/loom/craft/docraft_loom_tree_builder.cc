@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <any>
+#include <cmath>
 #include <string_view>
 
 #include <nlohmann/json.hpp>
@@ -274,6 +275,18 @@ namespace docraft::loom::craft {
             {
                 node.edit_style().border_width = *data.border_width;
             }
+        }
+
+        // Direction of `point` as seen from `center`, in degrees from 12 o'clock and
+        // increasing clockwise on the page -- the convention
+        // IDocraftShapeRenderingBackend::draw_arc() documents. Both are in the node's own
+        // Y-down box coordinates, hence negating dy to get the "up is zero" reference.
+        float arc_angle_from_point(const nodes::Position& point, const nodes::Position& center)
+        {
+            const float dx = point.x - center.x;
+            const float dy = point.y - center.y;
+            const float degrees = std::atan2(dx, -dy) * 180.0F / 3.14159265358979323846F;
+            return degrees < 0.0F ? degrees + 360.0F : degrees;
         }
 
         std::shared_ptr<nodes::DocraftLoomTableCell> build_matrix_cell(const std::string& text)
@@ -1007,6 +1020,47 @@ namespace docraft::loom::craft {
             }
             node->set_radii(*element.common.width / 2.0F, *element.common.height / 2.0F);
         }
+
+        // Arc: the author gives the two endpoints as points in the node's own box, and
+        // only their *direction* from the center is used -- the distance comes from the
+        // circle's own radius, so a point that doesn't land exactly on the outline is
+        // projected onto it rather than being an error. Two points always have two arcs
+        // between them; the sweep is fixed clockwise from start to finish, which makes
+        // the other one reachable simply by swapping the two.
+        const int arc_attribute_count = static_cast<int>(data.start_x.has_value())
+            + static_cast<int>(data.start_y.has_value()) + static_cast<int>(data.finish_x.has_value())
+            + static_cast<int>(data.finish_y.has_value());
+        if (arc_attribute_count != 0)
+        {
+            if (arc_attribute_count != 4)
+            {
+                throw docraft::exception::InvalidInputException(
+                    "<Circle> arc requires all of 'start_x', 'start_y', 'finish_x' and 'finish_y'");
+            }
+            if (!node->is_circle())
+            {
+                throw docraft::exception::InvalidInputException(
+                    "<Circle> arcs are supported on circles only, not on an oval sized by "
+                    "differing 'width' and 'height'");
+            }
+            if (data.background_color)
+            {
+                throw docraft::exception::InvalidInputException(
+                    "<Circle> arc is an open path and cannot be filled -- drop "
+                    "'background_color', or use <Polygon> for a filled sector");
+            }
+            const nodes::Position center = {.x = node->radius_x(), .y = node->radius_y()};
+            const float start = arc_angle_from_point({.x = *data.start_x, .y = *data.start_y}, center);
+            float finish = arc_angle_from_point({.x = *data.finish_x, .y = *data.finish_y}, center);
+            // The backend wants a strictly increasing sweep, so an arc wrapping past 12
+            // o'clock is expressed by carrying the end angle a full turn further round.
+            if (finish <= start)
+            {
+                finish += 360.0F;
+            }
+            node->set_arc(start, finish);
+        }
+
         apply_common_attributes(*node, element.common);
         return node;
     }

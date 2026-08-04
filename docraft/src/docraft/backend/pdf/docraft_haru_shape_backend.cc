@@ -84,6 +84,17 @@ namespace docraft::backend::pdf {
         HPDF_Page_Ellipse(provider->current_page(), px, py, radius_x, radius_y);
     }
 
+    void DocraftHaruShapeBackend::draw_arc(float center_x, float center_y, float radius, float start_angle,
+                                           float end_angle) const {
+        auto *provider = state_->ensure_page_provider();
+        float px, py;
+        provider->compute_coordinate_system(center_x, center_y, px, py);
+        // HPDF_Page_Arc uses the same convention this interface documents -- degrees from
+        // 12 o'clock, increasing clockwise -- so the angles pass through unchanged even
+        // though the y coordinate is flipped into PDF space above.
+        HPDF_Page_Arc(provider->current_page(), px, py, radius, start_angle, end_angle);
+    }
+
     void DocraftHaruShapeBackend::draw_polygon(const std::vector<Position>& points) const
     {
         if (points.size() < 2U) {

@@ -257,6 +257,11 @@ namespace docraft::craft {
             constexpr string kBorderColor = "border_color";
             constexpr string kBorderWidth = "border_width";
             constexpr string kRadius = "radius";
+            // Arc endpoints: given as points, all four together or none.
+            constexpr string kStartX = "start_x";
+            constexpr string kStartY = "start_y";
+            constexpr string kFinishX = "finish_x";
+            constexpr string kFinishY = "finish_y";
         }
         namespace triangle::attribute {
             constexpr string kBackgroundColor = "background_color";

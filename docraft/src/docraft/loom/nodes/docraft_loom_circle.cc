@@ -32,4 +32,33 @@ namespace docraft::loom::nodes {
     {
         return radius_x_ == radius_y_;
     }
+
+    void DocraftLoomCircle::set_arc(float start_angle, float end_angle)
+    {
+        has_arc_ = true;
+        arc_start_angle_ = start_angle;
+        arc_end_angle_ = end_angle;
+    }
+
+    void DocraftLoomCircle::clear_arc()
+    {
+        has_arc_ = false;
+        arc_start_angle_ = 0.0F;
+        arc_end_angle_ = 0.0F;
+    }
+
+    bool DocraftLoomCircle::has_arc() const
+    {
+        return has_arc_;
+    }
+
+    float DocraftLoomCircle::arc_start_angle() const
+    {
+        return arc_start_angle_;
+    }
+
+    float DocraftLoomCircle::arc_end_angle() const
+    {
+        return arc_end_angle_;
+    }
 } // docraft

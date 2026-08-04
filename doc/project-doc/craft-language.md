@@ -576,6 +576,30 @@ Rules (each violation is a parse error, not a silently misdrawn shape):
 - a `Circle` with no sizing attribute at all is rejected.
 - a non-positive `radius`/`width`/`height` is rejected.
 
+Arc attributes:
+
+- `start_x`, `start_y` (float)
+- `finish_x`, `finish_y` (float)
+
+Given all four, only the arc between the two points is drawn instead of the whole
+outline.
+
+- endpoints are points in the circle's own box; only their *direction* from the centre
+  is used, the distance coming from the radius -- a point off the outline is projected
+  onto it rather than rejected.
+- the sweep is always clockwise from start to finish; swapping the two endpoints
+  selects the complementary arc.
+- a partially specified arc (fewer than all four attributes) is rejected.
+- an arc plus `background_color` is rejected: an arc is an open path and cannot be
+  filled. Use `Polygon` for a filled sector.
+- an arc on an oval (`width` != `height`) is rejected; arcs are circles only.
+
+```xml
+<!-- semicerchio superiore -->
+<Circle radius="50" start_x="0" start_y="50" finish_x="100" finish_y="50"
+        border_color="red" border_width="2"/>
+```
+
 ### 12.3 `Line`
 
 Attributes:
