@@ -100,17 +100,21 @@ namespace docraft::craft::parser::detail {
             // Table sub-elements (Row/Cell/HTitle/VTitle) are not laid out as nodes of
             // their own, so the common positioning attributes mean nothing on them and
             // are not silently tolerated either.
-            if (allow_common && std::ranges::contains(kCommon, name))
+            if (allow_common && std::ranges::find(kCommon, name) != kCommon.end())
             {
                 continue;
             }
-            if (std::ranges::contains(accepted, name))
+            if (std::ranges::find(accepted, name) != accepted.end())
             {
                 continue;
             }
 
-            auto joined = accepted | std::views::join_with(std::string_view{", "});
-            const std::string known(joined.begin(), joined.end());
+            std::string known;
+            for (const std::string_view candidate : accepted)
+            {
+                known += known.empty() ? "" : ", ";
+                known += candidate;
+            }
             throw docraft::exception::InvalidInputException(std::format(
                 "Unknown attribute '{}' on <{}>. That element accepts {}{}", name, tag_name,
                 known.empty() ? std::string{"only the common attributes"} : std::format("'{}'", known),
