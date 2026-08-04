@@ -49,4 +49,14 @@ namespace docraft::craft::parser {
 
         return data;
     }
+
+    std::vector<std::string_view> DocraftPolygonParser::accepted_attributes() const
+    {
+        return {
+            elements::polygon::attribute::kPoints,
+            elements::polygon::attribute::kBackgroundColor,
+            elements::polygon::attribute::kBorderColor,
+            elements::polygon::attribute::kBorderWidth
+        };
+    }
 } // namespace docraft::craft::parser

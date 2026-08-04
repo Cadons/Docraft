@@ -69,6 +69,12 @@ namespace docraft::craft::parser {
 
         ParsedTableTitleData parse_table_title(const pugi::xml_node& title, const char* background_attr_name)
         {
+            detail::reject_unknown_attributes(title, title.name(),
+                                              {elements::table_title::attribute::kAlignment,
+                                               elements::table_title::attribute::kStyle,
+                                               elements::table_title::attribute::kColor,
+                                               std::string_view{background_attr_name}},
+                                              /*allow_common=*/false);
             ParsedTableTitleData data;
             data.text = title.child_value();
             data.alignment = parse_table_title_alignment(title);
@@ -95,6 +101,13 @@ namespace docraft::craft::parser {
 
         ParsedTableCellData parse_cell(const pugi::xml_node& cell)
         {
+            // A Cell is a slot in the grid, not a node with its own geometry: it sizes
+            // itself with `width` and paints a background, and everything else -- text
+            // alignment included -- belongs to the element inside it.
+            detail::reject_unknown_attributes(cell, std::string{elements::kCell},
+                                              {basic::attribute::kWidth,
+                                               elements::table_column::attribute::kBackgroundColor},
+                                              /*allow_common=*/false);
             ParsedTableCellData data;
             if (auto width_attr = cell.attribute(basic::attribute::kWidth.data()))
             {
@@ -146,6 +159,9 @@ namespace docraft::craft::parser {
 
         ParsedTableRowData parse_horizontal_row(const pugi::xml_node& row)
         {
+            detail::reject_unknown_attributes(row, std::string{elements::kRow},
+                                              {elements::table_row::attribute::kBackgroundColor},
+                                              /*allow_common=*/false);
             ParsedTableRowData row_data;
             row_data.background = parse_background_color(row, elements::table_row::attribute::kBackgroundColor.data());
             for (auto col: row.children()) {
@@ -161,6 +177,9 @@ namespace docraft::craft::parser {
 
         ParsedTableRowData parse_vertical_row(const pugi::xml_node& row)
         {
+            detail::reject_unknown_attributes(row, std::string{elements::kRow},
+                                              {elements::table_row::attribute::kBackgroundColor},
+                                              /*allow_common=*/false);
             ParsedTableRowData row_data;
             row_data.background = parse_background_color(row, elements::table_row::attribute::kBackgroundColor.data());
             bool found_vtitle = false;
@@ -278,5 +297,15 @@ namespace docraft::craft::parser {
         }
 
         return data;
+    }
+
+    std::vector<std::string_view> DocraftTableParser::accepted_attributes() const
+    {
+        return {
+            elements::table::attribute::kModel,
+            elements::table::attribute::kHeader,
+            elements::table::attribute::kBaselineOffset,
+            elements::table::attribute::kTableTile
+        };
     }
 } // namespace docraft::craft::parser

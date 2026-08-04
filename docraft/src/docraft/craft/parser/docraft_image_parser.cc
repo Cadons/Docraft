@@ -88,4 +88,14 @@ namespace docraft::craft::parser {
         }
         return data;
     }
+
+    std::vector<std::string_view> DocraftImageParser::accepted_attributes() const
+    {
+        return {
+            elements::image::attribute::kSrc,
+            elements::image::attribute::kData,
+            elements::image::attribute::kDataWidth,
+            elements::image::attribute::kDataHeight
+        };
+    }
 } // namespace docraft::craft::parser

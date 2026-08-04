@@ -21,4 +21,9 @@ namespace docraft::craft::parser {
     {
         return ParsedBlankLineData{};
     }
+
+    std::vector<std::string_view> DocraftBlackLineParser::accepted_attributes() const
+    {
+        return {};
+    }
 } // namespace docraft::craft::parser

@@ -8,7 +8,9 @@ It is intentionally implementation-oriented and focuses on what the parser actua
 - `.craft` files are XML parsed with `pugixml`.
 - Tag names and attribute names are case-sensitive.
 - Unknown tags in parsed subtrees raise an error (`No parser registered for node: ...`).
-- Unknown attributes are currently ignored (unless a known attribute value is invalid).
+- Unknown attributes raise an error too, naming the attribute, its element, and what that
+  element does accept. An attribute no parser reads would otherwise have no effect on the
+  rendered document while looking like it did.
 - Attribute values are parsed with `pugixml` conversions (`as_float`, `as_bool`, etc.).
 
 ## 2. Required Structure
@@ -93,8 +95,6 @@ Most nodes call the shared attribute configurator and accept:
 | `y` | float | Position y. |
 | `width` | float | Width in points. |
 | `height` | float | Height in points. |
-| `auto_fill_width` | bool | `true` / `false`. |
-| `auto_fill_height` | bool | `true` / `false`. |
 | `padding` | float | Padding in points. |
 | `weight` | float | Relative share among siblings; need not sum to `1`. Missing or `<= 0` defaults to an even share (`1.0`). |
 | `position` | string | `block` or `absolute`. |
@@ -103,7 +103,9 @@ Most nodes call the shared attribute configurator and accept:
 
 Notes:
 
-- `id` exists as a token name but is not consumed by current parsers.
+- `id`, `auto_fill_width` and `auto_fill_height` exist as token names but no parser reads
+  them, so they are **not** accepted as attributes -- writing one is an error rather than
+  a silent no-op.
 - Invalid `position` raises an exception; there is no validation on `weight`'s value.
 
 ## 5. Colors

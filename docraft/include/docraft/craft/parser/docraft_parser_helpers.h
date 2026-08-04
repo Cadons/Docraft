@@ -16,6 +16,10 @@
 
 #pragma once
 
+#include <vector>
+
+#include <string_view>
+
 #include <pugixml.hpp>
 
 #include "docraft/craft/docraft_craft_language_tokens.h"
@@ -63,6 +67,20 @@ namespace docraft::craft::parser::detail {
      * @return The parsed common attributes.
      */
     DocraftCommonAttributes parse_common_node_attributes(const pugi::xml_node& craft_language_source);
+
+    /**
+     * @brief Rejects any attribute on `craft_language_source` that is neither a common
+     * node attribute nor listed in `accepted`.
+     *
+     * Unknown *tags* have always been hard errors; this makes unknown attributes behave
+     * the same way, so a name the parser would silently drop is reported instead of
+     * quietly having no effect on the rendered document.
+     * @throws docraft::exception::InvalidInputException naming the offending attribute,
+     * its element, and what that element does accept.
+     */
+    void reject_unknown_attributes(const pugi::xml_node& craft_language_source, const std::string& tag_name,
+                                   const std::vector<std::string_view>& accepted, bool allow_common = true);
+
 
     /**
      * @brief Parses a `style` attribute value (e.g. "bold") into a `ParsedTextStyle`.

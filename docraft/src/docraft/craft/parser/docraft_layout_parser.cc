@@ -42,4 +42,13 @@ namespace docraft::craft::parser {
                                                           elements::layout::attribute::kWeights.data());
         return data;
     }
+
+    std::vector<std::string_view> DocraftLayoutParser::accepted_attributes() const
+    {
+        return {
+            elements::layout::attribute::kOrientation,
+            elements::layout::attribute::kSpacing,
+            elements::layout::attribute::kWeights
+        };
+    }
 } // namespace docraft::craft::parser
