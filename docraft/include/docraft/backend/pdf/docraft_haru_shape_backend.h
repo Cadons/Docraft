@@ -85,6 +85,11 @@ namespace docraft::backend::pdf {
         void draw_circle(float center_x, float center_y, float radius) const override;
 
         /**
+         * @brief Appends an ellipse path to the current page path.
+         */
+        void draw_ellipse(float center_x, float center_y, float radius_x, float radius_y) const override;
+
+        /**
          * @brief Appends a closed polygon path from the provided points.
          */
         void draw_polygon(const std::vector<Position>& points) const override;

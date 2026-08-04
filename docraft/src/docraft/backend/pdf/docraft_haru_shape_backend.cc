@@ -76,6 +76,14 @@ namespace docraft::backend::pdf {
         HPDF_Page_Circle(provider->current_page(), px, py, radius);
     }
 
+    void DocraftHaruShapeBackend::draw_ellipse(float center_x, float center_y, float radius_x,
+                                               float radius_y) const {
+        auto *provider = state_->ensure_page_provider();
+        float px, py;
+        provider->compute_coordinate_system(center_x, center_y, px, py);
+        HPDF_Page_Ellipse(provider->current_page(), px, py, radius_x, radius_y);
+    }
+
     void DocraftHaruShapeBackend::draw_polygon(const std::vector<Position>& points) const
     {
         if (points.size() < 2U) {

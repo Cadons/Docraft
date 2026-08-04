@@ -27,14 +27,42 @@ namespace docraft::test {
         EXPECT_FLOAT_EQ(line.layout_box().measured_size.height, 4.0F); // max(1, 4)
     }
 
-    TEST_F(DocraftLoomLineTest, MeasureUsesCustomPoints)
+    TEST_F(DocraftLoomLineTest, MeasureSpansFromTheAnchorToTheFarthestEndpoint)
     {
+        // Endpoints are offsets from the node's anchor, not a self-contained bounding box,
+        // so a segment starting 10pt in still occupies the full 60pt from that anchor.
         loom::nodes::DocraftLoomLine line;
         line.set_start({.x = 10.0F, .y = 0.0F});
         line.set_end({.x = 60.0F, .y = 0.0F});
         line.accept(*measure_);
 
-        EXPECT_FLOAT_EQ(line.layout_box().measured_size.width, 50.0F);
+        EXPECT_FLOAT_EQ(line.layout_box().measured_size.width, 60.0F);
+    }
+
+    TEST_F(DocraftLoomLineTest, MeasureIgnoresNegativeEndpointsWhenSizingTheBox)
+    {
+        // Negative offsets draw above/left of the anchor on purpose (a Canvas clips them);
+        // they must not drag the box's own extent below the anchor.
+        loom::nodes::DocraftLoomLine line;
+        line.set_start({.x = -20.0F, .y = -30.0F});
+        line.set_end({.x = 40.0F, .y = 50.0F});
+        line.accept(*measure_);
+
+        EXPECT_FLOAT_EQ(line.layout_box().measured_size.width, 40.0F);
+        EXPECT_FLOAT_EQ(line.layout_box().measured_size.height, 50.0F);
+    }
+
+    TEST_F(DocraftLoomLineTest, MeasureCoversAVerticalOffsetSharedByBothEndpoints)
+    {
+        // Regression test for issue #38: a horizontal segment pushed down by a shared
+        // y offset used to measure only |y2 - y1| == 0, collapsing to the 4pt floor.
+        loom::nodes::DocraftLoomLine line;
+        line.set_start({.x = 0.0F, .y = 75.0F});
+        line.set_end({.x = 200.0F, .y = 75.0F});
+        line.accept(*measure_);
+
+        EXPECT_FLOAT_EQ(line.layout_box().measured_size.width, 200.0F);
+        EXPECT_FLOAT_EQ(line.layout_box().measured_size.height, 75.0F);
     }
 
     TEST_F(DocraftLoomLineTest, MeasureHeightFollowsThickBorderWidth)

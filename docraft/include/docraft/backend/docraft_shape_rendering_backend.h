@@ -83,6 +83,17 @@ namespace docraft::backend {
          */
         virtual void draw_circle(float center_x, float center_y, float radius) const = 0;
         /**
+         * @brief Defines an ellipse path with the given center and semi-axes.
+         *
+         * The circle is the `radius_x == radius_y` case; callers may still prefer
+         * draw_circle() there, since a backend can have a cheaper dedicated primitive.
+         * @param center_x The x-coordinate of the center.
+         * @param center_y The y-coordinate of the center.
+         * @param radius_x The horizontal semi-axis.
+         * @param radius_y The vertical semi-axis.
+         */
+        virtual void draw_ellipse(float center_x, float center_y, float radius_x, float radius_y) const = 0;
+        /**
          * @brief Defines a polygon path with the given points.
          * @param points Polygon points in document coordinates.
          */

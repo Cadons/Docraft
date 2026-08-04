@@ -956,15 +956,57 @@ namespace docraft::loom::craft {
     std::shared_ptr<nodes::DocraftLoomCircle> DocraftLoomTreeBuilder::build_circle(const ParsedElement& element)
     {
         const auto& data = std::any_cast<const parser::ParsedCircleData&>(element.data);
+
+        // `radius` and `width`+`height` are two mutually exclusive ways of sizing the same
+        // node: `radius` draws a circle, `width`+`height` inscribe an ellipse in that
+        // bounding box (its four extreme points touch the middle of each box side, so an
+        // oval is just a Circle whose box isn't square). Honoring both would make the
+        // result depend on which one an arbitrary precedence rule happens to prefer, and
+        // honoring neither used to silently draw nothing at all -- both are rejected here
+        // instead. Note DocraftLoomCircle has no set_width()/set_height(), so
+        // apply_common_attributes() below leaves the box attributes alone by design; they
+        // are consumed here and only here.
+        const bool has_radius = data.radius.has_value();
+        const bool has_width = element.common.width.has_value();
+        const bool has_height = element.common.height.has_value();
+        if (has_radius && (has_width || has_height))
+        {
+            throw docraft::exception::InvalidInputException(
+                "<Circle> accepts either 'radius' or 'width'+'height', not both -- they are two "
+                "mutually exclusive ways of sizing the same shape");
+        }
+        if (!has_radius && !has_width && !has_height)
+        {
+            throw docraft::exception::InvalidInputException(
+                "<Circle> requires a 'radius' attribute, or both 'width' and 'height' to inscribe "
+                "an oval in that bounding box");
+        }
+        if (!has_radius && (!has_width || !has_height))
+        {
+            throw docraft::exception::InvalidInputException(
+                std::string("<Circle> sized by its bounding box requires both 'width' and 'height', but only '")
+                + (has_width ? "width" : "height") + "' was given");
+        }
+
         auto node = std::make_shared<nodes::DocraftLoomCircle>();
         apply_shape_style(*node, data, [this](const std::string& c) { return resolve_color(c); });
-        if (data.radius)
+        if (has_radius)
         {
+            if (*data.radius <= 0.0F)
+            {
+                throw docraft::exception::InvalidInputException("<Circle> 'radius' must be greater than zero");
+            }
             node->set_radius(*data.radius);
         }
-        // Note: common.width/common.height are deliberately not consulted here -- Circle
-        // has its own `radius` attribute instead, and DocraftLoomCircle has no
-        // set_width()/set_height() for apply_common_attributes to gate on either.
+        else
+        {
+            if (*element.common.width <= 0.0F || *element.common.height <= 0.0F)
+            {
+                throw docraft::exception::InvalidInputException(
+                    "<Circle> 'width' and 'height' must be greater than zero");
+            }
+            node->set_radii(*element.common.width / 2.0F, *element.common.height / 2.0F);
+        }
         apply_common_attributes(*node, element.common);
         return node;
     }

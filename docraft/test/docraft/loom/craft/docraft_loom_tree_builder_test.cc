@@ -251,7 +251,67 @@ TEST(DocraftLoomTreeBuilderTest, BuildsCircleRadius)
     const auto node = parse_and_build(xml);
     const auto circle = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomCircle>(node);
     ASSERT_TRUE(circle);
-    EXPECT_FLOAT_EQ(circle->radius(), 20.0F);
+    EXPECT_FLOAT_EQ(circle->radius_x(), 20.0F);
+    EXPECT_FLOAT_EQ(circle->radius_y(), 20.0F);
+    EXPECT_TRUE(circle->is_circle());
+}
+
+TEST(DocraftLoomTreeBuilderTest, BuildsOvalInscribedInWidthHeightBox)
+{
+    const char* xml = R"XML(<Circle width="60" height="40" background_color="red" />)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto circle = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomCircle>(node);
+    ASSERT_TRUE(circle);
+    // The oval is inscribed in the 60x40 box, so its semi-axes are half of each side.
+    EXPECT_FLOAT_EQ(circle->radius_x(), 30.0F);
+    EXPECT_FLOAT_EQ(circle->radius_y(), 20.0F);
+    EXPECT_FALSE(circle->is_circle());
+}
+
+TEST(DocraftLoomTreeBuilderTest, BuildsCircleFromSquareBoundingBox)
+{
+    const char* xml = R"XML(<Circle width="50" height="50" />)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto circle = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomCircle>(node);
+    ASSERT_TRUE(circle);
+    EXPECT_FLOAT_EQ(circle->radius_x(), 25.0F);
+    EXPECT_TRUE(circle->is_circle());
+}
+
+TEST(DocraftLoomTreeBuilderTest, RejectsCircleWithBothRadiusAndBoundingBox)
+{
+    // `radius` and `width`/`height` are mutually exclusive sizing methods; accepting both
+    // would make the drawn shape depend on an arbitrary precedence rule.
+    EXPECT_THROW(parse_and_build(R"XML(<Circle radius="20" width="60" height="40" />)XML"),
+                 docraft::exception::InvalidInputException);
+    EXPECT_THROW(parse_and_build(R"XML(<Circle radius="20" width="60" />)XML"),
+                 docraft::exception::InvalidInputException);
+}
+
+TEST(DocraftLoomTreeBuilderTest, RejectsCircleWithoutAnySizing)
+{
+    // Regression test for issue #38: an unsized <Circle> used to be built with radius 0
+    // and then silently skipped at render time, so the shape just never appeared.
+    EXPECT_THROW(parse_and_build(R"XML(<Circle background_color="red" />)XML"),
+                 docraft::exception::InvalidInputException);
+}
+
+TEST(DocraftLoomTreeBuilderTest, RejectsCircleWithHalfSpecifiedBoundingBox)
+{
+    EXPECT_THROW(parse_and_build(R"XML(<Circle width="60" />)XML"),
+                 docraft::exception::InvalidInputException);
+    EXPECT_THROW(parse_and_build(R"XML(<Circle height="40" />)XML"),
+                 docraft::exception::InvalidInputException);
+}
+
+TEST(DocraftLoomTreeBuilderTest, RejectsCircleWithNonPositiveSizing)
+{
+    EXPECT_THROW(parse_and_build(R"XML(<Circle radius="0" />)XML"),
+                 docraft::exception::InvalidInputException);
+    EXPECT_THROW(parse_and_build(R"XML(<Circle width="60" height="0" />)XML"),
+                 docraft::exception::InvalidInputException);
 }
 
 TEST(DocraftLoomTreeBuilderTest, BuildsTitleWithHeadingDefaults)
