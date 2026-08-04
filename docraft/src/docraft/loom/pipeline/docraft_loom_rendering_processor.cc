@@ -11,6 +11,7 @@
 #include "docraft/backend/pdf/docraft_haru_text_backend.h"
 #include "docraft/exception/docraft_input_exceptions.h"
 #include "docraft/loom/nodes/docraft_loom_circle.h"
+#include "docraft/loom/nodes/docraft_loom_curve_line.h"
 #include "docraft/loom/nodes/docraft_loom_hstack.h"
 #include "docraft/loom/nodes/docraft_loom_image.h"
 #include "docraft/loom/nodes/docraft_loom_line.h"
@@ -515,19 +516,18 @@ namespace docraft::loom::pipeline {
     {
         if (!node || !should_render(*node))
             return;
-        // A smooth polygon is an open curve (e.g. a spline chart's line), not a closed
-        // fillable shape -- draw_shape_curve() strokes a Bezier interpolation through
-        // the points instead of draw_shape_polygon()'s closed fill/stroke path.
-        if (node->smooth())
-        {
-            draw_shape_curve(shape_backend_, line_backend_, node->style().border_color, node->style().border_width,
-                             node->layout_box().frame.position, node->points());
-        }
-        else
-        {
-            draw_shape_polygon(shape_backend_, line_backend_, node->style(), node->layout_box().frame.position,
-                               node->points());
-        }
+        draw_shape_polygon(shape_backend_, line_backend_, node->style(), node->layout_box().frame.position,
+                           node->points());
+    }
+
+    void DocraftLoomRenderingProcessor::visit(docraft::loom::nodes::DocraftLoomCurveLine* node)
+    {
+        if (!node || !should_render(*node))
+            return;
+        // An open curve is stroked, never filled or closed -- hence border_color/
+        // border_width read off the node itself rather than a composed shape style.
+        draw_shape_curve(shape_backend_, line_backend_, node->border_color(), node->border_width(),
+                         node->layout_box().frame.position, node->points());
     }
 
     void DocraftLoomRenderingProcessor::visit(docraft::loom::nodes::DocraftLoomList* node)

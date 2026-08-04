@@ -29,6 +29,7 @@
 #include "docraft/craft/parser/docraft_paragraph_parser.h"
 #include "docraft/craft/parser/docraft_parser.h"
 #include "docraft/craft/parser/docraft_parser_helpers.h"
+#include "docraft/craft/parser/docraft_curve_line_parser.h"
 #include "docraft/craft/parser/docraft_polygon_parser.h"
 #include "docraft/craft/parser/docraft_section_parsers.h"
 #include "docraft/craft/parser/docraft_triangle_parser.h"
@@ -343,6 +344,10 @@ namespace docraft::loom::craft {
         if (tag == std::string{tokens::elements::kPolygon})
         {
             return build_polygon(*element);
+        }
+        if (tag == std::string{tokens::elements::kCurveLine})
+        {
+            return build_curve_line(*element);
         }
         if (tag == std::string{tokens::elements::kLine})
         {
@@ -990,6 +995,31 @@ namespace docraft::loom::craft {
         if (!data.points.empty())
         {
             node->set_points(data.points);
+        }
+        apply_common_attributes(*node, element.common);
+        return node;
+    }
+
+    std::shared_ptr<nodes::DocraftLoomCurveLine> DocraftLoomTreeBuilder::build_curve_line(const ParsedElement& element)
+    {
+        const auto& data = std::any_cast<const parser::ParsedCurveLineData&>(element.data);
+        auto node = std::make_shared<nodes::DocraftLoomCurveLine>();
+        // An open curve is well defined through 2 points, where a closed <Polygon> needs
+        // 3 -- rejecting fewer here, rather than letting the renderer skip the node,
+        // keeps a mis-specified curve from silently drawing nothing.
+        if (data.points.size() < 2U)
+        {
+            throw docraft::exception::InvalidInputException(
+                "<CurveLine> requires at least 2 points, got " + std::to_string(data.points.size()));
+        }
+        node->set_points(data.points);
+        if (data.border_color)
+        {
+            node->set_border_color(resolve_color(*data.border_color));
+        }
+        if (data.border_width)
+        {
+            node->set_border_width(*data.border_width);
         }
         apply_common_attributes(*node, element.common);
         return node;

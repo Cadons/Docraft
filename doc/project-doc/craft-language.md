@@ -77,6 +77,7 @@ Notes:
 - `Circle`
 - `Triangle`
 - `Line`
+- `CurveLine`
 - `Polygon`
 - `Foreach`
 
@@ -573,6 +574,9 @@ Rule:
 
 ### 12.5 `Polygon`
 
+Always a closed, fillable shape. For an open curve through the same points use
+`CurveLine` (12.6).
+
 Attributes:
 
 - `points` format: `x1,y1 x2,y2 x3,y3 ...`
@@ -584,6 +588,32 @@ Point parsing notes:
 
 - points are split by spaces, each token must be `x,y`.
 - malformed tokens raise parse errors.
+
+### 12.6 `CurveLine`
+
+An *open* curve passing through its points -- the curved counterpart of `Line`, and
+the primitive a spline chart's series line is built from.
+
+Attributes:
+
+- `points` format: `x1,y1 x2,y2 x3,y3 ...`
+- `border_color`
+- `border_width`
+
+Rules:
+
+- at least 2 points are required; fewer is a parse error.
+- the curve interpolates: it passes exactly through every point, not near them.
+- with exactly 2 points it degenerates to a straight segment, which is why 2 is legal
+  here and 3 is the minimum for a closed `Polygon`.
+- there is no `background_color`: an open curve has no interior to fill.
+- on a sharp change of direction the interpolation can bow slightly outside the
+  straight path between two points.
+
+```xml
+<CurveLine points="0,60 40,10 80,60 120,10 160,60"
+           border_color="green" border_width="1.5"/>
+```
 
 ## 13. Settings and Fonts
 
