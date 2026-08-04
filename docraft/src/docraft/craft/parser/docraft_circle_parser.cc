@@ -41,4 +41,14 @@ namespace docraft::craft::parser {
         }
         return data;
     }
+
+    std::vector<std::string_view> DocraftCircleParser::accepted_attributes() const
+    {
+        return {
+            elements::circle::attribute::kBackgroundColor,
+            elements::circle::attribute::kBorderColor,
+            elements::circle::attribute::kBorderWidth,
+            elements::circle::attribute::kRadius
+        };
+    }
 } // namespace docraft::craft::parser

@@ -48,6 +48,11 @@ namespace docraft::craft::parser {
          * @return `ParsedRectangleData`.
          */
         std::any parse(const pugi::xml_node& craft_language_source) override;
+
+        /**
+         * @brief Attribute names this parser reads, beyond the common set.
+         */
+        std::vector<std::string_view> accepted_attributes() const override;
     };
 
     /**
@@ -106,6 +111,11 @@ namespace docraft::craft::parser {
          * @return `ParsedTextData`.
          */
         std::any parse(const pugi::xml_node& craft_language_source) override;
+
+        /**
+         * @brief Attribute names this parser reads, beyond the common set.
+         */
+        std::vector<std::string_view> accepted_attributes() const override;
     };
 
     /**
@@ -135,6 +145,11 @@ namespace docraft::craft::parser {
          * @return `ParsedPageNumberData`.
          */
         std::any parse(const pugi::xml_node& craft_language_source) override;
+
+        /**
+         * @brief Attribute names this parser reads, beyond the common set.
+         */
+        std::vector<std::string_view> accepted_attributes() const override;
     };
 
     /**
@@ -161,6 +176,11 @@ namespace docraft::craft::parser {
          * present, or if base64 `data` is missing/invalid dimensions.
          */
         std::any parse(const pugi::xml_node& craft_language_source) override;
+
+        /**
+         * @brief Attribute names this parser reads, beyond the common set.
+         */
+        std::vector<std::string_view> accepted_attributes() const override;
     };
 
     /**
@@ -239,6 +259,11 @@ namespace docraft::craft::parser {
          * @return `ParsedTableData`.
          */
         std::any parse(const pugi::xml_node& craft_language_source) override;
+
+        /**
+         * @brief Attribute names this parser reads, beyond the common set.
+         */
+        std::vector<std::string_view> accepted_attributes() const override;
     };
 
     /**
@@ -286,6 +311,11 @@ namespace docraft::craft::parser {
          * @return `ParsedListData` with kind = kOrdered.
          */
         std::any parse(const pugi::xml_node& craft_language_source) override;
+
+        /**
+         * @brief Attribute names this parser reads, beyond the common set.
+         */
+        std::vector<std::string_view> accepted_attributes() const override;
     };
 
     /**
@@ -299,6 +329,11 @@ namespace docraft::craft::parser {
          * @return `ParsedListData` with kind = kUnordered.
          */
         std::any parse(const pugi::xml_node& craft_language_source) override;
+
+        /**
+         * @brief Attribute names this parser reads, beyond the common set.
+         */
+        std::vector<std::string_view> accepted_attributes() const override;
     };
 
     /**
@@ -320,6 +355,11 @@ namespace docraft::craft::parser {
          * @return `ParsedBlankLineData`.
          */
         std::any parse(const pugi::xml_node& craft_language_source) override;
+
+        /**
+         * @brief Attribute names this parser reads, beyond the common set.
+         */
+        std::vector<std::string_view> accepted_attributes() const override;
     };
 
     /**
@@ -342,6 +382,11 @@ namespace docraft::craft::parser {
          * @return `ParsedNewPageData`.
          */
         std::any parse(const pugi::xml_node& craft_language_source) override;
+
+        /**
+         * @brief Attribute names this parser reads, beyond the common set.
+         */
+        std::vector<std::string_view> accepted_attributes() const override;
     };
 
     /**
@@ -381,6 +426,11 @@ namespace docraft::craft::parser {
          * @return `ParsedLayoutData`.
          */
         std::any parse(const pugi::xml_node& craft_language_source) override;
+
+        /**
+         * @brief Attribute names this parser reads, beyond the common set.
+         */
+        std::vector<std::string_view> accepted_attributes() const override;
     };
 
     /**
@@ -417,6 +467,11 @@ namespace docraft::craft::parser {
          * @return `ParsedChartData`.
          */
         std::any parse(const pugi::xml_node& craft_language_source) override;
+
+        /**
+         * @brief Attribute names this parser reads, beyond the common set.
+         */
+        std::vector<std::string_view> accepted_attributes() const override;
     };
 
     /**
@@ -446,5 +501,10 @@ namespace docraft::craft::parser {
          * @return `ParsedSeriesData`.
          */
         std::any parse(const pugi::xml_node& craft_language_source) override;
+
+        /**
+         * @brief Attribute names this parser reads, beyond the common set.
+         */
+        std::vector<std::string_view> accepted_attributes() const override;
     };
 } // namespace docraft::craft::parser

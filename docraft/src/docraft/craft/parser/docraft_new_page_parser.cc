@@ -21,4 +21,9 @@ namespace docraft::craft::parser {
     {
         return ParsedNewPageData{};
     }
+
+    std::vector<std::string_view> DocraftNewPageParser::accepted_attributes() const
+    {
+        return {};
+    }
 } // namespace docraft::craft::parser

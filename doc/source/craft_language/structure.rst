@@ -129,9 +129,13 @@ Every content node supports these attributes:
 
 .. note::
 
-   ``auto_fill_width``/``auto_fill_height`` and a ``path`` attribute on
-   ``<Document>`` are recognized as XML tokens by the parser but are not
-   currently read anywhere — they have no effect on the rendered document.
+   Every attribute is checked against what its element actually accepts. An
+   unrecognized name — a typo, or one belonging to a different element — is a
+   parse error naming the attribute, its element and the accepted set, in the
+   same way an unrecognized *tag* has always been. This includes
+   ``auto_fill_width``/``auto_fill_height`` and ``id``: they exist as token
+   names but no parser reads them, so writing one is rejected rather than
+   silently having no effect.
 
 Color Values
 ------------

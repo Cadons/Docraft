@@ -15,6 +15,12 @@
  */
 
 #include "docraft/craft/parser/docraft_parser_helpers.h"
+#include <vector>
+#include <string_view>
+#include <array>
+#include <algorithm>
+#include <format>
+#include <ranges>
 
 #include <cctype>
 
@@ -73,6 +79,49 @@ namespace docraft::craft::parser::detail {
         }
 
         throw docraft::exception::InvalidInputException("Unknown color: " + color_name_str);
+    }
+
+    void validate_attributes(const pugi::xml_node& craft_language_source, const std::string& tag_name,
+                             const std::vector<std::string_view>& accepted, bool allow_common)
+    {
+        // Exactly the names parse_common_node_attributes() below reads -- deliberately
+        // not "everything in basic::attribute", which also holds `color` (only some tags
+        // read it) and the position *values*, neither of which every element accepts.
+        static constexpr std::array<std::string_view, 15> kCommon = {
+            basic::attribute::kNodeName, basic::attribute::kX, basic::attribute::kY,
+            basic::attribute::kWidth, basic::attribute::kHeight, basic::attribute::kPadding,
+            basic::attribute::kMargin, basic::attribute::kMarginTop, basic::attribute::kMarginRight,
+            basic::attribute::kMarginBottom, basic::attribute::kMarginLeft, basic::attribute::kWeight,
+            basic::attribute::kPosition, basic::attribute::kZIndex, basic::attribute::kVisible};
+
+        for (const auto& attribute : craft_language_source.attributes())
+        {
+            const std::string_view name = attribute.name();
+            // Table sub-elements (Row/Cell/HTitle/VTitle) are not laid out as nodes of
+            // their own, so the common positioning attributes mean nothing on them and
+            // are not silently tolerated either.
+            if (allow_common && std::ranges::find(kCommon, name) != kCommon.end())
+            {
+                continue;
+            }
+            if (std::ranges::find(accepted, name) != accepted.end())
+            {
+                continue;
+            }
+
+            std::string known;
+            for (const std::string_view candidate : accepted)
+            {
+                known += known.empty() ? "" : ", ";
+                known += candidate;
+            }
+            throw docraft::exception::InvalidInputException(std::format(
+                "Unknown attribute '{}' on <{}>. That element accepts {}{}", name, tag_name,
+                known.empty() ? std::string{"only the common attributes"} : std::format("'{}'", known),
+                allow_common ? ", plus the common attributes (name, x, y, width, height, padding, margin*, "
+                               "weight, position, z_index, visible)"
+                             : " and nothing else"));
+        }
     }
 
     DocraftCommonAttributes parse_common_node_attributes(const pugi::xml_node& craft_language_source)

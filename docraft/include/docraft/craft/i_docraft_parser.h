@@ -17,6 +17,8 @@
 #pragma once
 
 #include <any>
+#include <string_view>
+#include <vector>
 
 #include "docraft/docraft_lib.h"
 #include <pugixml.hpp>
@@ -45,5 +47,19 @@ namespace docraft::craft {
          * @return Type-erased `Parsed<Tag>Data` struct.
          */
         virtual std::any parse(const pugi::xml_node& craft_language_source) = 0;
+
+        /**
+         * @brief Every attribute name this parser reads, beyond the common set.
+         *
+         * `DocraftCraftLanguageParser` rejects any attribute on an element that is
+         * neither common nor listed here, so that a name the parser would silently drop
+         * is reported instead of quietly having no effect.
+         *
+         * Pure virtual on purpose: a new parser that forgets to declare its names fails
+         * to compile, where a default of "accept nothing" or "accept everything" would
+         * fail at runtime or not at all. Keep the list next to `parse()` -- adding an
+         * attribute there without adding it here makes the parser's own tests fail.
+         */
+        virtual std::vector<std::string_view> accepted_attributes() const = 0;
     };
 } // namespace docraft::craft

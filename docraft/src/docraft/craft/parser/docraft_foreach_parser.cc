@@ -57,4 +57,12 @@ namespace docraft::craft::parser {
         }
         return data;
     }
+
+    std::vector<std::string_view> DocraftForeachParser::accepted_attributes() const
+    {
+        return {
+            elements::templating::foreach::attribute::kModel,
+            elements::templating::foreach::attribute::kN
+        };
+    }
 } // namespace docraft::craft::parser

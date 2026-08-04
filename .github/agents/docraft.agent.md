@@ -12,6 +12,7 @@ Use this document to understand the architecture, structure, and workflow for co
 
 ---
 
-See `doc/project-doc/contributors/loom-architecture.md` for the primary (loom) layout/render
-pipeline, `doc/project-doc/contributors/architecture.md` for the legacy pipeline, and
-`doc/project-doc/contributors/components/` for deep dives.
+The documentation lives in `doc/source/` and is published online — build it with
+`cd doc && python3 -m sphinx -b html source build/html`. `craft_language/` covers the
+markup, `api/` the loom node/pipeline types (generated from the headers via Doxygen).
+There is no separate contributor handbook: the header comments are the deep dive.

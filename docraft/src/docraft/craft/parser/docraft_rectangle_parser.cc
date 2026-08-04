@@ -36,4 +36,13 @@ namespace docraft::craft::parser {
         }
         return data;
     }
+
+    std::vector<std::string_view> DocraftRectangleParser::accepted_attributes() const
+    {
+        return {
+            elements::rectangle::attribute::kBackgroundColor,
+            elements::rectangle::attribute::kBorderColor,
+            elements::rectangle::attribute::kBorderWidth
+        };
+    }
 } // namespace docraft::craft::parser

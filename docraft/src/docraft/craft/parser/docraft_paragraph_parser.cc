@@ -44,4 +44,14 @@ namespace docraft::craft::parser {
         }
         return data;
     }
+
+    std::vector<std::string_view> DocraftParagraphParser::accepted_attributes() const
+    {
+        return {
+            elements::paragraph::attribute::kLineSpacing,
+            elements::paragraph::attribute::kSpaceBefore,
+            elements::paragraph::attribute::kSpaceAfter,
+            elements::text::attribute::kAlignment
+        };
+    }
 } // namespace docraft::craft::parser

@@ -101,6 +101,8 @@ std::shared_ptr<DocraftParsedElement> DocraftCraftLanguageParser::parse_node(con
         throw docraft::exception::DataFormatException("No parser registered for node: " + node_name);
     }
 
+    parser::detail::validate_attributes(xml_node, node_name, it->second->accepted_attributes());
+
     auto element = std::make_shared<DocraftParsedElement>();
     element->tag_name = node_name;
     element->common = parser::detail::parse_common_node_attributes(xml_node);
