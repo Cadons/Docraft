@@ -184,10 +184,7 @@
     <Layout orientation="horizontal">
       <Text weight="0.3" font_size="8" color="#999999">${facility_name} | Industrial Maintenance</Text>
       <Text weight="0.4" font_size="8" color="#999999" alignment="center">Confidential - Internal Use Only</Text>
-      <Layout orientation="vertical" padding="0" weight="0.3">
-        <Text font_size="8" color="#999999" alignment="right">Page</Text>
-        <PageNumber font_size="8" color="#999999" alignment="right" />
-      </Layout>
+      <PageNumber weight="0.3" font_size="8" color="#999999" alignment="right" />
     </Layout>
   </Footer>
 

@@ -207,10 +207,7 @@
   <Footer margin_left="25" margin_right="25" border_width="1" border_color="#DDDDDD">
     <Layout orientation="horizontal">
       <Text weight="0.5" font_size="9" color="#999999">© ${company_name} - Industrial Manufacturing</Text>
-      <Layout orientation="horizontal" padding="0" spacing="3" weight="0.5">
-        <Text font_size="9" color="#999999">Page</Text>
-        <PageNumber font_size="9" color="#999999" />
-      </Layout>
+      <PageNumber weight="0.5" font_size="9" color="#999999" alignment="right" />
     </Layout>
   </Footer>
 </Document>
