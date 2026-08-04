@@ -72,7 +72,13 @@ namespace docraft::craft::parser::detail {
             return DocraftColor(ColorName::kPurple);
         }
 
-        throw docraft::exception::InvalidInputException("Unknown color: " + color_name_str);
+        // Naming the accepted set matters here: the palette is deliberately small, so a
+        // plausible-looking name ("orange", "grey") fails, and a bare "unknown color"
+        // gives the author no way to tell whether they misspelled a name or asked for
+        // one that never existed.
+        throw docraft::exception::InvalidInputException(
+            "Unknown color: '" + color_name_str + "'. Use a #RRGGBB hex value, or one of: "
+            "black, white, red, green, blue, yellow, cyan, magenta, purple");
     }
 
     DocraftCommonAttributes parse_common_node_attributes(const pugi::xml_node& craft_language_source)

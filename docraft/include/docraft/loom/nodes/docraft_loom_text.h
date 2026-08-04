@@ -63,6 +63,21 @@ namespace docraft::loom::nodes {
         void set_wrap_width(float wrap_width);
 
         /**
+         * @brief The text's own box width -- an alias of wrap_width().
+         *
+         * For a text node the wrap box and the alignment box are the same box, and
+         * `width` is the name the Craft common-attribute set uses for it. Exposing it
+         * under that name is what lets the tree builder's generic
+         * apply_common_attributes() pick `width` up (it gates on
+         * `requires { n.set_width(v); }`); without it, `width="..."` on a `<Text>` was
+         * accepted by the parser and then silently dropped, which also left `alignment`
+         * resolving against whatever width the parent happened to relay -- the whole
+         * canvas, for a Canvas child.
+         */
+        float width() const;
+        void set_width(float width);
+
+        /**
          * @brief The lines text() was wrapped into, populated by
          * DocraftLoomMeasureProcessor when wrap_width() > 0. Empty when wrapping is
          * disabled.
