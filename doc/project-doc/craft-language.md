@@ -74,10 +74,12 @@ Notes:
 - `List`
 - `UList`
 - `Rectangle`
+- `Canvas`
 - `Circle`
 - `Triangle`
 - `Line`
 - `Polygon`
+- `Chart`
 - `Foreach`
 
 `Foreach` is parsed with uppercase `F` in XML.
@@ -548,7 +550,31 @@ Attributes:
 
 ### 12.2 `Circle`
 
-Same visual attributes as `Rectangle`.
+Draws a circle or an oval. Same visual attributes as `Rectangle`, plus its own sizing.
+
+Attributes:
+
+- `radius` (float, `> 0`)
+- `width`, `height` (float, `> 0`)
+- `background_color`
+- `border_color`
+- `border_width`
+
+Sizing is done in one of two **mutually exclusive** ways:
+
+- `radius` -- a circle of that radius;
+- `width` **and** `height` -- an oval inscribed in that bounding box, i.e. its four
+  extreme points touch the middle of each side of the box. `width == height` is a circle.
+
+`x`/`y` are the top-left corner of that bounding box, not the center; the center is
+`(x + width/2, y + height/2)`.
+
+Rules (each violation is a parse error, not a silently misdrawn shape):
+
+- `radius` together with `width` and/or `height` is rejected as ambiguous.
+- `width` without `height` (or the other way around) is rejected.
+- a `Circle` with no sizing attribute at all is rejected.
+- a non-positive `radius`/`width`/`height` is rejected.
 
 ### 12.3 `Line`
 
@@ -557,6 +583,13 @@ Attributes:
 - `x1`, `y1`, `x2`, `y2`
 - `border_color`
 - `border_width`
+
+The endpoints are offsets from the line's own anchor, the same way `Triangle`/`Polygon`
+points are local to their node. That anchor is the canvas origin plus the line's own
+`x`/`y` when it sits inside a `Canvas` (so the endpoints read as canvas coordinates), or
+the layout cursor in normal block flow. An offset shared by both endpoints therefore
+moves the whole segment: `<Line x1="0" y1="75" x2="200" y2="75"/>` is a horizontal rule
+75pt below the anchor, not one sitting on it.
 
 ### 12.4 `Triangle`
 
@@ -584,6 +617,32 @@ Point parsing notes:
 
 - points are split by spaces, each token must be `x,y`.
 - malformed tokens raise parse errors.
+
+### 12.6 `Canvas`
+
+Free-form graphics container. Its children are not block-stacked: each one places itself
+by its own `x`/`y` relative to the canvas's top-left origin (`y` grows downward), and
+painting is clipped to the canvas bounds.
+
+Attributes:
+
+- `width`, `height` (required)
+- `background_color`
+- `border_color`
+- `border_width`
+
+Rules:
+
+- `width` and `height` are both required -- a canvas never derives its size from its
+  children, so it has no bounds to clip against without them.
+
+```xml
+<Canvas width="200" height="150" background_color="#F5F5F5">
+  <Circle x="80" y="55" radius="20" background_color="blue"/>
+  <Circle x="10" y="10" width="60" height="30" border_color="black"/>
+  <Line x1="0" y1="75" x2="200" y2="75" border_color="black"/>
+</Canvas>
+```
 
 ## 13. Settings and Fonts
 

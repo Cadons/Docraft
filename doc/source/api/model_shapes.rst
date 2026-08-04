@@ -29,7 +29,9 @@ Base class for Circle/Triangle/Polygon/Rectangle (via
 DocraftLoomCircle
 --------------------
 
-``<Circle>`` — a shape with a ``radius``.
+``<Circle>`` — an ellipse held as two semi-axes: ``radius`` sets both (a
+circle), ``width``/``height`` inscribe an oval in that bounding box. The
+node's frame position is the box's top-left corner, not the center.
 
 .. doxygenclass:: docraft::loom::nodes::DocraftLoomCircle
    :project: docraft
@@ -59,7 +61,8 @@ DocraftLoomLine
 
 ``<Line>`` — a stroke-only primitive with ``start``/``end`` points,
 ``border_color``, and ``border_width``. Not a ``DocraftLoomShape`` (no
-background color).
+background color). Both points are Y-down offsets from the node's own
+origin, like ``DocraftLoomTriangle``'s points.
 
 .. doxygenclass:: docraft::loom::nodes::DocraftLoomLine
    :project: docraft

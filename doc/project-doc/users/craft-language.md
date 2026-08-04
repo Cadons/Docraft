@@ -113,7 +113,7 @@ Most used content tags:
 - layout: `Layout`, `Rectangle`
 - lists: `List`, `UList`
 - table: `Table`, `THead`, `TBody`, `Row`, `Cell`, `HTitle`, `VTitle`
-- graphics/media: `Image`, `Circle`, `Triangle`, `Line`, `Polygon`
+- graphics/media: `Image`, `Canvas`, `Circle`, `Triangle`, `Line`, `Polygon`, `Chart`
 - flow control: `NewPage`, `Blank`, `Foreach`
 
 Common attributes (many nodes):
