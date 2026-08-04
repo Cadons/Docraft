@@ -40,6 +40,11 @@ namespace docraft::craft::parser {
             data.border_width = border_width_attr.as_float();
         }
 
+        if (auto smooth_attr = craft_language_source.attribute(elements::polygon::attribute::kSmooth.data()))
+        {
+            data.smooth = smooth_attr.as_bool();
+        }
+
         auto points = detail::parse_points_attribute(craft_language_source,
                                                      elements::polygon::attribute::kPoints.data());
         if (!points.empty())

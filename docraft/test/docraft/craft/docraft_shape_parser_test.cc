@@ -125,6 +125,40 @@ TEST(DocraftPolygonParserTest, ParsesPolygonPoints) {
     EXPECT_FLOAT_EQ(*data.border_width, 0.5F);
 }
 
+TEST(DocraftPolygonParserTest, SmoothDefaultsToUnsetAndParsesBothStates) {
+    const char *xml = R"XML(
+<Root>
+  <Polygon points="0,0 10,0 10,10" />
+  <Polygon points="0,0 10,10" smooth="true" />
+  <Polygon points="0,0 10,0 10,10" smooth="false" />
+</Root>
+)XML";
+
+    pugi::xml_document doc;
+    ASSERT_TRUE(doc.load_string(xml));
+
+    docraft::craft::parser::DocraftPolygonParser parser;
+    auto parse_nth = [&](int index) {
+        auto node = doc.child("Root").child("Polygon");
+        for (int i = 0; i < index; ++i) {
+            node = node.next_sibling("Polygon");
+        }
+        return std::any_cast<docraft::craft::parser::ParsedPolygonData>(parser.parse(node));
+    };
+
+    // Left unset when absent, so the node keeps its own default rather than being
+    // forced closed by the parser.
+    EXPECT_FALSE(parse_nth(0).smooth.has_value());
+
+    const auto smooth = parse_nth(1);
+    ASSERT_TRUE(smooth.smooth.has_value());
+    EXPECT_TRUE(*smooth.smooth);
+
+    const auto explicit_closed = parse_nth(2);
+    ASSERT_TRUE(explicit_closed.smooth.has_value());
+    EXPECT_FALSE(*explicit_closed.smooth);
+}
+
 TEST(DocraftRectangleParserTest, ParsesBorderWidth) {
     const char *xml = R"XML(
 <Rectangle border_width="3" />

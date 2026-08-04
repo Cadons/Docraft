@@ -576,6 +576,7 @@ Rule:
 Attributes:
 
 - `points` format: `x1,y1 x2,y2 x3,y3 ...`
+- `smooth` (bool, default `false`)
 - `background_color`
 - `border_color`
 - `border_width`
@@ -584,6 +585,15 @@ Point parsing notes:
 
 - points are split by spaces, each token must be `x,y`.
 - malformed tokens raise parse errors.
+- points are Y-down offsets from the node's own origin.
+
+Rules:
+
+- `smooth="true"` renders the points as an *open* curve passing smoothly through each
+  of them, instead of a closed polygon -- the same primitive a spline chart's series
+  line is built from.
+- an open curve is stroke-only: `background_color` is ignored when `smooth="true"`.
+- a closed polygon needs at least 3 points to render, a smooth one at least 2.
 
 ## 13. Settings and Fonts
 

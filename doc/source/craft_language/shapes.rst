@@ -127,12 +127,17 @@ bounds. It's the building block :doc:`charts` are drawn on top of.
 Polygon
 -------
 
-``<Polygon>`` draws an arbitrary closed polygon.
+``<Polygon>`` draws an arbitrary closed polygon, or -- with ``smooth="true"`` -- an
+open curve passing smoothly through the same points (the shape a spline chart's series
+line is made of).
 
 .. code-block:: xml
 
    <Polygon points="0,0 100,0 120,60 50,100 -20,60"
             background_color="green" border_color="black"/>
+
+   <Polygon points="0,60 40,10 80,60 120,10 160,60"
+            smooth="true" border_color="green" border_width="2"/>
 
 .. list-table::
    :header-rows: 1
@@ -143,14 +148,21 @@ Polygon
      - Description
    * - ``points``
      - string
-     - Space-separated ``x,y`` pairs.
+     - Space-separated ``x,y`` pairs, as Y-down offsets from the node's own origin.
+   * - ``smooth``
+     - bool
+     - ``true`` renders an open stroked curve through the points instead of a closed
+       polygon. Default ``false``.
    * - ``background_color``
      - color
-     - Fill color.
+     - Fill color. Ignored when ``smooth="true"`` — an open curve is stroke-only.
    * - ``border_color``
      - color
      - Stroke color.
    * - ``border_width``
      - float
      - Stroke width in points.
+
+A closed polygon needs at least 3 points to render; a smooth one is well-defined
+through 2.
 

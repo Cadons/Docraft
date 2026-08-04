@@ -35,6 +35,11 @@ namespace docraft::craft::parser {
         std::optional<std::string> border_color;
         std::optional<float> border_width;
         std::vector<docraft::Position> points;
+        /**
+         * @brief `smooth="true"` renders the points as an open stroked curve instead of
+         * a closed fillable polygon (see `docraft::loom::nodes::DocraftLoomPolygon`).
+         */
+        std::optional<bool> smooth;
     };
 
     /**

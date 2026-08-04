@@ -991,6 +991,10 @@ namespace docraft::loom::craft {
         {
             node->set_points(data.points);
         }
+        if (data.smooth)
+        {
+            node->set_smooth(*data.smooth);
+        }
         apply_common_attributes(*node, element.common);
         return node;
     }

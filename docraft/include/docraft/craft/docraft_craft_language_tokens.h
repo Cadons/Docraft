@@ -277,6 +277,7 @@ namespace docraft::craft {
             constexpr string kBorderColor = "border_color";
             constexpr string kBorderWidth = "border_width";
             constexpr string kPoints = "points";
+            constexpr string kSmooth = "smooth";
         }
 
         namespace text::attribute {

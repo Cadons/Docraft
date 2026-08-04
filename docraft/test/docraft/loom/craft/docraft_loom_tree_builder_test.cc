@@ -12,6 +12,7 @@
 #include "docraft/loom/nodes/docraft_loom_new_page.h"
 #include "docraft/loom/nodes/docraft_loom_page_number.h"
 #include "docraft/loom/nodes/docraft_loom_paragraph.h"
+#include "docraft/loom/nodes/docraft_loom_polygon.h"
 #include "docraft/loom/nodes/docraft_loom_rectangle.h"
 #include "docraft/loom/nodes/docraft_loom_table.h"
 #include "docraft/loom/nodes/docraft_loom_table_cell.h"
@@ -252,6 +253,43 @@ TEST(DocraftLoomTreeBuilderTest, BuildsCircleRadius)
     const auto circle = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomCircle>(node);
     ASSERT_TRUE(circle);
     EXPECT_FLOAT_EQ(circle->radius(), 20.0F);
+}
+
+TEST(DocraftLoomTreeBuilderTest, BuildsSmoothPolygonFromCraft)
+{
+    // `smooth` selects the open-curve rendering path, which until now was reachable
+    // only programmatically (the spline chart builder) and not from a .craft file.
+    const char* xml = R"XML(<Polygon points="0,0 20,40 60,10" smooth="true" border_color="blue"/>)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto polygon = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomPolygon>(node);
+    ASSERT_TRUE(polygon);
+    EXPECT_TRUE(polygon->smooth());
+    EXPECT_EQ(polygon->points().size(), 3U);
+}
+
+TEST(DocraftLoomTreeBuilderTest, PolygonIsClosedUnlessSmoothIsRequested)
+{
+    const auto implicit_default = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomPolygon>(
+        parse_and_build(R"XML(<Polygon points="0,0 20,40 60,10"/>)XML"));
+    ASSERT_TRUE(implicit_default);
+    EXPECT_FALSE(implicit_default->smooth());
+
+    const auto explicit_closed = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomPolygon>(
+        parse_and_build(R"XML(<Polygon points="0,0 20,40 60,10" smooth="false"/>)XML"));
+    ASSERT_TRUE(explicit_closed);
+    EXPECT_FALSE(explicit_closed->smooth());
+}
+
+TEST(DocraftLoomTreeBuilderTest, SmoothPolygonAcceptsTwoPoints)
+{
+    // A closed polygon needs at least 3 points, but an open curve is well-defined
+    // through 2 -- the sizing rule differs with `smooth`, so it is worth pinning down.
+    const auto polygon = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomPolygon>(
+        parse_and_build(R"XML(<Polygon points="0,0 50,50" smooth="true" border_color="red"/>)XML"));
+    ASSERT_TRUE(polygon);
+    EXPECT_TRUE(polygon->smooth());
+    EXPECT_EQ(polygon->points().size(), 2U);
 }
 
 TEST(DocraftLoomTreeBuilderTest, BuildsTitleWithHeadingDefaults)
