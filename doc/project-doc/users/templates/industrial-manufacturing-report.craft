@@ -75,10 +75,10 @@
         <Row>
           <Cell width="70"><Text font_size="9" style="bold">${data("line_name")}</Text></Cell>
           <Cell width="80"><Text font_size="9">${data("product_type")}</Text></Cell>
-          <Cell width="60" alignment="center"><Text font_size="9">${data("units_produced")}</Text></Cell>
-          <Cell width="60" alignment="center"><Text font_size="9">${data("target_units")}</Text></Cell>
-          <Cell width="70" alignment="center">
-            <Text font_size="9" style="bold" color="#27AE60">${data("achievement_percentage")}%</Text>
+          <Cell width="60"><Text font_size="9" alignment="center">${data("units_produced")}</Text></Cell>
+          <Cell width="60"><Text font_size="9" alignment="center">${data("target_units")}</Text></Cell>
+          <Cell width="70">
+            <Text font_size="9" style="bold" color="#27AE60" alignment="center">${data("achievement_percentage")}%</Text>
           </Cell>
         </Row>
       </TBody>
@@ -99,11 +99,11 @@
       <TBody>
         <Row>
           <Cell width="80"><Text font_size="9">${data("inspection_point")}</Text></Cell>
-          <Cell width="70" alignment="center"><Text font_size="9">${data("items_inspected")}</Text></Cell>
-          <Cell width="60" alignment="center"><Text font_size="9" color="#E74C3C" style="bold">${data("defects_found")}</Text></Cell>
-          <Cell width="70" alignment="center"><Text font_size="9">${data("defect_rate")}%</Text></Cell>
-          <Cell width="65" alignment="center">
-            <Text font_size="9" style="bold" color="#27AE60">${data("status")}</Text>
+          <Cell width="70"><Text font_size="9" alignment="center">${data("items_inspected")}</Text></Cell>
+          <Cell width="60"><Text font_size="9" color="#E74C3C" style="bold" alignment="center">${data("defects_found")}</Text></Cell>
+          <Cell width="70"><Text font_size="9" alignment="center">${data("defect_rate")}%</Text></Cell>
+          <Cell width="65">
+            <Text font_size="9" style="bold" color="#27AE60" alignment="center">${data("status")}</Text>
           </Cell>
         </Row>
       </TBody>
@@ -128,7 +128,7 @@
         <Row>
           <Cell width="60"><Text font_size="9" style="bold">${data("equipment_id")}</Text></Cell>
           <Cell width="70"><Text font_size="9">${data("equipment_type")}</Text></Cell>
-          <Cell width="70" alignment="center"><Text font_size="9">${data("operating_hours")}</Text></Cell>
+          <Cell width="70"><Text font_size="9" alignment="center">${data("operating_hours")}</Text></Cell>
           <Cell width="85"><Text font_size="9" color="#27AE60">${data("maintenance_status")}</Text></Cell>
           <Cell width="75"><Text font_size="9">${data("next_service_date")}</Text></Cell>
         </Row>
@@ -150,10 +150,10 @@
       <TBody>
         <Row>
           <Cell width="60"><Text font_size="9" style="bold">${data("shift_name")}</Text></Cell>
-          <Cell width="60" alignment="center"><Text font_size="9">${data("personnel_count")}</Text></Cell>
-          <Cell width="80" alignment="center"><Text font_size="9">${data("shift_output")}</Text></Cell>
-          <Cell width="60" alignment="center"><Text font_size="9" color="#E74C3C">${data("shift_defects")}</Text></Cell>
-          <Cell width="60" alignment="center"><Text font_size="9">${data("incidents")}</Text></Cell>
+          <Cell width="60"><Text font_size="9" alignment="center">${data("personnel_count")}</Text></Cell>
+          <Cell width="80"><Text font_size="9" alignment="center">${data("shift_output")}</Text></Cell>
+          <Cell width="60"><Text font_size="9" color="#E74C3C" alignment="center">${data("shift_defects")}</Text></Cell>
+          <Cell width="60"><Text font_size="9" alignment="center">${data("incidents")}</Text></Cell>
         </Row>
       </TBody>
     </Table>

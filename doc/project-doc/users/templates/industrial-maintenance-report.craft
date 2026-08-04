@@ -94,7 +94,7 @@
           <Cell width="50"><Text font_size="9">${data("date")}</Text></Cell>
           <Cell width="70"><Text font_size="9">${data("equipment")}</Text></Cell>
           <Cell width="90"><Text font_size="9">${data("activity")}</Text></Cell>
-          <Cell width="60" alignment="center"><Text font_size="9">${data("duration")}</Text></Cell>
+          <Cell width="60"><Text font_size="9" alignment="center">${data("duration")}</Text></Cell>
           <Cell width="80"><Text font_size="9">${data("technician")}</Text></Cell>
         </Row>
       </TBody>
