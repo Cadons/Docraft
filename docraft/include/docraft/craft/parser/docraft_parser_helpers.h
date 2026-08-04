@@ -78,7 +78,7 @@ namespace docraft::craft::parser::detail {
      * @throws docraft::exception::InvalidInputException naming the offending attribute,
      * its element, and what that element does accept.
      */
-    void reject_unknown_attributes(const pugi::xml_node& craft_language_source, const std::string& tag_name,
+    void validate_attributes(const pugi::xml_node& craft_language_source, const std::string& tag_name,
                                    const std::vector<std::string_view>& accepted, bool allow_common = true);
 
 

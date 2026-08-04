@@ -69,7 +69,7 @@ namespace docraft::craft::parser {
 
         ParsedTableTitleData parse_table_title(const pugi::xml_node& title, const char* background_attr_name)
         {
-            detail::reject_unknown_attributes(title, title.name(),
+            detail::validate_attributes(title, title.name(),
                                               {elements::table_title::attribute::kAlignment,
                                                elements::table_title::attribute::kStyle,
                                                elements::table_title::attribute::kColor,
@@ -104,7 +104,7 @@ namespace docraft::craft::parser {
             // A Cell is a slot in the grid, not a node with its own geometry: it sizes
             // itself with `width` and paints a background, and everything else -- text
             // alignment included -- belongs to the element inside it.
-            detail::reject_unknown_attributes(cell, std::string{elements::kCell},
+            detail::validate_attributes(cell, std::string{elements::kCell},
                                               {basic::attribute::kWidth,
                                                elements::table_column::attribute::kBackgroundColor},
                                               /*allow_common=*/false);
@@ -159,7 +159,7 @@ namespace docraft::craft::parser {
 
         ParsedTableRowData parse_horizontal_row(const pugi::xml_node& row)
         {
-            detail::reject_unknown_attributes(row, std::string{elements::kRow},
+            detail::validate_attributes(row, std::string{elements::kRow},
                                               {elements::table_row::attribute::kBackgroundColor},
                                               /*allow_common=*/false);
             ParsedTableRowData row_data;
@@ -177,7 +177,7 @@ namespace docraft::craft::parser {
 
         ParsedTableRowData parse_vertical_row(const pugi::xml_node& row)
         {
-            detail::reject_unknown_attributes(row, std::string{elements::kRow},
+            detail::validate_attributes(row, std::string{elements::kRow},
                                               {elements::table_row::attribute::kBackgroundColor},
                                               /*allow_common=*/false);
             ParsedTableRowData row_data;
