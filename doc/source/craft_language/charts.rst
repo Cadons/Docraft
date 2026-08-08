@@ -228,7 +228,7 @@ drawn as ordinary shapes:
 
    <Canvas width="600" height="600" background_color="#FAFAFA"
            border_color="#DDDDDD" border_width="1">
-     <Text x="20" y="16" font_size="13" bold="true">Q1-Q3 Business Overview</Text>
+     <Text x="20" y="16" font_size="13" style="bold">Q1-Q3 Business Overview</Text>
      <Line x1="20" y1="40" x2="580" y2="40" border_color="#DDDDDD" border_width="1"/>
 
      <Chart x="10" y="50" style="pie" width="290" height="230" title="Revenue Split">
@@ -283,12 +283,12 @@ gets the same effect:
 
      <Rectangle x="10" y="310" width="145" height="46"
                 background_color="#E8F5E9" border_color="#2CA02C" border_width="1"/>
-     <Text x="18" y="317" font_size="9" bold="true" color="#2CA02C">Peak: 50k</Text>
+     <Text x="18" y="317" font_size="9" style="bold" color="#2CA02C">Peak: 50k</Text>
      <Text x="18" y="332" font_size="7" color="#555555">App A, month 12</Text>
 
      <Rectangle x="320" y="310" width="150" height="46"
                 background_color="#E3F2FD" border_color="#1F77B4" border_width="1"/>
-     <Text x="328" y="317" font_size="9" bold="true" color="#1F77B4">Growth: +317%</Text>
+     <Text x="328" y="317" font_size="9" style="bold" color="#1F77B4">Growth: +317%</Text>
      <Text x="328" y="332" font_size="7" color="#555555">App A, year over year</Text>
    </Canvas>
 

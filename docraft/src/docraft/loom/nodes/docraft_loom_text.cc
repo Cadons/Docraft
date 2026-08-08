@@ -129,6 +129,16 @@ namespace docraft::loom::nodes {
         wrap_width_ = wrap_width;
     }
 
+    float DocraftLoomText::width() const
+    {
+        return wrap_width_;
+    }
+
+    void DocraftLoomText::set_width(float width)
+    {
+        wrap_width_ = width;
+    }
+
     const std::vector<std::string>& DocraftLoomText::wrapped_lines() const
     {
         return wrapped_lines_;

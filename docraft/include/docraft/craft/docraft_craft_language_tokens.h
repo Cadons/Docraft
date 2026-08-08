@@ -222,6 +222,7 @@ namespace docraft::craft {
             constexpr string kStyle = "style";
             constexpr string kColor = "color";
             constexpr string kBackgroundColor = "background_color";
+            constexpr string kFontSize = "font_size";
         }
         namespace table_htitle::attribute {
             constexpr string kBackgroundColor = "background_color";

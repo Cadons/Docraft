@@ -295,6 +295,98 @@ TEST(DocraftLoomTreeBuilderTest, PolygonNoLongerAcceptsSmooth)
                  docraft::exception::InvalidInputException);
 }
 
+TEST(DocraftLoomTreeBuilderTest, TextWidthSetsItsOwnAlignmentAndWrapBox)
+{
+    // Regression test for issue #40: `width` on a <Text> was accepted by the parser and
+    // then dropped, because apply_common_attributes() gates on set_width() and
+    // DocraftLoomText only had set_wrap_width(). That also left `alignment` resolving
+    // against whatever width the parent relayed instead of the declared box.
+    const char* xml = R"XML(<Text width="120" alignment="center">centered</Text>)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto text = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomText>(node);
+    ASSERT_TRUE(text);
+    EXPECT_FLOAT_EQ(text->width(), 120.0F);
+    // width and wrap_width are the same box for a text node.
+    EXPECT_FLOAT_EQ(text->wrap_width(), 120.0F);
+    EXPECT_EQ(text->alignment(), docraft::loom::nodes::TextAlignment::kCenter);
+}
+
+TEST(DocraftLoomTreeBuilderTest, TextWithoutExplicitWidthLeavesTheBoxToTheParent)
+{
+    const auto text = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomText>(
+        parse_and_build(R"XML(<Text>plain</Text>)XML"));
+    ASSERT_TRUE(text);
+    EXPECT_FLOAT_EQ(text->width(), 0.0F);
+}
+
+TEST(DocraftLoomTreeBuilderTest, TableHeaderTitleHonoursFontSize)
+{
+    // Regression test for issue #40: <HTitle font_size="..."> was documented in
+    // tables.rst but never parsed, so headers were stuck at the node default while
+    // body cells honoured font_size.
+    const char* xml = R"XML(
+<Table>
+  <THead>
+    <HTitle font_size="16" style="bold">Big</HTitle>
+  </THead>
+  <TBody>
+    <Row><Cell><Text font_size="9">v</Text></Cell></Row>
+  </TBody>
+</Table>
+)XML";
+
+    const auto table = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomTable>(parse_and_build(xml));
+    ASSERT_TRUE(table);
+    const auto header_cell = table->cell(0, 0);
+    ASSERT_TRUE(header_cell);
+    const auto header_text = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomText>(header_cell->content());
+    ASSERT_TRUE(header_text);
+    EXPECT_FLOAT_EQ(header_text->font_size(), 16.0F);
+}
+
+TEST(DocraftLoomTreeBuilderTest, TableHeaderTitleKeepsItsDefaultFontSizeWhenUnset)
+{
+    const char* xml = R"XML(
+<Table>
+  <THead><HTitle style="bold">Plain</HTitle></THead>
+  <TBody><Row><Cell><Text>v</Text></Cell></Row></TBody>
+</Table>
+)XML";
+
+    const auto table = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomTable>(parse_and_build(xml));
+    ASSERT_TRUE(table);
+    const auto header_text = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomText>(
+        table->cell(0, 0)->content());
+    ASSERT_TRUE(header_text);
+    EXPECT_FLOAT_EQ(header_text->font_size(), docraft::loom::nodes::DocraftLoomText{}.font_size());
+}
+
+TEST(DocraftLoomTreeBuilderTest, RejectsNonPositiveTableTitleFontSize)
+{
+    EXPECT_THROW(parse_and_build(R"XML(<Table><THead><HTitle font_size="0">H</HTitle></THead>
+        <TBody><Row><Cell><Text>v</Text></Cell></Row></TBody></Table>)XML"),
+                 docraft::exception::InvalidInputException);
+}
+
+TEST(DocraftLoomTreeBuilderTest, UnknownNamedColorErrorListsTheAcceptedNames)
+{
+    try
+    {
+        parse_and_build(R"XML(<Text color="orange">x</Text>)XML");
+        FAIL() << "expected an unknown-color rejection";
+    }
+    catch (const docraft::exception::InvalidInputException& e)
+    {
+        const std::string message = e.what();
+        EXPECT_NE(message.find("orange"), std::string::npos);
+        // The palette is small enough that a plausible-looking name fails, so the
+        // message has to say which names do work.
+        EXPECT_NE(message.find("magenta"), std::string::npos);
+        EXPECT_NE(message.find("#RRGGBB"), std::string::npos);
+    }
+}
+
 TEST(DocraftLoomTreeBuilderTest, BuildsTitleWithHeadingDefaults)
 {
     const char* xml = R"XML(<Title>Heading</Title>)XML";
