@@ -84,6 +84,51 @@ rather than a silently misdrawn shape:
 * only one of ``width``/``height`` -- half a bounding box, rejected;
 * no sizing attribute at all -- rejected (this used to draw nothing at all).
 
+Arcs
+~~~~
+
+Adding ``start_x``/``start_y`` and ``finish_x``/``finish_y`` draws only the **arc**
+between those two points instead of the whole outline — a semicircle, a quarter, any
+slice.
+
+.. code-block:: xml
+
+   <!-- upper semicircle: 9 o'clock round to 3 o'clock -->
+   <Circle radius="50" start_x="0" start_y="50" finish_x="100" finish_y="50"
+           border_color="red" border_width="2"/>
+
+The endpoints are points in the circle's own box, like every other coordinate in
+Docraft. Two rules make them unambiguous:
+
+* **Only the direction from the centre matters.** The distance comes from the circle's
+  own radius, so an endpoint that doesn't land exactly on the outline is projected onto
+  it rather than being an error — handy, since a point that lies *precisely* on a
+  circle rarely has round coordinates.
+* **The arc is always swept clockwise from start to finish.** Two points have two arcs
+  between them; swapping ``start`` and ``finish`` gives you the other one.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 15 60
+
+   * - Attribute
+     - Type
+     - Description
+   * - ``start_x``, ``start_y``
+     - float
+     - Where the arc begins. Required together with the finish pair.
+   * - ``finish_x``, ``finish_y``
+     - float
+     - Where the arc ends, sweeping clockwise from the start.
+
+Rejected combinations:
+
+* only some of the four arc attributes — an arc needs both endpoints;
+* an arc together with ``background_color`` — an arc is an open path and cannot be
+  filled; use ``<Polygon>`` for a filled sector;
+* an arc on an oval (``width`` and ``height`` differing) — arcs are supported on
+  circles only.
+
 Triangle
 --------
 

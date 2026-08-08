@@ -500,6 +500,29 @@ namespace docraft::loom::pipeline {
         const auto& pos = node->layout_box().frame.position;
         const nodes::Position center = {.x = pos.x + radius_x, .y = pos.y + radius_y};
 
+        if (node->has_arc())
+        {
+            // An arc is an open path: it is stroked and never filled, so it takes the
+            // border color/width directly rather than going through the fill/stroke
+            // flags the closed outline uses.
+            const auto rgba = node->style().border_color.toRGB();
+            if (node->style().border_width <= 0.0F || rgba.a <= 0.0F)
+            {
+                return;
+            }
+            shape_backend_->save_state();
+            if (rgba.a < 1.0F)
+            {
+                shape_backend_->set_stroke_alpha(rgba.a);
+            }
+            line_backend_->set_line_width(node->style().border_width);
+            line_backend_->set_stroke_color(rgba.r, rgba.g, rgba.b);
+            shape_backend_->draw_arc(center.x, center.y, radius_x, node->arc_start_angle(), node->arc_end_angle());
+            shape_backend_->stroke();
+            shape_backend_->restore_state();
+            return;
+        }
+
         shape_backend_->save_state();
         apply_shape_paint_state(shape_backend_, line_backend_, node->style(), flags);
         if (node->is_circle())

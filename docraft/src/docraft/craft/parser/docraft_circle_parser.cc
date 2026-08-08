@@ -39,6 +39,22 @@ namespace docraft::craft::parser {
         {
             data.radius = radius_attr.as_float();
         }
+        if (auto attr = craft_language_source.attribute(elements::circle::attribute::kStartX.data()))
+        {
+            data.start_x = attr.as_float();
+        }
+        if (auto attr = craft_language_source.attribute(elements::circle::attribute::kStartY.data()))
+        {
+            data.start_y = attr.as_float();
+        }
+        if (auto attr = craft_language_source.attribute(elements::circle::attribute::kFinishX.data()))
+        {
+            data.finish_x = attr.as_float();
+        }
+        if (auto attr = craft_language_source.attribute(elements::circle::attribute::kFinishY.data()))
+        {
+            data.finish_y = attr.as_float();
+        }
         return data;
     }
 } // namespace docraft::craft::parser

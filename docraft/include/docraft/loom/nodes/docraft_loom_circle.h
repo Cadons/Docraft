@@ -35,8 +35,27 @@ namespace docraft::loom::nodes {
          */
         bool is_circle() const;
 
+        /**
+         * @brief Restricts drawing to the arc between two angles instead of the whole
+         * outline.
+         *
+         * Angles are degrees from 12 o'clock, increasing clockwise on the page, and the
+         * arc is swept from `start` to `end` in that direction -- swapping the two
+         * therefore yields the complementary arc. `end` may exceed 360 to express an arc
+         * wrapping past 12 o'clock. An arc is stroked and never filled, since it is an
+         * open path; only the circular case is supported (see is_circle()).
+         */
+        void set_arc(float start_angle, float end_angle);
+        void clear_arc();
+        bool has_arc() const;
+        float arc_start_angle() const;
+        float arc_end_angle() const;
+
     private:
         float radius_x_ = 0.0F;
         float radius_y_ = 0.0F;
+        bool has_arc_ = false;
+        float arc_start_angle_ = 0.0F;
+        float arc_end_angle_ = 0.0F;
     };
 } // docraft
