@@ -50,9 +50,21 @@ origin); throws ``InvalidInputException`` otherwise.
 DocraftLoomPolygon
 ---------------------
 
-``<Polygon>`` — an arbitrary-point-count shape (needs ≥3 points to render).
+``<Polygon>`` — an arbitrary-point-count closed shape (needs ≥3 points to
+render). Always closed; an open curve is ``DocraftLoomCurveLine``.
 
 .. doxygenclass:: docraft::loom::nodes::DocraftLoomPolygon
+   :project: docraft
+   :members:
+
+DocraftLoomCurveLine
+-----------------------
+
+``<CurveLine>`` — an open curve interpolating ≥2 points. Stroke-only and, like
+``DocraftLoomLine``, not a ``DocraftLoomShape``: an open curve has no interior
+to fill.
+
+.. doxygenclass:: docraft::loom::nodes::DocraftLoomCurveLine
    :project: docraft
    :members:
 

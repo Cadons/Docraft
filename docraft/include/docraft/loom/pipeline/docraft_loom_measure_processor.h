@@ -78,6 +78,7 @@ namespace docraft::loom::pipeline {
         void visit(docraft::loom::nodes::DocraftLoomCircle*) override;
         void visit(docraft::loom::nodes::DocraftLoomTriangle*) override;
         void visit(docraft::loom::nodes::DocraftLoomPolygon*) override;
+        void visit(docraft::loom::nodes::DocraftLoomCurveLine*) override;
         void visit(docraft::loom::nodes::DocraftLoomList*) override;
         void visit(docraft::loom::nodes::DocraftLoomTableCell*) override;
         void visit(docraft::loom::nodes::DocraftLoomTable*) override;

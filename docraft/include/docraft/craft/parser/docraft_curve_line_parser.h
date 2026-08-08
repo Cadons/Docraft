@@ -18,39 +18,44 @@
 
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "docraft/docraft_lib.h"
-#include "docraft/docraft_position.h"
 
 #include "docraft/craft/i_docraft_parser.h"
+#include "docraft/docraft_position.h"
 
 namespace docraft::craft::parser {
     /**
-     * @brief Tag-specific payload parsed from a `<Polygon>` element.
+     * @brief Tag-specific payload parsed from a `<CurveLine>` element.
+     *
+     * No background color: an open curve has no interior to fill, so unlike
+     * `<Polygon>` this element is stroke-only by construction rather than by
+     * convention.
      */
-    struct ParsedPolygonData
+    struct ParsedCurveLineData
     {
-        std::optional<std::string> background_color;
+        std::vector<docraft::Position> points;
         std::optional<std::string> border_color;
         std::optional<float> border_width;
-        std::vector<docraft::Position> points;
     };
 
     /**
-     * @brief Parser for polygon nodes.
+     * @brief Parser for curve line nodes.
      */
-    class DOCRAFT_LIB DocraftPolygonParser : public IDocraftParser {
+    class DOCRAFT_LIB DocraftCurveLineParser : public IDocraftParser {
     public:
         /**
-         * @brief Parses a polygon XML node.
+         * @brief Parses a curve line XML node.
          * @param craft_language_source XML node.
-         * @return `ParsedPolygonData`.
+         * @return `ParsedCurveLineData`.
          */
         std::any parse(const pugi::xml_node& craft_language_source) override;
 
         /**
-         * @brief Attribute names this parser reads, beyond the common set.
+         * @brief Attributes accepted on a `<CurveLine>` element.
+         * @return List of accepted attribute names.
          */
         std::vector<std::string_view> accepted_attributes() const override;
     };

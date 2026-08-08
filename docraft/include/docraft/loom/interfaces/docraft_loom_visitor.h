@@ -18,6 +18,7 @@ namespace docraft::loom::nodes {
     class DocraftLoomCircle;
     class DocraftLoomTriangle;
     class DocraftLoomPolygon;
+    class DocraftLoomCurveLine;
     class DocraftLoomList;
     class DocraftLoomTableCell;
     class DocraftLoomTable;
@@ -47,6 +48,7 @@ namespace docraft::loom::interfaces {
         virtual void visit(docraft::loom::nodes::DocraftLoomCircle*) = 0;
         virtual void visit(docraft::loom::nodes::DocraftLoomTriangle*) = 0;
         virtual void visit(docraft::loom::nodes::DocraftLoomPolygon*) = 0;
+        virtual void visit(docraft::loom::nodes::DocraftLoomCurveLine*) = 0;
         virtual void visit(docraft::loom::nodes::DocraftLoomList*) = 0;
         virtual void visit(docraft::loom::nodes::DocraftLoomTableCell*) = 0;
         virtual void visit(docraft::loom::nodes::DocraftLoomTable*) = 0;

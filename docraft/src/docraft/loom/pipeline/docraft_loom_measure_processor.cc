@@ -13,6 +13,7 @@
 #include "docraft/loom/nodes/docraft_loom_blank_line.h"
 #include "docraft/loom/nodes/docraft_loom_hstack.h"
 #include "docraft/loom/nodes/docraft_loom_circle.h"
+#include "docraft/loom/nodes/docraft_loom_curve_line.h"
 #include "docraft/loom/nodes/docraft_loom_image.h"
 #include "docraft/loom/nodes/docraft_loom_line.h"
 #include "docraft/loom/nodes/docraft_loom_list.h"
@@ -508,6 +509,17 @@ namespace docraft::loom::pipeline {
     {
         if (!node)
             return;
+        measure_points_bounding_box(node->points(), node->edit_layout_box().measured_size);
+    }
+
+    void DocraftLoomMeasureProcessor::visit(docraft::loom::nodes::DocraftLoomCurveLine* node)
+    {
+        if (!node)
+            return;
+        // A curve occupies the bounding box of the points it interpolates, exactly like a
+        // polygon over the same points. The spline can bow slightly outside that box
+        // between two points; that is left alone deliberately, since growing the box to
+        // chase the overshoot would push following content around for a few points of ink.
         measure_points_bounding_box(node->points(), node->edit_layout_box().measured_size);
     }
 

@@ -23,6 +23,7 @@
 #include "docraft/craft/parser/docraft_paragraph_parser.h"
 #include "docraft/craft/parser/docraft_parser.h"
 #include "docraft/craft/parser/docraft_parser_helpers.h"
+#include "docraft/craft/parser/docraft_curve_line_parser.h"
 #include "docraft/craft/parser/docraft_polygon_parser.h"
 #include "docraft/craft/parser/docraft_section_parsers.h"
 #include "docraft/craft/parser/docraft_triangle_parser.h"
@@ -39,6 +40,7 @@ DocraftCraftLanguageParser::DocraftCraftLanguageParser() {
     parsers_[std::string{elements::kTriangle}] = std::make_unique<parser::DocraftTriangleParser>();
     parsers_[std::string{elements::kLine}] = std::make_unique<parser::DocraftLineParser>();
     parsers_[std::string{elements::kPolygon}] = std::make_unique<parser::DocraftPolygonParser>();
+    parsers_[std::string{elements::kCurveLine}] = std::make_unique<parser::DocraftCurveLineParser>();
     parsers_[std::string{elements::kText}] = std::make_unique<parser::DocraftTextParser>();
     parsers_[std::string{elements::kTitle}] = std::make_unique<parser::DocraftTextParser>();
     parsers_[std::string{elements::kSubtitle}] = std::make_unique<parser::DocraftTextParser>();
@@ -100,6 +102,8 @@ std::shared_ptr<DocraftParsedElement> DocraftCraftLanguageParser::parse_node(con
     if (it == parsers_.end()) {
         throw docraft::exception::DataFormatException("No parser registered for node: " + node_name);
     }
+
+    parser::detail::validate_attributes(xml_node, node_name, it->second->accepted_attributes());
 
     auto element = std::make_shared<DocraftParsedElement>();
     element->tag_name = node_name;

@@ -11,6 +11,7 @@
 
 #include "docraft/loom/nodes/docraft_loom_line.h"
 #include "docraft/loom/nodes/docraft_loom_polygon.h"
+#include "docraft/loom/nodes/docraft_loom_curve_line.h"
 #include "docraft/loom/nodes/docraft_loom_rectangle.h"
 #include "docraft/loom/nodes/docraft_loom_text.h"
 #include "docraft/utils/docraft_utf8.h"
@@ -74,22 +75,18 @@ namespace docraft::loom::charts {
             min_x = std::min(min_x, pt.x);
             min_y = std::min(min_y, pt.y);
         }
-        // A smooth Polygon is an open curve rather than a closed fillable shape -- see
-        // DocraftLoomPolygon's own doc comment. No dedicated node/visitor for a curve is
-        // needed since the existing Polygon visit() already branches on smooth().
-        auto polygon = std::make_shared<nodes::DocraftLoomPolygon>();
+        auto curve = std::make_shared<nodes::DocraftLoomCurveLine>();
         std::vector<nodes::Position> local;
         local.reserve(points.size());
         for (const auto& pt : points)
         {
             local.push_back({.x = pt.x - min_x, .y = pt.y - min_y});
         }
-        polygon->set_points(local);
-        polygon->set_smooth(true);
-        polygon->edit_style().border_color = color;
-        polygon->edit_style().border_width = width;
-        polygon->set_explicit_position({.x = min_x, .y = min_y});
-        canvas.add_child(polygon);
+        curve->set_points(local);
+        curve->set_border_color(color);
+        curve->set_border_width(width);
+        curve->set_explicit_position({.x = min_x, .y = min_y});
+        canvas.add_child(curve);
     }
 
     void DocraftChartBuilder::add_text(nodes::DocraftLoomCanvas& canvas, const std::string& text, float x, float y,

@@ -58,4 +58,17 @@ namespace docraft::craft::parser {
         }
         return data;
     }
+
+    std::vector<std::string_view> DocraftSectionParser::accepted_attributes() const
+    {
+        return {
+            section::attribute::kMarginTop,
+            section::attribute::kMarginBottom,
+            section::attribute::kMarginLeft,
+            section::attribute::kMarginRight,
+            elements::rectangle::attribute::kBackgroundColor,
+            elements::rectangle::attribute::kBorderColor,
+            elements::rectangle::attribute::kBorderWidth
+        };
+    }
 } // namespace docraft::craft::parser
