@@ -73,6 +73,7 @@ namespace docraft::craft::parser {
                                               {elements::table_title::attribute::kAlignment,
                                                elements::table_title::attribute::kStyle,
                                                elements::table_title::attribute::kColor,
+                                               elements::table_title::attribute::kFontSize,
                                                std::string_view{background_attr_name}},
                                               /*allow_common=*/false);
             ParsedTableTitleData data;
