@@ -37,6 +37,13 @@ namespace docraft::craft::parser {
         return data;
     }
 
+    std::vector<std::string_view> DocraftListParser::accepted_attributes() const
+    {
+        return {
+            elements::list::attribute::kStyle
+        };
+    }
+
     std::any DocraftUListParser::parse(const pugi::xml_node& craft_language_source)
     {
         ParsedListData data;
@@ -56,5 +63,12 @@ namespace docraft::craft::parser {
             }
         }
         return data;
+    }
+
+    std::vector<std::string_view> DocraftUListParser::accepted_attributes() const
+    {
+        return {
+            elements::ulist::attribute::kDot
+        };
     }
 } // namespace docraft::craft::parser

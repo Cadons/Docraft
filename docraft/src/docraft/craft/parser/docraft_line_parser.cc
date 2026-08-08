@@ -51,4 +51,16 @@ namespace docraft::craft::parser {
         }
         return data;
     }
+
+    std::vector<std::string_view> DocraftLineParser::accepted_attributes() const
+    {
+        return {
+            elements::line::attribute::kX1,
+            elements::line::attribute::kY1,
+            elements::line::attribute::kX2,
+            elements::line::attribute::kY2,
+            elements::line::attribute::kBorderColor,
+            elements::line::attribute::kBorderWidth
+        };
+    }
 } // namespace docraft::craft::parser

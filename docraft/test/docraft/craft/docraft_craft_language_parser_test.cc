@@ -258,3 +258,103 @@ TEST(DocraftCraftLanguageParserTest, ThrowsWhenForeachNIsNegative)
     docraft::craft::DocraftCraftLanguageParser parser;
     EXPECT_THROW(parser.parse(xml), docraft::exception::InvalidInputException);
 }
+
+// ── Unknown attributes are rejected, like unknown tags ────────────────────────
+
+namespace {
+    std::shared_ptr<docraft::craft::DocraftParsedElement> parse_craft(const char* xml)
+    {
+        docraft::craft::DocraftCraftLanguageParser parser;
+        return parser.parse(xml);
+    }
+} // namespace
+
+TEST(DocraftCraftLanguageParserTest, RejectsAnAttributeNoParserReads)
+{
+    // The whole point: an attribute that would have been silently dropped, and so had no
+    // effect on the rendered document, is now reported instead.
+    EXPECT_THROW(parse_craft(R"XML(<Rectangle nonsense="1"/>)XML"),
+                 docraft::exception::InvalidInputException);
+}
+
+TEST(DocraftCraftLanguageParserTest, UnknownAttributeMessageNamesTheAttributeTagAndWhatIsAccepted)
+{
+    try
+    {
+        parse_craft(R"XML(<Rectangle wdith="10"/>)XML");
+        FAIL() << "expected a typo'd attribute to be rejected";
+    }
+    catch (const docraft::exception::InvalidInputException& e)
+    {
+        const std::string message = e.what();
+        EXPECT_NE(message.find("wdith"), std::string::npos);
+        EXPECT_NE(message.find("Rectangle"), std::string::npos);
+        // Listing what the element does accept is what turns the error into a fix.
+        EXPECT_NE(message.find("background_color"), std::string::npos);
+    }
+}
+
+TEST(DocraftCraftLanguageParserTest, AcceptsTagSpecificAndCommonAttributes)
+{
+    EXPECT_NO_THROW(parse_craft(R"XML(<Rectangle background_color="red" border_width="2"/>)XML"));
+    EXPECT_NO_THROW(parse_craft(R"XML(<Rectangle name="r" x="1" y="2" width="3" height="4"
+                                                 padding="5" margin="6" weight="0.5"
+                                                 position="absolute" z_index="2" visible="true"/>)XML"));
+}
+
+TEST(DocraftCraftLanguageParserTest, TagSpecificAttributesDoNotLeakBetweenElements)
+{
+    // `points` belongs to Polygon/Triangle, `radius` to Circle: each element accepts only
+    // the names its own parser reads.
+    EXPECT_NO_THROW(parse_craft(R"XML(<Polygon points="0,0 10,0 5,10"/>)XML"));
+    EXPECT_THROW(parse_craft(R"XML(<Rectangle points="0,0 10,0 5,10"/>)XML"),
+                 docraft::exception::InvalidInputException);
+    EXPECT_THROW(parse_craft(R"XML(<Polygon radius="10"/>)XML"),
+                 docraft::exception::InvalidInputException);
+}
+
+TEST(DocraftCraftLanguageParserTest, RejectsTokensThatExistButAreReadNowhere)
+{
+    // auto_fill_width/auto_fill_height are declared token names that no parser has ever
+    // consumed. Accepting them would be the exact silent no-op this check exists to end.
+    EXPECT_THROW(parse_craft(R"XML(<Rectangle auto_fill_width="true"/>)XML"),
+                 docraft::exception::InvalidInputException);
+}
+
+TEST(DocraftCraftLanguageParserTest, TableSubElementsAcceptOnlyTheirOwnAttributes)
+{
+    const char* cell_with_width = R"XML(
+<Table><THead><HTitle>H</HTitle></THead>
+  <TBody><Row background_color="#EEEEEE"><Cell width="60" background_color="#FFFFFF"><Text>v</Text></Cell></Row></TBody>
+</Table>)XML";
+    EXPECT_NO_THROW(parse_craft(cell_with_width));
+
+    // A Cell is a slot in the grid, not a node with its own geometry: alignment belongs
+    // to the text inside it, and the common positioning attributes mean nothing here.
+    const char* cell_with_alignment = R"XML(
+<Table><THead><HTitle>H</HTitle></THead>
+  <TBody><Row><Cell alignment="center"><Text>v</Text></Cell></Row></TBody>
+</Table>)XML";
+    EXPECT_THROW(parse_craft(cell_with_alignment), docraft::exception::InvalidInputException);
+
+    const char* cell_with_x = R"XML(
+<Table><THead><HTitle>H</HTitle></THead>
+  <TBody><Row><Cell x="5"><Text>v</Text></Cell></Row></TBody>
+</Table>)XML";
+    EXPECT_THROW(parse_craft(cell_with_x), docraft::exception::InvalidInputException);
+}
+
+TEST(DocraftCraftLanguageParserTest, TableTitlesAcceptOnlyTheirOwnAttributes)
+{
+    const char* styled = R"XML(
+<Table><THead><HTitle alignment="left" style="bold" color="red" background_color="#EEE">H</HTitle></THead>
+  <TBody><Row><Cell><Text>v</Text></Cell></Row></TBody>
+</Table>)XML";
+    EXPECT_NO_THROW(parse_craft(styled));
+
+    const char* unknown = R"XML(
+<Table><THead><HTitle nonsense="1">H</HTitle></THead>
+  <TBody><Row><Cell><Text>v</Text></Cell></Row></TBody>
+</Table>)XML";
+    EXPECT_THROW(parse_craft(unknown), docraft::exception::InvalidInputException);
+}

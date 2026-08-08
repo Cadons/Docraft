@@ -49,4 +49,14 @@ namespace docraft::craft::parser {
 
         return data;
     }
+
+    std::vector<std::string_view> DocraftTriangleParser::accepted_attributes() const
+    {
+        return {
+            elements::triangle::attribute::kPoints,
+            elements::triangle::attribute::kBackgroundColor,
+            elements::triangle::attribute::kBorderColor,
+            elements::triangle::attribute::kBorderWidth
+        };
+    }
 } // namespace docraft::craft::parser

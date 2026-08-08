@@ -50,5 +50,10 @@ namespace docraft::craft::parser {
          * @return `ParsedCircleData`.
          */
         std::any parse(const pugi::xml_node& craft_language_source) override;
+
+        /**
+         * @brief Attribute names this parser reads, beyond the common set.
+         */
+        std::vector<std::string_view> accepted_attributes() const override;
     };
 } // namespace docraft::craft::parser
