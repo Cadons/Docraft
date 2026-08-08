@@ -44,4 +44,12 @@ namespace docraft::craft::parser {
 
         return data;
     }
+
+    std::vector<std::string_view> DocraftCurveLineParser::accepted_attributes() const {
+        return {
+            elements::curve_line::attribute::kPoints,
+            elements::curve_line::attribute::kBorderColor,
+            elements::curve_line::attribute::kBorderWidth
+        };
+    }
 } // namespace docraft::craft::parser

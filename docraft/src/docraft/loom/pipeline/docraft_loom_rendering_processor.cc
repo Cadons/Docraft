@@ -28,131 +28,9 @@
 #include "docraft/loom/nodes/docraft_loom_title.h"
 #include "docraft/loom/nodes/docraft_loom_triangle.h"
 #include "docraft/loom/nodes/docraft_loom_vstack.h"
+#include "docraft/loom/pipeline/docraft_loom_shape_draw_utils.h"
 
 namespace docraft::loom::pipeline {
-    namespace {
-        struct ShapeDrawFlags
-        {
-            bool has_fill;
-            bool has_stroke;
-        };
-
-        ShapeDrawFlags resolve_shape_draw_flags(const nodes::DocraftLoomShapeStyle& style)
-        {
-            return {
-                .has_fill = style.background_color.toRGB().a > 0.0F,
-                .has_stroke = style.border_width > 0.0F && style.border_color.toRGB().a > 0.0F,
-            };
-        }
-
-        void apply_shape_paint_state(backend::IDocraftShapeRenderingBackend* shape_backend,
-                                     backend::IDocraftLineRenderingBackend* line_backend,
-                                     const nodes::DocraftLoomShapeStyle& style,
-                                     ShapeDrawFlags flags)
-        {
-            if (flags.has_fill)
-            {
-                const auto bg = style.background_color.toRGB();
-                if (bg.a < 1.0F)
-                {
-                    shape_backend->set_fill_alpha(bg.a);
-                }
-                shape_backend->set_fill_color(bg.r, bg.g, bg.b);
-            }
-            if (flags.has_stroke)
-            {
-                const auto border = style.border_color.toRGB();
-                if (border.a < 1.0F)
-                {
-                    shape_backend->set_stroke_alpha(border.a);
-                }
-                line_backend->set_line_width(style.border_width);
-                line_backend->set_stroke_color(border.r, border.g, border.b);
-            }
-        }
-
-        void finish_shape_path(backend::IDocraftShapeRenderingBackend* shape_backend, ShapeDrawFlags flags)
-        {
-            if (flags.has_fill && flags.has_stroke)
-            {
-                shape_backend->fill_stroke();
-            }
-            else if (flags.has_fill)
-            {
-                shape_backend->fill();
-            }
-            else if (flags.has_stroke)
-            {
-                shape_backend->stroke();
-            }
-        }
-
-        void draw_shape_polygon(backend::IDocraftShapeRenderingBackend* shape_backend,
-                                backend::IDocraftLineRenderingBackend* line_backend,
-                                const nodes::DocraftLoomShapeStyle& style,
-                                const nodes::Position& origin, const std::vector<nodes::Position>& points)
-        {
-            if (points.size() < 3)
-            {
-                return;
-            }
-            const auto flags = resolve_shape_draw_flags(style);
-            if (!(flags.has_fill || flags.has_stroke))
-            {
-                return;
-            }
-            // Points are stored Y-down relative to origin, matching loom's coordinate
-            // convention throughout -- no sign flip here (see coordinate note).
-            std::vector<nodes::Position> transformed;
-            transformed.reserve(points.size());
-            for (const auto& pt : points)
-            {
-                transformed.push_back({.x = origin.x + pt.x, .y = origin.y + pt.y});
-            }
-
-            shape_backend->save_state();
-            apply_shape_paint_state(shape_backend, line_backend, style, flags);
-            shape_backend->draw_polygon(transformed);
-            finish_shape_path(shape_backend, flags);
-            shape_backend->restore_state();
-        }
-
-        // Mirrors draw_shape_polygon() above, but for an open stroked curve (Spline)
-        // rather than a closed fillable path -- draw_curve() only ever strokes, never
-        // fills, so there is no ShapeDrawFlags/fill branch to consider here.
-        void draw_shape_curve(backend::IDocraftShapeRenderingBackend* shape_backend,
-                              backend::IDocraftLineRenderingBackend* line_backend, const DocraftColor& border_color,
-                              float border_width, const nodes::Position& origin,
-                              const std::vector<nodes::Position>& points)
-        {
-            if (points.size() < 2)
-            {
-                return;
-            }
-            const auto rgba = border_color.toRGB();
-            if (border_width <= 0.0F || rgba.a <= 0.0F)
-            {
-                return;
-            }
-            std::vector<nodes::Position> transformed;
-            transformed.reserve(points.size());
-            for (const auto& pt : points)
-            {
-                transformed.push_back({.x = origin.x + pt.x, .y = origin.y + pt.y});
-            }
-
-            shape_backend->save_state();
-            if (rgba.a < 1.0F)
-            {
-                shape_backend->set_stroke_alpha(rgba.a);
-            }
-            line_backend->set_line_width(border_width);
-            line_backend->set_stroke_color(rgba.r, rgba.g, rgba.b);
-            line_backend->draw_curve(transformed);
-            shape_backend->restore_state();
-        }
-    }
-
     DocraftLoomRenderingProcessor::DocraftLoomRenderingProcessor(
         docraft::backend::IDocraftRenderingCapabilityProvider* backend)
         : text_backend_(backend ? backend->edit_text_rendering() : nullptr),
@@ -351,15 +229,19 @@ namespace docraft::loom::pipeline {
                                                                    const nodes::Position& position,
                                                                    const nodes::Size& size)
     {
-        const auto flags = resolve_shape_draw_flags(style);
+        const auto flags = DocraftLoomShapeDrawUtils::resolve_shape_draw_flags(style);
         if (!(flags.has_fill || flags.has_stroke))
         {
             return;
         }
+        const DocraftLoomShapeDrawUtils::ShapeRenderTarget target{
+            .shape_backend = shape_backend_,
+            .line_backend = line_backend_
+        };
         shape_backend_->save_state();
-        apply_shape_paint_state(shape_backend_, line_backend_, style, flags);
+        DocraftLoomShapeDrawUtils::apply_shape_paint_state(target, style, flags);
         shape_backend_->draw_rectangle(position.x, position.y, size.width, size.height);
-        finish_shape_path(shape_backend_, flags);
+        DocraftLoomShapeDrawUtils::finish_shape_path(shape_backend_, flags);
         shape_backend_->restore_state();
     }
 
@@ -489,7 +371,7 @@ namespace docraft::loom::pipeline {
         if (!node || !should_render(*node))
             return;
         const float radius = node->radius();
-        const auto flags = resolve_shape_draw_flags(node->style());
+        const auto flags = DocraftLoomShapeDrawUtils::resolve_shape_draw_flags(node->style());
         if (radius <= 0.0F || !(flags.has_fill || flags.has_stroke))
         {
             return;
@@ -497,10 +379,14 @@ namespace docraft::loom::pipeline {
         const auto& pos = node->layout_box().frame.position;
         const nodes::Position center = {.x = pos.x + radius, .y = pos.y + radius};
 
+        const DocraftLoomShapeDrawUtils::ShapeRenderTarget target{
+            .shape_backend = shape_backend_,
+            .line_backend = line_backend_
+        };
         shape_backend_->save_state();
-        apply_shape_paint_state(shape_backend_, line_backend_, node->style(), flags);
+        DocraftLoomShapeDrawUtils::apply_shape_paint_state(target, node->style(), flags);
         shape_backend_->draw_circle(center.x, center.y, radius);
-        finish_shape_path(shape_backend_, flags);
+        DocraftLoomShapeDrawUtils::finish_shape_path(shape_backend_, flags);
         shape_backend_->restore_state();
     }
 
@@ -508,16 +394,24 @@ namespace docraft::loom::pipeline {
     {
         if (!node || !should_render(*node))
             return;
-        draw_shape_polygon(shape_backend_, line_backend_, node->style(), node->layout_box().frame.position,
-                           node->points());
+        DocraftLoomShapeDrawUtils::draw_shape_polygon({
+            .target = {.shape_backend = shape_backend_, .line_backend = line_backend_},
+            .style = node->style(),
+            .origin = node->layout_box().frame.position,
+            .points = node->points(),
+        });
     }
 
     void DocraftLoomRenderingProcessor::visit(docraft::loom::nodes::DocraftLoomPolygon* node)
     {
         if (!node || !should_render(*node))
             return;
-        draw_shape_polygon(shape_backend_, line_backend_, node->style(), node->layout_box().frame.position,
-                           node->points());
+        DocraftLoomShapeDrawUtils::draw_shape_polygon({
+            .target = {.shape_backend = shape_backend_, .line_backend = line_backend_},
+            .style = node->style(),
+            .origin = node->layout_box().frame.position,
+            .points = node->points(),
+        });
     }
 
     void DocraftLoomRenderingProcessor::visit(docraft::loom::nodes::DocraftLoomCurveLine* node)
@@ -526,8 +420,13 @@ namespace docraft::loom::pipeline {
             return;
         // An open curve is stroked, never filled or closed -- hence border_color/
         // border_width read off the node itself rather than a composed shape style.
-        draw_shape_curve(shape_backend_, line_backend_, node->border_color(), node->border_width(),
-                         node->layout_box().frame.position, node->points());
+        DocraftLoomShapeDrawUtils::draw_shape_curve({
+            .target = {.shape_backend = shape_backend_, .line_backend = line_backend_},
+            .border_color = node->border_color(),
+            .border_width = node->border_width(),
+            .origin = node->layout_box().frame.position,
+            .points = node->points(),
+        });
     }
 
     void DocraftLoomRenderingProcessor::visit(docraft::loom::nodes::DocraftLoomList* node)

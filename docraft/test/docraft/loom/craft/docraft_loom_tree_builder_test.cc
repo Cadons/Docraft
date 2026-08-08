@@ -288,12 +288,11 @@ TEST(DocraftLoomTreeBuilderTest, RejectsCurveLineWithFewerThanTwoPoints)
 
 TEST(DocraftLoomTreeBuilderTest, PolygonNoLongerAcceptsSmooth)
 {
-    // `smooth` is gone from <Polygon>: curves are their own element now. The attribute
-    // is currently ignored like any other unknown one (see #43) -- what matters here is
-    // that a Polygon is built, and stays a plain closed polygon.
-    const auto node = parse_and_build(R"XML(<Polygon points="0,0 20,40 60,10" smooth="true"/>)XML");
-    EXPECT_TRUE(std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomPolygon>(node));
-    EXPECT_FALSE(std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomCurveLine>(node));
+    // `smooth` is gone from <Polygon>: curves are their own element now (DocraftLoomCurveLine).
+    // Unrecognised attributes are now rejected outright (see #47), so unlike when this
+    // attribute was merely ignored, parsing it on <Polygon> throws.
+    EXPECT_THROW(parse_and_build(R"XML(<Polygon points="0,0 20,40 60,10" smooth="true"/>)XML"),
+                 docraft::exception::InvalidInputException);
 }
 
 TEST(DocraftLoomTreeBuilderTest, BuildsTitleWithHeadingDefaults)

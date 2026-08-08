@@ -18,6 +18,7 @@
 
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "docraft/docraft_lib.h"
@@ -51,5 +52,11 @@ namespace docraft::craft::parser {
          * @return `ParsedCurveLineData`.
          */
         std::any parse(const pugi::xml_node& craft_language_source) override;
+
+        /**
+         * @brief Attributes accepted on a `<CurveLine>` element.
+         * @return List of accepted attribute names.
+         */
+        std::vector<std::string_view> accepted_attributes() const override;
     };
 } // namespace docraft::craft::parser

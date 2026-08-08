@@ -106,6 +106,8 @@ set(DOCRAFT_SOURCES
         include/docraft/loom/pipeline/docraft_loom_layout_processor.h
         src/docraft/loom/pipeline/docraft_loom_pagination_processor.cc
         include/docraft/loom/pipeline/docraft_loom_pagination_processor.h
+        src/docraft/loom/pipeline/docraft_loom_shape_draw_utils.cc
+        include/docraft/loom/pipeline/docraft_loom_shape_draw_utils.h
         src/docraft/loom/pipeline/docraft_loom_rendering_processor.cc
         include/docraft/loom/pipeline/docraft_loom_rendering_processor.h
         src/docraft/loom/pipeline/docraft_loom_pipeline_executor.cc
