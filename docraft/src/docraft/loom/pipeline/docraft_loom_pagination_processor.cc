@@ -80,6 +80,10 @@ namespace docraft::loom::pipeline {
     {
     }
 
+    void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomCurveLine*)
+    {
+    }
+
     void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomList* node)
     {
         recurse_into_children(node);

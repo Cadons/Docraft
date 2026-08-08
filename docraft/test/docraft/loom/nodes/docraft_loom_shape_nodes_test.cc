@@ -3,6 +3,7 @@
 #include "docraft/docraft_color.h"
 #include "docraft/exception/docraft_input_exceptions.h"
 #include "docraft/loom/nodes/docraft_loom_circle.h"
+#include "docraft/loom/nodes/docraft_loom_curve_line.h"
 #include "docraft/loom/nodes/docraft_loom_polygon.h"
 #include "docraft/loom/nodes/docraft_loom_triangle.h"
 #include "docraft/loom/pipeline/docraft_loom_layout_processor.h"
@@ -125,27 +126,15 @@ namespace docraft::test {
         EXPECT_FLOAT_EQ(polygon.layout_box().measured_size.height, 8.0F);
     }
 
-    TEST_F(DocraftLoomShapeNodesTest, PolygonDefaultsToNotSmooth)
+    TEST_F(DocraftLoomShapeNodesTest, PolygonAlwaysRendersAsAClosedShape)
     {
-        loom::nodes::DocraftLoomPolygon polygon;
-        EXPECT_FALSE(polygon.smooth());
-        polygon.set_smooth(true);
-        EXPECT_TRUE(polygon.smooth());
-    }
-
-    TEST_F(DocraftLoomShapeNodesTest, SmoothPolygonRendersAsCurveThroughItsPoints)
-    {
-        // Regression coverage for the smooth() flag: a spline chart's curve is composed
-        // from this same Polygon node/visitor (see DocraftLoomPolygon's class doc) rather
-        // than a dedicated node type, so rendering must route a smooth polygon to
-        // IDocraftLineRenderingBackend::draw_curve() instead of the closed
-        // fill/stroke polygon path.
+        // A polygon is only ever a polygon: the open-curve rendering it used to reach
+        // through a smooth() flag now lives in its own node, DocraftLoomCurveLine.
         utils::MockRenderingBackend backend;
         loom::pipeline::DocraftLoomRenderingProcessor rendering(&backend);
 
         auto polygon = std::make_shared<loom::nodes::DocraftLoomPolygon>();
         polygon->set_points({{.x = 0.0F, .y = 0.0F}, {.x = 10.0F, .y = 5.0F}, {.x = 20.0F, .y = 0.0F}});
-        polygon->set_smooth(true);
         polygon->edit_style().border_color = DocraftColor::fromRGB(0.0F, 0.0F, 1.0F, 1.0F);
         polygon->edit_style().border_width = 2.0F;
 
@@ -153,8 +142,55 @@ namespace docraft::test {
         polygon->accept(*layout_);
         polygon->accept(rendering);
 
+        EXPECT_TRUE(backend.draw_curve_calls().empty());
+    }
+
+    // ── CurveLine ───────────────────────────────────────────────────────────────
+
+    TEST_F(DocraftLoomShapeNodesTest, CurveLineRendersAsCurveThroughItsPoints)
+    {
+        utils::MockRenderingBackend backend;
+        loom::pipeline::DocraftLoomRenderingProcessor rendering(&backend);
+
+        auto curve = std::make_shared<loom::nodes::DocraftLoomCurveLine>();
+        curve->set_points({{.x = 0.0F, .y = 0.0F}, {.x = 10.0F, .y = 5.0F}, {.x = 20.0F, .y = 0.0F}});
+        curve->set_border_color(DocraftColor::fromRGB(0.0F, 0.0F, 1.0F, 1.0F));
+        curve->set_border_width(2.0F);
+
+        curve->accept(*measure_);
+        curve->accept(*layout_);
+        curve->accept(rendering);
+
         ASSERT_EQ(backend.draw_curve_calls().size(), 1U);
         EXPECT_EQ(backend.draw_curve_calls()[0].points.size(), 3U);
+    }
+
+    TEST_F(DocraftLoomShapeNodesTest, CurveLineMeasuresToTheBoundingBoxOfItsPoints)
+    {
+        loom::nodes::DocraftLoomCurveLine curve;
+        curve.set_points({{.x = 0.0F, .y = 0.0F}, {.x = 30.0F, .y = 8.0F}, {.x = 12.0F, .y = 20.0F}});
+        curve.accept(*measure_);
+
+        EXPECT_FLOAT_EQ(curve.layout_box().measured_size.width, 30.0F);
+        EXPECT_FLOAT_EQ(curve.layout_box().measured_size.height, 20.0F);
+    }
+
+    TEST_F(DocraftLoomShapeNodesTest, CurveLineWithTwoPointsDrawsASingleSegment)
+    {
+        // The interpolation degenerates to a straight line at 2 points, which is what
+        // makes 2 a legal point count for a curve where a closed polygon needs 3.
+        utils::MockRenderingBackend backend;
+        loom::pipeline::DocraftLoomRenderingProcessor rendering(&backend);
+
+        auto curve = std::make_shared<loom::nodes::DocraftLoomCurveLine>();
+        curve->set_points({{.x = 0.0F, .y = 0.0F}, {.x = 40.0F, .y = 10.0F}});
+
+        curve->accept(*measure_);
+        curve->accept(*layout_);
+        curve->accept(rendering);
+
+        ASSERT_EQ(backend.draw_curve_calls().size(), 1U);
+        EXPECT_EQ(backend.draw_curve_calls()[0].points.size(), 2U);
     }
 
     // ── Absolute positioning (one representative shape is enough per the plan) ────

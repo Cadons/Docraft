@@ -6,6 +6,7 @@
 #include "docraft/exception/docraft_input_exceptions.h"
 #include "docraft/loom/nodes/docraft_loom_blank_line.h"
 #include "docraft/loom/nodes/docraft_loom_circle.h"
+#include "docraft/loom/nodes/docraft_loom_curve_line.h"
 #include "docraft/loom/nodes/docraft_loom_hstack.h"
 #include "docraft/loom/nodes/docraft_loom_image.h"
 #include "docraft/loom/nodes/docraft_loom_line.h"
@@ -410,6 +411,16 @@ namespace docraft::loom::pipeline {
     }
 
     void DocraftLoomLayoutProcessor::visit(docraft::loom::nodes::DocraftLoomPolygon* node)
+    {
+        if (!node)
+            return;
+        PositionScope scope(*this, *node);
+        auto& layout_box = node->edit_layout_box();
+        layout_box.frame.size = layout_box.measured_size;
+        cursor_.move(0.0F, layout_box.measured_size.height);
+    }
+
+    void DocraftLoomLayoutProcessor::visit(docraft::loom::nodes::DocraftLoomCurveLine* node)
     {
         if (!node)
             return;
