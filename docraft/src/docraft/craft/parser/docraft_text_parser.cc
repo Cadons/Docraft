@@ -58,4 +58,17 @@ namespace docraft::craft::parser {
 
         return data;
     }
+
+    std::vector<std::string_view> DocraftTextParser::accepted_attributes() const
+    {
+        return {
+            elements::text::attribute::kFontSize,
+            elements::text::attribute::kFontName,
+            elements::text::attribute::kStyle,
+            elements::text::attribute::kAlignment,
+            elements::text::attribute::kUnderline,
+            elements::text::attribute::kStrikeout,
+            basic::attribute::kColor
+        };
+    }
 } // namespace docraft::craft::parser

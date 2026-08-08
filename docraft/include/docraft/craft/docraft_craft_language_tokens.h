@@ -93,6 +93,7 @@ namespace docraft::craft {
         constexpr string kCircle = "Circle";
         constexpr string kTriangle = "Triangle";
         constexpr string kLine = "Line";
+        constexpr string kCurveLine = "CurveLine";
         constexpr string kPolygon = "Polygon";
         constexpr string kNewPage = "NewPage";
         constexpr string kSettings = "Settings";
@@ -275,6 +276,12 @@ namespace docraft::craft {
         }
         namespace polygon::attribute {
             constexpr string kBackgroundColor = "background_color";
+            constexpr string kBorderColor = "border_color";
+            constexpr string kBorderWidth = "border_width";
+            constexpr string kPoints = "points";
+        }
+        // No background_color: an open curve has no interior to fill.
+        namespace curve_line::attribute {
             constexpr string kBorderColor = "border_color";
             constexpr string kBorderWidth = "border_width";
             constexpr string kPoints = "points";

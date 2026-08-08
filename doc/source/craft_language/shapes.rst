@@ -124,10 +124,56 @@ bounds. It's the building block :doc:`charts` are drawn on top of.
 ``width``/``height`` are required. Otherwise accepts the same
 ``background_color``/``border_color``/``border_width`` attributes as ``<Rectangle>``.
 
+.. _craft-curveline:
+
+CurveLine
+---------
+
+``<CurveLine>`` draws an **open** curve passing through a series of points — the
+curved counterpart of ``<Line>``, and what a spline chart's series line is made of.
+
+.. code-block:: xml
+
+   <CurveLine points="0,60 40,10 80,60 120,10 160,60"
+              border_color="green" border_width="1.5"/>
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 15 65
+
+   * - Attribute
+     - Type
+     - Description
+   * - ``points``
+     - string
+     - Space-separated ``x,y`` pairs, as Y-down offsets from the node's own origin.
+       At least 2 are required; fewer is a parse error.
+   * - ``border_color``
+     - color
+     - Stroke color.
+   * - ``border_width``
+     - float
+     - Stroke width in points.
+
+The curve **interpolates**: it passes exactly through every point rather than near
+them. With exactly 2 points it degenerates to a straight segment, which is why 2 is a
+legal count here where a closed ``<Polygon>`` needs 3.
+
+There is no ``background_color``: an open curve has no interior to fill. For a filled
+shape use ``<Polygon>``.
+
+.. note::
+
+   On a sharp change of direction the interpolation can bow slightly outside the
+   straight path between two points. Where that overshoot would misrepresent the data
+   — a quantity that cannot go below zero, say — use ``<Polygon>`` or a series of
+   ``<Line>`` segments instead.
+
 Polygon
 -------
 
-``<Polygon>`` draws an arbitrary closed polygon.
+``<Polygon>`` draws an arbitrary closed polygon. It is always closed and fillable; for
+an open curve through the same points see :ref:`CurveLine <craft-curveline>` above.
 
 .. code-block:: xml
 

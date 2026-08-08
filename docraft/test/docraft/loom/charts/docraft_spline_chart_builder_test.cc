@@ -2,6 +2,7 @@
 
 #include "docraft/loom/charts/docraft_spline_chart_builder.h"
 #include "docraft/loom/nodes/docraft_loom_circle.h"
+#include "docraft/loom/nodes/docraft_loom_curve_line.h"
 #include "docraft/loom/nodes/docraft_loom_polygon.h"
 
 namespace docraft::test {
@@ -9,6 +10,7 @@ namespace docraft::test {
     using docraft::loom::charts::DocraftChartSeries;
     using docraft::loom::charts::DocraftSplineChartBuilder;
     using docraft::loom::nodes::DocraftLoomCircle;
+    using docraft::loom::nodes::DocraftLoomCurveLine;
     using docraft::loom::nodes::DocraftLoomPolygon;
 
     namespace {
@@ -56,16 +58,15 @@ namespace docraft::test {
         ctx.series = {a, b};
 
         const auto canvas = build_spline_chart(ctx);
-        int smooth_count = 0;
+        int curve_count = 0;
         for (int i = 0; i < canvas->children_count(); ++i)
         {
-            if (auto polygon = std::dynamic_pointer_cast<const DocraftLoomPolygon>(canvas->child(i));
-                polygon && polygon->smooth())
+            if (std::dynamic_pointer_cast<const DocraftLoomCurveLine>(canvas->child(i)))
             {
-                ++smooth_count;
+                ++curve_count;
             }
         }
-        EXPECT_EQ(smooth_count, 2);
+        EXPECT_EQ(curve_count, 2);
     }
 
     TEST(DocraftSplineChartBuilderTest, DrawsOneMarkerCirclePerDataPoint)

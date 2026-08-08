@@ -78,6 +78,8 @@ set(DOCRAFT_SOURCES
         include/docraft/loom/nodes/docraft_loom_triangle.h
         src/docraft/loom/nodes/docraft_loom_polygon.cc
         include/docraft/loom/nodes/docraft_loom_polygon.h
+        src/docraft/loom/nodes/docraft_loom_curve_line.cc
+        include/docraft/loom/nodes/docraft_loom_curve_line.h
         src/docraft/loom/nodes/docraft_loom_list.cc
         include/docraft/loom/nodes/docraft_loom_list.h
         src/docraft/loom/nodes/docraft_loom_table_cell.cc
@@ -104,6 +106,8 @@ set(DOCRAFT_SOURCES
         include/docraft/loom/pipeline/docraft_loom_layout_processor.h
         src/docraft/loom/pipeline/docraft_loom_pagination_processor.cc
         include/docraft/loom/pipeline/docraft_loom_pagination_processor.h
+        src/docraft/loom/pipeline/docraft_loom_shape_draw_utils.cc
+        include/docraft/loom/pipeline/docraft_loom_shape_draw_utils.h
         src/docraft/loom/pipeline/docraft_loom_rendering_processor.cc
         include/docraft/loom/pipeline/docraft_loom_rendering_processor.h
         src/docraft/loom/pipeline/docraft_loom_pipeline_executor.cc
@@ -147,6 +151,8 @@ set(DOCRAFT_SOURCES
         src/docraft/craft/parser/docraft_triangle_parser.cc
         include/docraft/craft/parser/docraft_polygon_parser.h
         src/docraft/craft/parser/docraft_polygon_parser.cc
+        include/docraft/craft/parser/docraft_curve_line_parser.h
+        src/docraft/craft/parser/docraft_curve_line_parser.cc
         include/docraft/craft/parser/docraft_line_parser.h
         src/docraft/craft/parser/docraft_line_parser.cc
         include/docraft/craft/parser/docraft_paragraph_parser.h

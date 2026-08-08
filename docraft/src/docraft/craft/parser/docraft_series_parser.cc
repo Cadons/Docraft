@@ -32,4 +32,12 @@ namespace docraft::craft::parser {
         }
         return data;
     }
+
+    std::vector<std::string_view> DocraftSeriesParser::accepted_attributes() const
+    {
+        return {
+            elements::series::attribute::kColor,
+            elements::series::attribute::kModel
+        };
+    }
 } // namespace docraft::craft::parser

@@ -6,6 +6,8 @@
 #include "docraft/loom/nodes/docraft_loom_blank_line.h"
 #include "docraft/loom/nodes/docraft_loom_canvas.h"
 #include "docraft/loom/nodes/docraft_loom_circle.h"
+#include "docraft/loom/nodes/docraft_loom_polygon.h"
+#include "docraft/loom/nodes/docraft_loom_curve_line.h"
 #include "docraft/loom/nodes/docraft_loom_hstack.h"
 #include "docraft/loom/nodes/docraft_loom_image.h"
 #include "docraft/loom/nodes/docraft_loom_list.h"
@@ -252,6 +254,45 @@ TEST(DocraftLoomTreeBuilderTest, BuildsCircleRadius)
     const auto circle = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomCircle>(node);
     ASSERT_TRUE(circle);
     EXPECT_FLOAT_EQ(circle->radius(), 20.0F);
+}
+
+TEST(DocraftLoomTreeBuilderTest, BuildsCurveLineFromPoints)
+{
+    const char* xml = R"XML(<CurveLine points="0,0 20,40 60,10" border_color="blue" border_width="2"/>)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto curve = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomCurveLine>(node);
+    ASSERT_TRUE(curve);
+    ASSERT_EQ(curve->points().size(), 3U);
+    EXPECT_FLOAT_EQ(curve->points()[1].x, 20.0F);
+    EXPECT_FLOAT_EQ(curve->points()[1].y, 40.0F);
+    EXPECT_FLOAT_EQ(curve->border_width(), 2.0F);
+}
+
+TEST(DocraftLoomTreeBuilderTest, CurveLineAcceptsTwoPoints)
+{
+    // An open curve is well defined through 2 points, unlike a closed <Polygon>.
+    const auto curve = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomCurveLine>(
+        parse_and_build(R"XML(<CurveLine points="0,0 50,50"/>)XML"));
+    ASSERT_TRUE(curve);
+    EXPECT_EQ(curve->points().size(), 2U);
+}
+
+TEST(DocraftLoomTreeBuilderTest, RejectsCurveLineWithFewerThanTwoPoints)
+{
+    EXPECT_THROW(parse_and_build(R"XML(<CurveLine points="10,10"/>)XML"),
+                 docraft::exception::InvalidInputException);
+    EXPECT_THROW(parse_and_build(R"XML(<CurveLine border_color="red"/>)XML"),
+                 docraft::exception::InvalidInputException);
+}
+
+TEST(DocraftLoomTreeBuilderTest, PolygonNoLongerAcceptsSmooth)
+{
+    // `smooth` is gone from <Polygon>: curves are their own element now (DocraftLoomCurveLine).
+    // Unrecognised attributes are now rejected outright (see #47), so unlike when this
+    // attribute was merely ignored, parsing it on <Polygon> throws.
+    EXPECT_THROW(parse_and_build(R"XML(<Polygon points="0,0 20,40 60,10" smooth="true"/>)XML"),
+                 docraft::exception::InvalidInputException);
 }
 
 TEST(DocraftLoomTreeBuilderTest, TextWidthSetsItsOwnAlignmentAndWrapBox)

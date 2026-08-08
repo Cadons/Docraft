@@ -65,4 +65,19 @@ namespace docraft::craft::parser {
         }
         return data;
     }
+
+    std::vector<std::string_view> DocraftChartParser::accepted_attributes() const
+    {
+        return {
+            elements::chart::attribute::kStyle,
+            elements::chart::attribute::kAxisPosition,
+            elements::chart::attribute::kTitle,
+            elements::chart::attribute::kXLabel,
+            elements::chart::attribute::kYLabel,
+            elements::chart::attribute::kShowPercentage,
+            elements::chart::attribute::kBackgroundColor,
+            elements::chart::attribute::kBorderColor,
+            elements::chart::attribute::kBorderWidth
+        };
+    }
 } // namespace docraft::craft::parser

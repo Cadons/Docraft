@@ -14,34 +14,29 @@
  * limitations under the License.
  */
 
-#include "docraft/craft/parser/docraft_polygon_parser.h"
+#include "docraft/craft/parser/docraft_curve_line_parser.h"
 
 #include "docraft/craft/docraft_craft_language_tokens.h"
 #include "docraft/craft/parser/docraft_parser_helpers.h"
 #include "docraft/craft/parser/docraft_shape_parser_utils.h"
 
 namespace docraft::craft::parser {
-    std::any DocraftPolygonParser::parse(const pugi::xml_node& craft_language_source)
+    std::any DocraftCurveLineParser::parse(const pugi::xml_node& craft_language_source)
     {
-        ParsedPolygonData data;
-        if (auto background_color_attr = craft_language_source.attribute(
-                elements::polygon::attribute::kBackgroundColor.data()))
-        {
-            data.background_color = detail::get_color_attribute_raw(background_color_attr);
-        }
+        ParsedCurveLineData data;
         if (auto border_color_attr = craft_language_source.attribute(
-                elements::polygon::attribute::kBorderColor.data()))
+                elements::curve_line::attribute::kBorderColor.data()))
         {
             data.border_color = detail::get_color_attribute_raw(border_color_attr);
         }
         if (auto border_width_attr = craft_language_source.attribute(
-                elements::polygon::attribute::kBorderWidth.data()))
+                elements::curve_line::attribute::kBorderWidth.data()))
         {
             data.border_width = border_width_attr.as_float();
         }
 
         auto points = detail::parse_points_attribute(craft_language_source,
-                                                     elements::polygon::attribute::kPoints.data());
+                                                     elements::curve_line::attribute::kPoints.data());
         if (!points.empty())
         {
             data.points = std::move(points);
@@ -50,13 +45,11 @@ namespace docraft::craft::parser {
         return data;
     }
 
-    std::vector<std::string_view> DocraftPolygonParser::accepted_attributes() const
-    {
+    std::vector<std::string_view> DocraftCurveLineParser::accepted_attributes() const {
         return {
-            elements::polygon::attribute::kPoints,
-            elements::polygon::attribute::kBackgroundColor,
-            elements::polygon::attribute::kBorderColor,
-            elements::polygon::attribute::kBorderWidth
+            elements::curve_line::attribute::kPoints,
+            elements::curve_line::attribute::kBorderColor,
+            elements::curve_line::attribute::kBorderWidth
         };
     }
 } // namespace docraft::craft::parser

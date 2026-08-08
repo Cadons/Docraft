@@ -37,6 +37,7 @@
 #include "docraft/loom/nodes/docraft_loom_node.h"
 #include "docraft/loom/nodes/docraft_loom_page_number.h"
 #include "docraft/loom/nodes/docraft_loom_paragraph.h"
+#include "docraft/loom/nodes/docraft_loom_curve_line.h"
 #include "docraft/loom/nodes/docraft_loom_polygon.h"
 #include "docraft/loom/charts/docraft_chart_types.h"
 #include "docraft/loom/nodes/docraft_loom_canvas.h"
@@ -110,6 +111,7 @@ namespace docraft::loom::craft {
         std::shared_ptr<nodes::DocraftLoomCircle> build_circle(const ParsedElement& element);
         std::shared_ptr<nodes::DocraftLoomTriangle> build_triangle(const ParsedElement& element);
         std::shared_ptr<nodes::DocraftLoomPolygon> build_polygon(const ParsedElement& element);
+        std::shared_ptr<nodes::DocraftLoomCurveLine> build_curve_line(const ParsedElement& element);
         std::shared_ptr<nodes::DocraftLoomLine> build_line(const ParsedElement& element);
         std::shared_ptr<nodes::DocraftLoomText> build_text(const ParsedElement& element);
         std::shared_ptr<nodes::DocraftLoomTitle> build_title(const ParsedElement& element);
