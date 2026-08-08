@@ -592,6 +592,10 @@ namespace docraft::loom::craft {
         {
             text->set_color(resolve_color(*title.color));
         }
+        if (title.font_size)
+        {
+            text->set_font_size(*title.font_size);
+        }
         auto cell = std::make_shared<nodes::DocraftLoomTableCell>();
         cell->set_content(text);
         cell->set_is_title(true);

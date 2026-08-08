@@ -194,6 +194,12 @@ namespace docraft::craft::parser {
         ParsedTextStyle style = ParsedTextStyle::kBold;
         std::optional<std::string> color;
         std::optional<std::string> background;
+        /**
+         * @brief Header/row-title font size, unset meaning "keep the node default".
+         * Body cells honour `font_size` through their own `<Text>`, so without this a
+         * table's headers could not be sized at all.
+         */
+        std::optional<float> font_size;
     };
 
     /**

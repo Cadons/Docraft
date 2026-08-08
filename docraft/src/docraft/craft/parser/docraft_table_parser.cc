@@ -73,6 +73,7 @@ namespace docraft::craft::parser {
                                               {elements::table_title::attribute::kAlignment,
                                                elements::table_title::attribute::kStyle,
                                                elements::table_title::attribute::kColor,
+                                               elements::table_title::attribute::kFontSize,
                                                std::string_view{background_attr_name}},
                                               /*allow_common=*/false);
             ParsedTableTitleData data;
@@ -86,6 +87,15 @@ namespace docraft::craft::parser {
             if (auto bg_attr = title.attribute(background_attr_name))
             {
                 data.background = detail::get_color_attribute_raw(bg_attr);
+            }
+            if (auto font_size_attr = title.attribute(elements::table_title::attribute::kFontSize.data()))
+            {
+                const float font_size = font_size_attr.as_float();
+                if (font_size <= 0.0F)
+                {
+                    throw docraft::exception::InvalidInputException("Table title font_size must be > 0");
+                }
+                data.font_size = font_size;
             }
             return data;
         }

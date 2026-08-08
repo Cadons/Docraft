@@ -137,6 +137,8 @@ Every content node supports these attributes:
    names but no parser reads them, so writing one is rejected rather than
    silently having no effect.
 
+.. _color-values:
+
 Color Values
 ------------
 
@@ -144,7 +146,8 @@ Colors can be specified as:
 
 - **Hex**: ``#RRGGBB`` or ``#RRGGBBAA``
 - **Named**: ``black``, ``white``, ``red``, ``green``, ``blue``, ``yellow``,
-  ``magenta``, ``cyan``, ``purple``
+  ``magenta``, ``cyan``, ``purple`` — this list is exhaustive; any other name
+  (``orange``, ``grey``, ...) is a parse error, use a hex value instead
 - **Template**: ``${variable}`` or ``${data("field")}``
 
 Page Break

@@ -37,10 +37,17 @@ Attributes
      - ``normal`` | ``bold`` | ``italic`` | ``bold_italic``.
    * - ``alignment``
      - string
-     - ``left`` | ``center`` | ``right`` | ``justified``.
+     - ``left`` | ``center`` | ``right`` | ``justified``. Resolved inside the box
+       given by ``width``; without an explicit ``width`` the box is whatever the
+       parent container relays, which inside a ``<Canvas>`` is the whole canvas.
+   * - ``width``
+     - float
+     - The text's own box, in points: text is word-wrapped to it and ``alignment``
+       is resolved inside it. Omitted, the text is drawn as a single unwrapped line
+       and inherits the parent's width for alignment.
    * - ``color``
      - color
-     - Text color (hex or named).
+     - Text color (hex or named — see :ref:`Color Values <color-values>`).
    * - ``underline``
      - bool
      - Enable underline rendering.
@@ -49,10 +56,17 @@ Attributes
      - Enable strikeout rendering. Independent of ``underline`` — both can
        be enabled at once.
 
-The text content is the inner text of the XML element. Note there is
-currently no Craft Language attribute for word-wrapping (the underlying
-``DocraftLoomText::wrap_width()`` isn't wired to an XML token yet) — text
-that doesn't fit its container's natural width is not wrapped from markup.
+The text content is the inner text of the XML element.
+
+Word-wrapping is driven by ``width``: given one, the text is wrapped to that box
+at measure time, and each resulting line is aligned within it. Without one, the
+text is laid out as a single line — it is not wrapped to the container's natural
+width.
+
+.. code-block:: xml
+
+   <!-- centred on its own 120pt box, not on the parent -->
+   <Text width="120" alignment="center">Label</Text>
 
 Title & Subtitle
 ----------------
