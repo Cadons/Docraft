@@ -55,13 +55,10 @@ namespace docraft::loom::charts {
                                         const DocraftColor& color, float width)
     {
         auto line = std::make_shared<nodes::DocraftLoomLine>();
-        const float origin_x = std::min(x1, x2);
-        const float origin_y = std::min(y1, y2);
-        line->set_start({.x = x1 - origin_x, .y = y1 - origin_y});
-        line->set_end({.x = x2 - origin_x, .y = y2 - origin_y});
+        line->set_start({.x = x1, .y = y1});
+        line->set_end({.x = x2, .y = y2});
         line->set_border_color(color);
         line->set_border_width(width);
-        line->set_explicit_position({.x = origin_x, .y = origin_y});
         canvas.add_child(line);
     }
 

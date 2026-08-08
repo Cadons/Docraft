@@ -253,7 +253,139 @@ TEST(DocraftLoomTreeBuilderTest, BuildsCircleRadius)
     const auto node = parse_and_build(xml);
     const auto circle = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomCircle>(node);
     ASSERT_TRUE(circle);
-    EXPECT_FLOAT_EQ(circle->radius(), 20.0F);
+    EXPECT_FLOAT_EQ(circle->radius_x(), 20.0F);
+    EXPECT_FLOAT_EQ(circle->radius_y(), 20.0F);
+    EXPECT_TRUE(circle->is_circle());
+}
+
+TEST(DocraftLoomTreeBuilderTest, BuildsOvalInscribedInWidthHeightBox)
+{
+    const char* xml = R"XML(<Circle width="60" height="40" background_color="red" />)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto circle = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomCircle>(node);
+    ASSERT_TRUE(circle);
+    // The oval is inscribed in the 60x40 box, so its semi-axes are half of each side.
+    EXPECT_FLOAT_EQ(circle->radius_x(), 30.0F);
+    EXPECT_FLOAT_EQ(circle->radius_y(), 20.0F);
+    EXPECT_FALSE(circle->is_circle());
+}
+
+TEST(DocraftLoomTreeBuilderTest, BuildsCircleFromSquareBoundingBox)
+{
+    const char* xml = R"XML(<Circle width="50" height="50" />)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto circle = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomCircle>(node);
+    ASSERT_TRUE(circle);
+    EXPECT_FLOAT_EQ(circle->radius_x(), 25.0F);
+    EXPECT_TRUE(circle->is_circle());
+}
+
+TEST(DocraftLoomTreeBuilderTest, RejectsCircleWithBothRadiusAndBoundingBox)
+{
+    // `radius` and `width`/`height` are mutually exclusive sizing methods; accepting both
+    // would make the drawn shape depend on an arbitrary precedence rule.
+    EXPECT_THROW(parse_and_build(R"XML(<Circle radius="20" width="60" height="40" />)XML"),
+                 docraft::exception::InvalidInputException);
+    EXPECT_THROW(parse_and_build(R"XML(<Circle radius="20" width="60" />)XML"),
+                 docraft::exception::InvalidInputException);
+}
+
+TEST(DocraftLoomTreeBuilderTest, RejectsCircleWithoutAnySizing)
+{
+    // Regression test for issue #38: an unsized <Circle> used to be built with radius 0
+    // and then silently skipped at render time, so the shape just never appeared.
+    EXPECT_THROW(parse_and_build(R"XML(<Circle background_color="red" />)XML"),
+                 docraft::exception::InvalidInputException);
+}
+
+TEST(DocraftLoomTreeBuilderTest, RejectsCircleWithHalfSpecifiedBoundingBox)
+{
+    EXPECT_THROW(parse_and_build(R"XML(<Circle width="60" />)XML"),
+                 docraft::exception::InvalidInputException);
+    EXPECT_THROW(parse_and_build(R"XML(<Circle height="40" />)XML"),
+                 docraft::exception::InvalidInputException);
+}
+
+TEST(DocraftLoomTreeBuilderTest, RejectsCircleWithNonPositiveSizing)
+{
+    EXPECT_THROW(parse_and_build(R"XML(<Circle radius="0" />)XML"),
+                 docraft::exception::InvalidInputException);
+    EXPECT_THROW(parse_and_build(R"XML(<Circle width="60" height="0" />)XML"),
+                 docraft::exception::InvalidInputException);
+}
+
+TEST(DocraftLoomTreeBuilderTest, BuildsCircleArcFromItsTwoEndpoints)
+{
+    // Endpoints given as points in the node's own 100x100 box, centre (50,50): the left
+    // one is 9 o'clock (270 degrees) and the right one 3 o'clock (90), swept clockwise
+    // through the top -- so the end angle carries a full turn to stay increasing.
+    const char* xml = R"XML(<Circle radius="50" start_x="0" start_y="50" finish_x="100" finish_y="50"
+                                    border_color="red" border_width="2"/>)XML";
+
+    const auto circle = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomCircle>(parse_and_build(xml));
+    ASSERT_TRUE(circle);
+    ASSERT_TRUE(circle->has_arc());
+    EXPECT_NEAR(circle->arc_start_angle(), 270.0F, 0.01F);
+    EXPECT_NEAR(circle->arc_end_angle(), 450.0F, 0.01F);
+}
+
+TEST(DocraftLoomTreeBuilderTest, SwappingArcEndpointsSelectsTheComplementaryArc)
+{
+    const char* xml = R"XML(<Circle radius="50" start_x="100" start_y="50" finish_x="0" finish_y="50"/>)XML";
+
+    const auto circle = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomCircle>(parse_and_build(xml));
+    ASSERT_TRUE(circle);
+    ASSERT_TRUE(circle->has_arc());
+    EXPECT_NEAR(circle->arc_start_angle(), 90.0F, 0.01F);
+    EXPECT_NEAR(circle->arc_end_angle(), 270.0F, 0.01F);
+}
+
+TEST(DocraftLoomTreeBuilderTest, ArcEndpointsOffTheOutlineAreProjectedOntoIt)
+{
+    // Only the direction from the centre matters; the distance comes from the radius, so
+    // a point nowhere near the outline still names an unambiguous angle.
+    const char* xml = R"XML(<Circle radius="50" start_x="500" start_y="50" finish_x="-400" finish_y="50"/>)XML";
+
+    const auto circle = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomCircle>(parse_and_build(xml));
+    ASSERT_TRUE(circle);
+    EXPECT_NEAR(circle->arc_start_angle(), 90.0F, 0.01F);
+    EXPECT_NEAR(circle->arc_end_angle(), 270.0F, 0.01F);
+}
+
+TEST(DocraftLoomTreeBuilderTest, CircleWithoutArcAttributesHasNoArc)
+{
+    const auto circle = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomCircle>(
+        parse_and_build(R"XML(<Circle radius="20"/>)XML"));
+    ASSERT_TRUE(circle);
+    EXPECT_FALSE(circle->has_arc());
+}
+
+TEST(DocraftLoomTreeBuilderTest, RejectsPartiallySpecifiedArc)
+{
+    EXPECT_THROW(parse_and_build(R"XML(<Circle radius="50" start_x="0" start_y="50"/>)XML"),
+                 docraft::exception::InvalidInputException);
+    EXPECT_THROW(parse_and_build(R"XML(<Circle radius="50" start_x="0" start_y="50" finish_x="100"/>)XML"),
+                 docraft::exception::InvalidInputException);
+}
+
+TEST(DocraftLoomTreeBuilderTest, RejectsFilledArc)
+{
+    // An arc is an open path, so a fill colour has no meaning on it.
+    EXPECT_THROW(parse_and_build(R"XML(<Circle radius="50" background_color="red"
+                                               start_x="0" start_y="50" finish_x="100" finish_y="50"/>)XML"),
+                 docraft::exception::InvalidInputException);
+}
+
+TEST(DocraftLoomTreeBuilderTest, RejectsArcOnAnOval)
+{
+    EXPECT_THROW(parse_and_build(R"XML(<Circle width="120" height="60"
+                                               start_x="0" start_y="30" finish_x="120" finish_y="30"/>)XML"),
+                 docraft::exception::InvalidInputException);
+    // A width/height pair that happens to be square is still a circle, so it is allowed.
+    EXPECT_NO_THROW(parse_and_build(R"XML(<Circle width="100" height="100"
+                                                  start_x="0" start_y="50" finish_x="100" finish_y="50"/>)XML"));
 }
 
 TEST(DocraftLoomTreeBuilderTest, BuildsCurveLineFromPoints)

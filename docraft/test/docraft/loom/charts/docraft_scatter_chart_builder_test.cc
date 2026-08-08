@@ -124,9 +124,9 @@ namespace docraft::test {
                 continue;
             }
             EXPECT_GE(circle->explicit_position().x, -0.01F);
-            EXPECT_LE(circle->explicit_position().x + circle->radius() * 2.0F, ctx.width + 0.01F);
+            EXPECT_LE(circle->explicit_position().x + circle->radius_x() * 2.0F, ctx.width + 0.01F);
             EXPECT_GE(circle->explicit_position().y, -0.01F);
-            EXPECT_LE(circle->explicit_position().y + circle->radius() * 2.0F, ctx.height + 0.01F);
+            EXPECT_LE(circle->explicit_position().y + circle->radius_y() * 2.0F, ctx.height + 0.01F);
         }
     }
 

@@ -345,15 +345,15 @@ namespace docraft::loom::pipeline {
         }
 
         const auto& pos = line->layout_box().frame.position;
-        // start()/end() are the line's own local geometry and may not start at (0,0)
-        // (e.g. a vertical line has start().x == end().x, both possibly nonzero), while
-        // pos anchors the *bounding box's* top-left corner (min.x, min.y) -- so both
-        // points are shifted by that same box origin before being placed at pos, mirroring
-        // how Polygon/Triangle place their own local points relative to frame.position.
-        const float origin_x = std::min(line->start().x, line->end().x);
-        const float origin_y = std::min(line->start().y, line->end().y);
-        const nodes::Position p1 = {.x = pos.x + (line->start().x - origin_x), .y = pos.y + (line->start().y - origin_y)};
-        const nodes::Position p2 = {.x = pos.x + (line->end().x - origin_x), .y = pos.y + (line->end().y - origin_y)};
+        // start()/end() are plain offsets from the node's anchor, exactly like the local
+        // points of a Polygon/Triangle: inside a Canvas that anchor is the canvas origin
+        // (plus the line's own x/y, both defaulting to 0), so x1/y1/x2/y2 read as
+        // canvas-local coordinates; in block flow it is the cursor. They are deliberately
+        // NOT re-based onto their own bounding box first -- doing so used to collapse a
+        // shared offset (e.g. `y1="100" y2="100"`, a horizontal line halfway down a
+        // canvas) to zero and pin the line to the top of its container.
+        const nodes::Position p1 = {.x = pos.x + line->start().x, .y = pos.y + line->start().y};
+        const nodes::Position p2 = {.x = pos.x + line->end().x, .y = pos.y + line->end().y};
 
         shape_backend_->save_state();
         if (rgba.a < 1.0F)
@@ -370,14 +370,41 @@ namespace docraft::loom::pipeline {
     {
         if (!node || !should_render(*node))
             return;
-        const float radius = node->radius();
+        const float radius_x = node->radius_x();
+        const float radius_y = node->radius_y();
         const auto flags = DocraftLoomShapeDrawUtils::resolve_shape_draw_flags(node->style());
-        if (radius <= 0.0F || !(flags.has_fill || flags.has_stroke))
+        if (radius_x <= 0.0F || radius_y <= 0.0F || !(flags.has_fill || flags.has_stroke))
         {
             return;
         }
+        // frame.position is the bounding box's top-left corner, so the center sits one
+        // semi-axis in on each side -- for a width/height-sized oval that is exactly the
+        // middle of the box its four extreme points touch.
         const auto& pos = node->layout_box().frame.position;
-        const nodes::Position center = {.x = pos.x + radius, .y = pos.y + radius};
+        const nodes::Position center = {.x = pos.x + radius_x, .y = pos.y + radius_y};
+
+        if (node->has_arc())
+        {
+            // An arc is an open path: it is stroked and never filled, so it takes the
+            // border color/width directly rather than going through the fill/stroke
+            // flags the closed outline uses.
+            const auto rgba = node->style().border_color.toRGB();
+            if (node->style().border_width <= 0.0F || rgba.a <= 0.0F)
+            {
+                return;
+            }
+            shape_backend_->save_state();
+            if (rgba.a < 1.0F)
+            {
+                shape_backend_->set_stroke_alpha(rgba.a);
+            }
+            line_backend_->set_line_width(node->style().border_width);
+            line_backend_->set_stroke_color(rgba.r, rgba.g, rgba.b);
+            shape_backend_->draw_arc(center.x, center.y, radius_x, node->arc_start_angle(), node->arc_end_angle());
+            shape_backend_->stroke();
+            shape_backend_->restore_state();
+            return;
+        }
 
         const DocraftLoomShapeDrawUtils::ShapeRenderTarget target{
             .shape_backend = shape_backend_,
@@ -385,7 +412,14 @@ namespace docraft::loom::pipeline {
         };
         shape_backend_->save_state();
         DocraftLoomShapeDrawUtils::apply_shape_paint_state(target, node->style(), flags);
-        shape_backend_->draw_circle(center.x, center.y, radius);
+        if (node->is_circle())
+        {
+            shape_backend_->draw_circle(center.x, center.y, radius_x);
+        }
+        else
+        {
+            shape_backend_->draw_ellipse(center.x, center.y, radius_x, radius_y);
+        }
         DocraftLoomShapeDrawUtils::finish_shape_path(shape_backend_, flags);
         shape_backend_->restore_state();
     }

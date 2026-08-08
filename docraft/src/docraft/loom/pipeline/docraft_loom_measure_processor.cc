@@ -453,22 +453,27 @@ namespace docraft::loom::pipeline {
         if (!node)
             return;
         auto& measured_size = node->edit_layout_box().measured_size;
-        measured_size.width = std::abs(node->end().x - node->start().x);
-        // The bounding box must cover the line's actual vertical extent too, not just
-        // border_width -- otherwise a vertical/diagonal line's box collapses to the
-        // border-width floor and the line gets clipped/pushed against following content
-        // (see visit(DocraftLoomLine*) in the rendering processor for how start()/end()
-        // are drawn relative to this same box).
-        measured_size.height = std::max({std::abs(node->end().y - node->start().y), node->border_width(), 4.0F});
+        // start()/end() are offsets from the node's own anchor (frame.position), not a
+        // pre-normalized bounding box, so the box the line occupies runs from that anchor
+        // out to the farthest endpoint -- see visit(DocraftLoomLine*) in the rendering
+        // processor. Endpoints with negative coordinates draw outside this box on purpose
+        // (a Canvas clips them); they must not shrink it below the anchor.
+        measured_size.width = std::max({node->start().x, node->end().x, 0.0F});
+        // The box must cover the line's actual vertical extent too, not just border_width
+        // -- otherwise a vertical/diagonal line's box collapses to the border-width floor
+        // and the line gets clipped/pushed against following content.
+        measured_size.height = std::max({node->start().y, node->end().y, node->border_width(), 4.0F});
     }
 
     void DocraftLoomMeasureProcessor::visit(docraft::loom::nodes::DocraftLoomCircle* node)
     {
         if (!node)
             return;
+        // The node's box is the ellipse's bounding box; for the circular case the two
+        // semi-axes are equal, so this stays the diameter on both sides.
         auto& measured_size = node->edit_layout_box().measured_size;
-        measured_size.width = node->radius() * 2.0F;
-        measured_size.height = node->radius() * 2.0F;
+        measured_size.width = node->radius_x() * 2.0F;
+        measured_size.height = node->radius_y() * 2.0F;
     }
 
     namespace {

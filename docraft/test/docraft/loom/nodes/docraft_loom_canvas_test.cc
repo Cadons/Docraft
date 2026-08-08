@@ -218,4 +218,66 @@ namespace docraft::test {
         EXPECT_FLOAT_EQ(call.x2, canvas->layout_box().frame.position.x + 5.0F + 30.0F);
         EXPECT_FLOAT_EQ(call.y2, canvas->layout_box().frame.position.y + 5.0F + 40.0F);
     }
+
+    TEST_F(DocraftLoomCanvasTest, RenderingKeepsLineEndpointsAtTheirCanvasLocalCoordinates)
+    {
+        // Regression test for issue #38: the renderer used to re-base a line's endpoints
+        // onto their own bounding box before anchoring them at frame.position, so an
+        // offset shared by both endpoints (here y=75, halfway down the canvas) was
+        // cancelled out and the line was drawn pinned to the top edge instead.
+        utils::MockRenderingBackend backend;
+        loom::pipeline::DocraftLoomRenderingProcessor rendering(&backend);
+
+        auto canvas = std::make_shared<loom::nodes::DocraftLoomCanvas>();
+        canvas->set_position_mode(loom::nodes::DocraftPositionType::kAbsolute);
+        canvas->set_explicit_position({.x = 10.0F, .y = 20.0F});
+        canvas->set_width(200.0F);
+        canvas->set_height(150.0F);
+
+        auto midline = std::make_shared<loom::nodes::DocraftLoomLine>();
+        midline->set_start({.x = 0.0F, .y = 75.0F});
+        midline->set_end({.x = 200.0F, .y = 75.0F});
+        canvas->add_child(midline);
+
+        canvas->accept(*measure_);
+        canvas->accept(*layout_);
+        canvas->accept(rendering);
+
+        ASSERT_EQ(backend.draw_line_calls().size(), 1U);
+        const auto& call = backend.draw_line_calls()[0];
+        EXPECT_FLOAT_EQ(call.x1, 10.0F);
+        EXPECT_FLOAT_EQ(call.y1, 20.0F + 75.0F);
+        EXPECT_FLOAT_EQ(call.x2, 10.0F + 200.0F);
+        EXPECT_FLOAT_EQ(call.y2, 20.0F + 75.0F);
+    }
+
+    TEST_F(DocraftLoomCanvasTest, RenderingAddsTheLinesOwnXYOnTopOfItsEndpoints)
+    {
+        // The line's x/y (its anchor within the canvas) and its endpoints compose: the
+        // anchor moves the whole segment, the endpoints shape it.
+        utils::MockRenderingBackend backend;
+        loom::pipeline::DocraftLoomRenderingProcessor rendering(&backend);
+
+        auto canvas = std::make_shared<loom::nodes::DocraftLoomCanvas>();
+        canvas->set_width(200.0F);
+        canvas->set_height(150.0F);
+
+        auto line = std::make_shared<loom::nodes::DocraftLoomLine>();
+        line->set_explicit_position({.x = 8.0F, .y = 9.0F});
+        line->set_start({.x = 1.0F, .y = 2.0F});
+        line->set_end({.x = 3.0F, .y = 4.0F});
+        canvas->add_child(line);
+
+        canvas->accept(*measure_);
+        canvas->accept(*layout_);
+        canvas->accept(rendering);
+
+        const auto& origin = canvas->layout_box().frame.position;
+        ASSERT_EQ(backend.draw_line_calls().size(), 1U);
+        const auto& call = backend.draw_line_calls()[0];
+        EXPECT_FLOAT_EQ(call.x1, origin.x + 8.0F + 1.0F);
+        EXPECT_FLOAT_EQ(call.y1, origin.y + 9.0F + 2.0F);
+        EXPECT_FLOAT_EQ(call.x2, origin.x + 8.0F + 3.0F);
+        EXPECT_FLOAT_EQ(call.y2, origin.y + 9.0F + 4.0F);
+    }
 } // namespace docraft::test

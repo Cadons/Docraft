@@ -102,9 +102,9 @@ namespace docraft::loom::charts {
         /**
          * @brief Adds a line segment at the given absolute canvas-local pixel
          * coordinates.
-         * @details DocraftLoomLine's own start()/end() are local to its bounding box
-         * (whose top-left anchor is explicit_position()) -- normalizing to the min
-         * corner here keeps every caller simple regardless of which endpoint is "first".
+         * @details DocraftLoomLine's own start()/end() are offsets from its anchor, which
+         * for a Canvas child left at the default x/y is the canvas origin -- so the
+         * coordinates pass straight through.
          */
         static void add_line(nodes::DocraftLoomCanvas& canvas, float x1, float y1, float x2, float y2,
                               const DocraftColor& color, float width);

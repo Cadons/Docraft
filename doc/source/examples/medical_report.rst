@@ -100,7 +100,9 @@ Template — ``medical_report.craft``
            <Blank/>
 
            <!-- Signature -->
-           <Line x1="350" y1="0" x2="750" y2="0"
+           <!-- x1/x2 are offsets from the cursor, so this rule sits in the
+                right third of the content width, above the signature block -->
+           <Line x1="358" y1="0" x2="535" y2="0"
                  border_color="black" border_width="0.5"/>
            <Layout orientation="horizontal">
                <Text weight="0.67"/>

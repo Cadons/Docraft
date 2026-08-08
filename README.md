@@ -45,8 +45,9 @@ Key Features
   alignment (left, center, right, justified), and color.
 - **External font support** — Register custom TTF fonts (regular, bold,
   italic, bold-italic variants) for full typographic control.
-- **Shapes** — Rectangle, Circle, Triangle, Line, Polygon with background
-  color, border color, and border width.
+- **Shapes** — Rectangle, Circle/oval, Triangle, Line, Polygon with background
+  color, border color, and border width, plus a free-form ``<Canvas>`` that
+  positions them by coordinates instead of stacking them.
 - **Tables** — Column titles, row/column weights, per-cell backgrounds, and
   JSON model binding for data-driven tables.
 - **Ordered & unordered lists** — Number, roman numeral, dash, star, circle,

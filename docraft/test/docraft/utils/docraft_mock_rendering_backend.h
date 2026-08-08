@@ -79,6 +79,26 @@ namespace docraft::test::utils {
             std::vector<docraft::Position> points;
         };
 
+        // Records draw_circle() and draw_ellipse() alike -- a circle is stored with
+        // radius_x == radius_y, so a test can assert on the resulting geometry without
+        // caring which of the two primitives the rendering stage picked.
+        struct DrawEllipseCall
+        {
+            float center_x;
+            float center_y;
+            float radius_x;
+            float radius_y;
+        };
+
+        struct DrawArcCall
+        {
+            float center_x;
+            float center_y;
+            float radius;
+            float start_angle;
+            float end_angle;
+        };
+
         Config config;
         std::size_t pages = 1;
         std::size_t current_page = 0;
@@ -88,6 +108,8 @@ namespace docraft::test::utils {
         mutable std::vector<ClipCall> clip_calls;
         mutable std::vector<DrawLineCall> draw_line_calls;
         mutable std::vector<DrawCurveCall> draw_curve_calls;
+        mutable std::vector<DrawEllipseCall> draw_ellipse_calls;
+        mutable std::vector<DrawArcCall> draw_arc_calls;
 
         // Simple hash set to track registered fonts by their internal names.
         struct StringHash {
@@ -228,7 +250,28 @@ namespace docraft::test::utils {
             state_->clip_calls.push_back({.x = x, .y = y, .width = width, .height = height});
         }
 
-        void draw_circle(float, float, float) const override { require(); }
+        void draw_circle(float center_x, float center_y, float radius) const override
+        {
+            require();
+            state_->draw_ellipse_calls.push_back(
+                {.center_x = center_x, .center_y = center_y, .radius_x = radius, .radius_y = radius});
+        }
+
+        void draw_ellipse(float center_x, float center_y, float radius_x, float radius_y) const override
+        {
+            require();
+            state_->draw_ellipse_calls.push_back(
+                {.center_x = center_x, .center_y = center_y, .radius_x = radius_x, .radius_y = radius_y});
+        }
+
+        void draw_arc(float center_x, float center_y, float radius, float start_angle,
+                      float end_angle) const override
+        {
+            require();
+            state_->draw_arc_calls.push_back({.center_x = center_x, .center_y = center_y, .radius = radius,
+                                              .start_angle = start_angle, .end_angle = end_angle});
+        }
+
         void draw_polygon(const std::vector<docraft::Position>&) const override { require(); }
         void fill() const override { require(); }
         void stroke() const override { require(); }
@@ -547,6 +590,16 @@ namespace docraft::test::utils {
         [[nodiscard]] const std::vector<MockBackendSharedState::DrawLineCall>& draw_line_calls() const
         {
             return state_->draw_line_calls;
+        }
+
+        [[nodiscard]] const std::vector<MockBackendSharedState::DrawEllipseCall>& draw_ellipse_calls() const
+        {
+            return state_->draw_ellipse_calls;
+        }
+
+        [[nodiscard]] const std::vector<MockBackendSharedState::DrawArcCall>& draw_arc_calls() const
+        {
+            return state_->draw_arc_calls;
         }
 
         [[nodiscard]] const std::vector<MockBackendSharedState::DrawCurveCall>& draw_curve_calls() const

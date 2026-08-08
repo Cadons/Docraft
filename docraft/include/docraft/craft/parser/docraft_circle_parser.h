@@ -37,6 +37,15 @@ namespace docraft::craft::parser {
         std::optional<std::string> border_color;
         std::optional<float> border_width;
         std::optional<float> radius;
+        /**
+         * @brief Arc endpoints, as points in the node's own box. All four are required
+         * together; the arc is swept clockwise from start to finish, so swapping them
+         * selects the complementary arc.
+         */
+        std::optional<float> start_x;
+        std::optional<float> start_y;
+        std::optional<float> finish_x;
+        std::optional<float> finish_y;
     };
 
     /**
