@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <any>
 #include <cmath>
+#include <numbers>
 #include <string_view>
 
 #include <nlohmann/json.hpp>
@@ -286,7 +287,7 @@ namespace docraft::loom::craft {
         {
             const float dx = point.x - center.x;
             const float dy = point.y - center.y;
-            const float degrees = std::atan2(dx, -dy) * 180.0F / 3.14159265358979323846F;
+            const float degrees = std::atan2(dx, -dy) * 180.0F / std::numbers::pi_v<float>;
             return degrees < 0.0F ? degrees + 360.0F : degrees;
         }
 
