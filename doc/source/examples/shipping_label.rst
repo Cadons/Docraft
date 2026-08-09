@@ -92,8 +92,9 @@ Data — ``shipping_label.json``
 -------------------------------
 
 ``qr_code`` points at an image file expected next to the ``docraft_tool``
-executable (JSON has no comment syntax, so this can't be noted inline in the
-file itself):
+executable — any PNG works, including a real, scannable QR code generated with
+a tool like `qrcode <https://pypi.org/project/qrcode/>`_ (JSON has no comment
+syntax, so this can't be noted inline in the file itself):
 
 .. code-block:: json
 
@@ -115,7 +116,7 @@ file itself):
      "handling_instructions": "FRAGILE — THIS SIDE UP",
      "ship_date": "2025-03-08",
      "eta": "2025-03-10",
-     "qr_code": "test.png"
+     "qr_code": "qr.png"
    }
 
 Usage
