@@ -1,0 +1,21 @@
+{
+  "carrier_name": "FastFreight Logistics",
+  "carrier_tagline": "International Express Courier",
+  "service_type": "EXPRESS",
+  "tracking_number": "FF-2025-0039871-IT",
+  "sender_name": "TechCraft Srl",
+  "sender_address": "Via Roma 42",
+  "sender_city": "20100 Milano (MI), Italy",
+  "receiver_name": "Global Parts GmbH",
+  "receiver_address": "Industriestr. 88",
+  "receiver_city": "80333 München, Germany",
+  "receiver_phone": "+49 89 9876543",
+  "weight": "12.5 kg",
+  "dimensions": "40 × 30 × 25 cm",
+  "pieces": "2",
+  "delivery_speed": "1–2 DAYS",
+  "ship_date": "2025-03-08",
+  "eta": "2025-03-10",
+  "barcode": "barcode.png",
+  "qr_code": "qr.png"
+}

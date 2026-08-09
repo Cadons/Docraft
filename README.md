@@ -31,23 +31,35 @@ external processes, no temporary files, no network calls.
 ---
 
 <p align="center">
-  <img src="doc/source/_static/sales_report_page1.png" alt="A Docraft-rendered sales report: KPI cards, a pie chart, a bar chart and a trend line, all generated in-process from XML + JSON" width="620">
+  <img src="assets/readme/showcase.png" alt="A single Docraft-rendered PDF page: a pie chart, a layered-shapes illustration, a self-referential feature table, typography samples, list markers, and a color palette — every element is native vector output from one XML file, no external renderer involved" width="720">
 </p>
 
-<p align="center"><sub>That entire dashboard is one &lt;Canvas&gt; with two &lt;Chart&gt; tags on it:</sub></p>
+Charts, shapes, tables, typography, lists — that entire page is one `.craft`
+file and one call to `docraft_tool`, rendered natively with no LaTeX, no
+headless browser, and no network call in sight. It's just as much at home
+with an everyday business document as it is with a chart-driven report:
 
-```xml
-<Canvas width="495" height="230">
-    <Chart x="0" y="0" style="pie" width="240" height="220" title="By Product Line">
-        <Series model="${revenue_split}"/>
-    </Chart>
-    <Chart x="250" y="0" style="histogram" width="245" height="220" title="By Region">
-        <Series name="This Quarter" color="#2E86C1" model="${regional_sales}"/>
-    </Chart>
-</Canvas>
+<p align="center">
+  <img src="doc/source/_static/shipping_label.png" alt="A realistic courier shipping label rendered by Docraft: branded header, Code128 barcode, prominent destination block, handling badges, a package-details table, and a QR code" width="320">
+  &nbsp;&nbsp;
+  <img src="doc/source/_static/sales_report_page1.png" alt="A Docraft-rendered sales report: KPI cards, a pie chart, a regional bar chart, and a year-over-year trend chart" width="320">
+</p>
+
+Every one of them comes from the same two-step build:
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j
+
+./build/artifacts/bin/docraft_tool showcase.craft        showcase.pdf        --data showcase.json
+./build/artifacts/bin/docraft_tool shipping_label.craft  shipping_label.pdf  --data shipping_label.json
+./build/artifacts/bin/docraft_tool sales_report.craft    sales_report.pdf    --data sales_report.json
 ```
 
-<p align="center"><sub><a href="https://cadons.github.io/docraft/examples/sales_report.html">Full template &amp; data</a> — more document types (invoices, shipping labels, QC reports...) in the <a href="https://cadons.github.io/docraft/examples/index.html">example gallery</a>.</sub></p>
+The full source for each is in the repo — [`assets/readme/showcase.craft`](assets/readme/showcase.craft),
+[`assets/readme/shipping_label.craft`](assets/readme/shipping_label.craft),
+and the [sales report example](https://cadons.github.io/docraft/examples/sales_report.html) —
+plus more document types (invoices, QC reports...) in the
+[full example gallery](https://cadons.github.io/docraft/examples/index.html).
 
 ---
 

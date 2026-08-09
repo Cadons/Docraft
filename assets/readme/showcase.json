@@ -1,0 +1,10 @@
+{
+  "page_breakdown": [
+    {"Layout": 30},
+    {"Charts": 20},
+    {"Shapes": 20},
+    {"Tables": 15},
+    {"Text": 15}
+  ],
+  "render_time": "3 ms"
+}
