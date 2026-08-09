@@ -55,9 +55,8 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j
 
 The full source for all three lives in [`assets/readme/`](assets/readme/) —
 [`showcase.craft`](assets/readme/showcase.craft),
-[`shipping_label.craft`](assets/readme/shipping_label.craft),
 [`charts.craft`](assets/readme/charts.craft) — plus more document types
-(invoices, sales reports, QC reports...) in the
+(invoices,shipping labels, sales reports, QC reports...) in the
 [full example gallery](https://cadons.github.io/docraft/examples/index.html).
 
 ---
