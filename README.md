@@ -31,7 +31,7 @@ external processes, no temporary files, no network calls.
 ---
 
 <p align="center">
-  <img src="assets/readme/showcase.png" alt="A single Docraft-rendered PDF page: a pie chart, a layered-shapes illustration, a self-referential feature table, typography samples, list markers, and a color palette — every element is native vector output from one XML file, no external renderer involved" width="720">
+  <img src="assets/readme/showcase.png" alt="A single Docraft-rendered PDF page: a pie chart, a layered-shapes illustration, a self-referential feature table, typography samples, list markers, and a color palette — every element is native vector output from one XML file, no external renderer involved" width="800">
 </p>
 
 Charts, shapes, tables, typography, lists — that entire page is one `.craft`
@@ -40,9 +40,8 @@ headless browser, and no network call in sight. It's just as much at home
 with an everyday business document as it is with a chart-driven report:
 
 <p align="center">
-  <img src="doc/source/_static/shipping_label.png" alt="A realistic courier shipping label rendered by Docraft: branded header, Code128 barcode, prominent destination block, handling badges, a package-details table, and a QR code" width="300">
-  &nbsp;&nbsp;
-  <img src="assets/readme/charts.png" alt="A Docraft chart gallery: pie, histogram, spline, line, and scatter charts, each drawn from a single Chart tag with no charting library involved" width="420">
+
+  <img src="assets/readme/charts.png" alt="A Docraft chart gallery: pie, histogram, spline, line, and scatter charts, each drawn from a single Chart tag with no charting library involved" width="800">
 </p>
 
 Every one of them comes from the same two-step build:
@@ -51,7 +50,6 @@ Every one of them comes from the same two-step build:
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j
 
 ./build/artifacts/bin/docraft_tool showcase.craft        showcase.pdf        --data showcase.json
-./build/artifacts/bin/docraft_tool shipping_label.craft  shipping_label.pdf  --data shipping_label.json
 ./build/artifacts/bin/docraft_tool charts.craft          charts.pdf          --data charts.json
 ```
 
