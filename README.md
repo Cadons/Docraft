@@ -40,9 +40,9 @@ headless browser, and no network call in sight. It's just as much at home
 with an everyday business document as it is with a chart-driven report:
 
 <p align="center">
-  <img src="doc/source/_static/shipping_label.png" alt="A realistic courier shipping label rendered by Docraft: branded header, Code128 barcode, prominent destination block, handling badges, a package-details table, and a QR code" width="320">
+  <img src="doc/source/_static/shipping_label.png" alt="A realistic courier shipping label rendered by Docraft: branded header, Code128 barcode, prominent destination block, handling badges, a package-details table, and a QR code" width="300">
   &nbsp;&nbsp;
-  <img src="doc/source/_static/sales_report_page1.png" alt="A Docraft-rendered sales report: KPI cards, a pie chart, a regional bar chart, and a year-over-year trend chart" width="320">
+  <img src="assets/readme/charts.png" alt="A Docraft chart gallery: pie, histogram, spline, line, and scatter charts, each drawn from a single Chart tag with no charting library involved" width="420">
 </p>
 
 Every one of them comes from the same two-step build:
@@ -52,13 +52,14 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j
 
 ./build/artifacts/bin/docraft_tool showcase.craft        showcase.pdf        --data showcase.json
 ./build/artifacts/bin/docraft_tool shipping_label.craft  shipping_label.pdf  --data shipping_label.json
-./build/artifacts/bin/docraft_tool sales_report.craft    sales_report.pdf    --data sales_report.json
+./build/artifacts/bin/docraft_tool charts.craft          charts.pdf          --data charts.json
 ```
 
-The full source for each is in the repo — [`assets/readme/showcase.craft`](assets/readme/showcase.craft),
-[`assets/readme/shipping_label.craft`](assets/readme/shipping_label.craft),
-and the [sales report example](https://cadons.github.io/docraft/examples/sales_report.html) —
-plus more document types (invoices, QC reports...) in the
+The full source for all three lives in [`assets/readme/`](assets/readme/) —
+[`showcase.craft`](assets/readme/showcase.craft),
+[`shipping_label.craft`](assets/readme/shipping_label.craft),
+[`charts.craft`](assets/readme/charts.craft) — plus more document types
+(invoices, sales reports, QC reports...) in the
 [full example gallery](https://cadons.github.io/docraft/examples/index.html).
 
 ---

@@ -104,10 +104,9 @@ Template — ``shipping_label.craft``
                <Text weight="10"> </Text>
                <Layout weight="145" orientation="vertical">
                    <Text alignment="center" font_size="7" color="#95A5A6">SCAN TO TRACK</Text>
-                   <Blank/>
-                   <Layout orientation="horizontal" weights="23,100,22">
+                   <Layout orientation="horizontal" weights="10,125,10">
                        <Text> </Text>
-                       <Image src="${qr_code}" width="100" height="100"/>
+                       <Image src="${qr_code}" width="125" height="125"/>
                        <Text> </Text>
                    </Layout>
                </Layout>
