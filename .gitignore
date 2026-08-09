@@ -65,3 +65,4 @@ CMakeUserPresets.json
 
 # Local documentation and analysis (for Copilot/internal use)
 .local/
+/.claude/worktrees/
