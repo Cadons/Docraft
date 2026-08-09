@@ -1,7 +1,7 @@
 ---
 name: craft-language
 description: Use this skill whenever writing, generating, or editing a `.craft` file, or any XML markup meant to be fed to Docraft's loom pipeline (DocraftLoomCraftLanguageParser / docraft_tool) to produce a PDF. Triggers on "craft language", "write a .craft file", "generate a Docraft document", "Docraft XML", "craft markup", or requests to lay out a PDF (tables, charts, headers/footers, paginated reports) using Docraft. Covers the full document grammar (Document/Settings/Metadata/Header/Body/Footer), every node type and its exact attributes, the color palette, font system, `${variable}`/`Foreach`/`data()` templating, and pagination behavior — so generated markup is syntactically correct and behaviorally accurate on the first try.
-version: 0.1.0
+version: 1.0.0
 ---
 
 # Craft Language (Docraft loom pipeline)
