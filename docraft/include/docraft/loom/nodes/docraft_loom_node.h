@@ -100,7 +100,8 @@ namespace docraft::loom::nodes {
          * container's children). Stability preserves declaration order among
          * children that share the same z_index.
          */
-        std::vector<int> child_indices_in_paint_order() const;
+        std::vector<int> paint_order_indices() const;
+
         //layout box
         const LayoutBox& layout_box() const;
         LayoutBox& edit_layout_box();
