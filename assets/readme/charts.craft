@@ -1,0 +1,82 @@
+<Document>
+    <Settings>
+        <Page size="A4" orientation="landscape"/>
+        <SectionRatios header_ratio="0.02" body_ratio="0.88" footer_ratio="0.02"/>
+    </Settings>
+
+    <Header margin_left="0" margin_right="0" margin_top="0" margin_bottom="0"
+            background_color="#1B2631" padding="16">
+        <Layout orientation="horizontal">
+            <Layout orientation="vertical" weight="0.68">
+                <Text font_size="23" style="bold" color="white">Docraft — Chart Gallery</Text>
+                <Text font_size="9.5" color="#D5D8DC">Every chart below is a single &lt;Chart&gt; tag, drawn with ordinary
+                    lines/circles/rectangles &#8212; no charting library involved.</Text>
+            </Layout>
+            <Rectangle weight="0.32" background_color="#E67E22" padding="6">
+                <Text alignment="center" font_size="11" style="bold" color="white">5 STYLES</Text>
+                <Text alignment="center" font_size="11" style="bold" color="white">1 TAG EACH</Text>
+            </Rectangle>
+        </Layout>
+    </Header>
+
+    <Body margin_left="22" margin_right="22" margin_top="10" margin_bottom="6">
+        <Layout orientation="horizontal" spacing="12">
+            <Rectangle weight="1" height="230" padding="8"
+                       background_color="white" border_color="#D5D8DC" border_width="1">
+                <Text font_size="8" style="bold" color="#7F8C8D">PIE</Text>
+                <Chart style="pie" width="235" height="195" title="Revenue by Product Line">
+                    <Series model="${revenue_split}"/>
+                </Chart>
+            </Rectangle>
+
+            <Rectangle weight="1" height="230" padding="8"
+                       background_color="white" border_color="#D5D8DC" border_width="1">
+                <Text font_size="8" style="bold" color="#7F8C8D">HISTOGRAM</Text>
+                <Chart style="histogram" width="235" height="195" title="Sales by Region" y_label="$k">
+                    <Series name="This Quarter" color="#2E86C1" model="${regional_sales}"/>
+                </Chart>
+            </Rectangle>
+
+            <Rectangle weight="1" height="230" padding="8"
+                       background_color="white" border_color="#D5D8DC" border_width="1">
+                <Text font_size="8" style="bold" color="#7F8C8D">SPLINE</Text>
+                <Chart style="spline" width="235" height="195" title="Monthly Revenue" x_label="Month" y_label="$k">
+                    <Series name="2025" color="#2E86C1" model="${trend_current}"/>
+                    <Series name="2024" color="#AAB7B8" model="${trend_prior}"/>
+                </Chart>
+            </Rectangle>
+        </Layout>
+
+        <Blank/>
+
+        <Layout orientation="horizontal" spacing="12">
+            <Rectangle weight="1" height="168" padding="7"
+                       background_color="white" border_color="#D5D8DC" border_width="1">
+                <Text font_size="8" style="bold" color="#7F8C8D">LINE</Text>
+                <Chart style="line" width="235" height="135" title="Daily Signups" x_label="Day">
+                    <Series name="Trial" color="#27AE60" model="${daily_signups}"/>
+                </Chart>
+            </Rectangle>
+
+            <Rectangle weight="1" height="168" padding="7"
+                       background_color="white" border_color="#D5D8DC" border_width="1">
+                <Text font_size="8" style="bold" color="#7F8C8D">SCATTER</Text>
+                <Chart style="scatter" width="235" height="135" title="Height vs. Weight"
+                       x_label="Height (cm)" y_label="Weight (kg)">
+                    <Series name="Adults" color="#8E44AD" model="${scatter_points}"/>
+                </Chart>
+            </Rectangle>
+
+            <Rectangle weight="1" height="168" padding="9"
+                       background_color="#1B2631" border_color="#1B2631" border_width="1">
+                <Text font_size="8" style="bold" color="#AEB6BF">EACH CHART, START TO FINISH</Text>
+                <Blank/>
+                <Text font_name="Courier" font_size="8" color="#F5F5F5">&lt;Chart style="pie"</Text>
+                <Text font_name="Courier" font_size="8" color="#F5F5F5">    width="235" height="195"&gt;</Text>
+                <Text font_name="Courier" font_size="8" color="#F5F5F5">  &lt;Series</Text>
+                <Text font_name="Courier" font_size="8" color="#F5F5F5">    model="[data]"/&gt;</Text>
+                <Text font_name="Courier" font_size="8" color="#F5F5F5">&lt;/Chart&gt;</Text>
+            </Rectangle>
+        </Layout>
+    </Body>
+</Document>

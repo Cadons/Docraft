@@ -1,0 +1,152 @@
+<Document>
+    <Settings>
+        <Page size="A4" orientation="landscape"/>
+        <SectionRatios header_ratio="0.12" body_ratio="0.87" footer_ratio="0.01"/>
+    </Settings>
+
+    <Header margin_left="0" margin_right="0" margin_top="0" margin_bottom="0"
+            background_color="#1B2631" padding="14">
+        <Layout orientation="horizontal">
+            <Layout orientation="vertical" weight="0.68">
+                <Text font_size="23" style="bold" color="white">Docraft</Text>
+                <Text font_size="9.5" color="#D5D8DC">Every element on this page &#8212; charts, shapes, tables, text &#8212; is native vector
+                    output, drawn straight to PDF from one declarative XML file.</Text>
+            </Layout>
+            <Rectangle weight="0.32" background_color="#E67E22" padding="6">
+                <Text alignment="center" font_size="11" style="bold" color="white">NO LATEX</Text>
+                <Text alignment="center" font_size="11" style="bold" color="white">NO HEADLESS BROWSER</Text>
+                <Text alignment="center" font_size="11" style="bold" color="white">NO EXTERNAL PROCESS</Text>
+            </Rectangle>
+        </Layout>
+    </Header>
+
+    <Body margin_left="22" margin_right="22" margin_top="10" margin_bottom="6">
+        <!-- Row 1 -->
+        <Layout orientation="horizontal" spacing="12">
+            <Rectangle weight="1" height="172" padding="8"
+                       background_color="white" border_color="#D5D8DC" border_width="1">
+                <Text font_size="8" style="bold" color="#7F8C8D">CHARTS</Text>
+                <Chart style="pie" width="200" height="138" title="This Page, By Element">
+                    <Series model="${page_breakdown}"/>
+                </Chart>
+            </Rectangle>
+
+            <Rectangle weight="1" height="172" padding="8"
+                       background_color="white" border_color="#D5D8DC" border_width="1">
+                <Text font_size="8" style="bold" color="#7F8C8D">SHAPES &amp; LAYERING</Text>
+                <Canvas width="200" height="138" background_color="#FAFBFC">
+                    <Rectangle x="26" y="16" width="100" height="75" background_color="#D6EAF8"
+                               border_color="#AED6F1" border_width="1" z_index="1"/>
+                    <Rectangle x="38" y="28" width="100" height="75" background_color="#85C1E9"
+                               border_color="#5DADE2" border_width="1" z_index="2"/>
+                    <Rectangle x="50" y="40" width="100" height="75" background_color="#2E86C1"
+                               border_color="#1B4F72" border_width="1" z_index="3"/>
+                    <Triangle points="128,40 150,40 150,62" background_color="#1B4F72"
+                              border_color="#1B4F72" border_width="1" z_index="4"/>
+                    <Text x="62" y="72" font_size="10" style="bold" color="white" z_index="5">PDF</Text>
+                    <Circle x="12" y="10" radius="8" background_color="#F1C40F"
+                            border_color="#B7950B" border_width="1" z_index="6"/>
+                </Canvas>
+            </Rectangle>
+
+            <Rectangle weight="1" height="172" padding="8"
+                       background_color="white" border_color="#D5D8DC" border_width="1">
+                <Text font_size="8" style="bold" color="#7F8C8D">TABLES</Text>
+                <Blank/>
+                <Table>
+                    <THead>
+                        <HTitle font_size="9" style="bold" background_color="#1B2631" color="white">Feature</HTitle>
+                        <HTitle font_size="9" style="bold" background_color="#1B2631" color="white">Docraft</HTitle>
+                    </THead>
+                    <TBody>
+                        <Row>
+                            <Cell><Text font_size="9">External dependencies</Text></Cell>
+                            <Cell><Text font_size="9" style="bold" color="#27AE60">None</Text></Cell>
+                        </Row>
+                        <Row>
+                            <Cell><Text font_size="9">Process model</Text></Cell>
+                            <Cell><Text font_size="9" style="bold" color="#27AE60">In-process</Text></Cell>
+                        </Row>
+                        <Row>
+                            <Cell><Text font_size="9">Network calls</Text></Cell>
+                            <Cell><Text font_size="9" style="bold" color="#27AE60">Zero</Text></Cell>
+                        </Row>
+                        <Row>
+                            <Cell><Text font_size="9">Output</Text></Cell>
+                            <Cell><Text font_size="9" style="bold" color="#27AE60">Native PDF</Text></Cell>
+                        </Row>
+                    </TBody>
+                </Table>
+            </Rectangle>
+        </Layout>
+
+        <Blank/>
+
+        <!-- Row 2 -->
+        <Layout orientation="horizontal" spacing="12">
+            <Rectangle weight="1" height="172" padding="8"
+                       background_color="white" border_color="#D5D8DC" border_width="1">
+                <Text font_size="8" style="bold" color="#7F8C8D">TYPOGRAPHY</Text>
+                <Blank/>
+                <Text font_size="14" style="bold" color="#1B2631">Bold headline text</Text>
+                <Text font_size="11" style="italic" color="#1B2631">Italic for emphasis</Text>
+                <Text font_size="11" underline="true" color="#2E86C1">Underlined links</Text>
+                <Text font_size="11" strikeout="true" color="#95A5A6">Strikeout revisions</Text>
+                <Text font_size="11" alignment="right" color="#8E44AD">Right-aligned, any color</Text>
+            </Rectangle>
+
+            <Rectangle weight="1" height="172" padding="8"
+                       background_color="white" border_color="#D5D8DC" border_width="1">
+                <Text font_size="8" style="bold" color="#7F8C8D">LISTS</Text>
+                <Blank/>
+                <Layout orientation="horizontal">
+                    <List weight="1" style="number">
+                        <Text font_size="10.5">Parse</Text>
+                        <Text font_size="10.5">Layout</Text>
+                        <Text font_size="10.5">Paginate</Text>
+                        <Text font_size="10.5">Render</Text>
+                    </List>
+                    <UList weight="1" dot="box">
+                        <Text font_size="10.5">Header</Text>
+                        <Text font_size="10.5">Body</Text>
+                        <Text font_size="10.5">Footer</Text>
+                    </UList>
+                </Layout>
+                <Layout orientation="horizontal">
+                    <List weight="1" style="roman">
+                        <Text font_size="10.5">Roman</Text>
+                        <Text font_size="10.5">markers</Text>
+                    </List>
+                    <UList weight="1" dot="circle">
+                        <Text font_size="10.5">Circle</Text>
+                        <Text font_size="10.5">markers</Text>
+                    </UList>
+                </Layout>
+            </Rectangle>
+
+            <Rectangle weight="1" height="172" padding="8"
+                       background_color="white" border_color="#D5D8DC" border_width="1">
+                <Text font_size="8" style="bold" color="#7F8C8D">COLOR &amp; STYLE</Text>
+                <Blank/>
+                <Layout orientation="horizontal" spacing="6">
+                    <Rectangle weight="1" height="46" background_color="#2E86C1"/>
+                    <Rectangle weight="1" height="46" background_color="#27AE60"/>
+                    <Rectangle weight="1" height="46" background_color="#E67E22"/>
+                    <Rectangle weight="1" height="46" background_color="#E74C3C"/>
+                    <Rectangle weight="1" height="46" background_color="#8E44AD"/>
+                    <Rectangle weight="1" height="46" background_color="#F1C40F"/>
+                </Layout>
+                <Blank/>
+                <Text font_size="9.5" color="#7F8C8D">Hex or named colors, anywhere a color attribute
+                    is accepted.</Text>
+            </Rectangle>
+        </Layout>
+
+        <Blank/>
+        <Line x1="0" y1="0" x2="798" y2="0" border_color="#D5D8DC" border_width="0.5"/>
+        <Layout orientation="horizontal">
+            <Text weight="0.7" font_size="8" color="#95A5A6">Rendered by Docraft in ${render_time} &#8212; github.com/Cadons/Docraft</Text>
+            <PageNumber weight="0.3" font_size="8" alignment="right" color="#95A5A6"/>
+        </Layout>
+    </Body>
+</Document>

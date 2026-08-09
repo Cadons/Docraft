@@ -28,6 +28,40 @@ It ships as a static or shared library that you link into your CMake project.
 The rendering pipeline runs entirely in-process using [libharu](https://github.com/libharu/libharu) as the PDF backend — no spawning of
 external processes, no temporary files, no network calls.
 
+---
+
+<p align="center">
+  <img src="assets/readme/showcase.png" alt="A single Docraft-rendered PDF page: a pie chart, a layered-shapes illustration, a self-referential feature table, typography samples, list markers, and a color palette — every element is native vector output from one XML file, no external renderer involved" width="800">
+</p>
+
+Charts, shapes, tables, typography, lists — that entire page is one `.craft`
+file and one call to `docraft_tool`, rendered natively with no LaTeX, no
+headless browser, and no network call in sight. It's just as much at home
+with an everyday business document as it is with a chart-driven report:
+
+<p align="center">
+
+  <img src="assets/readme/charts.png" alt="A Docraft chart gallery: pie, histogram, spline, line, and scatter charts, each drawn from a single Chart tag with no charting library involved" width="800">
+</p>
+
+Every one of them comes from the same two-step build:
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j
+
+./build/artifacts/bin/docraft_tool showcase.craft        showcase.pdf        --data showcase.json
+./build/artifacts/bin/docraft_tool charts.craft          charts.pdf          --data charts.json
+```
+
+The full source for all three lives in [`assets/readme/`](assets/readme/) —
+[`showcase.craft`](assets/readme/showcase.craft),
+[`shipping_label.craft`](assets/readme/shipping_label.craft),
+[`charts.craft`](assets/readme/charts.craft) — plus more document types
+(invoices, sales reports, QC reports...) in the
+[full example gallery](https://cadons.github.io/docraft/examples/index.html).
+
+---
+
 Key Features
 ------------
 

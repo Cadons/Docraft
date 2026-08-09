@@ -29,9 +29,10 @@ Attributes
      - Font size in points (default ``12``).
    * - ``font_name``
      - string
-     - Font family name (default ``Helvetica``, one of the built-in PDF
-       fonts — see :ref:`document-default-font` for setting this once for
-       the whole document instead of on every node).
+     - Font family name (default ``Helvetica``, one of the :ref:`built-in PDF
+       fonts <builtin-fonts>`, or a family registered via ``<Fonts>`` — see
+       :ref:`document-default-font` for setting this once for the whole
+       document instead of on every node).
    * - ``style``
      - string
      - ``normal`` | ``bold`` | ``italic`` | ``bold_italic``.

@@ -80,6 +80,62 @@ variant files:
 
 Each variant requires a ``src`` attribute pointing to a ``.ttf`` file.
 
+.. _builtin-fonts:
+
+Built-in Fonts
+--------------
+
+Every ``font_name`` resolves against the PDF standard's 14 base fonts before
+falling back to any font registered via ``<Fonts>`` above — no embedding, no
+external files, always available:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 75
+
+   * - Family
+     - Built-in names
+   * - Courier
+     - ``Courier``, ``Courier-Bold``, ``Courier-Oblique``, ``Courier-BoldOblique``
+   * - Helvetica
+     - ``Helvetica``, ``Helvetica-Bold``, ``Helvetica-Oblique``, ``Helvetica-BoldOblique``
+   * - Times
+     - ``Times-Roman``, ``Times-Bold``, ``Times-Italic``, ``Times-BoldItalic``
+   * - Symbol
+     - ``Symbol`` (symbol glyphs, no bold/italic variant)
+   * - ZapfDingbats
+     - ``ZapfDingbats`` (dingbat glyphs, no bold/italic variant)
+
+``Helvetica`` is the document-wide fallback (see :ref:`Default Font
+<document-default-font>` below) when nothing else applies.
+
+.. code-block:: xml
+
+   <Text font_name="Helvetica" style="bold">Resolves to Helvetica-Bold</Text>
+   <Text font_name="Courier" style="italic">Resolves to Courier-Oblique</Text>
+
+For **Courier** and **Helvetica**, ``style="bold"``/``"italic"``/``"bold_italic"``
+composes with the plain family name to pick the matching built-in variant
+automatically, so ``font_name="Helvetica"`` is enough regardless of ``style``.
+
+**Times** is the one exception: its regular weight is named ``Times-Roman``,
+not ``Times`` — a name ``style`` doesn't strip the way it strips ``-Bold``/
+``-Italic`` off the other families, so ``font_name="Times-Roman"`` combined
+with ``style="bold"`` does **not** resolve to ``Times-Bold``; it silently
+stays regular-weight. Name the variant you want directly instead:
+
+.. code-block:: xml
+
+   <!-- Wrong: style is ignored, renders as plain Times-Roman -->
+   <Text font_name="Times-Roman" style="bold">Not actually bold</Text>
+
+   <!-- Right: name the built-in variant explicitly -->
+   <Text font_name="Times-Bold">Actually bold</Text>
+
+``Symbol`` and ``ZapfDingbats`` have a single variant each — every character
+code maps to a symbol/dingbat glyph instead of Latin text, and ``style`` has
+nothing to compose with.
+
 .. _document-default-font:
 
 Default Font
