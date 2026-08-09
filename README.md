@@ -2,6 +2,36 @@
 [![Build and Test](https://github.com/Cadons/Docraft/actions/workflows/build.yml/badge.svg)](https://github.com/Cadons/Docraft/actions/workflows/build.yml)
 [![Documentation](https://github.com/Cadons/Docraft/actions/workflows/docs.yml/badge.svg)](https://github.com/Cadons/Docraft/actions/workflows/docs.yml)
 
+**Write XML, ship a PDF — no LaTeX, no headless browser, no external process.**
+
+<p align="center">
+  <img src="doc/source/_static/sales_report_page1.png" alt="A Docraft-rendered sales report: KPI cards, a pie chart, a bar chart and a trend line, all generated in-process from XML + JSON" width="640">
+</p>
+
+<p align="center"><sub>That entire dashboard is two &lt;Chart&gt; tags on a &lt;Canvas&gt;:</sub></p>
+
+```xml
+<Canvas width="495" height="230">
+    <Chart x="0" y="0" style="pie" width="240" height="220" title="By Product Line">
+        <Series model="${revenue_split}"/>
+    </Chart>
+    <Chart x="250" y="0" style="histogram" width="245" height="220" title="By Region">
+        <Series name="This Quarter" color="#2E86C1" model="${regional_sales}"/>
+    </Chart>
+</Canvas>
+```
+
+<p align="center"><sub>Full template &amp; data: <a href="https://cadons.github.io/docraft/examples/sales_report.html">sales_report.craft example</a></sub></p>
+
+<p align="center">
+  <a href="https://cadons.github.io/docraft/examples/invoice.html"><img src="doc/source/_static/invoice.png" width="200" alt="Invoice example"></a>
+  <a href="https://cadons.github.io/docraft/examples/shipping_label.html"><img src="doc/source/_static/shipping_label.png" width="200" alt="Shipping label example"></a>
+  <a href="https://cadons.github.io/docraft/examples/industrial_report.html"><img src="doc/source/_static/industrial_report_page1.png" width="200" alt="Industrial QC report example"></a>
+</p>
+<p align="center"><sub>Invoice · Shipping label · QC report — browse the <a href="https://cadons.github.io/docraft/examples/index.html">full example gallery</a></sub></p>
+
+---
+
 Why Docraft?
 ------------
 
