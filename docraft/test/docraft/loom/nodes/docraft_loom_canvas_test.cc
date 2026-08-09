@@ -280,4 +280,68 @@ namespace docraft::test {
         EXPECT_FLOAT_EQ(call.x2, origin.x + 8.0F + 3.0F);
         EXPECT_FLOAT_EQ(call.y2, origin.y + 9.0F + 4.0F);
     }
+
+    TEST_F(DocraftLoomCanvasTest, RenderingRespectsZIndexOrderAmongSiblingsRegardlessOfDeclarationOrder)
+    {
+        utils::MockRenderingBackend backend;
+        loom::pipeline::DocraftLoomRenderingProcessor rendering(&backend);
+
+        auto canvas = std::make_shared<loom::nodes::DocraftLoomCanvas>();
+        canvas->set_width(100.0F);
+        canvas->set_height(100.0F);
+
+        // Declared first but with the higher z_index -- should still paint last (on top).
+        auto line_a = std::make_shared<loom::nodes::DocraftLoomLine>();
+        line_a->set_start({.x = 0.0F, .y = 0.0F});
+        line_a->set_end({.x = 30.0F, .y = 0.0F});
+        line_a->set_z_index(5);
+        canvas->add_child(line_a);
+
+        // Declared second but with the lower z_index -- should paint first (underneath).
+        auto line_b = std::make_shared<loom::nodes::DocraftLoomLine>();
+        line_b->set_start({.x = 0.0F, .y = 0.0F});
+        line_b->set_end({.x = 0.0F, .y = 30.0F});
+        line_b->set_z_index(1);
+        canvas->add_child(line_b);
+
+        canvas->accept(*measure_);
+        canvas->accept(*layout_);
+        canvas->accept(rendering);
+
+        ASSERT_EQ(backend.draw_line_calls().size(), 2U);
+        EXPECT_FLOAT_EQ(backend.draw_line_calls()[0].x2, canvas->layout_box().frame.position.x);
+        EXPECT_FLOAT_EQ(backend.draw_line_calls()[0].y2, canvas->layout_box().frame.position.y + 30.0F);
+        EXPECT_FLOAT_EQ(backend.draw_line_calls()[1].x2, canvas->layout_box().frame.position.x + 30.0F);
+        EXPECT_FLOAT_EQ(backend.draw_line_calls()[1].y2, canvas->layout_box().frame.position.y);
+    }
+
+    TEST_F(DocraftLoomCanvasTest, RenderingPreservesDeclarationOrderForEqualZIndex)
+    {
+        utils::MockRenderingBackend backend;
+        loom::pipeline::DocraftLoomRenderingProcessor rendering(&backend);
+
+        auto canvas = std::make_shared<loom::nodes::DocraftLoomCanvas>();
+        canvas->set_width(100.0F);
+        canvas->set_height(100.0F);
+
+        auto line_a = std::make_shared<loom::nodes::DocraftLoomLine>();
+        line_a->set_start({.x = 0.0F, .y = 0.0F});
+        line_a->set_end({.x = 30.0F, .y = 0.0F});
+        canvas->add_child(line_a);
+
+        auto line_b = std::make_shared<loom::nodes::DocraftLoomLine>();
+        line_b->set_start({.x = 0.0F, .y = 0.0F});
+        line_b->set_end({.x = 0.0F, .y = 30.0F});
+        canvas->add_child(line_b);
+
+        canvas->accept(*measure_);
+        canvas->accept(*layout_);
+        canvas->accept(rendering);
+
+        ASSERT_EQ(backend.draw_line_calls().size(), 2U);
+        EXPECT_FLOAT_EQ(backend.draw_line_calls()[0].x2, canvas->layout_box().frame.position.x + 30.0F);
+        EXPECT_FLOAT_EQ(backend.draw_line_calls()[0].y2, canvas->layout_box().frame.position.y);
+        EXPECT_FLOAT_EQ(backend.draw_line_calls()[1].x2, canvas->layout_box().frame.position.x);
+        EXPECT_FLOAT_EQ(backend.draw_line_calls()[1].y2, canvas->layout_box().frame.position.y + 30.0F);
+    }
 } // namespace docraft::test
