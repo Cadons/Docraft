@@ -92,6 +92,15 @@ namespace docraft::loom::nodes {
         std::shared_ptr<const DocraftLoomNode> child(int index) const;
         std::shared_ptr<DocraftLoomNode> edit_child(int index);
         void clear_children();
+        /**
+         * @brief Returns this node's direct-child indices (0..children_count()-1),
+         * stable-sorted ascending by each child's z_index() -- the order in which
+         * this node's own children should be painted (sibling-scoped only, CSS
+         * stacking-context style; does not look into grandchildren or any other
+         * container's children). Stability preserves declaration order among
+         * children that share the same z_index.
+         */
+        std::vector<int> child_indices_in_paint_order() const;
         //layout box
         const LayoutBox& layout_box() const;
         LayoutBox& edit_layout_box();

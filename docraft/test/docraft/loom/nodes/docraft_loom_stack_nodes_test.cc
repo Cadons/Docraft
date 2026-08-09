@@ -3,10 +3,13 @@
 
 #include "docraft/docraft_color.h"
 #include "docraft/loom/nodes/docraft_loom_hstack.h"
+#include "docraft/loom/nodes/docraft_loom_line.h"
 #include "docraft/loom/nodes/docraft_loom_text.h"
 #include "docraft/loom/nodes/docraft_loom_vstack.h"
 #include "docraft/loom/pipeline/docraft_loom_layout_processor.h"
 #include "docraft/loom/pipeline/docraft_loom_measure_processor.h"
+#include "docraft/loom/pipeline/docraft_loom_rendering_processor.h"
+#include "docraft/utils/docraft_mock_rendering_backend.h"
 #include "../../backend/docraft_mock_backend.h"
 
 namespace docraft::test {
@@ -433,5 +436,42 @@ namespace docraft::test {
         vstack->accept(*layout_);
 
         EXPECT_FLOAT_EQ(vstack->layout_box().frame.size.height, 20.0F);
+    }
+
+    // ── z-index paint order ─────────────────────────────────────────────────────
+
+    TEST_F(DocraftLoomStackNodesTest, VStack_RenderingRespectsZIndexOrderAmongSiblings)
+    {
+        utils::MockRenderingBackend backend;
+        loom::pipeline::DocraftLoomMeasureProcessor measure(nullptr);
+        loom::pipeline::DocraftLoomLayoutProcessor layout;
+        loom::pipeline::DocraftLoomRenderingProcessor rendering(&backend);
+
+        auto vstack = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        vstack->set_padding(0.0F);
+
+        // Declared first but with the higher z_index -- should still paint last (on top).
+        auto line_a = std::make_shared<loom::nodes::DocraftLoomLine>();
+        line_a->set_start({.x = 0.0F, .y = 0.0F});
+        line_a->set_end({.x = 30.0F, .y = 0.0F});
+        line_a->set_z_index(5);
+        vstack->add_child(line_a);
+
+        // Declared second but with the lower z_index -- should paint first (underneath).
+        auto line_b = std::make_shared<loom::nodes::DocraftLoomLine>();
+        line_b->set_start({.x = 0.0F, .y = 0.0F});
+        line_b->set_end({.x = 0.0F, .y = 30.0F});
+        line_b->set_z_index(1);
+        vstack->add_child(line_b);
+
+        vstack->accept(measure);
+        vstack->accept(layout);
+        vstack->accept(rendering);
+
+        ASSERT_EQ(backend.draw_line_calls().size(), 2U);
+        EXPECT_FLOAT_EQ(backend.draw_line_calls()[0].x2 - backend.draw_line_calls()[0].x1, 0.0F);
+        EXPECT_FLOAT_EQ(backend.draw_line_calls()[0].y2 - backend.draw_line_calls()[0].y1, 30.0F);
+        EXPECT_FLOAT_EQ(backend.draw_line_calls()[1].x2 - backend.draw_line_calls()[1].x1, 30.0F);
+        EXPECT_FLOAT_EQ(backend.draw_line_calls()[1].y2 - backend.draw_line_calls()[1].y1, 0.0F);
     }
 } // namespace docraft::test

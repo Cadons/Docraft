@@ -4,6 +4,9 @@
 
 #include "docraft/loom/nodes/docraft_loom_node.h"
 
+#include <algorithm>
+#include <numeric>
+
 #include "docraft/exception/docraft_input_exceptions.h"
 #define CHILD_NODE_NULL_EXCEPTION_MESSAGE "Child node cannot be null"
 #define CHILD_NODE_INDEX_OUT_OF_RANGE_EXCEPTION_MESSAGE "Child index out of range"
@@ -80,6 +83,17 @@ namespace docraft::loom::nodes {
     void DocraftLoomNode::clear_children()
     {
         children_.clear();
+    }
+
+    std::vector<int> DocraftLoomNode::child_indices_in_paint_order() const
+    {
+        std::vector<int> indices(children_.size());
+        std::iota(indices.begin(), indices.end(), 0);
+        std::stable_sort(indices.begin(), indices.end(), [this](int a, int b) {
+            return children_[static_cast<std::size_t>(a)]->z_index()
+                 < children_[static_cast<std::size_t>(b)]->z_index();
+        });
+        return indices;
     }
 
     DocraftPositionType DocraftLoomNode::position_mode() const

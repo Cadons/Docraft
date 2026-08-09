@@ -250,7 +250,7 @@ namespace docraft::loom::pipeline {
         if (!node || !should_render(*node))
             return;
         draw_container_background(node->style(), node->layout_box().frame.position, node->layout_box().frame.size);
-        for (int i = 0; i < node->children_count(); ++i)
+        for (int i : node->child_indices_in_paint_order())
             if (auto child = node->edit_child(i))
                 child->accept(*this);
     }
@@ -266,7 +266,7 @@ namespace docraft::loom::pipeline {
         // positioned relative to this origin in the first place.
         shape_backend_->save_state();
         shape_backend_->clip_rectangle(frame.position.x, frame.position.y, frame.size.width, frame.size.height);
-        for (int i = 0; i < node->children_count(); ++i)
+        for (int i : node->child_indices_in_paint_order())
             if (auto child = node->edit_child(i))
                 child->accept(*this);
         shape_backend_->restore_state();
@@ -276,7 +276,7 @@ namespace docraft::loom::pipeline {
     {
         if (!paragraph || !should_render(*paragraph))
             return;
-        for (int i = 0; i < paragraph->children_count(); ++i)
+        for (int i : paragraph->child_indices_in_paint_order())
         {
             if (paragraph->edit_child(i))
                 paragraph->edit_child(i)->accept(*this);
@@ -287,7 +287,7 @@ namespace docraft::loom::pipeline {
     {
         if (!node || !should_render(*node)) return;
         draw_container_background(node->style(), node->layout_box().frame.position, node->layout_box().frame.size);
-        for (int i = 0; i < node->children_count(); ++i)
+        for (int i : node->child_indices_in_paint_order())
             if (auto child = node->edit_child(i))
                 child->accept(*this);
     }
@@ -296,7 +296,7 @@ namespace docraft::loom::pipeline {
     {
         if (!node || !should_render(*node)) return;
         draw_container_background(node->style(), node->layout_box().frame.position, node->layout_box().frame.size);
-        for (int i = 0; i < node->children_count(); ++i)
+        for (int i : node->child_indices_in_paint_order())
             if (auto child = node->edit_child(i))
                 child->accept(*this);
     }
@@ -468,7 +468,7 @@ namespace docraft::loom::pipeline {
         if (!node || !should_render(*node))
             return;
         const auto& markers = node->markers();
-        for (int i = 0; i < node->children_count(); ++i)
+        for (int i : node->child_indices_in_paint_order())
         {
             auto text_child = std::dynamic_pointer_cast<nodes::DocraftLoomText>(node->edit_child(i));
             if (!text_child)
