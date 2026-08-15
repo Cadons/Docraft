@@ -186,8 +186,8 @@ namespace docraft::loom::nodes {
                 if (split.kept->background()) {
                     blank->set_background(*split.kept->background());
                 }
-                if (split.kept->explicit_width()) {
-                    blank->set_explicit_width(*split.kept->explicit_width());
+                if (auto explicit_width = split.kept->explicit_width(); explicit_width.has_value()) {
+                    blank->set_explicit_width(explicit_width.value());
                 }
                 blank->edit_layout_box().frame = {
                     .position = split.kept->layout_box().frame.position,
@@ -312,7 +312,7 @@ namespace docraft::loom::nodes {
             }
         }
 
-        for (std::size_t r = static_cast<std::size_t>(row_index); r < grid_.size(); ++r) {
+        for (auto r = static_cast<std::size_t>(row_index); r < grid_.size(); ++r) {
             remainder->grid_.push_back(std::move(grid_[r]));
         }
         grid_.resize(static_cast<std::size_t>(row_index));
