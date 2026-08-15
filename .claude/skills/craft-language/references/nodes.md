@@ -278,9 +278,10 @@ JSON/templated model, or it throws ("THead tag not found, it is mandatory").
 table header** ("Title is reserved for text headings; use HTitle in table headers").
 
 `<Cell>` accepts **only** `width` (float, `> 0`) and `background_color` — no other attributes,
-not even the common ones — and exactly **one child, which must be `<Text>` or `<Image>`**. Any
-other content type is a parser trap, see `gotchas.md` #3. `<Row>` accepts only
-`background_color`, but see `gotchas.md` #2 — it's parsed and never applied.
+not even the common ones — and exactly **one child, which must be `<Text>` or `<Image>`**. A
+second child, or any other content type, throws `InvalidInputException` at parse time — see
+`gotchas.md` #3. `<Row>` accepts only `background_color`, but see `gotchas.md` #2 — it's parsed
+and never applied.
 
 **JSON/templated `model` forms:**
 

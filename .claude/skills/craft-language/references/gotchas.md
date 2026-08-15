@@ -15,9 +15,10 @@ one is a case where a document parses fine but doesn't do what a reasonable auth
    silently doesn't work in loom — use the table's `TableTile` attribute for a table-wide
    default, or set `background_color` on each `<Cell>` individually.
 
-3. **`<Cell>` content must be exactly one `<Text>` or `<Image>` child.** A third tag as a cell's
-   only child hits an internal `bad_any_cast` rather than a clean validation error. When
-   generating table markup, only ever put `<Text>` or `<Image>` directly inside `<Cell>`.
+3. **`<Cell>` content must be exactly one `<Text>` or `<Image>` child.** A second child, or a
+   child tag other than `<Text>`/`<Image>`, throws a clean parse-time `InvalidInputException` —
+   it no longer silently drops the extra content. Only ever put a single `<Text>` or `<Image>`
+   directly inside `<Cell>`.
 
 4. **No `<Table weights="...">`.** Unlike `<Layout weights="...">` (HStack), table column widths
    come only from each `<Cell width="...">`'s explicit width or an even split — there's no
