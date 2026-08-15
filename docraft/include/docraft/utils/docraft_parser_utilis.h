@@ -26,9 +26,13 @@ namespace docraft::utils {
                  * The data request can be a simple key or a dot-separated path for nested values.
                  * @param data_request The data request string (e.g., "${data(name)" or "${data("age")").
                  * @param item The JSON object to extract data from.
+                 * @param found Optional out-param, set to whether the requested field was
+                 * actually present in `item` -- distinguishes "field missing" from "field
+                 * present but its value is an empty string". Left untouched if null.
                  * @return The extracted value as a string, or an empty string if not found.
                  */
-                static std::string extract_data_attribute(const std::string &data_request, const nlohmann::json& item);
+                static std::string extract_data_attribute(const std::string &data_request, const nlohmann::json& item,
+                                                            bool* found = nullptr);
                 static std::string extract_data_attribute(const std::vector<unsigned char>& data_request, const nlohmann::json& item);
 
                 static bool is_data_request(const std::string &data_request);

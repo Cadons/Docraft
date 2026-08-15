@@ -147,3 +147,26 @@ TEST(DocraftValidatorTest, UndefinedVariableProducesWarningNotError)
     EXPECT_FALSE(result.has_errors());
     EXPECT_TRUE(result.has_warnings());
 }
+
+TEST(DocraftValidatorTest, StrictModePromotesUndefinedVariableToError)
+{
+    const auto craft_file = write_temp_file(".craft", "<Document><Body><Text>${missing}</Text></Body></Document>");
+    const auto data_file = write_temp_file(".json", R"JSON({"greeting": "Hello"})JSON");
+
+    const docraft::tools::DocraftValidator validator;
+    const auto result = validator.validate(craft_file, data_file, /*strict=*/true);
+
+    EXPECT_TRUE(result.has_errors());
+}
+
+TEST(DocraftValidatorTest, StrictModeDoesNotFlagResolvedVariable)
+{
+    const auto craft_file = write_temp_file(".craft", "<Document><Body><Text>${greeting}</Text></Body></Document>");
+    const auto data_file = write_temp_file(".json", R"JSON({"greeting": "Hello"})JSON");
+
+    const docraft::tools::DocraftValidator validator;
+    const auto result = validator.validate(craft_file, data_file, /*strict=*/true);
+
+    EXPECT_FALSE(result.has_errors());
+    EXPECT_FALSE(result.has_warnings());
+}

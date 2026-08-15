@@ -10,6 +10,7 @@ set(TEST_SOURCES
         docraft/backend/docraft_haru_backend_test.cc
         docraft/utils/docraft_logger_test.cc
         docraft/utils/docraft_parser_utils.cc
+        docraft/templating/docraft_template_engine_strict_test.cc
         docraft/utils/docraft_font_registry_test.cc
         docraft/utils/docraft_test_temp_file.h
         docraft/loom/pipeline/docraft_loom_measure_processor_test.cc
