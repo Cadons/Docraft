@@ -68,8 +68,16 @@ namespace docraft::utils {
         {
             return std::nullopt;
         }
+
+#if !defined(_WIN32)
+        // POSIX temp roots (e.g. /tmp) are shared by every local user, so lock the
+        // subdirectory down to owner-only. Skip this on Windows: %TEMP% already
+        // resolves to a per-user, ACL-isolated directory there, and MSVC STL's
+        // permissions() has been observed to leave the directory unwritable even
+        // to its owner afterwards, which broke file creation below in CI.
         std::filesystem::permissions(private_dir, std::filesystem::perms::owner_all,
                                       std::filesystem::perm_options::replace, ec);
+#endif
 
         const auto tmp_path = private_dir / kTempFileName;
         std::ofstream out(tmp_path, std::ios::binary | std::ios::trunc);
