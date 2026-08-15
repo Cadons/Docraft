@@ -11,6 +11,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include <fmt/format.h>
+
 #include "docraft/loom/nodes/docraft_loom_hstack.h"
 #include "docraft/loom/nodes/docraft_loom_list.h"
 #include "docraft/loom/nodes/docraft_loom_new_page.h"
@@ -18,6 +20,7 @@
 #include "docraft/loom/nodes/docraft_loom_rectangle.h"
 #include "docraft/loom/nodes/docraft_loom_table.h"
 #include "docraft/loom/nodes/docraft_loom_vstack.h"
+#include "docraft/utils/docraft_logger.h"
 
 namespace docraft::loom::pipeline {
     void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomText*)
@@ -463,6 +466,18 @@ namespace docraft::loom::pipeline {
             const bool oversized_escape = std::abs(frame.position.y - body_top_y) < 0.01F;
             if (oversized_escape)
             {
+                // The content past page_bottom_y is still written to the PDF's content
+                // stream (nothing is lost), but nothing on the rendered page or in the
+                // tool's exit code says so -- log it so it's at least visible in
+                // CI/pipeline output, matching how an unresolved ${variable} is reported.
+                const std::string node_label =
+                    child->name().empty() ? std::string{"A node"} : fmt::format("Node '{}'", child->name());
+                LOG_WARNING(fmt::format(
+                    "{} on page {} is {:.1f}pt tall, taller than the {:.1f}pt available on the page -- "
+                    "it overflows past the page bottom and the content beyond it will not be visible "
+                    "in the rendered PDF.",
+                    node_label, current_page + 1, frame.size.height, body_height));
+
                 assign_page_index_recursive(*child, current_page);
                 next_y = bottom + gap_after(child.get());
                 ++i;

@@ -19,6 +19,31 @@ namespace docraft::test {
             };
             return cell;
         }
+
+        // 100x100 mock page, the size every test in this file lays its content out
+        // against.
+        utils::MockPageBackend make_standard_page_backend() {
+            auto config = utils::MockBackendSharedState::Config{};
+            config.page_width = 100.0F;
+            config.page_height = 100.0F;
+            return utils::MockPageBackend{std::make_shared<utils::MockBackendSharedState>(config)};
+        }
+
+        // A VStack body with a single positioned DocraftLoomText child -- optionally
+        // named, for tests that need to assert the overflow warning names the node.
+        std::shared_ptr<loom::nodes::DocraftLoomVStack> make_single_text_body(
+            const std::string& text, float y, float height, const std::string& name = "") {
+            auto node = std::make_shared<loom::nodes::DocraftLoomText>(text);
+            if (!name.empty()) {
+                node->set_name(name);
+            }
+            node->edit_layout_box().frame = {
+                .position = {.x = 0.0F, .y = y}, .size = {.width = 50.0F, .height = height}
+            };
+            auto body = std::make_shared<loom::nodes::DocraftLoomVStack>();
+            body->add_child(node);
+            return body;
+        }
     } // namespace
     TEST(DocraftLoomPaginationProcessorTest, NewPageForcesBreakRegardlessOfRemainingSpace)
     {
@@ -217,5 +242,42 @@ namespace docraft::test {
         EXPECT_EQ(reconstructed, lines);
 
         EXPECT_TRUE(page1->cell(0, 0)->is_title()); // header repeated onto the continuation
+    }
+
+    // Regression test for #58: a non-table node taller than the available page height
+    // used to overflow the page bottom with no diagnostic at all (exit code 0, no
+    // warning). It's still accepted as overflow -- the layout behavior is unchanged --
+    // but it must now be logged so the mistake is visible in tool/CI output.
+    TEST(DocraftLoomPaginationProcessorTest, OversizedNonTableNodeLogsWarning) {
+        auto page_backend = make_standard_page_backend();
+        auto body = make_single_text_body("way too tall", /*y=*/10.0F, /*height=*/200.0F, "overflowing_text");
+
+        loom::pipeline::DocraftLoomPaginationProcessor processor;
+
+        testing::internal::CaptureStdout();
+        const int total_pages =
+                processor.paginate_body(*body, /*body_top_y=*/10.0F, /*body_height=*/80.0F, &page_backend);
+        const std::string stdout_log = testing::internal::GetCapturedStdout();
+
+        EXPECT_EQ(total_pages, 1);
+        ASSERT_EQ(body->children_count(), 1);
+        EXPECT_EQ(body->child(0)->layout_box().page_index, 0);
+        EXPECT_NE(stdout_log.find("[WARNING]"), std::string::npos);
+        EXPECT_NE(stdout_log.find("overflowing_text"), std::string::npos);
+    }
+
+    // A node that fits within the available page height must not trigger the overflow
+    // warning.
+    TEST(DocraftLoomPaginationProcessorTest, FittingNodeLogsNoWarning) {
+        auto page_backend = make_standard_page_backend();
+        auto body = make_single_text_body("only", /*y=*/10.0F, /*height=*/10.0F);
+
+        loom::pipeline::DocraftLoomPaginationProcessor processor;
+
+        testing::internal::CaptureStdout();
+        processor.paginate_body(*body, /*body_top_y=*/10.0F, /*body_height=*/80.0F, &page_backend);
+        const std::string stdout_log = testing::internal::GetCapturedStdout();
+
+        EXPECT_EQ(stdout_log.find("[WARNING]"), std::string::npos);
     }
 } // namespace docraft::test
