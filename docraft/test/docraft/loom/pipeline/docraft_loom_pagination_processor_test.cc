@@ -218,4 +218,62 @@ namespace docraft::test {
 
         EXPECT_TRUE(page1->cell(0, 0)->is_title()); // header repeated onto the continuation
     }
+
+    // Regression test for #58: a non-table node taller than the available page height
+    // used to overflow the page bottom with no diagnostic at all (exit code 0, no
+    // warning). It's still accepted as overflow -- the layout behavior is unchanged --
+    // but it must now be logged so the mistake is visible in tool/CI output.
+    TEST(DocraftLoomPaginationProcessorTest, OversizedNonTableNodeLogsWarning) {
+        auto config = utils::MockBackendSharedState::Config{};
+        config.page_width = 100.0F;
+        config.page_height = 100.0F;
+        auto state = std::make_shared<utils::MockBackendSharedState>(config);
+        utils::MockPageBackend page_backend{state};
+
+        auto body = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        auto tall_text = std::make_shared<loom::nodes::DocraftLoomText>("way too tall");
+        tall_text->set_name("overflowing_text");
+        tall_text->edit_layout_box().frame = {
+            .position = {.x = 0.0F, .y = 10.0F}, .size = {.width = 50.0F, .height = 200.0F}
+        };
+        body->add_child(tall_text);
+
+        loom::pipeline::DocraftLoomPaginationProcessor processor;
+
+        testing::internal::CaptureStdout();
+        const int total_pages =
+                processor.paginate_body(*body, /*body_top_y=*/10.0F, /*body_height=*/80.0F, &page_backend);
+        const std::string stdout_log = testing::internal::GetCapturedStdout();
+
+        EXPECT_EQ(total_pages, 1);
+        ASSERT_EQ(body->children_count(), 1);
+        EXPECT_EQ(body->child(0)->layout_box().page_index, 0);
+        EXPECT_NE(stdout_log.find("[WARNING]"), std::string::npos);
+        EXPECT_NE(stdout_log.find("overflowing_text"), std::string::npos);
+    }
+
+    // A node that fits within the available page height must not trigger the overflow
+    // warning.
+    TEST(DocraftLoomPaginationProcessorTest, FittingNodeLogsNoWarning) {
+        auto config = utils::MockBackendSharedState::Config{};
+        config.page_width = 100.0F;
+        config.page_height = 100.0F;
+        auto state = std::make_shared<utils::MockBackendSharedState>(config);
+        utils::MockPageBackend page_backend{state};
+
+        auto body = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        auto only = std::make_shared<loom::nodes::DocraftLoomText>("only");
+        only->edit_layout_box().frame = {
+            .position = {.x = 0.0F, .y = 10.0F}, .size = {.width = 50.0F, .height = 10.0F}
+        };
+        body->add_child(only);
+
+        loom::pipeline::DocraftLoomPaginationProcessor processor;
+
+        testing::internal::CaptureStdout();
+        processor.paginate_body(*body, /*body_top_y=*/10.0F, /*body_height=*/80.0F, &page_backend);
+        const std::string stdout_log = testing::internal::GetCapturedStdout();
+
+        EXPECT_EQ(stdout_log.find("[WARNING]"), std::string::npos);
+    }
 } // namespace docraft::test
