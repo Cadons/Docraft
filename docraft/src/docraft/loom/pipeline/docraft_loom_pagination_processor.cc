@@ -214,51 +214,8 @@ namespace docraft::loom::pipeline {
         }
     }
 
-    std::shared_ptr<nodes::DocraftLoomTable> DocraftLoomPaginationProcessor::try_split_table(
-        nodes::DocraftLoomTable& table, float page_bottom_y, float new_page_top_y)
-    {
-        const int rows = table.row_count();
-        const int cols = table.column_count();
-        if (rows <= 1 || cols == 0)
-        {
-            // Nothing meaningful to split off -- a single row can't be broken further
-            // in this simplified model (no intra-row/cell splitting).
-            return nullptr;
-        }
-
-        // A row "fits" on the current page only if every one of its cells clears
-        // page_bottom_y. All cells in a row share the same height (Layout assigns row
-        // height uniformly), so reading cell(r, 0) is enough to know the row's bottom.
-        int fit_rows = 0;
-        for (int r = 0; r < rows; ++r)
-        {
-            auto reference_cell = table.cell(r, 0);
-            if (!reference_cell)
-            {
-                break;
-            }
-            const auto& frame = reference_cell->layout_box().frame;
-            const float row_bottom = frame.position.y + frame.size.height;
-            if (row_bottom > page_bottom_y + 0.01F)
-            {
-                break;
-            }
-            ++fit_rows;
-        }
-
-        if (fit_rows == 0 || fit_rows >= rows)
-        {
-            // Either nothing fits (caller's oversized-escape-hatch handles that case by
-            // forcing the whole table onto a fresh page) or everything already fits.
-            return nullptr;
-        }
-
-        auto remainder = table.split_after_row(fit_rows, /*repeat_header_rows=*/true);
-        if (!remainder)
-        {
-            return nullptr;
-        }
-
+    std::shared_ptr<nodes::DocraftLoomTable> DocraftLoomPaginationProcessor::finish_table_split(
+        nodes::DocraftLoomTable &table, std::shared_ptr<nodes::DocraftLoomTable> remainder, float new_page_top_y) {
         // Re-stack the remainder's rows starting at the new page's body top -- their
         // positions were computed by Layout for a continuous canvas that no longer
         // applies once the rows move to a fresh physical page.
@@ -284,7 +241,7 @@ namespace docraft::loom::pipeline {
         }
 
         // The remainder's own frame mirrors the kept table's column layout (widths are
-        // unchanged by a row split) and spans exactly the rows it now holds.
+        // unchanged by a row/cell-content split) and spans exactly the rows it now holds.
         auto& remainder_frame = remainder->edit_layout_box().frame;
         remainder_frame.position = {table.layout_box().frame.position.x, new_page_top_y};
         remainder_frame.size = {table.layout_box().frame.size.width, row_top - new_page_top_y};
@@ -301,6 +258,79 @@ namespace docraft::loom::pipeline {
         table.edit_layout_box().frame.size.height = kept_height;
 
         return remainder;
+    }
+
+    std::shared_ptr<nodes::DocraftLoomTable> DocraftLoomPaginationProcessor::try_split_table(
+        nodes::DocraftLoomTable &table, float page_bottom_y, float new_page_top_y) {
+        const int rows = table.row_count();
+        const int cols = table.column_count();
+        if (cols == 0) {
+            return nullptr;
+        }
+
+        const bool at_fresh_page_top = std::abs(table.layout_box().frame.position.y - new_page_top_y) < 0.01F;
+
+        // A row "fits" on the current page only if every one of its cells clears
+        // page_bottom_y. All cells in a row share the same height (Layout assigns row
+        // height uniformly), so reading cell(r, 0) is enough to know the row's bottom.
+        // A table with a single row can't be split at the row level at all -- fit_rows
+        // stays 0, since the caller only reaches try_split_table when the child (here,
+        // the table) doesn't already fit as a whole, so that lone row can't fit either.
+        int fit_rows = 0;
+        if (rows > 1) {
+            for (int r = 0; r < rows; ++r) {
+                auto reference_cell = table.cell(r, 0);
+                if (!reference_cell) {
+                    break;
+                }
+                const auto &frame = reference_cell->layout_box().frame;
+                const float row_bottom = frame.position.y + frame.size.height;
+                if (row_bottom > page_bottom_y + 0.01F) {
+                    break;
+                }
+                ++fit_rows;
+            }
+        }
+
+        if (fit_rows >= rows) {
+            // Everything already fits.
+            return nullptr;
+        }
+
+        // If the table already starts at a fresh page's top and every row that fits is
+        // itself a repeated header row (no genuine content row made it on), row `fit_rows`
+        // is a genuinely oversized row: taller than one whole page, so no amount of
+        // row-level splitting would ever place it whole -- split_after_row would just
+        // reproduce a table shaped [cloned header(s), oversized row] on every following
+        // page forever. Try splitting that row's own cell content (its wrapped text)
+        // across this page and the next instead of giving up on it.
+        if (at_fresh_page_top && fit_rows <= table.leading_title_row_count()) {
+            auto reference_cell = table.cell(fit_rows, 0);
+            const float row_top = reference_cell ? reference_cell->layout_box().frame.position.y : new_page_top_y;
+            const float available_height = page_bottom_y - row_top;
+            if (auto content_remainder = table.split_row_content(fit_rows, available_height,
+                                                                 /*repeat_header_rows=*/true)) {
+                return finish_table_split(table, content_remainder, new_page_top_y);
+            }
+            // The row's cells couldn't be split either (e.g. non-text content, or not
+            // even one line fits) -- let the caller's oversized-escape-hatch accept the
+            // whole table as overflow rather than looping.
+            return nullptr;
+        }
+
+        if (fit_rows == 0) {
+            // Nothing fits and the table isn't at a fresh page top yet -- give it a
+            // whole-node move to a fresh page first; the check above will get another
+            // chance to split its content once it lands there.
+            return nullptr;
+        }
+
+        auto remainder = table.split_after_row(fit_rows, /*repeat_header_rows=*/true);
+        if (!remainder) {
+            return nullptr;
+        }
+
+        return finish_table_split(table, remainder, new_page_top_y);
     }
 
     int DocraftLoomPaginationProcessor::paginate_body(nodes::DocraftLoomNode& body_root, float body_top_y,

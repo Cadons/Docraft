@@ -1,5 +1,8 @@
 #include "docraft/loom/nodes/docraft_loom_table.h"
 
+#include <algorithm>
+#include <optional>
+
 #include "docraft/exception/docraft_input_exceptions.h"
 #include "docraft/loom/nodes/docraft_loom_image.h"
 #include "docraft/loom/nodes/docraft_loom_text.h"
@@ -57,6 +60,127 @@ namespace docraft::loom::nodes {
                 content->edit_layout_box() = source.content()->layout_box();
             }
             return clone;
+        }
+
+        // One cell's outcome from splitting its row at a given available_height: kept
+        // stays on the current page, remainder (null if nothing carries over) becomes
+        // that column's cell on the continuation.
+        struct CellContentSplit {
+            std::shared_ptr<DocraftLoomTableCell> kept;
+            std::shared_ptr<DocraftLoomTableCell> remainder;
+        };
+
+        // Splits a single cell's content to fit within available_height. Returns
+        // nullopt if the cell can't be split further and doesn't already fit on its own
+        // -- the caller must then abandon splitting the whole row.
+        std::optional<CellContentSplit> split_cell_content(const std::shared_ptr<DocraftLoomTableCell> &cell,
+                                                           float available_height) {
+            auto text = std::dynamic_pointer_cast<DocraftLoomText>(cell->content());
+            const std::size_t line_count = text ? text->wrapped_lines().size() : 0;
+
+            if (!text || line_count < 2) {
+                // Not splittable content -- the whole cell must already fit on its own
+                // natural height, or this row can't be split at all. measured_size (not
+                // frame) is used here: frame.size.height may already be stretched to a
+                // row-uniform height dominated by a taller sibling cell in the same row,
+                // which isn't this cell's own requirement.
+                const float natural_height = cell->layout_box().measured_size.height;
+                if (natural_height > available_height + 0.01F) {
+                    return std::nullopt;
+                }
+                cell->edit_layout_box().frame.size.height = natural_height;
+                return CellContentSplit{.kept = cell, .remainder = nullptr};
+            }
+
+            const float line_height = text->layout_box().measured_size.height / static_cast<float>(line_count);
+            const float text_available = std::max(0.0F, available_height - (2.0F * DocraftLoomTable::kCellPaddingY));
+            int keep_count = line_height > 0.0F
+                                 ? static_cast<int>(text_available / line_height)
+                                 : static_cast<int>(line_count);
+            keep_count = std::clamp(keep_count, 0, static_cast<int>(line_count));
+
+            if (keep_count == 0) {
+                // Not even one line fits -- caller falls back to accepting the row as
+                // overflow rather than looping on a split that makes no progress.
+                return std::nullopt;
+            }
+            if (keep_count >= static_cast<int>(line_count)) {
+                // This cell's whole content actually fits -- it just wasn't the row's
+                // own bottleneck -- so there's nothing to carry over for it. Normalize
+                // its frame away from any prior row-uniform stretch, same as above.
+                cell->edit_layout_box().frame.size.height = cell->layout_box().measured_size.height;
+                return CellContentSplit{.kept = cell, .remainder = nullptr};
+            }
+
+            const auto &lines = text->wrapped_lines();
+            std::vector<std::string> kept_lines(lines.begin(), lines.begin() + keep_count);
+            std::vector<std::string> remainder_lines(lines.begin() + keep_count, lines.end());
+
+            auto kept_cell = clone_cell(*cell);
+            auto kept_text = std::static_pointer_cast<DocraftLoomText>(kept_cell->content());
+            kept_text->set_wrapped_lines(kept_lines);
+            kept_text->edit_layout_box().measured_size.height = line_height * static_cast<float>(kept_lines.size());
+            kept_cell->edit_layout_box().frame.size.height =
+                    kept_text->layout_box().measured_size.height + (2.0F * DocraftLoomTable::kCellPaddingY);
+
+            auto remainder_cell = clone_cell(*cell);
+            auto remainder_text = std::static_pointer_cast<DocraftLoomText>(remainder_cell->content());
+            remainder_text->set_wrapped_lines(remainder_lines);
+            remainder_text->edit_layout_box().measured_size.height =
+                    line_height * static_cast<float>(remainder_lines.size());
+            remainder_cell->edit_layout_box().frame.size.height =
+                    remainder_text->layout_box().measured_size.height + (2.0F * DocraftLoomTable::kCellPaddingY);
+
+            return CellContentSplit{.kept = kept_cell, .remainder = remainder_cell};
+        }
+
+        struct RowContentSplit {
+            std::vector<std::shared_ptr<DocraftLoomTableCell> > kept_row;
+            std::vector<std::shared_ptr<DocraftLoomTableCell> > remainder_row;
+        };
+
+        // Assembles a row's per-cell splits into the two rows that replace it: every
+        // cell in each row shares that row's own uniform height (mirrors how Layout
+        // sizes a row to its tallest cell), and a cell with no remainder gets a blank
+        // placeholder on the continuation instead of repeating its (already fully kept)
+        // content.
+        RowContentSplit assemble_split_row(const std::vector<CellContentSplit> &splits) {
+            float kept_row_height = 0.0F;
+            float remainder_row_height = 0.0F;
+            for (const auto &split: splits) {
+                kept_row_height = std::max(kept_row_height, split.kept->layout_box().frame.size.height);
+                if (split.remainder) {
+                    remainder_row_height =
+                            std::max(remainder_row_height, split.remainder->layout_box().frame.size.height);
+                }
+            }
+
+            RowContentSplit result;
+            result.kept_row.reserve(splits.size());
+            result.remainder_row.reserve(splits.size());
+            for (const auto &split: splits) {
+                split.kept->edit_layout_box().frame.size.height = kept_row_height;
+                result.kept_row.push_back(split.kept);
+
+                if (split.remainder) {
+                    split.remainder->edit_layout_box().frame.size.height = remainder_row_height;
+                    result.remainder_row.push_back(split.remainder);
+                    continue;
+                }
+
+                // This cell's content was already exhausted by the kept fragment -- the
+                // continuation shows it blank rather than repeating it. Its stale
+                // position must match its row-mates' (still the original, pre-split row
+                // position) so the caller's uniform per-row shift lands it correctly.
+                auto blank = std::make_shared<DocraftLoomTableCell>();
+                blank->set_is_title(split.kept->is_title());
+                blank->edit_layout_box().frame = {
+                    .position = split.kept->layout_box().frame.position,
+                    .size = {split.kept->layout_box().frame.size.width, remainder_row_height}
+                };
+                result.remainder_row.push_back(blank);
+            }
+            return result;
         }
     }
 
@@ -155,36 +279,99 @@ namespace docraft::loom::nodes {
 
         if (repeat_header_rows)
         {
-            for (int r = 0; r < row_index; ++r)
+            for (auto& cloned_row : clone_leading_header_rows(row_index))
             {
-                bool all_title = true;
-                for (auto& cell : grid_[static_cast<std::size_t>(r)])
-                {
-                    if (!cell->is_title())
-                    {
-                        all_title = false;
-                        break;
-                    }
-                }
-                if (!all_title)
-                {
-                    break;
-                }
-                std::vector<std::shared_ptr<DocraftLoomTableCell>> cloned_row;
-                cloned_row.reserve(grid_[static_cast<std::size_t>(r)].size());
-                for (auto& cell : grid_[static_cast<std::size_t>(r)])
-                {
-                    cloned_row.push_back(clone_cell(*cell));
-                }
                 remainder->grid_.push_back(std::move(cloned_row));
             }
         }
 
-        for (std::size_t r = static_cast<std::size_t>(row_index); r < grid_.size(); ++r)
-        {
+        for (std::size_t r = static_cast<std::size_t>(row_index); r < grid_.size(); ++r) {
             remainder->grid_.push_back(std::move(grid_[r]));
         }
         grid_.resize(static_cast<std::size_t>(row_index));
+
+        return remainder;
+    }
+
+    int DocraftLoomTable::leading_title_row_count() const {
+        int count = 0;
+        for (const auto &row: grid_) {
+            const bool all_title = std::ranges::all_of(row.begin(), row.end(),
+                                                       [](const std::shared_ptr<DocraftLoomTableCell> &cell) {
+                                                           return cell->is_title();
+                                                       });
+            if (!all_title) {
+                break;
+            }
+            ++count;
+        }
+        return count;
+    }
+
+    std::vector<std::vector<std::shared_ptr<DocraftLoomTableCell> > > DocraftLoomTable::clone_leading_header_rows(
+        int upto_row_index) const {
+        std::vector<std::vector<std::shared_ptr<DocraftLoomTableCell> > > cloned;
+        const int header_rows = std::min(leading_title_row_count(), upto_row_index);
+        cloned.reserve(static_cast<std::size_t>(header_rows));
+        for (int r = 0; r < header_rows; ++r) {
+            std::vector<std::shared_ptr<DocraftLoomTableCell> > cloned_row;
+            cloned_row.reserve(grid_[static_cast<std::size_t>(r)].size());
+            for (auto &cell: grid_[static_cast<std::size_t>(r)]) {
+                cloned_row.push_back(clone_cell(*cell));
+            }
+            cloned.push_back(std::move(cloned_row));
+        }
+        return cloned;
+    }
+
+    std::shared_ptr<DocraftLoomTable> DocraftLoomTable::split_row_content(int row_index, float available_height,
+                                                                          bool repeat_header_rows) {
+        if (row_index < 0 || row_index >= row_count() || column_count() == 0) {
+            return nullptr;
+        }
+
+        auto &row = grid_[static_cast<std::size_t>(row_index)];
+
+        std::vector<CellContentSplit> splits;
+        splits.reserve(row.size());
+        bool made_progress = false;
+        for (auto &cell: row) {
+            auto split = split_cell_content(cell, available_height);
+            if (!split) {
+                // A cell couldn't be split and doesn't fit on its own either -- the
+                // whole row can't be split; caller falls back to accepting it as
+                // overflow rather than looping on a split that makes no progress.
+                return nullptr;
+            }
+            made_progress |= (split->remainder != nullptr);
+            splits.push_back(std::move(*split));
+        }
+
+        if (!made_progress) {
+            // Every cell already fit whole -- there's genuinely nothing to split.
+            return nullptr;
+        }
+
+        auto [kept_row, remainder_row] = assemble_split_row(splits);
+        grid_[static_cast<std::size_t>(row_index)] = std::move(kept_row);
+
+        auto remainder = std::make_shared<DocraftLoomTable>();
+        remainder->column_weights_ = column_weights_;
+        remainder->default_cell_background_ = default_cell_background_;
+        remainder->baseline_offset_ = baseline_offset_;
+        remainder->padding_ = padding_;
+
+        if (repeat_header_rows) {
+            for (auto &cloned_row: clone_leading_header_rows(row_index)) {
+                remainder->grid_.push_back(std::move(cloned_row));
+            }
+        }
+
+        remainder->grid_.push_back(std::move(remainder_row));
+        for (std::size_t r = static_cast<std::size_t>(row_index) + 1; r < grid_.size(); ++r) {
+            remainder->grid_.push_back(std::move(grid_[r]));
+        }
+        grid_.resize(static_cast<std::size_t>(row_index) + 1);
 
         return remainder;
     }

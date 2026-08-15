@@ -89,10 +89,30 @@ namespace docraft::loom::pipeline {
          * of the table that are entirely title cells are treated as a repeating header
          * and cloned onto the remainder too (a simplification of legacy's per-orientation
          * title handling: only a contiguous all-title prefix is treated as a header).
+         *
+         * When the table is already at a fresh page's top and the only rows that fit are
+         * repeated header rows, the next row is genuinely taller than one whole page --
+         * row-level splitting alone could never place it, so its cells' own wrapped text
+         * is split instead (see DocraftLoomTable::split_row_content), letting a single
+         * oversized cell's content continue across as many further pages as it needs.
+         *
          * @return The remainder table, or nullptr if no split was possible/needed
-         * (table has 0 or 1 rows fitting, or nothing overflows).
+         * (everything already fits, or the table's next row is oversized and its cell
+         * content couldn't be split either -- e.g. non-text content, or not even one
+         * line fits -- in which case the caller's oversized-escape-hatch accepts it as
+         * overflow instead of looping).
          */
         static std::shared_ptr<nodes::DocraftLoomTable> try_split_table(
             nodes::DocraftLoomTable& table, float page_bottom_y, float new_page_top_y);
+
+        /**
+         * @brief Shared tail of try_split_table's two split strategies (whole-row split
+         * via DocraftLoomTable::split_after_row, or single-row cell-content split via
+         * DocraftLoomTable::split_row_content): re-stacks remainder's rows starting at
+         * new_page_top_y and shrinks table's own frame to the rows it kept.
+         * @return remainder, unchanged (returned for a single-expression call site).
+         */
+        static std::shared_ptr<nodes::DocraftLoomTable> finish_table_split(
+            nodes::DocraftLoomTable &table, std::shared_ptr<nodes::DocraftLoomTable> remainder, float new_page_top_y);
     };
 } // docraft
