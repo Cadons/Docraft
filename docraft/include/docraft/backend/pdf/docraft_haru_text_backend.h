@@ -20,6 +20,7 @@
 #include "docraft/backend/pdf/docraft_haru_shared_state.h"
 
 #include <memory>
+#include <unordered_set>
 
 namespace docraft::backend::pdf {
     /**
@@ -114,6 +115,10 @@ namespace docraft::backend::pdf {
         // of their own -- set by the preceding set_font() call, which does know which
         // encoding resolve_font() picked for the font it just activated.
         mutable bool current_needs_win_ansi_transcode_ = true;
+        // Names already warned about falling back to kDefaultFont -- resolve_font() is
+        // called per glyph run/measurement, so without this a single bad font_name would
+        // spam a warning on every call instead of once.
+        mutable std::unordered_set<std::string> warned_unresolved_fonts_;
     };
 } // namespace docraft::backend::pdf
 

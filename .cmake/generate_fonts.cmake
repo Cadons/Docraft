@@ -21,11 +21,13 @@ function(generate_docraft_fonts artifact json_config_path)
     set(EMBED_SCRIPT "${BASE_DIR}/.cmake/embed_resource.cmake")
     set(CONCAT_SCRIPT "${BASE_DIR}/.cmake/concat_files.cmake")
     set(FONT_HEADER_INIT_SCRIPT "${BASE_DIR}/.cmake/font_header_init.cmake")
+    set(FONT_REGISTRATION_SOURCE_SCRIPT "${BASE_DIR}/.cmake/font_registration_source.cmake")
 
     foreach(SCRIPT
         EMBED_SCRIPT
         CONCAT_SCRIPT
         FONT_HEADER_INIT_SCRIPT
+        FONT_REGISTRATION_SOURCE_SCRIPT
     )
         if(NOT EXISTS "${${SCRIPT}}")
             message(FATAL_ERROR "Missing required script: ${${SCRIPT}}")
@@ -129,7 +131,38 @@ function(generate_docraft_fonts artifact json_config_path)
         PROPERTIES GENERATED TRUE
     )
 
-    target_sources("${artifact}" PRIVATE "${FINAL_FONTS_H}")
+    #
+    # Registration translation unit
+    #
+    # fonts.h's static registration initializers only run if the header is actually
+    # compiled as part of a translation unit -- listing a .h file as a target source does
+    # not do that. Generate a tiny .cc that includes fonts.h so those initializers link in.
+    #
+    set(FONTS_REGISTRATION_CC "${CMAKE_CURRENT_BINARY_DIR}/fonts_registration.cc")
+    cmake_path(NORMAL_PATH FONTS_REGISTRATION_CC)
+
+    add_custom_command(
+        OUTPUT "${FONTS_REGISTRATION_CC}"
+
+        COMMAND "${CMAKE_COMMAND}"
+            -DOUTPUT_FILE=${FONTS_REGISTRATION_CC}
+            -P "${FONT_REGISTRATION_SOURCE_SCRIPT}"
+
+        DEPENDS
+            "${FINAL_FONTS_H}"
+            "${FONT_REGISTRATION_SOURCE_SCRIPT}"
+
+        COMMENT "Generating fonts registration translation unit"
+
+        VERBATIM
+    )
+
+    set_source_files_properties(
+        "${FONTS_REGISTRATION_CC}"
+        PROPERTIES GENERATED TRUE
+    )
+
+    target_sources("${artifact}" PRIVATE "${FINAL_FONTS_H}" "${FONTS_REGISTRATION_CC}")
 
     target_include_directories(
         "${artifact}"

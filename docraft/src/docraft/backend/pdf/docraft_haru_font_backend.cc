@@ -42,6 +42,23 @@ namespace docraft::backend::pdf {
         return result;
     }
 
+    const char *DocraftHaruFontBackend::register_ttf_font_from_memory(const unsigned char *data,
+                                                                       std::size_t size,
+                                                                       bool embed) const {
+        auto *const pdf = state_ ? state_->pdf : nullptr;
+        if (!pdf || !data) {
+            return nullptr;
+        }
+        const char *result = HPDF_LoadTTFontFromMemory(pdf,
+                                                        data,
+                                                        static_cast<HPDF_UINT>(size),
+                                                        embed ? HPDF_TRUE : HPDF_FALSE);
+        if (!result) {
+            HPDF_ResetError(pdf);
+        }
+        return result;
+    }
+
     bool DocraftHaruFontBackend::can_use_font(const std::string &internal_name,
                                               const char *encoder) const {
         auto *const pdf = state_ ? state_->pdf : nullptr;
