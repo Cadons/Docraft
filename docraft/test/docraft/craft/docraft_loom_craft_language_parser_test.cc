@@ -448,5 +448,17 @@ TEST(DocraftLoomCraftLanguageParserTest, ThrowsWhenBodyIsMissing)
 )XML";
 
   docraft::craft::DocraftLoomCraftLanguageParser parser;
-  EXPECT_THROW(parser.parse(xml), docraft::exception::DataFormatException);
+  EXPECT_THROW(parser.parse(xml), docraft::exception::InvalidInputException);
+}
+TEST(DocraftCraftLanguageParserTest, TypoTopLevelElement)
+{
+  const char* xml = R"XML(<Document><Body></Body><Boddy></Boddy></Document>)XML";
+  docraft::craft::DocraftLoomCraftLanguageParser parser;
+  EXPECT_THROW(parser.parse(xml), docraft::exception::InvalidInputException);
+}
+TEST(DocraftCraftLanguageParserTest, DuplicatedTopLevelElements)
+{
+  const char* xml = R"XML(<Document><Body></Body><Body></Body></Document>)XML";
+  docraft::craft::DocraftLoomCraftLanguageParser parser;
+  EXPECT_THROW(parser.parse(xml), docraft::exception::InvalidInputException);
 }
