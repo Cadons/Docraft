@@ -16,6 +16,9 @@
 
 #include "docraft/backend/pdf/docraft_haru_font_backend.h"
 
+#include <atomic>
+#include <filesystem>
+#include <fstream>
 #include <stdexcept>
 
 #include <hpdf.h>
@@ -46,13 +49,34 @@ namespace docraft::backend::pdf {
                                                                        std::size_t size,
                                                                        bool embed) const {
         auto *const pdf = state_ ? state_->pdf : nullptr;
-        if (!pdf || !data) {
+        if (!pdf || !data || size == 0) {
             return nullptr;
         }
-        const char *result = HPDF_LoadTTFontFromMemory(pdf,
-                                                        data,
-                                                        static_cast<HPDF_UINT>(size),
-                                                        embed ? HPDF_TRUE : HPDF_FALSE);
+
+        // HPDF_LoadTTFontFromMemory doesn't exist in the libharu version vcpkg
+        // distributes (only Homebrew's is new enough) -- write to a temp file and go
+        // through HPDF_LoadTTFontFromFile instead, so this works against any libharu
+        // version. libharu copies the font bytes into its own internal structures at
+        // load time, so the temp file can be removed right after the call.
+        static std::atomic<unsigned int> counter{0};
+        std::error_code ec;
+        const auto tmp_path = std::filesystem::temp_directory_path(ec) /
+            ("docraft_font_" + std::to_string(counter.fetch_add(1)) + ".ttf");
+        if (ec) {
+            return nullptr;
+        }
+        {
+            std::ofstream out(tmp_path, std::ios::binary);
+            if (!out) {
+                return nullptr;
+            }
+            out.write(reinterpret_cast<const char *>(data), static_cast<std::streamsize>(size));
+        }
+
+        const char *result = HPDF_LoadTTFontFromFile(pdf,
+                                                      tmp_path.string().c_str(),
+                                                      embed ? HPDF_TRUE : HPDF_FALSE);
+        std::filesystem::remove(tmp_path, ec);
         if (!result) {
             HPDF_ResetError(pdf);
         }
