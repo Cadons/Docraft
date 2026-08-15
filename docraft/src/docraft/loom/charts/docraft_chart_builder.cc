@@ -90,12 +90,17 @@ namespace docraft::loom::charts {
     }
 
     void DocraftChartBuilder::add_text(nodes::DocraftLoomCanvas& canvas, const std::string& text, float x, float y,
-                                        float font_size, const DocraftColor& color, bool bold)
+                                        float font_size, const DocraftColor& color, bool bold,
+                                        const std::string& font_family)
     {
         auto node = std::make_shared<nodes::DocraftLoomText>(text);
         node->set_font_size(font_size);
         node->set_color(color);
         node->set_bold(bold);
+        if (!font_family.empty())
+        {
+            node->set_font_family(font_family);
+        }
         node->set_explicit_position({.x = x, .y = y});
         canvas.add_child(node);
     }
@@ -139,7 +144,7 @@ namespace docraft::loom::charts {
 
     void DocraftChartBuilder::draw_legend_column(nodes::DocraftLoomCanvas& canvas, float x, float top_y,
                                                   const std::vector<std::pair<DocraftColor, std::string>>& entries,
-                                                  const DocraftColor& text_color)
+                                                  const DocraftColor& text_color, const std::string& font_family)
     {
         for (std::size_t i = 0; i < entries.size(); ++i)
         {
@@ -152,7 +157,7 @@ namespace docraft::loom::charts {
             canvas.add_child(swatch);
 
             add_text(canvas, entries[i].second, x + kLegendSwatchSize + kLegendLabelGap,
-                     row_y - kLegendLabelVerticalNudge, kLegendFontSize, text_color);
+                     row_y - kLegendLabelVerticalNudge, kLegendFontSize, text_color, /*bold=*/false, font_family);
         }
     }
 
@@ -295,7 +300,7 @@ namespace docraft::loom::charts {
             const std::string label = format_x_tick_label(xt, ctx);
             const float label_w = estimate_text_width(label, kTickLabelFontSize);
             add_text(*canvas, label, px - (label_w / 2.0F), plot.bottom + kTickLength + kTickLabelGap,
-                     kTickLabelFontSize, text_color);
+                     kTickLabelFontSize, text_color, /*bold=*/false, ctx.font_family.value_or(""));
         }
         for (float yt : y_ticks)
         {
@@ -304,7 +309,8 @@ namespace docraft::loom::charts {
             const std::string label = format_tick_label(yt);
             const float label_w = estimate_text_width(label, kTickLabelFontSize);
             add_text(*canvas, label, plot.left - kTickLength - kTickLabelGap - label_w,
-                     py - (kTickLabelFontSize / 2.0F), kTickLabelFontSize, text_color);
+                     py - (kTickLabelFontSize / 2.0F), kTickLabelFontSize, text_color, /*bold=*/false,
+                     ctx.font_family.value_or(""));
         }
 
         // 4. Data series, on top of gridlines/axes -- delegated to the concrete style.
@@ -315,7 +321,7 @@ namespace docraft::loom::charts {
         {
             const float title_w = estimate_text_width(*ctx.title, kTitleFontSize);
             add_text(*canvas, *ctx.title, std::max(0.0F, (ctx.width - title_w) / 2.0F), kTitleTopMargin,
-                     kTitleFontSize, text_color, /*bold=*/true);
+                     kTitleFontSize, text_color, /*bold=*/true, ctx.font_family.value_or(""));
         }
 
         // 6. Legend.
@@ -330,7 +336,8 @@ namespace docraft::loom::charts {
                                           ? (std::string(kDefaultSeriesLabelPrefix) + std::to_string(i + 1))
                                           : ctx.series[i].name);
             }
-            draw_legend_column(*canvas, plot.right + kLegendLeftGap, plot.top, entries, text_color);
+            draw_legend_column(*canvas, plot.right + kLegendLeftGap, plot.top, entries, text_color,
+                                ctx.font_family.value_or(""));
         }
 
         // 7. x_label/y_label. y_label is placed horizontally (above the Y axis rail)
@@ -341,14 +348,16 @@ namespace docraft::loom::charts {
         {
             const float label_w = estimate_text_width(*ctx.x_label, kTickLabelFontSize);
             add_text(*canvas, *ctx.x_label, plot.left + std::max(0.0F, (plot.width() - label_w) / 2.0F),
-                     ctx.height - kXLabelHeight, kTickLabelFontSize, text_color);
+                     ctx.height - kXLabelHeight, kTickLabelFontSize, text_color, /*bold=*/false,
+                     ctx.font_family.value_or(""));
         }
         if (ctx.y_label)
         {
             // Its own reserved band (plot.top already accounts for y_label_h), aligned
             // above the plot's left edge -- never shares a row with the topmost Y tick's
             // numeric label, which starts at plot.top.
-            add_text(*canvas, *ctx.y_label, plot.left, title_h + kYLabelTopMargin, kTickLabelFontSize, text_color);
+            add_text(*canvas, *ctx.y_label, plot.left, title_h + kYLabelTopMargin, kTickLabelFontSize, text_color,
+                     /*bold=*/false, ctx.font_family.value_or(""));
         }
 
         return canvas;

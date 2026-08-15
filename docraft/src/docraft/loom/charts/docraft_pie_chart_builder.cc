@@ -108,7 +108,7 @@ namespace docraft::loom::charts {
         {
             const float title_w = estimate_text_width(*ctx.title, kTitleFontSize);
             add_text(*canvas, *ctx.title, std::max(0.0F, (ctx.width - title_w) / 2.0F), kTitleTopMargin,
-                     kTitleFontSize, text_color, /*bold=*/true);
+                     kTitleFontSize, text_color, /*bold=*/true, ctx.font_family.value_or(""));
         }
 
         float total = 0.0F;
@@ -161,14 +161,15 @@ namespace docraft::loom::charts {
                 const float label_w = estimate_text_width(percentage, kPercentageLabelFontSize);
                 add_text(*canvas, percentage, label_pos.x - (label_w / 2.0F),
                          label_pos.y - (kPercentageLabelFontSize / 2.0F), kPercentageLabelFontSize,
-                         percentage_label_color);
+                         percentage_label_color, /*bold=*/false, ctx.font_family.value_or(""));
             }
 
             legend_entries.emplace_back(slice.color, slice.label);
             current_angle += sweep_deg;
         }
 
-        draw_legend_column(*canvas, pie_area.right + kLegendLeftGap, pie_area.top, legend_entries, text_color);
+        draw_legend_column(*canvas, pie_area.right + kLegendLeftGap, pie_area.top, legend_entries, text_color,
+                            ctx.font_family.value_or(""));
         return canvas;
     }
 } // namespace docraft::loom::charts

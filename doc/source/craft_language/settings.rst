@@ -52,6 +52,15 @@ own height is always ``page_height - header_extent - footer_extent``, using
 each region's actual (ratio-or-larger) extent, so it never overlaps the
 other two regions.
 
+Because of this, ``<SectionRatios>`` is **not** the primary lever for page
+geometry in most documents: whenever a header/footer's measured content is
+taller than its ratio's share of the page — the common case for anything
+beyond a one-line header — that measured height wins outright, and changing
+the ratio has no visible effect on pagination at all. Reach for it only to
+pre-reserve extra blank space above a minimum, e.g. to keep a short header
+vertically centered in a taller band; to actually resize a header/footer,
+change its content (or content's padding/margins) instead.
+
 Custom Fonts
 ------------
 
@@ -183,5 +192,8 @@ time depends on which font resolves for that text:
   ellipsis, €, ™, ...) still renders correctly. A character with no
   Windows-1252 representation at all (e.g. CJK, Cyrillic, Greek, emoji)
   renders as ``?`` — use a custom TTF that covers the needed script/range
-  instead.
+  instead. The first time a given unmappable character is hit, Docraft logs a
+  warning to stderr naming the character's Unicode codepoint, so a document
+  silently losing a character during a batch render is discoverable instead
+  of only visible on manual inspection of the output PDF.
 

@@ -652,7 +652,17 @@ namespace docraft::loom::pipeline {
         // doc), so the real string is substituted here before delegating -- alignment,
         // underline/strikeout and the ascent-based baseline all then come from the
         // shared Text paint path for free.
-        const std::string display = std::to_string(current_page_index_ + 1);
+        std::string display = node->format();
+        const auto replace_all = [&display](const std::string& token, const std::string& value) {
+            std::size_t pos = 0;
+            while ((pos = display.find(token, pos)) != std::string::npos)
+            {
+                display.replace(pos, token.size(), value);
+                pos += value.size();
+            }
+        };
+        replace_all("{page}", std::to_string(current_page_index_ + 1));
+        replace_all("{total}", std::to_string(total_page_count_));
         node->set_text(display);
         if (node->wrap_width() > 0.0F)
         {

@@ -32,9 +32,14 @@ explicitly recomputes this derived margin; an explicit `margin`/`margin_*` attri
 ## `<PageNumber />`
 
 Subclass of Text — same attribute set (`font_size`, `font_name`, `color`, `style`, `alignment`,
-`underline`, `strikeout`). At render time its text becomes the current **1-based page number as a
-bare string** ("1", "2", ...) — there is no "Page X of Y" formatting and no `${total_pages}`
-variable; compose that yourself around it if needed. Self-closing, no text content of its own.
+`underline`, `strikeout`), plus `format`. At render time its text is `format` with `{page}`
+replaced by the current 1-based page number and `{total}` replaced by the document's total page
+count; `format` defaults to `"{page}"` (bare current page number, matching the old behavior).
+Self-closing, no text content of its own.
+
+```xml
+<PageNumber format="Page {page} of {total}" />
+```
 
 ## `<Paragraph>`
 

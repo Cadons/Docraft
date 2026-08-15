@@ -120,9 +120,14 @@ namespace docraft::loom::charts {
 
         /**
          * @brief Adds a text node at the given absolute canvas-local pixel coordinates.
+         * @details `font_family`, when non-empty, is applied to the node -- callers pass
+         * `ctx.font_family.value_or("")` so chart text follows the document's configured
+         * default font instead of always falling back to DocraftLoomText's own Helvetica
+         * default.
          */
         static void add_text(nodes::DocraftLoomCanvas& canvas, const std::string& text, float x, float y,
-                              float font_size, const DocraftColor& color, bool bold = false);
+                              float font_size, const DocraftColor& color, bool bold = false,
+                              const std::string& font_family = "");
 
         /**
          * @brief Adds a filled (optionally outlined) polygon at the given absolute
@@ -190,7 +195,7 @@ namespace docraft::loom::charts {
          */
         static void draw_legend_column(nodes::DocraftLoomCanvas& canvas, float x, float top_y,
                                         const std::vector<std::pair<DocraftColor, std::string>>& entries,
-                                        const DocraftColor& text_color);
+                                        const DocraftColor& text_color, const std::string& font_family = "");
 
         // Chrome constants shared across chart styles (Cartesian or not), so a style
         // that overrides build() outright (e.g. pie) still matches the visual language
