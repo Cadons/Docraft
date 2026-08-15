@@ -16,9 +16,9 @@
 
 #include "docraft/backend/pdf/docraft_haru_font_backend.h"
 
-#include <atomic>
+#include <cstdio>
 #include <filesystem>
-#include <fstream>
+#include <random>
 #include <stdexcept>
 
 #include <hpdf.h>
@@ -58,19 +58,39 @@ namespace docraft::backend::pdf {
         // through HPDF_LoadTTFontFromFile instead, so this works against any libharu
         // version. libharu copies the font bytes into its own internal structures at
         // load time, so the temp file can be removed right after the call.
-        static std::atomic<unsigned int> counter{0};
+        //
+        // The temp directory is world-writable, so a predictable name (e.g. an
+        // incrementing counter) would let a local attacker pre-plant a symlink at the
+        // path we're about to open, redirecting our write to an arbitrary file the
+        // process can write to (CWE-377/CWE-59). Guard against that with an
+        // unpredictable name plus fopen's "x" mode, which atomically fails instead of
+        // following an existing symlink/file rather than opening it.
         std::error_code ec;
-        const auto tmp_path = std::filesystem::temp_directory_path(ec) /
-            ("docraft_font_" + std::to_string(counter.fetch_add(1)) + ".ttf");
+        const auto tmp_dir = std::filesystem::temp_directory_path(ec);
         if (ec) {
             return nullptr;
         }
-        {
-            std::ofstream out(tmp_path, std::ios::binary);
-            if (!out) {
-                return nullptr;
-            }
-            out.write(reinterpret_cast<const char *>(data), static_cast<std::streamsize>(size));
+
+        std::random_device rd;
+        std::mt19937_64 rng(rd());
+        std::filesystem::path tmp_path;
+        std::FILE *file = nullptr;
+        for (int attempt = 0; attempt < 8 && !file; ++attempt) {
+            char name[64];
+            std::snprintf(name, sizeof(name), "docraft_font_%016llx.ttf",
+                          static_cast<unsigned long long>(rng()));
+            tmp_path = tmp_dir / name;
+            file = std::fopen(tmp_path.string().c_str(), "wxb");
+        }
+        if (!file) {
+            return nullptr;
+        }
+
+        const std::size_t written = std::fwrite(data, 1, size, file);
+        std::fclose(file);
+        if (written != size) {
+            std::filesystem::remove(tmp_path, ec);
+            return nullptr;
         }
 
         const char *result = HPDF_LoadTTFontFromFile(pdf,
