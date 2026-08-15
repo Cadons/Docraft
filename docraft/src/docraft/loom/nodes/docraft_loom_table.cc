@@ -239,6 +239,12 @@ namespace docraft::loom::nodes {
         return grid_[static_cast<std::size_t>(row)][static_cast<std::size_t>(column)];
     }
 
+    float DocraftLoomTable::row_height(int row) const
+    {
+        auto reference_cell = cell(row, 0);
+        return reference_cell ? reference_cell->layout_box().frame.size.height : 0.0F;
+    }
+
     void DocraftLoomTable::set_column_weights(std::vector<float> weights)
     {
         column_weights_ = std::move(weights);
@@ -279,6 +285,16 @@ namespace docraft::loom::nodes {
         padding_ = padding;
     }
 
+    std::shared_ptr<DocraftLoomTable> DocraftLoomTable::make_remainder_shell() const
+    {
+        auto remainder = std::make_shared<DocraftLoomTable>();
+        remainder->column_weights_ = column_weights_;
+        remainder->default_cell_background_ = default_cell_background_;
+        remainder->baseline_offset_ = baseline_offset_;
+        remainder->padding_ = padding_;
+        return remainder;
+    }
+
     std::shared_ptr<DocraftLoomTable> DocraftLoomTable::split_after_row(int row_index, bool repeat_header_rows)
     {
         if (row_index <= 0 || row_index >= row_count())
@@ -286,11 +302,7 @@ namespace docraft::loom::nodes {
             return nullptr;
         }
 
-        auto remainder = std::make_shared<DocraftLoomTable>();
-        remainder->column_weights_ = column_weights_;
-        remainder->default_cell_background_ = default_cell_background_;
-        remainder->baseline_offset_ = baseline_offset_;
-        remainder->padding_ = padding_;
+        auto remainder = make_remainder_shell();
 
         if (repeat_header_rows)
         {
@@ -370,11 +382,7 @@ namespace docraft::loom::nodes {
         auto [kept_row, remainder_row] = assemble_split_row(splits);
         grid_[static_cast<std::size_t>(row_index)] = std::move(kept_row);
 
-        auto remainder = std::make_shared<DocraftLoomTable>();
-        remainder->column_weights_ = column_weights_;
-        remainder->default_cell_background_ = default_cell_background_;
-        remainder->baseline_offset_ = baseline_offset_;
-        remainder->padding_ = padding_;
+        auto remainder = make_remainder_shell();
 
         if (repeat_header_rows) {
             for (auto &cloned_row: clone_leading_header_rows(row_index)) {

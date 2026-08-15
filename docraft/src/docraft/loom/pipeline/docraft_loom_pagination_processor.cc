@@ -152,16 +152,10 @@ namespace docraft::loom::pipeline {
         // vector, so they need their own recursion branch.
         if (auto* table = dynamic_cast<nodes::DocraftLoomTable*>(&node))
         {
-            for (int r = 0; r < table->row_count(); ++r)
+            table->for_each_cell([&](nodes::DocraftLoomTableCell& cell)
             {
-                for (int c = 0; c < table->column_count(); ++c)
-                {
-                    if (auto cell = table->cell(r, c))
-                    {
-                        assign_page_index_recursive(*cell, page_index);
-                    }
-                }
-            }
+                assign_page_index_recursive(cell, page_index);
+            });
             return;
         }
 
@@ -192,16 +186,10 @@ namespace docraft::loom::pipeline {
         // vector, so they need their own recursion branch (mirrors assign_page_index_recursive).
         if (auto* table = dynamic_cast<nodes::DocraftLoomTable*>(&node))
         {
-            for (int r = 0; r < table->row_count(); ++r)
+            table->for_each_cell([&](nodes::DocraftLoomTableCell& cell)
             {
-                for (int c = 0; c < table->column_count(); ++c)
-                {
-                    if (auto cell = table->cell(r, c))
-                    {
-                        shift_subtree_position(*cell, dy);
-                    }
-                }
-            }
+                shift_subtree_position(cell, dy);
+            });
             return;
         }
 
@@ -228,7 +216,7 @@ namespace docraft::loom::pipeline {
             {
                 continue;
             }
-            const float row_height = reference_cell->layout_box().frame.size.height;
+            const float row_height = remainder->row_height(r);
             const float dy = row_top - reference_cell->layout_box().frame.position.y;
             for (int c = 0; c < remainder_cols; ++c)
             {
@@ -250,10 +238,7 @@ namespace docraft::loom::pipeline {
         float kept_height = 0.0F;
         for (int r = 0; r < table.row_count(); ++r)
         {
-            if (auto reference_cell = table.cell(r, 0))
-            {
-                kept_height += reference_cell->layout_box().frame.size.height;
-            }
+            kept_height += table.row_height(r);
         }
         table.edit_layout_box().frame.size.height = kept_height;
 
@@ -283,8 +268,7 @@ namespace docraft::loom::pipeline {
                 if (!reference_cell) {
                     break;
                 }
-                const auto &frame = reference_cell->layout_box().frame;
-                const float row_bottom = frame.position.y + frame.size.height;
+                const float row_bottom = reference_cell->layout_box().frame.position.y + table.row_height(r);
                 if (row_bottom > page_bottom_y + 0.01F) {
                     break;
                 }

@@ -586,7 +586,7 @@ namespace docraft::loom::pipeline {
         }
         for (int r = 0; r < table.row_count(); ++r)
         {
-            table_size.height += table.cell(r, 0)->layout_box().frame.size.height;
+            table_size.height += table.row_height(r);
         }
         shape_backend_->save_state();
         line_backend_->set_stroke_color(0.0F, 0.0F, 0.0F);
