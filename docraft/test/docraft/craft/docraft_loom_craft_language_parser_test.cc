@@ -6,7 +6,6 @@
 #include "docraft/exception/docraft_exceptions.h"
 #include "docraft/loom/nodes/docraft_loom_text.h"
 #include "docraft/loom/nodes/docraft_loom_vstack.h"
-#include "docraft/utils/docraft_font_registry.h"
 #include "docraft/utils/docraft_test_temp_file.h"
 
 TEST(DocraftLoomCraftLanguageParserTest, ParsesFullDocumentWithHeaderBodyFooter)
@@ -281,39 +280,6 @@ TEST(DocraftLoomCraftLanguageParserTest, ParsesAndRendersWithCustomFontFamily)
 
   const auto creator = parser.edit_creator();
   ASSERT_TRUE(creator);
-  EXPECT_NO_THROW(creator->create());
-
-  const auto output_path = docraft::test::utils::make_unique_temp_path(".pdf");
-  EXPECT_NO_THROW(creator->render(output_path));
-  ASSERT_TRUE(std::filesystem::exists(output_path));
-  EXPECT_GT(std::filesystem::file_size(output_path), 0U);
-  std::filesystem::remove(output_path);
-}
-
-// Regression test: font_name="Roboto"/"OpenSans" (bundled via docraft/fonts.json) must
-// resolve to a real embedded font with no <Settings><Fonts> registration -- previously
-// this silently fell back to Helvetica (see DocraftLoomPdfCreator::register_bundled_fonts()).
-TEST(DocraftLoomCraftLanguageParserTest, ParsesAndRendersWithBundledFontFamily)
-{
-  const char* xml = R"XML(
-<Document>
-  <Body>
-    <Text font_name="Roboto">Roboto text</Text>
-    <Text font_name="OpenSans">OpenSans text</Text>
-  </Body>
-</Document>
-)XML";
-
-  docraft::craft::DocraftLoomCraftLanguageParser parser;
-  EXPECT_NO_THROW(parser.parse(xml));
-
-  const auto creator = parser.edit_creator();
-  ASSERT_TRUE(creator);
-
-  auto& registry = docraft::utils::DocraftFontRegistry::instance();
-  EXPECT_NE(registry.resolve_font_alias("Roboto"), "Roboto");
-  EXPECT_NE(registry.resolve_font_alias("OpenSans"), "OpenSans");
-
   EXPECT_NO_THROW(creator->create());
 
   const auto output_path = docraft::test::utils::make_unique_temp_path(".pdf");

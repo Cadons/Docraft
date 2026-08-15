@@ -433,16 +433,6 @@ namespace docraft::test::utils {
             return it->c_str();
         }
 
-        const char *register_ttf_font_from_memory(const unsigned char *data, std::size_t size, bool) const override {
-            if (!state_->config.supports_font_backend || !data || size == 0) {
-                return nullptr;
-            }
-            const auto [it, inserted] = state_->registered_fonts.insert(
-                "memory-font-" + std::to_string(state_->registered_fonts.size()));
-            (void) inserted;
-            return it->c_str();
-        }
-
         bool can_use_font(const std::string &internal_name, const char *) const override {
             if (!state_->config.supports_font_backend || !state_->config.can_use_font) {
                 return false;

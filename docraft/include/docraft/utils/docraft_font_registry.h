@@ -78,14 +78,6 @@ namespace docraft::utils {
         std::vector<std::string> registered_font_names() const;
 
         /**
-         * @brief Returns the names of fonts registered from raw bytes (e.g. bundled fonts
-         * embedded at build time), excluding alias-only names -- unlike
-         * registered_font_names(), this does not include entries from register_font_alias().
-         * @return Vector of raw font names.
-         */
-        std::vector<std::string> raw_font_names() const;
-
-        /**
          * @brief Registers an alias for a font name, e.g. mapping a craft-language family
          * name like "OpenSans-Bold" to whatever internal name the backend actually loaded
          * the font under (which the backend chooses, not the caller -- see

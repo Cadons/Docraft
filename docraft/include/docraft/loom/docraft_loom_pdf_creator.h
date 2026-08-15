@@ -146,19 +146,6 @@ namespace docraft::loom {
         const Margins& footer_margins() const;
 
     private:
-        /**
-         * @brief Embeds every bundled font (docraft/fonts.json, registered as raw bytes
-         * into DocraftFontRegistry at static-init time) into this document's backend and
-         * aliases it under its bundled name, so `font_name="Roboto"`/`"OpenSans"` etc.
-         * work with no `<Settings><Fonts>` registration. Called once from the constructor,
-         * before any document-declared `<Fonts>` are applied via register_font() -- a
-         * document that registers its own font under the same family name simply
-         * overwrites the bundled alias (register_font_alias() overwrites on duplicate key).
-         * A bundled font that fails to embed is logged and skipped, not thrown -- unlike a
-         * user's explicit, intentionally-declared font failing to load.
-         */
-        void register_bundled_fonts();
-
         std::shared_ptr<interfaces::DocraftLoomIVisitorNode> root_node_; //taken as input, the body
         std::shared_ptr<nodes::DocraftLoomNode> header_;
         std::shared_ptr<nodes::DocraftLoomNode> footer_;

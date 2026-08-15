@@ -34,9 +34,6 @@ namespace docraft::backend::pdf {
 
         const char *register_ttf_font_from_file(const std::string &path, bool embed) const override;
 
-        const char *register_ttf_font_from_memory(const unsigned char *data, std::size_t size,
-                                                   bool embed) const override;
-
         bool can_use_font(const std::string &internal_name, const char *encoder) const override;
 
         void set_font(const std::string &internal_name, float size, const char *encoder) const override;

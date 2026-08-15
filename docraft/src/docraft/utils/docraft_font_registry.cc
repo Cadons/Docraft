@@ -20,16 +20,8 @@
 #include <iostream>
 #include <memory>
 
-// Defined in the generated fonts.h, compiled into its own translation unit
-// (fonts_registration.cc) so the file-scope statics that call register_font() for each
-// bundled font actually run. That translation unit exports no other referenced symbol, so
-// a static library linker drops it unless something calls this anchor function to force it
-// into the final binary.
-extern void docraft_register_fonts();
-
 namespace docraft::utils {
     DocraftFontRegistry& DocraftFontRegistry::instance() {
-        docraft_register_fonts();
         static DocraftFontRegistry inst;
         return inst;
     }
@@ -77,15 +69,6 @@ namespace docraft::utils {
         }
         for (const auto& pair : aliases_)
         {
-            names.push_back(pair.first);
-        }
-        return names;
-    }
-
-    std::vector<std::string> DocraftFontRegistry::raw_font_names() const {
-        std::vector<std::string> names;
-        names.reserve(registry_.size());
-        for (const auto &pair : registry_) {
             names.push_back(pair.first);
         }
         return names;

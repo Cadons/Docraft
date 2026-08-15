@@ -18,7 +18,6 @@
 
 #include "docraft/docraft_lib.h"
 
-#include <cstddef>
 #include <string>
 
 namespace docraft::backend {
@@ -36,16 +35,6 @@ namespace docraft::backend {
          * @return Backend internal font name.
          */
         virtual const char *register_ttf_font_from_file(const std::string &path, bool embed) const = 0;
-
-        /**
-         * @brief Registers a TTF font from in-memory bytes and returns the internal name.
-         * @param data Raw TTF font bytes.
-         * @param size Size of data in bytes.
-         * @param embed Whether to embed the font in the document.
-         * @return Backend internal font name, or nullptr on failure.
-         */
-        virtual const char *register_ttf_font_from_memory(const unsigned char *data, std::size_t size,
-                                                           bool embed) const = 0;
 
         /**
          * @brief Checks whether a font can be used with the given encoder.
