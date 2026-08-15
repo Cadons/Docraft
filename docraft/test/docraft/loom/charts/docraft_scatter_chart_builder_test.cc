@@ -217,6 +217,59 @@ namespace docraft::test {
         EXPECT_TRUE(any_text_equals(*canvas, "Value"));
     }
 
+    TEST(DocraftScatterChartBuilderTest, TextHonorsContextFontFamilyInsteadOfAlwaysHelvetica)
+    {
+        // Regression test: chart title/axis-label/legend/tick text used to ignore
+        // ctx.font_family entirely and always render in DocraftLoomText's own Helvetica
+        // default, even when the document configured a custom default font.
+        DocraftChartBuildContext ctx;
+        ctx.width = 300.0F;
+        ctx.height = 200.0F;
+        ctx.title = "Sales Overview";
+        ctx.x_label = "Time";
+        ctx.y_label = "Value";
+        ctx.font_family = "OpenSans";
+        DocraftChartSeries named_series;
+        named_series.name = "2026";
+        named_series.points = {{.x = 1.0F, .y = 1.0F}, {.x = 2.0F, .y = 2.0F}};
+        ctx.series = {named_series};
+
+        const auto canvas = build_scatter_chart(ctx);
+
+        ASSERT_GT(canvas->children_count(), 0);
+        int text_node_count = 0;
+        for (int i = 0; i < canvas->children_count(); ++i)
+        {
+            if (auto text = std::dynamic_pointer_cast<const DocraftLoomText>(canvas->child(i)))
+            {
+                ++text_node_count;
+                EXPECT_EQ(text->font_family(), "OpenSans") << "text: " << text->text();
+            }
+        }
+        EXPECT_GT(text_node_count, 0);
+    }
+
+    TEST(DocraftScatterChartBuilderTest, TextFallsBackToDefaultFontFamilyWhenContextLeavesItUnset)
+    {
+        DocraftChartBuildContext ctx;
+        ctx.width = 300.0F;
+        ctx.height = 200.0F;
+        ctx.title = "Sales Overview";
+
+        const auto canvas = build_scatter_chart(ctx);
+
+        const auto pos = position_of_text(*canvas, "Sales Overview");
+        ASSERT_TRUE(pos.has_value());
+        for (int i = 0; i < canvas->children_count(); ++i)
+        {
+            if (auto text = std::dynamic_pointer_cast<const DocraftLoomText>(canvas->child(i));
+                text && text->text() == "Sales Overview")
+            {
+                EXPECT_EQ(text->font_family(), "Helvetica");
+            }
+        }
+    }
+
     TEST(DocraftScatterChartBuilderTest, PaintOrderDrawsLinesBeforePoints)
     {
         DocraftChartBuildContext ctx;

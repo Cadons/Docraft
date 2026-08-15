@@ -16,7 +16,20 @@
 
 #include "docraft/backend/pdf/docraft_haru_font_backend.h"
 
+#include <cstdio>
+#include <filesystem>
 #include <stdexcept>
+#include <vector>
+
+#if defined(_WIN32)
+#include <fcntl.h>
+#include <io.h>
+#include <share.h>
+#include <sys/stat.h>
+#else
+#include <cstdlib>
+#include <unistd.h>
+#endif
 
 #include <hpdf.h>
 

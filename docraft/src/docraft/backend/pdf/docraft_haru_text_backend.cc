@@ -18,6 +18,10 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <unordered_set>
 
 #include <hpdf.h>
 
@@ -78,6 +82,25 @@ namespace docraft::backend::pdf {
             return codepoint;
         }
 
+        // Warns once per unique unmappable codepoint (not once per occurrence) that it
+        // was replaced with '?' -- a base-14 font has no way to render it, and a custom
+        // TTF registered via <Font> is the only fix, but nothing surfaced that silently
+        // otherwise.
+        void warn_unmappable_codepoint_once(char32_t codepoint)
+        {
+            static std::unordered_set<char32_t> warned;
+            if (!warned.insert(codepoint).second)
+            {
+                return;
+            }
+            std::ostringstream oss;
+            oss << "warning: character U+" << std::hex << std::uppercase << std::setfill('0') << std::setw(4)
+                << static_cast<unsigned int>(codepoint)
+                << " has no WinAnsiEncoding (Windows-1252) representation and was replaced with '?' -- "
+                   "register a custom TTF via <Font> to render it correctly.";
+            std::cerr << oss.str() << std::endl;
+        }
+
         // Maps a Unicode codepoint to its WinAnsiEncoding (Windows-1252) byte, or '?' if
         // that single-byte encoding has no glyph for it. 0x00-0x7F and 0xA0-0xFF match
         // Unicode directly (the latter covers every accented Western-European letter --
@@ -119,7 +142,9 @@ namespace docraft::backend::pdf {
             case 0x0153: return 0x9C;
             case 0x017E: return 0x9E;
             case 0x0178: return 0x9F;
-            default: return '?';
+            default:
+                warn_unmappable_codepoint_once(codepoint);
+                return '?';
             }
         }
 

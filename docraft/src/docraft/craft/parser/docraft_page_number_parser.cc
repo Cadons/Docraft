@@ -45,6 +45,9 @@ namespace docraft::craft::parser {
         if (auto strikeout_attr = craft_language_source.attribute(elements::text::attribute::kStrikeout.data())) {
             data.strikeout = strikeout_attr.as_bool();
         }
+        if (auto format_attr = craft_language_source.attribute(elements::page_number::attribute::kFormat.data())) {
+            data.format = format_attr.as_string();
+        }
 
         return data;
     }
@@ -58,7 +61,8 @@ namespace docraft::craft::parser {
             elements::text::attribute::kAlignment,
             elements::text::attribute::kUnderline,
             elements::text::attribute::kStrikeout,
-            basic::attribute::kColor
+            basic::attribute::kColor,
+            elements::page_number::attribute::kFormat
         };
     }
 } // namespace docraft::craft::parser

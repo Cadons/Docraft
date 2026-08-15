@@ -24,6 +24,7 @@ set(TEST_SOURCES
         docraft/loom/nodes/docraft_loom_canvas_test.cc
         docraft/loom/nodes/docraft_loom_shape_nodes_test.cc
         docraft/loom/nodes/docraft_loom_list_test.cc
+        docraft/loom/nodes/docraft_loom_page_number_test.cc
         docraft/loom/nodes/docraft_loom_table_test.cc
         docraft/backend/docraft_mock_backend.h
         docraft/craft/docraft_shape_parser_test.cc
@@ -34,6 +35,7 @@ set(TEST_SOURCES
         docraft/craft/docraft_paragraph_parser_test.cc
         docraft/craft/docraft_section_parser_test.cc
         docraft/craft/docraft_loom_craft_language_parser_test.cc
+        docraft/tools/docraft_validator_test.cc
         docraft/loom/craft/docraft_loom_tree_builder_test.cc
         docraft/loom/charts/docraft_chart_axis_helpers_test.cc
         docraft/loom/charts/docraft_scatter_chart_builder_test.cc

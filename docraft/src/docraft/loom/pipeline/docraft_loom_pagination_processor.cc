@@ -22,14 +22,17 @@
 namespace docraft::loom::pipeline {
     void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomText*)
     {
+        //Do nothing
     }
 
     void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomTitle*)
     {
+        //Do nothing
     }
 
     void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomSubtitle*)
     {
+        //Do nothing
     }
 
     void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomRectangle* node)
@@ -44,6 +47,7 @@ namespace docraft::loom::pipeline {
 
     void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomParagraph*)
     {
+        //Do nothing
     }
 
     void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomVStack* node)
@@ -58,30 +62,37 @@ namespace docraft::loom::pipeline {
 
     void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomBlankLine*)
     {
+        //Do nothing
     }
 
     void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomImage*)
     {
+        //Do nothing
     }
 
     void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomLine*)
     {
+        //Do nothing
     }
 
     void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomCircle*)
     {
+        //Do nothing
     }
 
     void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomTriangle*)
     {
+        //Do nothing
     }
 
     void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomPolygon*)
     {
+        //Do nothing
     }
 
     void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomCurveLine*)
     {
+        //Do nothing
     }
 
     void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomList* node)
@@ -121,6 +132,7 @@ namespace docraft::loom::pipeline {
 
     void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomPageNumber*)
     {
+        //Do nothing
     }
 
     void DocraftLoomPaginationProcessor::visit(docraft::loom::nodes::DocraftLoomNewPage*)
@@ -152,8 +164,7 @@ namespace docraft::loom::pipeline {
         // vector, so they need their own recursion branch.
         if (auto* table = dynamic_cast<nodes::DocraftLoomTable*>(&node))
         {
-            table->for_each_cell([&](nodes::DocraftLoomTableCell& cell)
-            {
+            table->for_each_cell([page_index](nodes::DocraftLoomTableCell &cell) {
                 assign_page_index_recursive(cell, page_index);
             });
             return;
@@ -186,8 +197,7 @@ namespace docraft::loom::pipeline {
         // vector, so they need their own recursion branch (mirrors assign_page_index_recursive).
         if (auto* table = dynamic_cast<nodes::DocraftLoomTable*>(&node))
         {
-            table->for_each_cell([&](nodes::DocraftLoomTableCell& cell)
-            {
+            table->for_each_cell([dy](nodes::DocraftLoomTableCell &cell) {
                 shift_subtree_position(cell, dy);
             });
             return;
@@ -265,11 +275,11 @@ namespace docraft::loom::pipeline {
         if (rows > 1) {
             for (int r = 0; r < rows; ++r) {
                 auto reference_cell = table.cell(r, 0);
-                if (!reference_cell) {
-                    break;
-                }
-                const float row_bottom = reference_cell->layout_box().frame.position.y + table.row_height(r);
-                if (row_bottom > page_bottom_y + 0.01F) {
+                const float row_bottom = reference_cell
+                                             ? reference_cell->layout_box().frame.position.y + table.row_height(r)
+                                             : -1.0F;
+                //row_bottom can't be negative, if it is, it means the cell is missing or has no layout box yet (e.g. a blank line), so the row doesn't fit.
+                if (row_bottom == -1.0F || row_bottom > page_bottom_y + 0.01F) {
                     break;
                 }
                 ++fit_rows;
