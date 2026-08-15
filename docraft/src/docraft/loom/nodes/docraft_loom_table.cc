@@ -88,14 +88,18 @@ namespace docraft::loom::nodes {
                 if (natural_height > available_height + 0.01F) {
                     return std::nullopt;
                 }
-                cell->edit_layout_box().frame.size.height = natural_height;
-                return CellContentSplit{.kept = cell, .remainder = nullptr};
+                // Clone rather than mutate cell in place: the caller may still abandon
+                // the whole row's split (another cell returns nullopt), and the original
+                // grid_ cell must be left untouched for that to be a true no-op.
+                auto kept_cell = clone_cell(*cell);
+                kept_cell->edit_layout_box().frame.size.height = natural_height;
+                return CellContentSplit{.kept = kept_cell, .remainder = nullptr};
             }
 
             const float line_height = text->layout_box().measured_size.height / static_cast<float>(line_count);
             const float text_available = std::max(0.0F, available_height - (2.0F * DocraftLoomTable::kCellPaddingY));
             int keep_count = line_height > 0.0F
-                                 ? static_cast<int>(text_available / line_height)
+                                 ? static_cast<int>((text_available + 0.01F) / line_height)
                                  : static_cast<int>(line_count);
             keep_count = std::clamp(keep_count, 0, static_cast<int>(line_count));
 
@@ -106,10 +110,12 @@ namespace docraft::loom::nodes {
             }
             if (keep_count >= static_cast<int>(line_count)) {
                 // This cell's whole content actually fits -- it just wasn't the row's
-                // own bottleneck -- so there's nothing to carry over for it. Normalize
-                // its frame away from any prior row-uniform stretch, same as above.
-                cell->edit_layout_box().frame.size.height = cell->layout_box().measured_size.height;
-                return CellContentSplit{.kept = cell, .remainder = nullptr};
+                // own bottleneck -- so there's nothing to carry over for it. Clone
+                // (same reasoning as above) and normalize its frame away from any prior
+                // row-uniform stretch.
+                auto kept_cell = clone_cell(*cell);
+                kept_cell->edit_layout_box().frame.size.height = cell->layout_box().measured_size.height;
+                return CellContentSplit{.kept = kept_cell, .remainder = nullptr};
             }
 
             const auto &lines = text->wrapped_lines();
@@ -174,6 +180,15 @@ namespace docraft::loom::nodes {
                 // position) so the caller's uniform per-row shift lands it correctly.
                 auto blank = std::make_shared<DocraftLoomTableCell>();
                 blank->set_is_title(split.kept->is_title());
+                // No set_content() call -- this cell stays blank -- but background and
+                // explicit_width are still styling of the cell itself and must carry
+                // over, same as clone_cell does for the split.kept/remainder cells.
+                if (split.kept->background()) {
+                    blank->set_background(*split.kept->background());
+                }
+                if (split.kept->explicit_width()) {
+                    blank->set_explicit_width(*split.kept->explicit_width());
+                }
                 blank->edit_layout_box().frame = {
                     .position = split.kept->layout_box().frame.position,
                     .size = {split.kept->layout_box().frame.size.width, remainder_row_height}
