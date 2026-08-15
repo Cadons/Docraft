@@ -9,6 +9,7 @@
 
 #include "docraft/backend/pdf/docraft_haru_backend.h"
 #include "docraft/exception/docraft_exceptions.h"
+#include "docraft/utils/docraft_logger.h"
 #include "docraft/loom/pipeline/docraft_loom_measure_processor.h"
 #include "docraft/loom/pipeline/docraft_loom_pagination_processor.h"
 #include "docraft/loom/pipeline/docraft_loom_pipeline_executor.h"
@@ -20,6 +21,29 @@ namespace docraft::loom {
         : root_node_(std::move(root_node))
     {
         backend_ = std::make_shared<docraft::backend::pdf::DocraftHaruBackend>();
+        register_bundled_fonts();
+    }
+
+    void DocraftLoomPdfCreator::register_bundled_fonts()
+    {
+        auto* font_backend = backend_->edit_font_backend();
+        auto& registry = docraft::utils::DocraftFontRegistry::instance();
+        for (const auto& name : registry.raw_font_names())
+        {
+            const auto* font_data = registry.find_font(name);
+            if (!font_data)
+            {
+                continue;
+            }
+            const char* internal_name = font_backend->register_ttf_font_from_memory(font_data->data,
+                font_data->size, /*embed=*/true);
+            if (!internal_name)
+            {
+                LOG_WARNING("Failed to embed bundled font '" + name + "'; it will not be available via font_name.");
+                continue;
+            }
+            registry.register_font_alias(name, internal_name);
+        }
     }
 
     void DocraftLoomPdfCreator::set_header(std::shared_ptr<nodes::DocraftLoomNode> header)

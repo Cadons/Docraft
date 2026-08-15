@@ -22,6 +22,7 @@
 #include <hpdf.h>
 
 #include "docraft/utils/docraft_font_registry.h"
+#include "docraft/utils/docraft_logger.h"
 
 namespace docraft::backend::pdf {
     namespace {
@@ -239,6 +240,10 @@ namespace docraft::backend::pdf {
                 return font;
             }
             HPDF_ResetError(state_->pdf);
+        }
+        if (warned_unresolved_fonts_.insert(font_name).second)
+        {
+            LOG_WARNING("Font '" + font_name + "' could not be resolved; falling back to " + kDefaultFont);
         }
         return HPDF_GetFont(state_->pdf, kDefaultFont.c_str(), "WinAnsiEncoding");
     }
