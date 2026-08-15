@@ -594,6 +594,17 @@ TEST(DocraftLoomTreeBuilderTest, BuildsPageNumber)
     ASSERT_TRUE(page_number);
     EXPECT_FLOAT_EQ(page_number->font_size(), 9.0F);
     EXPECT_TRUE(page_number->italic());
+    EXPECT_EQ(page_number->format(), "{page}");
+}
+
+TEST(DocraftLoomTreeBuilderTest, PageNumberFormatAttributeIsCarriedThroughToNode)
+{
+    const char* xml = R"XML(<PageNumber format="Page {page} of {total}" />)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto page_number = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomPageNumber>(node);
+    ASSERT_TRUE(page_number);
+    EXPECT_EQ(page_number->format(), "Page {page} of {total}");
 }
 
 TEST(DocraftLoomTreeBuilderTest, DefaultFontFamilyAppliesToTextWithoutFontNameAttribute)

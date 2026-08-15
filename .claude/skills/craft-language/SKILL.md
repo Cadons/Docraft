@@ -82,7 +82,7 @@ Full attributes/enums/examples for every one of these are in `references/nodes.m
 | Tag | Purpose |
 |---|---|
 | `<Text>`, `<Title>`, `<Subtitle>` | Text runs. Title/Subtitle = bold + larger default size + auto margin. |
-| `<PageNumber />` | Self-updating current page number (bare digits, no "of N"). |
+| `<PageNumber />` | Self-updating current page number; `format="Page {page} of {total}"` for a total-page count. |
 | `<Paragraph>` | Groups Text runs (or bare text) into one block with line-spacing/alignment. |
 | `<Rectangle>` | Block-stacking container with optional fill/border. |
 | `<Canvas>` | Free-form container — children positioned by their own local `x`/`y`, clipped to bounds. `width`/`height` required. |
@@ -128,8 +128,8 @@ conditional/branching directive** — only `visible` (boolean show/hide of one e
 
 1. Every attribute you used exists on that tag (check `references/nodes.md` — unrecognized
    attributes are a hard parse error).
-2. `<Cell>` contains exactly one `<Text>` or `<Image>` child, nothing else (a third tag causes an
-   internal `bad_any_cast`, not a clean error — see `references/gotchas.md` #3).
+2. `<Cell>` contains exactly one `<Text>` or `<Image>` child, nothing else (a second child or any
+   other tag throws `InvalidInputException` at parse time — see `references/gotchas.md` #3).
 3. If you used `z_index`, remember it only reorders *paint*, not layout position or flow.
 4. If you want per-row table backgrounds, don't rely on `<Row background_color="...">` — it's
    parsed but never applied (`references/gotchas.md` #2). Set `background_color` per `<Cell>`, or

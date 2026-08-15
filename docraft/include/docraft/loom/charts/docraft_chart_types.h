@@ -71,6 +71,11 @@ namespace docraft::loom::charts {
         // Only meaningful for the "pie" style -- whether each slice draws its centered
         // percentage-of-total label. Ignored by Cartesian styles.
         bool show_percentage = true;
+        // The document's `<Settings><Fonts default="...">` family, if set -- applied to
+        // every text a chart style draws (title/axis labels/legend/tick labels) so chart
+        // text matches the surrounding document instead of always rendering in
+        // DocraftLoomText's own Helvetica default.
+        std::optional<std::string> font_family;
     };
 
     /**

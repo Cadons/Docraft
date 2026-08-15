@@ -19,6 +19,17 @@
 #include "docraft/utils/docraft_file_utils.h"
 
 #include <stdexcept>
+#include <vector>
+
+#if defined(_WIN32)
+#include <fcntl.h>
+#include <io.h>
+#include <share.h>
+#include <sys/stat.h>
+#else
+#include <cstdlib>
+#include <unistd.h>
+#endif
 
 #include <hpdf.h>
 

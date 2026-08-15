@@ -32,9 +32,14 @@ explicitly recomputes this derived margin; an explicit `margin`/`margin_*` attri
 ## `<PageNumber />`
 
 Subclass of Text — same attribute set (`font_size`, `font_name`, `color`, `style`, `alignment`,
-`underline`, `strikeout`). At render time its text becomes the current **1-based page number as a
-bare string** ("1", "2", ...) — there is no "Page X of Y" formatting and no `${total_pages}`
-variable; compose that yourself around it if needed. Self-closing, no text content of its own.
+`underline`, `strikeout`), plus `format`. At render time its text is `format` with `{page}`
+replaced by the current 1-based page number and `{total}` replaced by the document's total page
+count; `format` defaults to `"{page}"` (bare current page number, matching the old behavior).
+Self-closing, no text content of its own.
+
+```xml
+<PageNumber format="Page {page} of {total}" />
+```
 
 ## `<Paragraph>`
 
@@ -273,9 +278,10 @@ JSON/templated model, or it throws ("THead tag not found, it is mandatory").
 table header** ("Title is reserved for text headings; use HTitle in table headers").
 
 `<Cell>` accepts **only** `width` (float, `> 0`) and `background_color` — no other attributes,
-not even the common ones — and exactly **one child, which must be `<Text>` or `<Image>`**. Any
-other content type is a parser trap, see `gotchas.md` #3. `<Row>` accepts only
-`background_color`, but see `gotchas.md` #2 — it's parsed and never applied.
+not even the common ones — and exactly **one child, which must be `<Text>` or `<Image>`**. A
+second child, or any other content type, throws `InvalidInputException` at parse time — see
+`gotchas.md` #3. `<Row>` accepts only `background_color`, but see `gotchas.md` #2 — it's parsed
+and never applied.
 
 **JSON/templated `model` forms:**
 

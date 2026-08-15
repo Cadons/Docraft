@@ -86,7 +86,11 @@ the page rather than overflowing off it.
   `0.06 / 0.88 / 0.06`, each must be `>= 0`, and the sum must be `<= 1.0` (+1e-6 tolerance) or
   `InvalidInputException` ("Section ratios must sum to 1.0 or less"). These are only fractions
   used to compute an *initial* region height — a region whose real content needs more room still
-  gets it (see Header/Body/Footer note above).
+  gets it (see Header/Body/Footer note above). In practice this means the ratios rarely change
+  pagination on their own: any header/footer with more than a line of content usually already
+  measures taller than its ratio's share, so that measured height wins and the ratio has no
+  visible effect. Resize a header/footer by changing its content (or padding/margins), not the
+  ratio; use the ratio only to pre-reserve blank space above a known minimum.
 - `<Fonts default="FamilyName">`: sets the font family used by every Text/Title/Subtitle/
   PageNumber/table-cell-text node that doesn't set its own `font_name`. Empty string throws.
   - `<Font name="FamilyName">` registers a family from up to 4 TTF variants: `<FontNormal
