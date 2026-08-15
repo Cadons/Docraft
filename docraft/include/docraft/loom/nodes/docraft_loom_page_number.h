@@ -22,7 +22,7 @@ namespace docraft::loom::nodes {
          * current 1-based page number, `{total}` with the document's total page count.
          * Defaults to `"{page}"`.
          */
-        void set_format(std::string format) { format_ = std::move(format); }
+        void set_format(const std::string& format) { format_ = format; }
         [[nodiscard]] const std::string& format() const { return format_; }
 
     private:

@@ -119,15 +119,27 @@ namespace docraft::loom::charts {
                                const DocraftColor& color, float width);
 
         /**
-         * @brief Adds a text node at the given absolute canvas-local pixel coordinates.
+         * @brief Inputs for add_text(): everything about the text node except which
+         * canvas it's added to.
          * @details `font_family`, when non-empty, is applied to the node -- callers pass
          * `ctx.font_family.value_or("")` so chart text follows the document's configured
          * default font instead of always falling back to DocraftLoomText's own Helvetica
          * default.
          */
-        static void add_text(nodes::DocraftLoomCanvas& canvas, const std::string& text, float x, float y,
-                              float font_size, const DocraftColor& color, bool bold = false,
-                              const std::string& font_family = "");
+        struct AddTextRequest {
+            const std::string& text;
+            float x;
+            float y;
+            float font_size;
+            const DocraftColor& color;
+            bool bold;
+            const std::string& font_family;
+        };
+
+        /**
+         * @brief Adds a text node at the given absolute canvas-local pixel coordinates.
+         */
+        static void add_text(nodes::DocraftLoomCanvas& canvas, const AddTextRequest& request);
 
         /**
          * @brief Adds a filled (optionally outlined) polygon at the given absolute
@@ -186,16 +198,26 @@ namespace docraft::loom::charts {
         static float map_y(float value, const PlotRect& plot, const DataBounds& mapped_bounds);
 
         /**
+         * @brief Inputs for draw_legend_column(): everything about the legend column
+         * except which canvas it's added to.
+         */
+        struct LegendColumnRequest {
+            float x;
+            float top_y;
+            const std::vector<std::pair<DocraftColor, std::string>>& entries;
+            const DocraftColor& text_color;
+            const std::string& font_family;
+        };
+
+        /**
          * @brief Draws a vertical column of legend rows (a color swatch + label per
-         * entry) starting at (x, top_y), one row per `entries` item, in order.
+         * entry) starting at (request.x, request.top_y), one row per entry, in order.
          * @details Shared by the Cartesian chrome's own per-series legend (build()'s
          * step 6) and any chart style that needs a differently-keyed legend instead
          * (e.g. a pie chart's per-slice legend, which has no notion of "series" to key
          * off of).
          */
-        static void draw_legend_column(nodes::DocraftLoomCanvas& canvas, float x, float top_y,
-                                        const std::vector<std::pair<DocraftColor, std::string>>& entries,
-                                        const DocraftColor& text_color, const std::string& font_family = "");
+        static void draw_legend_column(nodes::DocraftLoomCanvas& canvas, const LegendColumnRequest& request);
 
         // Chrome constants shared across chart styles (Cartesian or not), so a style
         // that overrides build() outright (e.g. pie) still matches the visual language
