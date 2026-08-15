@@ -364,6 +364,14 @@ namespace docraft::craft {
         // anything else is deliberately skipped rather than parsed (out of scope for this
         // phase; see the class-level doc comment). Foreach/NewPage are recognized inside
         // Header/Body/Footer's subtree (registered per-tag parsers), not here.
+         std::unordered_map<std::string_view, bool> seen_tags={
+            {section::kHeader, false},
+            {section::kBody, false},
+            {section::kFooter, false},
+            {elements::kSettings, false},
+            {section::kMetadata, false}
+        };//These elements can be place one time only
+
         for (pugi::xml_node child : document_node.children())
         {
             if (child.type() != pugi::node_element)
@@ -371,31 +379,46 @@ namespace docraft::craft {
                 continue;
             }
             const std::string tag = child.name();
+            for (const auto& [seen_tag, seen] : seen_tags)
+            {
+                if (tag == std::string{seen_tag} && seen)
+                {
+                    throw docraft::exception::InvalidInputException(
+                        "Duplicate top-level element <" + tag + "> in <" + std::string{section::kDocument} + ">, only one is allowed");
+                }
+            }
             if (tag == std::string{section::kHeader})
             {
                 header_element = craft_parser.parse_node(child);
+                seen_tags.at(section::kHeader) = true;
             }
             else if (tag == std::string{section::kBody})
             {
                 body_element = craft_parser.parse_node(child);
+                seen_tags.at(section::kBody) = true;
             }
             else if (tag == std::string{section::kFooter})
             {
                 footer_element = craft_parser.parse_node(child);
+                seen_tags.at(section::kFooter) = true;
             }
             else if (tag == std::string{elements::kSettings})
             {
                 settings_node = child;
+                seen_tags.at(elements::kSettings) = true;
             }
             else if (tag == std::string{section::kMetadata})
             {
                 metadata_node = child;
+                seen_tags.at(section::kMetadata) = true;
+            }else {
+                throw docraft::exception::InvalidInputException(std::format("Unknown top-level element <{}> in <{}>", tag, section::kDocument));
             }
         }
 
         if (!body_element)
         {
-            throw docraft::exception::DataFormatException(
+            throw docraft::exception::InvalidInputException(
                 "Invalid .craft document: missing required <" + std::string{section::kBody} + "> element");
         }
 
