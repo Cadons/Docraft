@@ -163,3 +163,36 @@ The ``model`` attribute accepts:
 
 The header can also be bound with a template variable using ``model``
 on ``<THead>``.
+
+Pagination
+----------
+
+A table that doesn't fit in the space remaining on a page splits across
+pages automatically — you don't need (and can't use) ``<NewPage/>`` inside a
+``<Table>``, splitting is entirely automatic.
+
+- **Whole rows first.** As many complete rows as fit stay on the current
+  page; the rest continue as a new table at the top of the next page.
+- **Header rows repeat.** A leading run of rows whose cells are *all*
+  title cells (``<HTitle>`` in a horizontal table, ``<VTitle>`` in a
+  vertical one) is treated as the table's header and is cloned onto every
+  continuation page, so readers always see the column/row titles.
+- **An oversized row splits by content, not just by row.** If a single row
+  — most commonly the first content row right after a repeated header —
+  is by itself taller than a whole page (typically a cell with a lot of
+  wrapped text), Docraft splits that row's text content: as many wrapped
+  lines as fit stay on the current page, and the remaining lines continue
+  as the same row on the next page, rather than pushing the whole row
+  forward indefinitely.
+- **Non-text content sets a hard limit.** Only ``<Text>`` cell content can
+  be split line-by-line this way. A row that doesn't fit and contains a
+  cell whose content isn't splittable (e.g. an ``<Image>`` too tall for one
+  page on its own) is rendered as-is, extending past the page's bottom
+  margin, instead of being pushed to an endless sequence of new pages.
+
+.. note::
+
+   Every cell in a row always shares that row's height (the tallest cell in
+   the row), including the continuation row created by a content split —
+   a column that finished its own text early is simply left blank on the
+   continuation rather than repeating already-shown content.
