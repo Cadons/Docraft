@@ -938,38 +938,17 @@ TEST(DocraftLoomTreeBuilderTest, LayoutWeightsAttributeAppliesToHStack)
     EXPECT_FLOAT_EQ(hstack->weights()[2], 1.0F);
 }
 
-TEST(DocraftLoomTreeBuilderTest, PerChildWeightAttributeAppliesToHStack)
+// There is no per-child `weight` attribute -- the only way to specify per-child
+// weights is `<Layout weights="1,2,1">` on the Layout element itself.
+TEST(DocraftLoomTreeBuilderTest, PerChildWeightAttributeIsRejected)
 {
     const char* xml = R"XML(
 <Layout orientation="horizontal">
   <Text weight="1">A</Text>
-  <Text weight="3">B</Text>
 </Layout>
 )XML";
 
-    const auto node = parse_and_build(xml);
-    const auto hstack = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomHStack>(node);
-    ASSERT_TRUE(hstack);
-    ASSERT_EQ(hstack->weights().size(), 2U);
-    EXPECT_FLOAT_EQ(hstack->weights()[0], 1.0F);
-    EXPECT_FLOAT_EQ(hstack->weights()[1], 3.0F);
-}
-
-TEST(DocraftLoomTreeBuilderTest, ExplicitLayoutWeightsTakePrecedenceOverPerChildWeight)
-{
-    const char* xml = R"XML(
-<Layout orientation="horizontal" weights="4,4">
-  <Text weight="1">A</Text>
-  <Text weight="3">B</Text>
-</Layout>
-)XML";
-
-    const auto node = parse_and_build(xml);
-    const auto hstack = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomHStack>(node);
-    ASSERT_TRUE(hstack);
-    ASSERT_EQ(hstack->weights().size(), 2U);
-    EXPECT_FLOAT_EQ(hstack->weights()[0], 4.0F);
-    EXPECT_FLOAT_EQ(hstack->weights()[1], 4.0F);
+    EXPECT_THROW(parse_and_build(xml), docraft::exception::InvalidInputException);
 }
 
 TEST(DocraftLoomTreeBuilderTest, NoWeightsLeavesHStackWeightsEmpty)
@@ -987,7 +966,7 @@ TEST(DocraftLoomTreeBuilderTest, NoWeightsLeavesHStackWeightsEmpty)
     EXPECT_TRUE(hstack->weights().empty());
 }
 
-TEST(DocraftLoomTreeBuilderTest, VStackAppliesSpacingButNotWeights)
+TEST(DocraftLoomTreeBuilderTest, VStackAppliesSpacingAndWeights)
 {
     const char* xml = R"XML(
 <Layout orientation="vertical" spacing="8" weights="1,1">
@@ -1000,6 +979,23 @@ TEST(DocraftLoomTreeBuilderTest, VStackAppliesSpacingButNotWeights)
     const auto vstack = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomVStack>(node);
     ASSERT_TRUE(vstack);
     EXPECT_FLOAT_EQ(vstack->spacing(), 8.0F);
+    ASSERT_EQ(vstack->weights().size(), 2U);
+    EXPECT_FLOAT_EQ(vstack->weights()[0], 1.0F);
+    EXPECT_FLOAT_EQ(vstack->weights()[1], 1.0F);
+}
+
+TEST(DocraftLoomTreeBuilderTest, LayoutHeightAttributeAppliesToVStack)
+{
+    const char* xml = R"XML(
+<Layout orientation="vertical" height="300">
+  <Text>A</Text>
+</Layout>
+)XML";
+
+    const auto node = parse_and_build(xml);
+    const auto vstack = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomVStack>(node);
+    ASSERT_TRUE(vstack);
+    EXPECT_FLOAT_EQ(vstack->height(), 300.0F);
 }
 
 TEST(DocraftLoomTreeBuilderTest, BuildsParagraphWithTypographicAttributesAndChildren)

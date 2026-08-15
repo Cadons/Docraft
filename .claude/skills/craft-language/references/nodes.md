@@ -328,17 +328,27 @@ Becomes `DocraftLoomHStack` or `DocraftLoomVStack`.
 | `orientation` | `horizontal`, `vertical` | `vertical` |
 | `spacing` | float | HStack `0.0`; VStack `12.0` |
 | `weights` | comma-separated floats, e.g. `"1,2,1"` | empty = shrink-to-fit |
+| `height` | float | VStack only; unset = shrink-to-fit (see below) |
 
-Weight precedence: explicit `weights` on `<Layout>` wins over per-child `weight="..."`; if
-`weights` is absent but a child has `weight`, a vector is built from each child's `weight`
-(default `1.0`). **Weights only apply to `orientation="horizontal"`** — VStack has no weights
-support yet; weights on a vertical layout are silently dropped.
+There is no per-child `weight="..."` attribute — `weights` on `<Layout>` itself is the only way to
+specify per-child weights.
+
+On `orientation="horizontal"` (HStack), weights always divide the available page/container width.
+On `orientation="vertical"` (VStack), weights only take effect when the `<Layout>` itself also has
+an explicit `height="..."` — a VStack's height is otherwise derived bottom-up from its children (no
+ambient "page height" budget the way HStack always has a page width to divide), so `weights` alone
+on a heightless vertical layout is silently dropped.
 
 ```xml
 <Layout orientation="horizontal" spacing="8" weights="1,2,1">
   <Text>Narrow</Text>
   <Text>Wide</Text>
   <Text>Narrow</Text>
+</Layout>
+
+<Layout orientation="vertical" height="400" weights="1,2">
+  <Text>Short</Text>
+  <Text>Tall</Text>
 </Layout>
 ```
 

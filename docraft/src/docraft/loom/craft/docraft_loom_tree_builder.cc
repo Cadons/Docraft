@@ -229,13 +229,6 @@ namespace docraft::loom::craft {
                     node.set_height(*common.height);
                 }
             }
-            if constexpr (requires(NodeT& n, float v) { n.set_weight(v); })
-            {
-                if (common.weight)
-                {
-                    node.set_weight(*common.weight);
-                }
-            }
 
             if (common.position_mode)
             {
@@ -1385,29 +1378,6 @@ namespace docraft::loom::craft {
     {
         const auto& data = std::any_cast<const parser::ParsedLayoutData&>(element.data);
 
-        // Precedence: an explicit `<layout weights="...">` attribute wins over per-child
-        // `weight` attributes; if neither is present, the weights vector stays empty so
-        // today's default homogeneous-shrink-to-fit behavior is preserved.
-        std::vector<float> weights;
-        if (data.weights)
-        {
-            weights = *data.weights;
-        }
-        else
-        {
-            const bool any_child_weight = std::ranges::any_of(
-                element.children,
-                [](const auto& child) { return child->common.weight.has_value(); });
-            if (any_child_weight)
-            {
-                weights.reserve(element.children.size());
-                for (const auto& child : element.children)
-                {
-                    weights.push_back(child->common.weight.value_or(1.0F));
-                }
-            }
-        }
-
         if (data.orientation == parser::ParsedLayoutOrientation::kHorizontal)
         {
             auto node = std::make_shared<nodes::DocraftLoomHStack>();
@@ -1415,9 +1385,9 @@ namespace docraft::loom::craft {
             {
                 node->set_spacing(*data.spacing);
             }
-            if (!weights.empty())
+            if (data.weights)
             {
-                node->set_weights(weights);
+                node->set_weights(*data.weights);
             }
             apply_common_attributes(*node, element.common);
             add_children(node, element.children);
@@ -1428,8 +1398,10 @@ namespace docraft::loom::craft {
         {
             node->set_spacing(*data.spacing);
         }
-        // VStack has no set_weights() yet (Phase 6) -- any collected weights are
-        // deliberately not applied here.
+        if (data.weights)
+        {
+            node->set_weights(*data.weights);
+        }
         apply_common_attributes(*node, element.common);
         add_children(node, element.children);
         return node;

@@ -30,9 +30,13 @@ one is a case where a document parses fine but doesn't do what a reasonable auth
    constraints interact. Don't promise pixel-perfect no-overflow guarantees for long cell text —
    it wraps, but the ceiling it wraps to is an estimate.
 
-6. **The generic `weight` common attribute only does anything via `<Layout orientation=
-   "horizontal">`.** No concrete node type defines a generic `set_weight()` — `weight="..."` on
-   any other tag (or on a vertical `<Layout>`'s children) is parsed but has zero effect.
+6. **`<Layout weights="...">` on a vertical orientation needs an explicit `height` too.** There is
+   no per-child `weight="..."` attribute — `weights` is a `<Layout>`-only attribute. On
+   `orientation="horizontal"` (HStack) it always works on its own, dividing the available
+   page/container width. On `orientation="vertical"` (VStack) it only takes effect when that same
+   `<Layout>` also has an explicit `height="..."` — a VStack's height is otherwise derived
+   bottom-up from its children (no ambient "page height" budget the way HStack always has a page
+   width to divide), so `weights` alone on a heightless vertical layout still has zero effect.
 
 7. **`width`/`height` silently do nothing on several tags** even though they parse without error:
    `<List>`, `<Paragraph>`, `<Line>`, `<CurveLine>`, `<Table>` have no setter wired for them.

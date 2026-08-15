@@ -93,11 +93,11 @@ namespace docraft::craft::parser::detail {
         // Exactly the names parse_common_node_attributes() below reads -- deliberately
         // not "everything in basic::attribute", which also holds `color` (only some tags
         // read it) and the position *values*, neither of which every element accepts.
-        static constexpr std::array<std::string_view, 15> kCommon = {
+        static constexpr std::array<std::string_view, 14> kCommon = {
             basic::attribute::kNodeName, basic::attribute::kX, basic::attribute::kY,
             basic::attribute::kWidth, basic::attribute::kHeight, basic::attribute::kPadding,
             basic::attribute::kMargin, basic::attribute::kMarginTop, basic::attribute::kMarginRight,
-            basic::attribute::kMarginBottom, basic::attribute::kMarginLeft, basic::attribute::kWeight,
+            basic::attribute::kMarginBottom, basic::attribute::kMarginLeft,
             basic::attribute::kPosition, basic::attribute::kZIndex, basic::attribute::kVisible};
 
         // These nodes derive their extent from their contents or coordinates. Although
@@ -144,7 +144,7 @@ namespace docraft::craft::parser::detail {
                 "Unknown attribute '{}' on <{}>. That element accepts {}{}", name, tag_name,
                 known.empty() ? std::string{"only the common attributes"} : std::format("'{}'", known),
                 allow_common ? ", plus the common attributes (name, x, y, width, height, padding, margin*, "
-                               "weight, position, z_index, visible)"
+                               "position, z_index, visible)"
                              : " and nothing else"));
         }
     }
@@ -220,9 +220,6 @@ namespace docraft::craft::parser::detail {
             // Explicit coordinates with no explicit "position" attribute imply absolute
             // placement, mirroring the legacy parser's behavior.
             common.position_mode = PositionMode::kAbsolute;
-        }
-        if (auto weight_attr = craft_language_source.attribute(basic::attribute::kWeight.data())) {
-            common.weight = weight_attr.as_float();
         }
         if (auto z_index_attr = craft_language_source.attribute(basic::attribute::kZIndex.data())) {
             common.z_index = z_index_attr.as_int();

@@ -298,8 +298,24 @@ TEST(DocraftCraftLanguageParserTest, AcceptsTagSpecificAndCommonAttributes)
 {
     EXPECT_NO_THROW(parse_craft(R"XML(<Rectangle background_color="red" border_width="2"/>)XML"));
     EXPECT_NO_THROW(parse_craft(R"XML(<Rectangle name="r" x="1" y="2" width="3" height="4"
-                                                 padding="5" margin="6" weight="0.5"
+                                                 padding="5" margin="6"
                                                  position="absolute" z_index="2" visible="true"/>)XML"));
+}
+
+// There is no per-child `weight` attribute -- the only way to specify per-child
+// weights is `<Layout weights="1,2,1">` on the Layout element itself.
+TEST(DocraftCraftLanguageParserTest, RejectsPerChildWeightAttribute)
+{
+    try
+    {
+        parse_craft(R"XML(<Rectangle weight="1"/>)XML");
+        FAIL() << "expected a per-child weight attribute to be rejected";
+    }
+    catch (const docraft::exception::InvalidInputException& e)
+    {
+        const std::string message = e.what();
+        EXPECT_NE(message.find("weight"), std::string::npos);
+    }
 }
 
 TEST(DocraftCraftLanguageParserTest, RejectsExplicitSizeOnNodesWithoutExplicitSizeSemantics)

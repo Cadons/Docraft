@@ -413,10 +413,8 @@ namespace docraft::craft::parser {
      * @brief Tag-specific payload parsed from a `<layout>` element.
      *
      * `weights` carries the single comma-separated `weights="1,2,1"` attribute on
-     * `<layout>` itself, if present. Per-child `weight` attributes (already parsed
-     * generically into each child's `DocraftCommonAttributes::weight`) are collected by
-     * `DocraftLoomTreeBuilder` at build time instead, not here -- this struct only owns
-     * what is specific to the `<layout>` tag itself.
+     * `<layout>` itself, if present -- the only way to specify per-child weights;
+     * there is no per-child `weight="..."` attribute.
      */
     struct ParsedLayoutData
     {

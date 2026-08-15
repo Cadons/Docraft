@@ -39,7 +39,7 @@ namespace docraft::craft {
 
     /**
      * @brief Universal attributes any Craft-language tag can carry (name/x/y/width/
-     * height/padding/margin/weight/z_index/visible/position). Parsed once, generically,
+     * height/padding/margin/z_index/visible/position). Parsed once, generically,
      * by `DocraftCraftLanguageParser` -- independent of what `DocraftParsedElement::data`
      * holds or which engine eventually consumes the parsed tree.
      */
@@ -56,7 +56,6 @@ namespace docraft::craft {
         std::optional<float> margin_right;
         std::optional<float> margin_bottom;
         std::optional<float> margin_left;
-        std::optional<float> weight;
         std::optional<int> z_index;
         std::optional<bool> visible;
         std::optional<PositionMode> position_mode;

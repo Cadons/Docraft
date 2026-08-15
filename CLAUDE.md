@@ -138,7 +138,7 @@ Format enforced by convention (`.github/git-commit-instructions.md`): first line
   errors (not warnings).
 - Templating: `${variable}` substitution and `<Foreach model="${items}">` expansion happen before
   layout, driven by JSON data (`data("key")` inside a `Foreach`).
-- Common attributes across nodes: `name`, `x`, `y`, `width`, `height`, `padding`, `weight`,
+- Common attributes across nodes: `name`, `x`, `y`, `width`, `height`, `padding`,
   `z_index`, `position`, `visible`. Colors are `#RRGGBB` or named (`red`, `blue`, ...).
 
 Loom architecture is the newer architecture, follow it as main architecture, and use the old one only to understand

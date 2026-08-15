@@ -105,6 +105,24 @@ namespace docraft::test {
         EXPECT_FLOAT_EQ(vstack->layout_box().measured_size.height, 54.0F); // 3 * 10, no spacing
     }
 
+    TEST_F(DocraftLoomStackNodesTest, VStack_MeasureExplicitHeightOverridesDerivedSum)
+    {
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(50.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto vstack = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        vstack->set_padding(0.0F); // isolate stacking math from the container's own default padding
+        vstack->set_spacing(0.0F);
+        vstack->set_height(200.0F);
+        vstack->add_child(make_text("a"));
+        vstack->add_child(make_text("b"));
+        vstack->accept(*measure_);
+
+        // Explicit height() wins outright over the derived sum of natural child
+        // heights (2 * 10 = 20), mirroring DocraftLoomRectangle's own explicit width().
+        EXPECT_FLOAT_EQ(vstack->layout_box().measured_size.height, 200.0F);
+    }
+
     // ── HStack measure ──────────────────────────────────────────────────────────
 
     TEST_F(DocraftLoomStackNodesTest, HStack_MeasureEmptyStack)
@@ -208,6 +226,87 @@ namespace docraft::test {
         vstack->accept(*layout_);
 
         EXPECT_FLOAT_EQ(t1->layout_box().frame.position.x, t2->layout_box().frame.position.x);
+    }
+
+    // Bug #75: `weight` on a child of a vertical `<Layout>` used to be silently
+    // dropped. A VStack now divides its own explicit height() among weighted children,
+    // mirroring DocraftLoomHStack's weighted-width distribution but on the vertical axis.
+    TEST_F(DocraftLoomStackNodesTest, VStack_LayoutWeightedHeightDistributesAmongChildren)
+    {
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(50.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto vstack = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        vstack->set_padding(0.0F); // isolate weighted-height math from the container's own default padding
+        vstack->set_spacing(0.0F);
+        vstack->set_height(200.0F);
+        vstack->set_weights({1.0F, 3.0F});
+        auto t1 = make_text("a");
+        auto t2 = make_text("b");
+        vstack->add_child(t1);
+        vstack->add_child(t2);
+
+        vstack->accept(*measure_);
+        vstack->accept(*layout_);
+
+        EXPECT_FLOAT_EQ(t1->layout_box().frame.size.height, 50.0F); // 200 * 1/4
+        EXPECT_FLOAT_EQ(t2->layout_box().frame.size.height, 150.0F); // 200 * 3/4
+        // 10 = the layout processor's default page top-margin cursor start (see
+        // VStack_LayoutChildrenStackedVertically above).
+        EXPECT_FLOAT_EQ(t1->layout_box().frame.position.y, 10.0F);
+        EXPECT_FLOAT_EQ(t2->layout_box().frame.position.y, 60.0F); // 10 + 50
+    }
+
+    // A weighted child is never squeezed shorter than its own natural height, even if
+    // that makes the resolved heights sum past the explicit height() budget -- mirrors
+    // HStack's natural-width floor.
+    TEST_F(DocraftLoomStackNodesTest, VStack_LayoutWeightedHeightNeverShrinksBelowNaturalHeight)
+    {
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(50.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto vstack = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        vstack->set_padding(0.0F);
+        vstack->set_spacing(0.0F);
+        vstack->set_height(12.0F); // smaller than the 20pt sum of natural heights
+        vstack->set_weights({1.0F, 1.0F});
+        auto t1 = make_text("a");
+        auto t2 = make_text("b");
+        vstack->add_child(t1);
+        vstack->add_child(t2);
+
+        vstack->accept(*measure_);
+        vstack->accept(*layout_);
+
+        EXPECT_FLOAT_EQ(t1->layout_box().frame.size.height, 10.0F);
+        EXPECT_FLOAT_EQ(t2->layout_box().frame.size.height, 10.0F);
+    }
+
+    // Regression guard for the opt-in gate: weights() alone, without an explicit
+    // height(), has nothing well-defined to divide (a VStack has no ambient "page
+    // height" budget the way HStack always has a page width) -- so it must keep
+    // today's shrink-to-fit behavior unchanged.
+    TEST_F(DocraftLoomStackNodesTest, VStack_WeightsWithoutExplicitHeightKeepsShrinkToFit)
+    {
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(50.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto vstack = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        vstack->set_padding(0.0F);
+        vstack->set_spacing(0.0F);
+        vstack->set_weights({1.0F, 3.0F}); // no set_height() call -- stays 0.0F (unset)
+        auto t1 = make_text("a");
+        auto t2 = make_text("b");
+        vstack->add_child(t1);
+        vstack->add_child(t2);
+
+        vstack->accept(*measure_);
+        vstack->accept(*layout_);
+
+        EXPECT_FLOAT_EQ(t1->layout_box().frame.size.height, 10.0F);
+        EXPECT_FLOAT_EQ(t2->layout_box().frame.size.height, 10.0F);
+        EXPECT_FLOAT_EQ(t2->layout_box().frame.position.y, 20.0F); // 10 (default page top margin) + 10
+        EXPECT_FLOAT_EQ(vstack->layout_box().measured_size.height, 20.0F);
     }
 
     // ── HStack layout ───────────────────────────────────────────────────────────

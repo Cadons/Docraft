@@ -351,7 +351,10 @@ namespace docraft::loom::pipeline {
         total_height += node->resolve_outer_margin(*node, /*leading=*/false);
         auto& ms = node->edit_layout_box().measured_size;
         ms.width = n > 0 ? max_width + (2.0F * padding) : 0.0F;
-        ms.height = total_height + (n > 0 ? (2.0F * padding) : 0.0F);
+        // An explicit height() is a hard override, same as DocraftLoomRectangle's own
+        // explicit width() above -- this is what gives DocraftLoomLayoutProcessor's
+        // weighted-height distribution a real, bounded amount to divide among children.
+        ms.height = node->height() > 0.0F ? node->height() : total_height + (n > 0 ? (2.0F * padding) : 0.0F);
     }
 
     void DocraftLoomMeasureProcessor::visit(docraft::loom::nodes::DocraftLoomHStack* node)
@@ -405,7 +408,7 @@ namespace docraft::loom::pipeline {
             const float available_width = std::max(0.0F,
                                                    incoming_width - total_gap - leading_margin - trailing_margin - (2.0F
                                                        * padding));
-            resolved_widths = distribute_weighted_widths(available_width, weights, n);
+            resolved_widths = distribute_weighted_amounts(available_width, weights, n);
         }
 
         for (int i = 0; i < n; ++i)
@@ -660,7 +663,7 @@ namespace docraft::loom::pipeline {
                 incoming_width - (2.0F * nodes::DocraftLoomTable::kCellPaddingX) - (2.0F * table->padding());
             if (available_width > 0.0F)
             {
-                const auto shares = distribute_weighted_widths(available_width, table->column_weights(), cols);
+                const auto shares = distribute_weighted_amounts(available_width, table->column_weights(), cols);
                 for (int c = 0; c < cols; ++c)
                 {
                     column_wrap_budget[static_cast<std::size_t>(c)] =
