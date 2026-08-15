@@ -16,25 +16,17 @@
 
 #include "docraft/utils/docraft_file_utils.h"
 
-#include <vector>
-
-#if defined(_WIN32)
-#include <direct.h>
-#include <fcntl.h>
-#include <io.h>
-#include <share.h>
-#include <sys/stat.h>
-#else
-#include <cstdlib>
-#include <fcntl.h>
-#include <unistd.h>
-#endif
+#include <format>
+#include <fstream>
+#include <random>
+#include <string>
 
 namespace {
     // Name of the file created inside each private per-call subdirectory; the
     // subdirectory itself is what guarantees uniqueness, so a fixed name is fine.
     constexpr auto kTempFileName = "docraft.tmp";
     constexpr auto kTempDirPrefix = "docraft_";
+    constexpr int kMaxDirCreateAttempts = 8;
 }
 
 namespace docraft::utils {
@@ -47,7 +39,7 @@ namespace docraft::utils {
         }
 
         std::error_code ec;
-        const auto tmp_root = std::filesystem::temp_directory_path(ec);
+        const auto tmp_root = std::filesystem::temp_directory_path(ec);//is safe
         if (ec)
         {
             return std::nullopt;
@@ -55,67 +47,44 @@ namespace docraft::utils {
 
         // The system temp root (e.g. /tmp, %TEMP%) is shared with every other
         // local user, so writing into it directly lets them read or race the
-        // file while it exists. Carve out a private, current-user-only (0700)
-        // subdirectory first and write into that instead.
-        auto dir_tmpl_str = (tmp_root / "docraft_XXXXXX").string();
-        std::vector<char> dir_tmpl(dir_tmpl_str.begin(), dir_tmpl_str.end());
-        dir_tmpl.push_back('\0');
-
-#if defined(_WIN32)
-        if (_mktemp_s(dir_tmpl.data(), dir_tmpl.size()) != 0 || _mkdir(dir_tmpl.data()) != 0)
+        // file while it exists. Carve out our own subdirectory first:
+        // create_directory() only succeeds if the name didn't already exist,
+        // which is an exclusive-create against a guessed/pre-planted path
+        // (CWE-377/CWE-59) on any platform without needing a platform-specific
+        // primitive (mkstemp, _mktemp_s, ...); restricting it to owner-only
+        // right after closes it off to other local users too.
+        std::mt19937_64 rng(std::random_device{}());
+        std::filesystem::path private_dir;
+        for (int attempt = 0; attempt < kMaxDirCreateAttempts; ++attempt)
         {
-            return std::nullopt;
-        }
-        const std::filesystem::path private_dir(dir_tmpl.data());
-        const std::filesystem::path tmp_path = private_dir / kTempFileName;
-
-        int fd = -1;
-        if (_sopen_s(&fd, tmp_path.string().c_str(), _O_CREAT | _O_EXCL | _O_WRONLY | _O_BINARY,
-                     _SH_DENYRW, _S_IWRITE) != 0 || fd == -1)
-        {
-            std::filesystem::remove(private_dir, ec);
-            return std::nullopt;
-        }
-        const auto written = _write(fd, data, static_cast<unsigned int>(size));
-        _close(fd);
-        if (written < 0 || static_cast<std::size_t>(written) != size)
-        {
-            remove_file(tmp_path);
-            std::filesystem::remove(private_dir, ec);
-            return std::nullopt;
-        }
-#else
-        if (mkdtemp(dir_tmpl.data()) == nullptr)
-        {
-            return std::nullopt;
-        }
-        const std::filesystem::path private_dir(dir_tmpl.data());
-        const std::filesystem::path tmp_path = private_dir / kTempFileName;
-
-        const int fd = open(tmp_path.c_str(), O_CREAT | O_EXCL | O_WRONLY, S_IRUSR | S_IWUSR);
-        if (fd == -1)
-        {
-            std::filesystem::remove(private_dir, ec);
-            return std::nullopt;
-        }
-        std::size_t total_written = 0;
-        while (total_written < size)
-        {
-            const ssize_t n = write(fd, data + total_written, size - total_written);
-            if (n <= 0)
+            auto candidate = tmp_root / (std::format("{}{:016x}", kTempDirPrefix, rng()));
+            if (std::filesystem::create_directory(candidate, ec))
             {
+                private_dir = std::move(candidate);
                 break;
             }
-            total_written += static_cast<std::size_t>(n);
         }
-        close(fd);
-        if (total_written != size)
+        if (private_dir.empty())
+        {
+            return std::nullopt;
+        }
+        std::filesystem::permissions(private_dir, std::filesystem::perms::owner_all,
+                                      std::filesystem::perm_options::replace, ec);
+
+        const auto tmp_path = private_dir / kTempFileName;
+        std::ofstream out(tmp_path, std::ios::binary | std::ios::trunc);
+        if (out)
+        {
+            out.write(reinterpret_cast<const char*>(data), static_cast<std::streamsize>(size));
+        }
+        const bool ok = out.good();
+        out.close();
+        if (!ok)
         {
             remove_file(tmp_path);
             std::filesystem::remove(private_dir, ec);
             return std::nullopt;
         }
-#endif
 
         return tmp_path;
     }

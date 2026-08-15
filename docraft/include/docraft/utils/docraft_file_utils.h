@@ -34,19 +34,15 @@ namespace docraft::utils {
         /**
          * @brief Securely writes raw bytes to a new, uniquely-named temporary file.
          *
-         * The file is created inside a private, current-user-only subdirectory
-         * (POSIX mkdtemp, mode 0700) of the system temp root rather than directly in
-         * that root -- the root itself (e.g. /tmp, %TEMP%) is shared with every other
-         * local user, so a file placed straight into it can be read or raced by them
-         * while it exists. Both the subdirectory and the file within it are created
-         * with the platform's atomic exclusive-create primitive (POSIX mkdtemp/O_EXCL,
-         * Windows _mktemp_s+_mkdir/O_CREAT|O_EXCL) rather than picking a name ourselves
-         * and opening it in a second step -- that atomicity is what stops a local
-         * attacker from pre-planting a symlink at a guessed path and redirecting the
-         * write elsewhere (CWE-377/CWE-59). The names themselves don't need to be
-         * unpredictable: exclusive creation fails safely regardless of how guessable
-         * they are, so letting the OS pick ones it knows to be unused is simpler and no
-         * less safe than hand-rolling one with a PRNG.
+         * The file is created inside a private, owner-only subdirectory of the
+         * system temp root rather than directly in that root -- the root itself
+         * (e.g. /tmp, %TEMP%) is shared with every other local user, so a file
+         * placed straight into it can be read or raced by them while it exists.
+         * std::filesystem::create_directory() only succeeds if the name didn't
+         * already exist, which is an exclusive-create against a guessed/pre-planted
+         * path (CWE-377/CWE-59) on any platform, so no platform-specific temp-file
+         * API (mkstemp, _mktemp_s, ...) is needed; the directory is then restricted
+         * to owner-only before the file is written into it.
          *
          * @param data Raw bytes to write. Must not be null when size > 0.
          * @param size Number of bytes to write.
