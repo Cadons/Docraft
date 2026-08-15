@@ -28,11 +28,13 @@ set(DOCRAFT_SOURCES
         src/docraft/utils/docraft_font_registry.cc
         src/docraft/utils/docraft_parser_utilis.cc
         src/docraft/utils/docraft_utf8.cc
+        src/docraft/utils/docraft_file_utils.cc
         include/docraft/utils/docraft_logger.h
         include/docraft/utils/docraft_base64.h
         include/docraft/utils/docraft_font_resolver.h
         include/docraft/utils/docraft_parser_utilis.h
         include/docraft/utils/docraft_utf8.h
+        include/docraft/utils/docraft_file_utils.h
         src/docraft/backend/pdf/docraft_haru_backend.cc
         include/docraft/backend/pdf/docraft_haru_backend.h
         src/docraft/backend/pdf/docraft_haru_backend_providers_factory.cc
