@@ -50,6 +50,7 @@ namespace {
         std::filesystem::path craft_file; //input file
         std::filesystem::path output_file; //output filename, kRender only
         std::optional<std::filesystem::path> data_file; //optional --data JSON file
+        bool strict = false; //--strict: unresolved ${variable}/${data(...)} become hard errors
     };
 
     /**
@@ -74,20 +75,27 @@ namespace {
      */
     void print_usage(std::ostream& output, const char* program_name)
     {
-        output << "Usage: " << program_name << " <file.craft> <output.pdf> [--data <data.json>]\n";
-        output << "       " << program_name << " " << VALIDATE_COMMAND << " <file.craft> [--data <data.json>]\n";
+        output << "Usage: " << program_name << " <file.craft> <output.pdf> [--data <data.json>] [--strict]\n";
+        output << "       " << program_name << " " << VALIDATE_COMMAND
+               << " <file.craft> [--data <data.json>] [--strict]\n";
         output << "Commands:\n";
         output << "  " << VALIDATE_COMMAND << "           Lints <file.craft> (and --data file, if given)\n";
         output << "                     for errors without rendering a PDF: well-formed XML,\n";
         output << "                     valid craft-language grammar, valid JSON, and\n";
         output << "                     unresolved ${variable} references. Exits non-zero if\n";
-        output << "                     any error is found.\n";
+        output << "                     any error is found. The render command (no subcommand)\n";
+        output << "                     always runs this check first and aborts before writing\n";
+        output << "                     a PDF if it finds an error.\n";
         output << "Options:\n";
         output << "  --data <data.json> Registers each top-level JSON field as a template\n";
         output << "                     variable ${field}, resolved in the .craft file's\n";
         output << "                     Text/Title/Subtitle content, Image src, and Foreach\n";
         output << "                     model attributes. Arrays/objects are passed through\n";
         output << "                     as their JSON text (for Foreach's model).\n";
+        output << "  --strict           Treat an unresolved ${variable} or ${data(...)} as a\n";
+        output << "                     hard error (non-zero exit, no PDF written) instead of\n";
+        output << "                     a warning with the placeholder left in the output.\n";
+        output << "                     Intended for CI/automated pipelines.\n";
         output << "  -h, --help         Show this help message.\n";
         output << "  -v, --version      Show version information.\n";
     }
@@ -135,6 +143,12 @@ namespace {
                     throw docraft::exception::ConfigurationException("--data requires a <data.json> argument");
                 }
                 options.data_file = argv[++i];
+                continue;
+            }
+
+            if (arg == "--strict")
+            {
+                options.strict = true;
                 continue;
             }
 
@@ -253,7 +267,7 @@ int main(int argc, char* argv[])
         if (options.mode == CliMode::kValidate)
         {
             const docraft::tools::DocraftValidator validator;
-            const auto result = validator.validate(options.craft_file, options.data_file);
+            const auto result = validator.validate(options.craft_file, options.data_file, options.strict);
 
             for (const auto& issue : result.issues)
             {
@@ -276,21 +290,44 @@ int main(int argc, char* argv[])
             return 0;
         }
 
-        if (!std::filesystem::exists(options.craft_file))
+        // Always lint before rendering: catches malformed XML/grammar/JSON (and, with
+        // --strict, unresolved ${variable} references) up front instead of failing
+        // partway through building the document.
+        const docraft::tools::DocraftValidator validator;
+        const auto validation = validator.validate(options.craft_file, options.data_file, options.strict);
+        for (const auto& issue : validation.issues)
         {
-            throw docraft::exception::FileNotFoundException(
-                "docraft/craft file not found: " + options.craft_file.string());
+            if (issue.severity == docraft::tools::DocraftValidationIssue::Severity::kError)
+            {
+                LOG_ERROR(issue.message);
+            }
+            else
+            {
+                LOG_WARNING(issue.message);
+            }
+        }
+        if (validation.has_errors())
+        {
+            LOG_ERROR(options.craft_file.string() + ": invalid, aborting render");
+            return 1;
         }
 
         docraft::craft::DocraftLoomCraftLanguageParser parser;
+        std::shared_ptr<docraft::templating::DocraftTemplateEngine> template_engine;
         if (options.data_file)
         {
-            if (!std::filesystem::exists(*options.data_file))
-            {
-                throw docraft::exception::FileNotFoundException(
-                    "--data file not found: " + options.data_file->string());
-            }
-            parser.set_template_engine(build_template_engine_from_json(*options.data_file));
+            template_engine = build_template_engine_from_json(*options.data_file);
+        }
+        else if (options.strict)
+        {
+            // No --data given, but --strict still needs an engine to enforce against --
+            // any ${variable}/${data(...)} in the document is necessarily unresolved.
+            template_engine = std::make_shared<docraft::templating::DocraftTemplateEngine>();
+        }
+        if (template_engine)
+        {
+            template_engine->set_strict(options.strict);
+            parser.set_template_engine(template_engine);
         }
         parser.load_from_file(options.craft_file);
 

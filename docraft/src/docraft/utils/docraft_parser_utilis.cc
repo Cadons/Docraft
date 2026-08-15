@@ -21,7 +21,8 @@
 #include "docraft/utils/docraft_logger.h"
 
 namespace docraft::utils {
-    std::string DocraftParserUtilis::extract_data_attribute(const std::string &data_request, const nlohmann::json &item) {
+    std::string DocraftParserUtilis::extract_data_attribute(const std::string &data_request, const nlohmann::json &item,
+                                                              bool* found) {
         // Expected format: ${data("field_name")} or ${data(field_name)}
         const std::string prefix = "${data(";
         const std::string suffix = ")}";
@@ -47,6 +48,7 @@ namespace docraft::utils {
             try {
                 if (!field.empty() && item.is_object() && item.contains(field)) {
                     const auto &value = item.at(field);
+                    if (found) { *found = true; }
                     if (value.is_string()) {
                         return value.get<std::string>();
                     }
@@ -54,13 +56,16 @@ namespace docraft::utils {
                         return value.dump();
 
                 }
+                if (found) { *found = false; }
                 return "";
             } catch (...) {
                 LOG_ERROR("Error extracting data attribute '" + field + "'");
+                if (found) { *found = false; }
                 return "";
             }
         }
         LOG_WARNING("Data request '" + data_request + "' is not in the expected format '${data(\"field_name\")}'.");
+        if (found) { *found = false; }
         return "";
     }
     std::string DocraftParserUtilis::extract_data_attribute(const std::vector<unsigned char> &data_request, const nlohmann::json &item) {

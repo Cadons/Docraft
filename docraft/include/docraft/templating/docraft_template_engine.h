@@ -71,6 +71,23 @@ namespace docraft::templating {
                 bool has_template_variable(const std::string &name) const;
 
                 /**
+                 * @brief Sets strict mode: when enabled, an unresolved `${variable}` or
+                 * `${data("field")}` encountered by render_template_string()/
+                 * render_template_string_foreach_item() throws
+                 * docraft::exception::TemplateVariableNotFoundException instead of logging a
+                 * warning and leaving the placeholder text (or an empty string, for
+                 * `data(...)`) in the output. Off by default -- lenient/interactive use is
+                 * unaffected; callers that need a hard failure for automated pipelines (e.g.
+                 * docraft_tool's `--strict` flag) opt in explicitly.
+                 * @param strict Whether strict mode should be enabled.
+                 */
+                void set_strict(bool strict = true);
+                /**
+                 * @brief Returns whether strict mode is currently enabled.
+                 */
+                [[nodiscard]] bool is_strict() const;
+
+                /**
                  * @brief Registers every field of a JSON object as a template variable,
                  * flattening nested objects into dot-notation keys -- e.g.
                  * `{"user":{"name":"Bob"}}` registers `"user.name"` -> `"Bob"`, so
@@ -181,5 +198,6 @@ namespace docraft::templating {
 
                 std::unordered_map<std::string, std::string> template_variables_;
                 std::unordered_map<std::string, RawImageData> image_data_;
+                bool strict_ = false;
         };
 } // docraft

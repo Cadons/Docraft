@@ -75,6 +75,14 @@ namespace docraft::templating {
         return template_variables_.contains(normalize_name(name));
     }
 
+    void DocraftTemplateEngine::set_strict(bool strict) {
+        strict_ = strict;
+    }
+
+    bool DocraftTemplateEngine::is_strict() const {
+        return strict_;
+    }
+
     void DocraftTemplateEngine::add_template_variables_from_json(const nlohmann::json& json)
     {
         if (!json.is_object())
@@ -112,6 +120,12 @@ namespace docraft::templating {
             std::string variable_value;
             try {
                 variable_value = resolve(variable_expression, variable_name);
+            } catch (const exception::DocraftException&) {
+                if (strict_) {
+                    throw;
+                }
+                LOG_ERROR("Template variable '" + variable_name + "' not found");
+                variable_value = variable_expression;
             } catch (...) {
                 LOG_ERROR("Template variable '" + variable_name + "' not found");
                 variable_value = variable_expression;
@@ -128,6 +142,10 @@ namespace docraft::templating {
             if (has_template_variable(variable_name)) {
                 return find_template_variable(variable_name);
             }
+            if (strict_) {
+                throw TemplateVariableNotFoundException(
+                    fmt::format("Template variable '{}' not found in template engine.", variable_name));
+            }
             LOG_WARNING("Template variable '" + variable_name + "' not found in template engine.");
             return expression;
         });
@@ -138,8 +156,14 @@ namespace docraft::templating {
         return scan_and_replace(text, [this, &item](const std::string &expression, const std::string &variable_name) {
             // Handle data("fieldName") syntax for foreach item fields using the utility method
             if (variable_name.starts_with("data(")) {
-                std::string value = utils::DocraftParserUtilis::extract_data_attribute(expression, item);
-                if (value.empty()) {
+                bool found = false;
+                std::string value = utils::DocraftParserUtilis::extract_data_attribute(expression, item, &found);
+                if (!found) {
+                    if (strict_) {
+                        throw TemplateVariableNotFoundException(
+                            fmt::format("Data field referenced by '{}' not found in current Foreach item.",
+                                        variable_name));
+                    }
                     LOG_WARNING("Template variable '" + variable_name + "' not found in foreach item.");
                 }
                 return value;
@@ -147,6 +171,10 @@ namespace docraft::templating {
             // Handle normal template variables if they are used in foreach item templates
             if (has_template_variable(variable_name)) {
                 return find_template_variable(variable_name);
+            }
+            if (strict_) {
+                throw TemplateVariableNotFoundException(
+                    fmt::format("Template variable '{}' not found in template engine.", variable_name));
             }
             LOG_WARNING("Template variable '" + variable_name + "' not found in template engine.");
             return expression;
