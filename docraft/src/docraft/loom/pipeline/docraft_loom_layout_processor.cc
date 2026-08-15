@@ -450,12 +450,17 @@ namespace docraft::loom::pipeline {
             text_child->accept(*this);
 
             const float text_height = text_child->layout_box().measured_size.height;
-            // Center the marker vertically within the item's own line height, so it
-            // lines up with the text regardless of marker kind (box or text glyph).
+            // Center the marker vertically within the item's *first* line only, so a
+            // wrapped multi-line item still aligns the marker with the first line of
+            // text instead of floating at the midpoint of the whole wrapped block.
+            const std::size_t line_count = text_child->wrapped_lines().empty()
+                                                ? std::size_t{1}
+                                                : text_child->wrapped_lines().size();
+            const float first_line_height = text_height / static_cast<float>(line_count);
             float marker_y = y;
             if (marker.kind == nodes::DocraftLoomList::Marker::Kind::kBox)
             {
-                marker_y = y + std::max(0.0F, (text_height - marker.width) / 2.0F);
+                marker_y = y + std::max(0.0F, (first_line_height - marker.width) / 2.0F);
             }
             marker.position = {.x = item_x, .y = marker_y};
             y += text_height;

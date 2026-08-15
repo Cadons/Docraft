@@ -82,7 +82,7 @@ Full attributes/enums/examples for every one of these are in `references/nodes.m
 | Tag | Purpose |
 |---|---|
 | `<Text>`, `<Title>`, `<Subtitle>` | Text runs. Title/Subtitle = bold + larger default size + auto margin. |
-| `<PageNumber />` | Self-updating current page number (bare digits, no "of N"). |
+| `<PageNumber />` | Self-updating current page number; `format="Page {page} of {total}"` for a total-page count. |
 | `<Paragraph>` | Groups Text runs (or bare text) into one block with line-spacing/alignment. |
 | `<Rectangle>` | Block-stacking container with optional fill/border. |
 | `<Canvas>` | Free-form container — children positioned by their own local `x`/`y`, clipped to bounds. `width`/`height` required. |

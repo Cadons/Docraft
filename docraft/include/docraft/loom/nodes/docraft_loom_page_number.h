@@ -1,4 +1,6 @@
 #pragma once
+#include <string>
+
 #include "docraft/loom/nodes/docraft_loom_text.h"
 
 namespace docraft::loom::nodes {
@@ -14,5 +16,16 @@ namespace docraft::loom::nodes {
         DocraftLoomPageNumber();
         ~DocraftLoomPageNumber() override = default;
         void accept(loom::interfaces::DocraftLoomIVisitor& visitor) override;
+
+        /**
+         * @brief Display format applied at render time. `{page}` is replaced with the
+         * current 1-based page number, `{total}` with the document's total page count.
+         * Defaults to `"{page}"`.
+         */
+        void set_format(const std::string& format) { format_ = format; }
+        [[nodiscard]] const std::string& format() const { return format_; }
+
+    private:
+        std::string format_ = "{page}";
     };
 } // docraft

@@ -300,6 +300,9 @@ namespace docraft::craft {
             constexpr string kUnderline = "underline";
             constexpr string kStrikeout = "strikeout";
         }
+        namespace page_number::attribute {
+            constexpr string kFormat = "format";
+        }
         namespace chart::attribute {
             constexpr string kStyle = "style";
             constexpr string kAxisPosition = "axis_position";

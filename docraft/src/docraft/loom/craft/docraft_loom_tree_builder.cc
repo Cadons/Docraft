@@ -568,6 +568,10 @@ namespace docraft::loom::craft {
         {
             node.set_strikeout(*data.strikeout);
         }
+        if (data.format)
+        {
+            node.set_format(*data.format);
+        }
     }
 
     void DocraftLoomTreeBuilder::fill_image_node(nodes::DocraftLoomImage& node,
@@ -950,6 +954,7 @@ namespace docraft::loom::craft {
             context.y_label = render_template_text(*data.y_label);
         }
         context.show_percentage = data.show_percentage.value_or(true);
+        context.font_family = default_font_family_;
 
         context.series.reserve(element.children.size());
         for (const auto& child : element.children)

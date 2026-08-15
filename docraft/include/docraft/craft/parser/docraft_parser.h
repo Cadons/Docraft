@@ -132,6 +132,11 @@ namespace docraft::craft::parser {
         std::optional<ParsedTextAlignment> alignment;
         std::optional<bool> underline;
         std::optional<bool> strikeout;
+        /**
+         * @brief Display format, with `{page}`/`{total}` placeholders substituted at
+         * render time. Defaults to `"{page}"` (bare current page number) when unset.
+         */
+        std::optional<std::string> format;
     };
 
     /**

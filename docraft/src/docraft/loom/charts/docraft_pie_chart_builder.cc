@@ -62,6 +62,7 @@ namespace docraft::loom::charts {
     {
         auto canvas = create_canvas(ctx);
         const DocraftColor text_color{std::string(kInkColorHex)};
+        const std::string font_family = ctx.font_family.value_or("");
 
         std::vector<Slice> slices;
         for (const auto& series : ctx.series)
@@ -107,8 +108,9 @@ namespace docraft::loom::charts {
         if (ctx.title)
         {
             const float title_w = estimate_text_width(*ctx.title, kTitleFontSize);
-            add_text(*canvas, *ctx.title, std::max(0.0F, (ctx.width - title_w) / 2.0F), kTitleTopMargin,
-                     kTitleFontSize, text_color, /*bold=*/true);
+            add_text(*canvas, {.text = *ctx.title, .x = std::max(0.0F, (ctx.width - title_w) / 2.0F),
+                                .y = kTitleTopMargin, .font_size = kTitleFontSize, .color = text_color, .bold = true,
+                                .font_family = font_family});
         }
 
         float total = 0.0F;
@@ -159,16 +161,19 @@ namespace docraft::loom::charts {
                     point_on_circle(center_x, center_y, radius * kPercentageLabelRadiusFraction, mid_angle);
                 const std::string percentage = format_percentage(slice.value, total);
                 const float label_w = estimate_text_width(percentage, kPercentageLabelFontSize);
-                add_text(*canvas, percentage, label_pos.x - (label_w / 2.0F),
-                         label_pos.y - (kPercentageLabelFontSize / 2.0F), kPercentageLabelFontSize,
-                         percentage_label_color);
+                add_text(*canvas, {.text = percentage, .x = label_pos.x - (label_w / 2.0F),
+                                    .y = label_pos.y - (kPercentageLabelFontSize / 2.0F),
+                                    .font_size = kPercentageLabelFontSize, .color = percentage_label_color,
+                                    .bold = false, .font_family = font_family});
             }
 
             legend_entries.emplace_back(slice.color, slice.label);
             current_angle += sweep_deg;
         }
 
-        draw_legend_column(*canvas, pie_area.right + kLegendLeftGap, pie_area.top, legend_entries, text_color);
+        draw_legend_column(*canvas, {.x = pie_area.right + kLegendLeftGap, .top_y = pie_area.top,
+                                      .entries = legend_entries, .text_color = text_color,
+                                      .font_family = font_family});
         return canvas;
     }
 } // namespace docraft::loom::charts

@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include <algorithm>
+
 #include "docraft/exception/docraft_input_exceptions.h"
 #include "docraft/loom/nodes/docraft_loom_list.h"
 #include "docraft/loom/nodes/docraft_loom_rectangle.h"
@@ -130,6 +132,36 @@ namespace docraft::test {
         // item_x (list x) + marker width 50 + gap 6
         EXPECT_FLOAT_EQ(item->layout_box().frame.position.x, list->layout_box().frame.position.x + 56.0F);
         EXPECT_FLOAT_EQ(list->markers()[0].position.x, list->layout_box().frame.position.x);
+    }
+
+    TEST_F(DocraftLoomListTest, BoxMarkerAlignsToFirstLineNotWholeWrappedBlock)
+    {
+        // Regression test: a box marker used to be centered against the item's *total*
+        // wrapped height, so a multi-line item's marker floated at the block's midpoint
+        // instead of sitting next to the first line. It must instead center against
+        // just the first line's height.
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(50.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto list = std::make_shared<loom::nodes::DocraftLoomList>();
+        list->set_kind(loom::nodes::ListKind::kUnordered);
+        list->set_unordered_dot(loom::nodes::UnorderedListDot::kBox);
+        auto item = std::make_shared<loom::nodes::DocraftLoomText>("item");
+        item->set_font_size(20.0F); // box marker width = 20 * 0.6 = 12
+        list->add_child(item);
+        list->accept(*measure_);
+
+        // Simulate a 3-line wrapped item (single-line height 10, total block height 30)
+        // without depending on the real word-wrap algorithm's line breaks.
+        item->set_wrapped_lines({"line one", "line two", "line three"});
+        item->edit_layout_box().measured_size.height = 30.0F;
+
+        list->accept(*layout_);
+
+        const float first_line_height = 10.0F;
+        const float marker_width = 12.0F;
+        const float expected_offset = std::max(0.0F, (first_line_height - marker_width) / 2.0F);
+        EXPECT_FLOAT_EQ(list->markers()[0].position.y, list->layout_box().frame.position.y + expected_offset);
     }
 
     TEST_F(DocraftLoomListTest, NonTextChildThrowsOnMeasure)
