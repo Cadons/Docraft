@@ -91,6 +91,48 @@ TEST(DocraftTableParserTest, RejectsLegacyTitleTagInTableHeader) {
     EXPECT_THROW(parser.parse(doc.child("Table")), docraft::exception::InvalidInputException);
 }
 
+TEST(DocraftTableParserTest, RejectsCellWithMoreThanOneChild) {
+    const char *xml = R"XML(
+<Table>
+  <THead>
+    <HTitle>ColA</HTitle>
+  </THead>
+  <TBody>
+    <Row>
+      <Cell><Text>v1</Text><Text>v2</Text></Cell>
+    </Row>
+  </TBody>
+</Table>
+)XML";
+
+    pugi::xml_document doc;
+    ASSERT_TRUE(doc.load_string(xml));
+
+    docraft::craft::parser::DocraftTableParser parser;
+    EXPECT_THROW(parser.parse(doc.child("Table")), docraft::exception::InvalidInputException);
+}
+
+TEST(DocraftTableParserTest, RejectsCellWithUnrecognizedChildTag) {
+    const char *xml = R"XML(
+<Table>
+  <THead>
+    <HTitle>ColA</HTitle>
+  </THead>
+  <TBody>
+    <Row>
+      <Cell><Rectangle width="10" height="10"/></Cell>
+    </Row>
+  </TBody>
+</Table>
+)XML";
+
+    pugi::xml_document doc;
+    ASSERT_TRUE(doc.load_string(xml));
+
+    docraft::craft::parser::DocraftTableParser parser;
+    EXPECT_THROW(parser.parse(doc.child("Table")), docraft::exception::InvalidInputException);
+}
+
 TEST(DocraftTableParserTest, ParsesVerticalTableWithHeaderRow) {
     const char *xml = R"XML(
 <Table model="vertical">

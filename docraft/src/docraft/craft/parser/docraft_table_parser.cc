@@ -130,19 +130,32 @@ namespace docraft::craft::parser {
             data.background = parse_background_color(cell, elements::table_column::attribute::kBackgroundColor.data());
 
             const pugi::xml_node child = cell.first_child();
-            const std::string child_name = child.name();
-            data.content_common = detail::parse_common_node_attributes(child);
-            if (child_name == std::string{elements::kText})
+            if (child)
             {
-                DocraftTextParser text_parser;
-                data.content_tag_name = std::string{elements::kText};
-                data.content = text_parser.parse(child);
-            }
-            else if (child_name == std::string{elements::kImage})
-            {
-                DocraftImageParser image_parser;
-                data.content_tag_name = std::string{elements::kImage};
-                data.content = image_parser.parse(child);
+                const std::string child_name = child.name();
+                if (child_name != std::string{elements::kText} && child_name != std::string{elements::kImage})
+                {
+                    throw docraft::exception::InvalidInputException(
+                        child_name + " cannot be placed inside <Cell>; only <Text> or <Image> are allowed");
+                }
+                if (child.next_sibling())
+                {
+                    throw docraft::exception::InvalidInputException(
+                        "<Cell> accepts exactly one child; found multiple children");
+                }
+                data.content_common = detail::parse_common_node_attributes(child);
+                if (child_name == std::string{elements::kText})
+                {
+                    DocraftTextParser text_parser;
+                    data.content_tag_name = std::string{elements::kText};
+                    data.content = text_parser.parse(child);
+                }
+                else
+                {
+                    DocraftImageParser image_parser;
+                    data.content_tag_name = std::string{elements::kImage};
+                    data.content = image_parser.parse(child);
+                }
             }
             return data;
         }
