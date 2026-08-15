@@ -302,6 +302,30 @@ TEST(DocraftCraftLanguageParserTest, AcceptsTagSpecificAndCommonAttributes)
                                                  position="absolute" z_index="2" visible="true"/>)XML"));
 }
 
+TEST(DocraftCraftLanguageParserTest, RejectsExplicitSizeOnNodesWithoutExplicitSizeSemantics)
+{
+    for (const std::string_view tag : {"List", "Paragraph", "Line", "CurveLine", "Table"})
+    {
+        for (const std::string_view attribute : {"width", "height"})
+        {
+            SCOPED_TRACE(std::string(tag) + " " + std::string(attribute));
+            const std::string xml = "<" + std::string(tag) + " " + std::string(attribute) + "=\"400\"/>";
+            try
+            {
+                parse_craft(xml.c_str());
+                FAIL() << "expected unsupported explicit sizing to be rejected";
+            }
+            catch (const docraft::exception::InvalidInputException& e)
+            {
+                const std::string message = e.what();
+                EXPECT_NE(message.find(attribute), std::string::npos);
+                EXPECT_NE(message.find(tag), std::string::npos);
+                EXPECT_NE(message.find("not supported"), std::string::npos);
+            }
+        }
+    }
+}
+
 TEST(DocraftCraftLanguageParserTest, TagSpecificAttributesDoNotLeakBetweenElements)
 {
     // `points` belongs to Polygon/Triangle, `radius` to Circle: each element accepts only

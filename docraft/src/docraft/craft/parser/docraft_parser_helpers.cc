@@ -100,9 +100,28 @@ namespace docraft::craft::parser::detail {
             basic::attribute::kMarginBottom, basic::attribute::kMarginLeft, basic::attribute::kWeight,
             basic::attribute::kPosition, basic::attribute::kZIndex, basic::attribute::kVisible};
 
+        // These nodes derive their extent from their contents or coordinates. Although
+        // width/height are common syntactically, their current layout implementations
+        // have no explicit-size semantics, so accepting them would be a silent no-op.
+        static constexpr std::array<std::string_view, 5> kContentOrCoordinateSized = {
+            elements::kList, elements::kParagraph, elements::kLine,
+            elements::kCurveLine, elements::kTable};
+
         for (const auto& attribute : craft_language_source.attributes())
         {
             const std::string_view name = attribute.name();
+            const bool is_explicit_size =
+                name == basic::attribute::kWidth || name == basic::attribute::kHeight;
+            if (is_explicit_size &&
+                std::ranges::find(kContentOrCoordinateSized, tag_name) != kContentOrCoordinateSized.end())
+            {
+                throw docraft::exception::InvalidInputException(std::format(
+                    "Attribute '{}' is not supported on <{}>; that element's size is determined by {}",
+                    name, tag_name,
+                    tag_name == elements::kLine || tag_name == elements::kCurveLine
+                        ? "its coordinates"
+                        : "its content"));
+            }
             // Table sub-elements (Row/Cell/HTitle/VTitle) are not laid out as nodes of
             // their own, so the common positioning attributes mean nothing on them and
             // are not silently tolerated either.

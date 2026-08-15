@@ -59,18 +59,18 @@ namespace docraft::craft::parser::detail {
     DocraftColor parse_docraft_color(const std::string &color_str);
 
     /**
-     * @brief Parses the universal attributes (name/x/y/width/height/padding/weight/
-     * z_index/visible/position) shared by every Craft-language tag into a
-     * `DocraftCommonAttributes`. Generic and tag-agnostic -- called once per element by
-     * `DocraftCraftLanguageParser`, not by individual `IDocraftParser` implementations.
+     * @brief Parses the common node attributes into a `DocraftCommonAttributes`.
+     * Attribute support is validated per tag before this generic, tag-agnostic parser is
+     * called; not every tag supports every common attribute (in particular, content- or
+     * coordinate-sized nodes reject explicit width/height).
      * @param craft_language_source The XML node to read attributes from.
      * @return The parsed common attributes.
      */
     DocraftCommonAttributes parse_common_node_attributes(const pugi::xml_node& craft_language_source);
 
     /**
-     * @brief Rejects any attribute on `craft_language_source` that is neither a common
-     * node attribute nor listed in `accepted`.
+     * @brief Rejects any attribute on `craft_language_source` that is neither a supported
+     * common node attribute for this tag nor listed in `accepted`.
      *
      * Unknown *tags* have always been hard errors; this makes unknown attributes behave
      * the same way, so a name the parser would silently drop is reported instead of
