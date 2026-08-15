@@ -34,24 +34,33 @@ namespace docraft::utils {
         /**
          * @brief Securely writes raw bytes to a new, uniquely-named temporary file.
          *
-         * Uses the platform's atomic exclusive-create primitive (POSIX mkstemp /
-         * Windows O_CREAT|O_EXCL) rather than picking a name ourselves and opening it
-         * in a second step -- that atomicity is what stops a local attacker from
-         * pre-planting a symlink at a guessed path and redirecting the write elsewhere
-         * (CWE-377/CWE-59). The name itself doesn't need to be unpredictable: exclusive
-         * creation fails safely regardless of how guessable it is, so letting the OS
-         * pick one it knows to be unused is simpler and no less safe than hand-rolling
-         * one with a PRNG.
+         * The file is created inside a private, current-user-only subdirectory
+         * (POSIX mkdtemp, mode 0700) of the system temp root rather than directly in
+         * that root -- the root itself (e.g. /tmp, %TEMP%) is shared with every other
+         * local user, so a file placed straight into it can be read or raced by them
+         * while it exists. Both the subdirectory and the file within it are created
+         * with the platform's atomic exclusive-create primitive (POSIX mkdtemp/O_EXCL,
+         * Windows _mktemp_s+_mkdir/O_CREAT|O_EXCL) rather than picking a name ourselves
+         * and opening it in a second step -- that atomicity is what stops a local
+         * attacker from pre-planting a symlink at a guessed path and redirecting the
+         * write elsewhere (CWE-377/CWE-59). The names themselves don't need to be
+         * unpredictable: exclusive creation fails safely regardless of how guessable
+         * they are, so letting the OS pick ones it knows to be unused is simpler and no
+         * less safe than hand-rolling one with a PRNG.
          *
          * @param data Raw bytes to write. Must not be null when size > 0.
          * @param size Number of bytes to write.
          * @return Path to the created file, or std::nullopt on failure. On failure no
-         * partially-written file is left behind.
+         * partially-written file or subdirectory is left behind.
          */
         static std::optional<std::filesystem::path> write_temp_file(const unsigned char* data, std::size_t size);
 
         /**
          * @brief Removes a file, ignoring errors (e.g. already removed).
+         *
+         * If path was produced by write_temp_file(), also removes the now-empty
+         * private subdirectory it was created in.
+         *
          * @param path File to remove.
          */
         static void remove_file(const std::filesystem::path& path);
