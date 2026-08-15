@@ -30,6 +30,11 @@ TEST(DocraftFileUtilsTest, WriteTempFileWritesExactBytesToAFreshUniqueFile)
     const std::vector<char> contents((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
     ASSERT_EQ(contents.size(), data.size());
     EXPECT_TRUE(std::equal(contents.begin(), contents.end(), data.begin()));
+    // Windows can't delete a file while a handle to it is still open (unlike
+    // POSIX, where unlinking an open file just removes the directory entry) --
+    // close the read handle before removing, or remove_file() below silently
+    // no-ops there and the file is still on disk afterwards.
+    in.close();
 
     DocraftFileUtils::remove_file(*path);
     EXPECT_FALSE(std::filesystem::exists(*path));
