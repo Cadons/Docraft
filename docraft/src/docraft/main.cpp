@@ -31,15 +31,24 @@
 #include "docraft/exception/docraft_exceptions.h"
 #include "docraft/loom/docraft_loom_pdf_creator.h"
 #include "docraft/templating/docraft_template_engine.h"
+#include "docraft/tools/docraft_validator.h"
 #include "docraft/utils/docraft_logger.h"
 #define CRAFT_EXTENSION ".craft"
 #define PDF_EXTENSION ".pdf"
+#define VALIDATE_COMMAND "validate"
 
 namespace {
+    enum class CliMode
+    {
+        kRender,
+        kValidate
+    };
+
     struct CliOptions
     {
+        CliMode mode = CliMode::kRender;
         std::filesystem::path craft_file; //input file
-        std::filesystem::path output_file; //output filename
+        std::filesystem::path output_file; //output filename, kRender only
         std::optional<std::filesystem::path> data_file; //optional --data JSON file
     };
 
@@ -66,6 +75,13 @@ namespace {
     void print_usage(std::ostream& output, const char* program_name)
     {
         output << "Usage: " << program_name << " <file.craft> <output.pdf> [--data <data.json>]\n";
+        output << "       " << program_name << " " << VALIDATE_COMMAND << " <file.craft> [--data <data.json>]\n";
+        output << "Commands:\n";
+        output << "  " << VALIDATE_COMMAND << "           Lints <file.craft> (and --data file, if given)\n";
+        output << "                     for errors without rendering a PDF: well-formed XML,\n";
+        output << "                     valid craft-language grammar, valid JSON, and\n";
+        output << "                     unresolved ${variable} references. Exits non-zero if\n";
+        output << "                     any error is found.\n";
         output << "Options:\n";
         output << "  --data <data.json> Registers each top-level JSON field as a template\n";
         output << "                     variable ${field}, resolved in the .craft file's\n";
@@ -94,7 +110,15 @@ namespace {
             std::cout << "Docraft version " << DOCRAFT_VERSION;
             std::exit(0);
         }
-        for (int i = 1; i < argc; ++i)
+
+        int arg_start = 1;
+        if (argc >= 2 && std::string(argv[1]) == VALIDATE_COMMAND)
+        {
+            options.mode = CliMode::kValidate;
+            arg_start = 2;
+        }
+
+        for (int i = arg_start; i < argc; ++i)
         {
             const std::string arg = argv[i];
 
@@ -120,6 +144,17 @@ namespace {
             }
 
             positional_args.push_back(arg); //collect positional arguments
+        }
+
+        if (options.mode == CliMode::kValidate)
+        {
+            if (positional_args.size() != 1)
+            {
+                throw docraft::exception::ConfigurationException(
+                    "Expected required argument: " VALIDATE_COMMAND " <file.craft>");
+            }
+            options.craft_file = positional_args[0];
+            return options;
         }
 
         if (positional_args.size() != 2)
@@ -214,6 +249,33 @@ int main(int argc, char* argv[])
         LOG_INFO("Docraft version " + std::string(DOCRAFT_VERSION));
 
         const CliOptions options = parse_args(argc, argv);
+
+        if (options.mode == CliMode::kValidate)
+        {
+            const docraft::tools::DocraftValidator validator;
+            const auto result = validator.validate(options.craft_file, options.data_file);
+
+            for (const auto& issue : result.issues)
+            {
+                if (issue.severity == docraft::tools::DocraftValidationIssue::Severity::kError)
+                {
+                    LOG_ERROR(issue.message);
+                }
+                else
+                {
+                    LOG_WARNING(issue.message);
+                }
+            }
+
+            if (result.has_errors())
+            {
+                LOG_ERROR(options.craft_file.string() + ": invalid");
+                return 1;
+            }
+            LOG_INFO(options.craft_file.string() + ": valid" + (result.has_warnings() ? " (with warnings)" : ""));
+            return 0;
+        }
+
         if (!std::filesystem::exists(options.craft_file))
         {
             throw docraft::exception::FileNotFoundException(

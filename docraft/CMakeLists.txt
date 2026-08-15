@@ -192,6 +192,10 @@ set(DOCRAFT_SOURCES
         # DocraftLoomPdfCreator from its Header/Body/Footer children.
         include/docraft/craft/docraft_loom_craft_language_parser.h
         src/docraft/craft/docraft_loom_craft_language_parser.cc
+
+        # .craft/data-file linter, reused by the docraft_validate CLI tool.
+        include/docraft/tools/docraft_validator.h
+        src/docraft/tools/docraft_validator.cc
 )
 set(DOCRAFT_LIBRARY_TYPE STATIC)
 if (BUILD_SHARED_LIBS)
