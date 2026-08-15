@@ -18,10 +18,18 @@ unit that either:
 
 If a table doesn't fit as a whole, the pagination stage computes how many leading rows *do* fit
 and splits the table there. **The remainder table repeats the original table's leading run of
-header row(s)** onto the front of the continuation, then is re-stacked starting at the new page's
-body top. This can recurse across as many further pages as needed. A single-row table (or a
-table with 0 columns) can't be split further — it falls through to whole-move/oversized-escape
-handling.
+header row(s)** onto the front of the continuation, then is re-stacked starting at the new page's body top. This can
+recurse across as many further pages as needed. A table with 0 columns can't be split at all.
+
+When a table is already at a fresh page's top and only the repeated header row (s) fit — no genuine content row does —
+the next row is taller than one whole page, so row-level splitting alone would just reproduce the same
+`[header, oversized row]` shape on every following page forever. In that case the pagination stage instead splits **that
+row's own cell content**: any cell whose text was wrapped into multiple lines (`<Text>` content wider than its column)
+has as many leading lines as fit on this page kept in place, with the rest continuing — under a repeated header — on the
+next page, recursing across as many further pages as the text needs. A cell whose content can't be split this way (an
+`<Image>`, or text that wasn't wrapped into multiple lines)
+must already fit on its own within the available space, or the whole row falls through to the oversized escape hatch and
+renders as overflow on one page instead of splitting.
 
 ## `<NewPage />`
 

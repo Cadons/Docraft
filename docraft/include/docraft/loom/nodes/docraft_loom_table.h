@@ -41,6 +41,38 @@ namespace docraft::loom::nodes {
         int column_count() const;
         std::shared_ptr<DocraftLoomTableCell> cell(int row, int column) const;
 
+        /**
+         * @brief Row row's height, once Layout has resolved it: every cell in a row
+         * shares the same frame.size.height (place_table_cells stretches each row to
+         * its tallest cell), so cell(row, 0) alone is always representative -- this is
+         * the single named accessor for that convention, instead of every call site
+         * re-deriving it from cell(row, 0)->layout_box().frame.size.height by hand.
+         * @return 0 if row is out of range or the table has no columns.
+         */
+        float row_height(int row) const;
+
+        /**
+         * @brief Invokes fn(DocraftLoomTableCell&) for every cell in the grid, in
+         * row-major order. Cells live in the table's own grid_, not the inherited
+         * children_ vector -- generic tree walks over a node's children (page-index
+         * assignment, position shifts, ...) must use this instead of children_count()/
+         * edit_child() to reach a table's cells.
+         */
+        template <typename Fn>
+        void for_each_cell(Fn&& fn) const
+        {
+            for (int r = 0; r < row_count(); ++r)
+            {
+                for (int c = 0; c < column_count(); ++c)
+                {
+                    if (auto cell_ptr = cell(r, c))
+                    {
+                        fn(*cell_ptr);
+                    }
+                }
+            }
+        }
+
         void set_column_weights(std::vector<float> weights);
         const std::vector<float>& column_weights() const;
 
@@ -73,7 +105,52 @@ namespace docraft::loom::nodes {
          */
         std::shared_ptr<DocraftLoomTable> split_after_row(int row_index, bool repeat_header_rows = true);
 
+        /**
+         * @brief Length of the leading contiguous run of all-title rows (0 if row 0
+         * isn't a title row, or the table has no rows). This is exactly what
+         * split_after_row(..., repeat_header_rows=true) clones onto a remainder's front
+         * as its repeating header, so callers can tell whether a given number of
+         * "fitting" rows covers only repeated header rows or actual content.
+         */
+        int leading_title_row_count() const;
+
+        /**
+         * @brief Splits row row_index's own cell content by wrapped-line count, for the
+         * case where the row alone is taller than available_height (typically a whole
+         * page) and can't be moved elsewhere as a unit. For each cell whose content is a
+         * DocraftLoomText with 2+ wrapped_lines(), as many leading lines as fit within
+         * available_height stay in *this (row_index shrinks to just that fragment); the
+         * rest become that column's cell in a new one-row remainder table (repeated
+         * header rows cloned onto its front first, mirroring split_after_row), the same
+         * way this table's own leftover rows (if any, after row_index) do. A cell whose
+         * content isn't a splittable Text -- or whose sole line still exceeds
+         * available_height -- must already fit within available_height on its own, or
+         * nothing is split at all.
+         * @return The remainder table, or nullptr if row_index is out of range, the
+         * table has no columns, no cell's content could be split, or every cell already
+         * fit whole (nothing to split).
+         */
+        std::shared_ptr<DocraftLoomTable> split_row_content(int row_index, float available_height,
+                                                            bool repeat_header_rows = true);
+
     private:
+        /**
+         * @brief Clones the leading contiguous run of all-title rows before
+         * upto_row_index (clamped to leading_title_row_count()) -- the shared "repeating
+         * header" prefix that both split_after_row and split_row_content prepend onto
+         * their remainder.
+         */
+        std::vector<std::vector<std::shared_ptr<DocraftLoomTableCell> > > clone_leading_header_rows(
+            int upto_row_index) const;
+
+        /**
+         * @brief A fresh, empty table carrying over this table's own column
+         * weights/default background/baseline offset/padding -- the shared starting
+         * point both split_after_row and split_row_content build their remainder on top
+         * of, before either fills in its own rows.
+         */
+        std::shared_ptr<DocraftLoomTable> make_remainder_shell() const;
+
         std::vector<std::vector<std::shared_ptr<DocraftLoomTableCell>>> grid_;
         std::vector<float> column_weights_;
         std::optional<DocraftColor> default_cell_background_;

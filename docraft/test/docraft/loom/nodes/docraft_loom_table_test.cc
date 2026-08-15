@@ -314,4 +314,26 @@ namespace docraft::test {
         table->add_row({make_cell("a"), make_cell("b")});
         EXPECT_THROW(table->add_row({make_cell("c")}), exception::InvalidInputException);
     }
+
+    TEST_F(DocraftLoomTableTest, LeadingTitleRowCountIsZeroWithNoTitleRows) {
+        auto table = std::make_shared<loom::nodes::DocraftLoomTable>();
+        table->add_row({make_cell("a"), make_cell("b")});
+        table->add_row({make_cell("c"), make_cell("d")});
+        EXPECT_EQ(table->leading_title_row_count(), 0);
+    }
+
+    TEST_F(DocraftLoomTableTest, LeadingTitleRowCountStopsAtFirstNonTitleRow) {
+        auto table = std::make_shared<loom::nodes::DocraftLoomTable>();
+        table->add_row({make_cell("Col A", true), make_cell("Col B", true)});
+        table->add_row({make_cell("a"), make_cell("b")});
+        table->add_row({make_cell("c", true), make_cell("d", true)});
+        EXPECT_EQ(table->leading_title_row_count(), 1);
+    }
+
+    TEST_F(DocraftLoomTableTest, LeadingTitleRowCountCoversAllRowsWhenAllAreTitle) {
+        auto table = std::make_shared<loom::nodes::DocraftLoomTable>();
+        table->add_row({make_cell("Col A", true), make_cell("Col B", true)});
+        table->add_row({make_cell("Col C", true), make_cell("Col D", true)});
+        EXPECT_EQ(table->leading_title_row_count(), 2);
+    }
 } // namespace docraft::test
