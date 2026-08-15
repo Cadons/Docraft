@@ -117,7 +117,11 @@ namespace docraft::tools {
 
         // Scans `craft_text` for `${...}` expressions (skipping `${data(...)}`, which is
         // only resolvable per-Foreach-item and can't be checked statically here) and
-        // warns about every one not registered in `engine`.
+        // warns about every one not registered in `engine`. Only meaningful in
+        // non-strict mode -- when strict, the real parse pass below already turns an
+        // unresolved reference into a hard error (and, unlike this static scan, also
+        // catches unresolved `${data(...)}` fields by actually expanding every
+        // `<Foreach>`).
         void warn_about_unresolved_variables(const std::string& craft_text,
                                               const docraft::templating::DocraftTemplateEngine& engine,
                                               DocraftValidationResult& result)
@@ -163,7 +167,8 @@ namespace docraft::tools {
     }
 
     DocraftValidationResult DocraftValidator::validate(
-        const std::filesystem::path& craft_file, const std::optional<std::filesystem::path>& data_file) const
+        const std::filesystem::path& craft_file, const std::optional<std::filesystem::path>& data_file,
+        const bool strict) const
     {
         DocraftValidationResult result;
 
@@ -171,6 +176,12 @@ namespace docraft::tools {
         if (data_file)
         {
             engine = build_template_engine(*data_file, result);
+        }
+        else if (strict)
+        {
+            // No --data given, but strict still needs an engine to enforce against --
+            // any ${variable}/${data(...)} in the document is necessarily unresolved.
+            engine = std::make_shared<docraft::templating::DocraftTemplateEngine>();
         }
 
         if (!std::filesystem::exists(craft_file))
@@ -194,6 +205,7 @@ namespace docraft::tools {
         docraft::craft::DocraftLoomCraftLanguageParser parser;
         if (engine)
         {
+            engine->set_strict(strict);
             parser.set_template_engine(engine);
         }
         try
@@ -206,7 +218,7 @@ namespace docraft::tools {
             return result;
         }
 
-        if (engine)
+        if (engine && !strict)
         {
             warn_about_unresolved_variables(*craft_text, *engine, result);
         }

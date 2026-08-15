@@ -36,6 +36,31 @@ namespace docraft::test::utils {
         EXPECT_EQ(result, "");
     }
 
+    TEST(DocraftParserUtilis, extract_data_attribute_reports_found_via_out_param) {
+        nlohmann::json item = {
+            {"name", "Alice"},
+            {"bio", ""}
+        };
+
+        bool found = false;
+        std::string result = docraft::utils::DocraftParserUtilis::extract_data_attribute("${data(name)}", item, &found);
+        EXPECT_EQ(result, "Alice");
+        EXPECT_TRUE(found);
+
+        // Present field whose value is itself an empty string -- must be distinguished
+        // from a missing field.
+        found = false;
+        result = docraft::utils::DocraftParserUtilis::extract_data_attribute("${data(bio)}", item, &found);
+        EXPECT_EQ(result, "");
+        EXPECT_TRUE(found);
+
+        // Missing field.
+        found = true;
+        result = docraft::utils::DocraftParserUtilis::extract_data_attribute("${data(country)}", item, &found);
+        EXPECT_EQ(result, "");
+        EXPECT_FALSE(found);
+    }
+
     TEST(DocraftParserUtilis, extract_data_attribute_with_quotes) {
         nlohmann::json item = {
             {"name", "Bob"},

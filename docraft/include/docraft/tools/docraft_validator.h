@@ -72,10 +72,15 @@ namespace docraft::tools {
          * @param craft_file Path to the `.craft` file to validate.
          * @param data_file Optional path to a JSON data file (same contract as
          * `docraft_tool`'s `--data` option).
+         * @param strict When true, a `${variable}` reference that can't be resolved
+         * against `data_file` is reported as an error (kError) instead of a warning
+         * (kWarning) -- mirrors `docraft_tool`'s `--strict` flag, letting pipelines
+         * gate on data-binding mistakes that would otherwise leak into the output.
          * @return Every error/warning found; empty when the input is fully valid.
          */
         [[nodiscard]] DocraftValidationResult validate(
             const std::filesystem::path& craft_file,
-            const std::optional<std::filesystem::path>& data_file = std::nullopt) const;
+            const std::optional<std::filesystem::path>& data_file = std::nullopt,
+            bool strict = false) const;
     };
 } // namespace docraft::tools
