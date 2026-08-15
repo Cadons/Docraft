@@ -19,6 +19,31 @@ namespace docraft::test {
             };
             return cell;
         }
+
+        // 100x100 mock page, the size every test in this file lays its content out
+        // against.
+        utils::MockPageBackend make_standard_page_backend() {
+            auto config = utils::MockBackendSharedState::Config{};
+            config.page_width = 100.0F;
+            config.page_height = 100.0F;
+            return utils::MockPageBackend{std::make_shared<utils::MockBackendSharedState>(config)};
+        }
+
+        // A VStack body with a single positioned DocraftLoomText child -- optionally
+        // named, for tests that need to assert the overflow warning names the node.
+        std::shared_ptr<loom::nodes::DocraftLoomVStack> make_single_text_body(
+            const std::string& text, float y, float height, const std::string& name = "") {
+            auto node = std::make_shared<loom::nodes::DocraftLoomText>(text);
+            if (!name.empty()) {
+                node->set_name(name);
+            }
+            node->edit_layout_box().frame = {
+                .position = {.x = 0.0F, .y = y}, .size = {.width = 50.0F, .height = height}
+            };
+            auto body = std::make_shared<loom::nodes::DocraftLoomVStack>();
+            body->add_child(node);
+            return body;
+        }
     } // namespace
     TEST(DocraftLoomPaginationProcessorTest, NewPageForcesBreakRegardlessOfRemainingSpace)
     {
@@ -224,19 +249,8 @@ namespace docraft::test {
     // warning). It's still accepted as overflow -- the layout behavior is unchanged --
     // but it must now be logged so the mistake is visible in tool/CI output.
     TEST(DocraftLoomPaginationProcessorTest, OversizedNonTableNodeLogsWarning) {
-        auto config = utils::MockBackendSharedState::Config{};
-        config.page_width = 100.0F;
-        config.page_height = 100.0F;
-        auto state = std::make_shared<utils::MockBackendSharedState>(config);
-        utils::MockPageBackend page_backend{state};
-
-        auto body = std::make_shared<loom::nodes::DocraftLoomVStack>();
-        auto tall_text = std::make_shared<loom::nodes::DocraftLoomText>("way too tall");
-        tall_text->set_name("overflowing_text");
-        tall_text->edit_layout_box().frame = {
-            .position = {.x = 0.0F, .y = 10.0F}, .size = {.width = 50.0F, .height = 200.0F}
-        };
-        body->add_child(tall_text);
+        auto page_backend = make_standard_page_backend();
+        auto body = make_single_text_body("way too tall", /*y=*/10.0F, /*height=*/200.0F, "overflowing_text");
 
         loom::pipeline::DocraftLoomPaginationProcessor processor;
 
@@ -255,18 +269,8 @@ namespace docraft::test {
     // A node that fits within the available page height must not trigger the overflow
     // warning.
     TEST(DocraftLoomPaginationProcessorTest, FittingNodeLogsNoWarning) {
-        auto config = utils::MockBackendSharedState::Config{};
-        config.page_width = 100.0F;
-        config.page_height = 100.0F;
-        auto state = std::make_shared<utils::MockBackendSharedState>(config);
-        utils::MockPageBackend page_backend{state};
-
-        auto body = std::make_shared<loom::nodes::DocraftLoomVStack>();
-        auto only = std::make_shared<loom::nodes::DocraftLoomText>("only");
-        only->edit_layout_box().frame = {
-            .position = {.x = 0.0F, .y = 10.0F}, .size = {.width = 50.0F, .height = 10.0F}
-        };
-        body->add_child(only);
+        auto page_backend = make_standard_page_backend();
+        auto body = make_single_text_body("only", /*y=*/10.0F, /*height=*/10.0F);
 
         loom::pipeline::DocraftLoomPaginationProcessor processor;
 
