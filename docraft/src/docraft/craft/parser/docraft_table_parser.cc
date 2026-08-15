@@ -17,6 +17,7 @@
 #include "docraft/craft/parser/docraft_parser.h"
 
 #include <optional>
+#include <utility>
 
 #include "docraft/craft/parser/docraft_parser_helpers.h"
 #include "docraft/exception/docraft_exceptions.h"
@@ -180,25 +181,7 @@ namespace docraft::craft::parser {
             }
         }
 
-        ParsedTableRowData parse_horizontal_row(const pugi::xml_node& row)
-        {
-            detail::validate_attributes(row, std::string{elements::kRow},
-                                              {elements::table_row::attribute::kBackgroundColor},
-                                              /*allow_common=*/false);
-            ParsedTableRowData row_data;
-            row_data.background = parse_background_color(row, elements::table_row::attribute::kBackgroundColor.data());
-            for (auto col: row.children()) {
-                if (col.name() != std::string{elements::kCell})
-                {
-                    throw docraft::exception::InvalidInputException(
-                        std::string(col.name()) + " is not supported in the table body");
-                }
-                row_data.cells.push_back(parse_cell(col));
-            }
-            return row_data;
-        }
-
-        ParsedTableRowData parse_vertical_row(const pugi::xml_node& row)
+        ParsedTableRowData parse_row(const pugi::xml_node& row, const bool is_vertical)
         {
             detail::validate_attributes(row, std::string{elements::kRow},
                                               {elements::table_row::attribute::kBackgroundColor},
@@ -208,7 +191,7 @@ namespace docraft::craft::parser {
             bool found_vtitle = false;
             for (auto col: row.children()) {
                 const std::string col_name = col.name();
-                if (col_name == std::string{elements::kVTitle}) {
+                if (is_vertical && col_name == std::string{elements::kVTitle}) {
                     if (found_vtitle)
                     {
                         throw docraft::exception::InvalidInputException("Only one VTitle is allowed per Row");
@@ -219,12 +202,17 @@ namespace docraft::craft::parser {
                     continue;
                 }
                 if (col_name == std::string{elements::kCell}) {
-                    row_data.cells.push_back(parse_cell(col));
+                    auto cell_data = parse_cell(col);
+                    if (!cell_data.background)
+                    {
+                        cell_data.background = row_data.background;
+                    }
+                    row_data.cells.push_back(std::move(cell_data));
                     continue;
                 }
                 throw docraft::exception::InvalidInputException(col_name + " is not supported in the table body");
             }
-            if (!found_vtitle) {
+            if (is_vertical && !found_vtitle) {
                 throw docraft::exception::InvalidInputException("VTitle is mandatory for vertical table rows");
             }
             return row_data;
@@ -238,7 +226,7 @@ namespace docraft::craft::parser {
                     throw docraft::exception::InvalidInputException(
                         std::string(row.name()) + " cannot be placed in a table body");
                 }
-                table_data.rows.push_back(is_vertical ? parse_vertical_row(row) : parse_horizontal_row(row));
+                table_data.rows.push_back(parse_row(row, is_vertical));
             }
         }
     } // namespace

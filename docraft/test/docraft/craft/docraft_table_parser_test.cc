@@ -60,6 +60,12 @@ TEST(DocraftTableParserTest, ParsesHorizontalTableWithBackgrounds) {
     EXPECT_FLOAT_EQ(cell_rgb.g, 0.0F);
     EXPECT_FLOAT_EQ(cell_rgb.b, 1.0F);
 
+    ASSERT_TRUE(data.rows[0].cells[1].background.has_value());
+    auto inherited_cell_rgb = to_rgb(*data.rows[0].cells[1].background);
+    EXPECT_FLOAT_EQ(inherited_cell_rgb.r, 0.0F);
+    EXPECT_FLOAT_EQ(inherited_cell_rgb.g, 1.0F);
+    EXPECT_FLOAT_EQ(inherited_cell_rgb.b, 0.0F);
+
     ASSERT_TRUE(data.default_cell_background.has_value());
     auto default_rgb = to_rgb(*data.default_cell_background);
     EXPECT_NEAR(default_rgb.r, 0.8F, 0.01F);
@@ -171,6 +177,16 @@ TEST(DocraftTableParserTest, ParsesVerticalTableWithHeaderRow) {
     ASSERT_TRUE(data.rows[0].row_title->background.has_value());
     ASSERT_TRUE(data.rows[0].background.has_value());
     ASSERT_EQ(data.rows[0].cells.size(), 2U);
+    ASSERT_TRUE(data.rows[0].cells[0].background.has_value());
+    auto explicit_cell_rgb = to_rgb(*data.rows[0].cells[0].background);
+    EXPECT_FLOAT_EQ(explicit_cell_rgb.r, 0.0F);
+    EXPECT_FLOAT_EQ(explicit_cell_rgb.g, 0.0F);
+    EXPECT_FLOAT_EQ(explicit_cell_rgb.b, 1.0F);
+    ASSERT_TRUE(data.rows[0].cells[1].background.has_value());
+    auto inherited_cell_rgb = to_rgb(*data.rows[0].cells[1].background);
+    EXPECT_FLOAT_EQ(inherited_cell_rgb.r, 0.0F);
+    EXPECT_FLOAT_EQ(inherited_cell_rgb.g, 1.0F);
+    EXPECT_FLOAT_EQ(inherited_cell_rgb.b, 0.0F);
 }
 
 TEST(DocraftTableParserTest, RejectsVerticalRowWithoutVTitle)
