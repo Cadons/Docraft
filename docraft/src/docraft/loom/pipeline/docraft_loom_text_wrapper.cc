@@ -79,7 +79,8 @@ namespace docraft::loom::pipeline {
                 }
                 continue;
             }
-            const std::string candidate = current_line.append(" ").append(word);
+            std::string candidate = current_line;
+            candidate=candidate.append(" ").append(word);
             if (text_backend_->measure_text_width(candidate, font_name, font_size) <= max_width) {
                 current_line = candidate;
             } else {

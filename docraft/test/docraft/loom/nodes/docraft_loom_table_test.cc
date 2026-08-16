@@ -72,9 +72,12 @@ namespace docraft::test {
         table->accept(layout);
 
         EXPECT_FLOAT_EQ(table->cell(0, 0)->layout_box().frame.size.width, 40.0F);
-        // no rescale when any explicit width is present: column 1 gets its weight-based
-        // share of available_width (195 / 2 columns = 97.5), floored at its natural width
-        EXPECT_FLOAT_EQ(table->cell(0, 1)->layout_box().frame.size.width, 97.5F);
+        // column 1 (the only flexible column) gets everything available_width has left
+        // over after column 0's explicit width is deducted (195 - 40 = 155), not a share
+        // of the full available_width diluted by column 0 -- otherwise the table's total
+        // resolved width would exceed available_width (40 + 97.5 = 137.5 happened to fit
+        // here, but the same dilution overflows the margin with more columns/less slack).
+        EXPECT_FLOAT_EQ(table->cell(0, 1)->layout_box().frame.size.width, 155.0F);
     }
 
     TEST_F(DocraftLoomTableTest, NaturalWidthFloorIsRespectedWhenNoRescaleIsNeeded)

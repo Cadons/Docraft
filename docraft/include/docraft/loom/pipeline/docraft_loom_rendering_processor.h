@@ -151,6 +151,15 @@ namespace docraft::loom::pipeline {
                                        const nodes::Size& size);
 
         /**
+         * @brief Paints node's children (in paint_order_indices() order) clipped to
+         * frame, so nothing a child paints can escape those bounds. Shared by every
+         * container that must contain its children (Rectangle, Canvas) so the
+         * save_state()/clip_rectangle()/.../restore_state() sequence isn't duplicated
+         * at each call site.
+         */
+        void paint_children_clipped_to_frame(nodes::DocraftLoomNode& node, const nodes::Rect& frame);
+
+        /**
          * @brief Whether a node should be drawn during the current page's render pass:
          * true for unpaginated content (layout_box().page_index < 0, e.g. a header/footer
          * or any document that never ran real pagination) or content assigned to the
