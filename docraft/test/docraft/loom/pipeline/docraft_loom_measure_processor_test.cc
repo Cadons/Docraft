@@ -3,6 +3,8 @@
 #include "docraft/loom/nodes/docraft_loom_circle.h"
 #include "docraft/loom/nodes/docraft_loom_hstack.h"
 #include "docraft/loom/nodes/docraft_loom_rectangle.h"
+#include "docraft/loom/nodes/docraft_loom_table.h"
+#include "docraft/loom/nodes/docraft_loom_table_cell.h"
 #include "docraft/loom/nodes/docraft_loom_text.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
@@ -166,5 +168,50 @@ namespace docraft::test {
             reassembled += line;
         }
         EXPECT_EQ(reassembled, word);
+    }
+
+    // A column's width can come from ANY row's cell -- e.g. only the header/first row
+    // repeats Cell width="...", later rows omit it and just inherit the column. A cell
+    // with no explicit width of its own must get that column's real (sibling-set)
+    // width as its wrap budget, not a naive even/weighted split of the whole table that
+    // ignores the fixed column entirely -- that naive split under-budgeted the column,
+    // wrapping its text far narrower than the box it's actually painted in.
+    TEST_F(DocraftLoomMeasureProcessorTest, ColumnWrapBudgetHonorsExplicitWidthSetBySiblingRow)
+    {
+        using ::testing::_;
+        using ::testing::Return;
+        EXPECT_CALL(*text_backend_mock(), measure_text_width(_, _, _)).WillRepeatedly(Return(250.0F));
+        EXPECT_CALL(*text_backend_mock(), measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+        EXPECT_CALL(*text_backend_mock(), measure_text_ascent(_, _)).WillRepeatedly(Return(8.0F));
+        EXPECT_CALL(*text_backend_mock(), measure_text_descent(_, _)).WillRepeatedly(Return(-2.0F));
+
+        processor()->set_content_width(400.0F);
+
+        auto table = std::make_shared<loom::nodes::DocraftLoomTable>();
+        table->set_padding(0.0F);
+
+        // Row 0 fixes column 0's width at 300 via its own cell; column 1 stays flexible.
+        auto cell_a0 = std::make_shared<loom::nodes::DocraftLoomTableCell>();
+        cell_a0->set_explicit_width(300.0F);
+        cell_a0->set_content(std::make_shared<loom::nodes::DocraftLoomText>("short"));
+        auto cell_b0 = std::make_shared<loom::nodes::DocraftLoomTableCell>();
+        cell_b0->set_content(std::make_shared<loom::nodes::DocraftLoomText>("short"));
+        table->add_row({cell_a0, cell_b0});
+
+        // Row 1 omits width on every cell -- column 0's cell here must still be
+        // budgeted against the 300pt the column was fixed at by row 0, not a naive
+        // even split of the table (which would starve it to ~192pt and force an
+        // unnecessary wrap of this 250pt-wide text).
+        auto cell_a1 = std::make_shared<loom::nodes::DocraftLoomTableCell>();
+        auto text_a1 = std::make_shared<loom::nodes::DocraftLoomText>("a long unwrapped line of text");
+        cell_a1->set_content(text_a1);
+        auto cell_b1 = std::make_shared<loom::nodes::DocraftLoomTableCell>();
+        cell_b1->set_content(std::make_shared<loom::nodes::DocraftLoomText>("short"));
+        table->add_row({cell_a1, cell_b1});
+
+        table->accept(*processor());
+
+        EXPECT_TRUE(text_a1->wrapped_lines().empty());
+        EXPECT_FLOAT_EQ(text_a1->edit_layout_box().measured_size.width, 250.0F);
     }
 }
