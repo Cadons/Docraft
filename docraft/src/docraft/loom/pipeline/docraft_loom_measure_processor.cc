@@ -503,8 +503,10 @@ namespace docraft::loom::pipeline {
         // the natural-width-floor sizing of cells that already fit.
         std::vector<float> column_wrap_budget(static_cast<std::size_t>(cols), 0.0F);
         if (cols > 0 && incoming_width > 0.0F) {
-            const float available_width =
-                    incoming_width - (2.0F * nodes::DocraftLoomTable::kCellPaddingX) - (2.0F * table->padding());
+            // See the matching comment in DocraftLoomLayoutProcessor::resolve_table_column_widths:
+            // kCellPaddingX is a per-cell inset, already reflected in each cell's own
+            // measured_size -- it must not also be subtracted here as a table-wide margin.
+            const float available_width = incoming_width - (2.0F * table->padding());
             if (available_width > 0.0F) {
                 const auto shares = distribute_weighted_amounts(available_width, table->column_weights(), cols);
                 for (int c = 0; c < cols; ++c) {

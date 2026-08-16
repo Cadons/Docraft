@@ -51,9 +51,11 @@ namespace docraft::test {
         loom::pipeline::DocraftLoomLayoutProcessor layout(200.0F);
         table->accept(layout);
 
-        // available_width = 200 - 2*2.5 = 195, split evenly -> ~97.5 each (floored at natural 10)
-        EXPECT_FLOAT_EQ(table->cell(0, 0)->layout_box().frame.size.width, 97.5F);
-        EXPECT_FLOAT_EQ(table->cell(0, 1)->layout_box().frame.size.width, 97.5F);
+        // available_width = 200 (table padding=0; kCellPaddingX is a per-cell inset already
+        // folded into each cell's own measured_size, not a table-wide margin), split evenly
+        // -> 100 each (floored at natural 10)
+        EXPECT_FLOAT_EQ(table->cell(0, 0)->layout_box().frame.size.width, 100.0F);
+        EXPECT_FLOAT_EQ(table->cell(0, 1)->layout_box().frame.size.width, 100.0F);
     }
 
     TEST_F(DocraftLoomTableTest, ExplicitWidthIsRespectedAndRemainderRedistributed)
@@ -73,11 +75,11 @@ namespace docraft::test {
 
         EXPECT_FLOAT_EQ(table->cell(0, 0)->layout_box().frame.size.width, 40.0F);
         // column 1 (the only flexible column) gets everything available_width has left
-        // over after column 0's explicit width is deducted (195 - 40 = 155), not a share
+        // over after column 0's explicit width is deducted (200 - 40 = 160), not a share
         // of the full available_width diluted by column 0 -- otherwise the table's total
-        // resolved width would exceed available_width (40 + 97.5 = 137.5 happened to fit
+        // resolved width would exceed available_width (40 + 100 = 140 happened to fit
         // here, but the same dilution overflows the margin with more columns/less slack).
-        EXPECT_FLOAT_EQ(table->cell(0, 1)->layout_box().frame.size.width, 155.0F);
+        EXPECT_FLOAT_EQ(table->cell(0, 1)->layout_box().frame.size.width, 160.0F);
     }
 
     TEST_F(DocraftLoomTableTest, NaturalWidthFloorIsRespectedWhenNoRescaleIsNeeded)
@@ -100,14 +102,14 @@ namespace docraft::test {
         table->add_row({make_cell("a", true), make_cell("b", true)});
         table->accept(*measure_);
 
-        // available_width = 200 - 2*2.5 = 195; weight share = 97.5 each, which already
+        // available_width = 200 (table padding=0); weight share = 100 each, which already
         // exceeds the natural width of 75, so the floor never has to compete with the
         // rescale here -- both columns simply get their even weight-based share.
         loom::pipeline::DocraftLoomLayoutProcessor layout(200.0F);
         table->accept(layout);
 
-        EXPECT_FLOAT_EQ(table->cell(0, 0)->layout_box().frame.size.width, 97.5F);
-        EXPECT_FLOAT_EQ(table->cell(0, 1)->layout_box().frame.size.width, 97.5F);
+        EXPECT_FLOAT_EQ(table->cell(0, 0)->layout_box().frame.size.width, 100.0F);
+        EXPECT_FLOAT_EQ(table->cell(0, 1)->layout_box().frame.size.width, 100.0F);
     }
 
     TEST_F(DocraftLoomTableTest, NarrowPageRescalesColumnsProportionally)
@@ -132,10 +134,10 @@ namespace docraft::test {
         table->accept(layout);
 
         // Cell natural widths include the automatic content padding (2*2.5 = 5), so
-        // natural widths are 150+5=155 and 10+5=15. available_width = 20 - 5 = 15;
-        // scale = 15 / (155+15) = 15/170.
-        EXPECT_NEAR(table->cell(0, 0)->layout_box().frame.size.width, 155.0F * 15.0F / 170.0F, 0.001F);
-        EXPECT_NEAR(table->cell(0, 1)->layout_box().frame.size.width, 15.0F * 15.0F / 170.0F, 0.001F);
+        // natural widths are 150+5=155 and 10+5=15. available_width = 20 (table padding=0);
+        // scale = 20 / (155+15) = 20/170.
+        EXPECT_NEAR(table->cell(0, 0)->layout_box().frame.size.width, 155.0F * 20.0F / 170.0F, 0.001F);
+        EXPECT_NEAR(table->cell(0, 1)->layout_box().frame.size.width, 15.0F * 20.0F / 170.0F, 0.001F);
     }
 
     TEST_F(DocraftLoomTableTest, RowHeightIsTallestCellPlusPadding)
@@ -225,10 +227,11 @@ namespace docraft::test {
 
         auto text = std::dynamic_pointer_cast<loom::nodes::DocraftLoomText>(table->cell(0, 0)->content());
         ASSERT_TRUE(text);
-        // available_width = 20 - 2*2.5 = 15; single column -> budget = 15 - 2*2.5 = 10.
-        EXPECT_FLOAT_EQ(text->wrap_width(), 10.0F);
+        // available_width = 20 (table padding=0); single column -> share = 20;
+        // budget = share - 2*kCellPaddingX = 20 - 5 = 15.
+        EXPECT_FLOAT_EQ(text->wrap_width(), 15.0F);
         EXPECT_GT(text->wrapped_lines().size(), 1U);
-        EXPECT_FLOAT_EQ(text->layout_box().measured_size.width, 10.0F);
+        EXPECT_FLOAT_EQ(text->layout_box().measured_size.width, 15.0F);
     }
 
     TEST_F(DocraftLoomTableTest, ShortCellTextKeepsNaturalWidthEvenWithAColumnBudget)

@@ -622,9 +622,13 @@ namespace docraft::loom::pipeline {
         float sum_natural = 0.0F;
         for (float w : geometry.natural_widths)
             sum_natural += w;
+        // kCellPaddingX is a per-cell content inset -- Measure already folds it into every
+        // cell's own measured_size (and therefore into geometry.natural_widths), so it must
+        // NOT also be subtracted here as if it were a table-wide margin like table.padding():
+        // doing so shrank the table by a flat 2*kCellPaddingX with nothing to reclaim it,
+        // leaving a gap on the table's trailing edge.
         const float available_width = incoming_width > 0.0F
-                                          ? incoming_width - (2.0F * nodes::DocraftLoomTable::kCellPaddingX) -
-                                          (2.0F * table.padding())
+                                          ? incoming_width - (2.0F * table.padding())
                                           : sum_natural;
 
         // A column is "fixed" if the author gave it an explicit width, "flexible"
