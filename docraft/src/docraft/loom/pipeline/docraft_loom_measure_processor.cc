@@ -526,10 +526,14 @@ namespace docraft::loom::pipeline {
         // explicit width, even when available_width below is 0 -- so a cell with its
         // own width() still gets a real wrap budget with no page/content width set at
         // all; only the flexible columns then get no budget (0), same as before.
+        //
+        // kCellPaddingX is a per-cell content inset, already reflected in each cell's
+        // own measured_size -- see the matching comment in
+        // DocraftLoomLayoutProcessor::resolve_table_column_widths -- so it must not
+        // also be subtracted here as a table-wide margin.
         float available_width = 0.0F;
         if (incoming_width > 0.0F) {
-            available_width = std::max(
-                0.0F, incoming_width - (2.0F * nodes::DocraftLoomTable::kCellPaddingX) - (2.0F * table->padding()));
+            available_width = std::max(0.0F, incoming_width - (2.0F * table->padding()));
         }
         const auto resolved_widths = resolve_fixed_and_flexible_amounts({
                 .available_amount = available_width,

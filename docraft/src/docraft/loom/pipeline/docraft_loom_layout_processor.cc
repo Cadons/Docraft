@@ -622,10 +622,33 @@ namespace docraft::loom::pipeline {
         float sum_natural = 0.0F;
         for (float w : geometry.natural_widths)
             sum_natural += w;
+        // kCellPaddingX is a per-cell content inset -- Measure already folds it into every
+        // cell's own measured_size (and therefore into geometry.natural_widths), so it must
+        // NOT also be subtracted here as if it were a table-wide margin like table.padding():
+        // doing so shrank the table by a flat 2*kCellPaddingX with nothing to reclaim it,
+        // leaving a gap on the table's trailing edge.
         const float available_width = incoming_width > 0.0F
-                                          ? incoming_width - (2.0F * nodes::DocraftLoomTable::kCellPaddingX) -
-                                          (2.0F * table.padding())
+                                          ? incoming_width - (2.0F * table.padding())
                                           : sum_natural;
+
+        // Warn (rather than silently clip) when the author's own explicit column widths
+        // already exceed available_width before any flexible column even gets a share --
+        // resolve_fixed_and_flexible_amounts() below still keeps fixed columns verbatim
+        // and clamps flexible ones to 0, so the table overflows the page margin visibly
+        // instead of crashing, but that's worth surfacing to the caller.
+        float explicit_total = 0.0F;
+        for (float w : geometry.explicit_widths)
+            if (w > 0.0F)
+                explicit_total += w;
+        if (explicit_total > available_width)
+        {
+            const std::string node_label =
+                table.name().empty() ? std::string{"A table"} : fmt::format("Table '{}'", table.name());
+            LOG_WARNING(fmt::format(
+                "{} has explicit column widths summing to {:.1f}pt, wider than the {:.1f}pt available "
+                "on the page -- it overflows past the page margin.",
+                node_label, explicit_total, available_width));
+        }
 
         // Fixed columns (explicit_widths[c] > 0) keep their own width verbatim and
         // reserve it out of available_width before flexible columns split what's left
