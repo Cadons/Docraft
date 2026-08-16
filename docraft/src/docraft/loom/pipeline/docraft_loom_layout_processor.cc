@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <memory>
 
+#include <fmt/format.h>
+
 #include "docraft/exception/docraft_input_exceptions.h"
 #include "docraft/loom/nodes/docraft_loom_blank_line.h"
 #include "docraft/loom/nodes/docraft_loom_circle.h"
@@ -24,6 +26,7 @@
 #include "docraft/loom/nodes/docraft_loom_title.h"
 #include "docraft/loom/nodes/docraft_loom_vstack.h"
 #include "docraft/loom/pipeline/docraft_loom_weighted_distribution.h"
+#include "docraft/utils/docraft_logger.h"
 
 namespace docraft::loom::pipeline {
 #pragma region Cursor
@@ -306,6 +309,15 @@ namespace docraft::loom::pipeline {
 
         const float content_bottom = current_y + trailing_margin + padding;
         const float actual_height = std::max(layout_box.frame.size.height, content_bottom - position.y);
+        if (node->height() > 0.0F && actual_height > layout_box.frame.size.height)
+        {
+            const std::string node_label =
+                node->name().empty() ? std::string{"A vertical Layout"} : fmt::format("Layout '{}'", node->name());
+            LOG_WARNING(fmt::format(
+                "{} has height=\"{:.1f}\" but its weighted children's own natural heights needed "
+                "{:.1f}pt to fit -- the box grew to that instead of clipping them.",
+                node_label, node->height(), actual_height));
+        }
         layout_box.frame.size.height = actual_height;
         layout_box.measured_size.height = actual_height;
         cursor_.set_position(position.x, position.y + layout_box.frame.size.height);

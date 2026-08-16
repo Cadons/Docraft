@@ -37,7 +37,10 @@ one is a case where a document parses fine but doesn't do what a reasonable auth
    only take effect when the `<Layout>` itself also has an explicit `height="..."` — a VStack's
    height is otherwise derived bottom-up from its children (no ambient "page height" budget the way
    HStack always has a page width to divide), so per-child `weight` alone on a heightless vertical
-   layout still has zero effect.
+   layout still has zero effect. If `height="..."` is smaller than what the weighted children's own
+   natural heights need (each child is never squeezed shorter than its own content), the `<Layout>`
+   grows past the declared `height` instead of clipping or overlapping the next sibling — a
+   `[WARNING]` is logged when this happens.
 
 7. **`width`/`height` silently do nothing on several tags** even though they parse without error:
    `<List>`, `<Paragraph>`, `<Line>`, `<CurveLine>`, `<Table>` have no setter wired for them.

@@ -324,6 +324,56 @@ namespace docraft::test {
         EXPECT_FLOAT_EQ(sibling->layout_box().frame.position.y, 30.0F); // 10 + 20, not 10 + 12
     }
 
+    // The box growing past a too-small explicit height() is silent otherwise -- the
+    // author asked for height="12" and got 20 with no visible sign anything was off.
+    // Log it, mirroring how DocraftLoomPaginationProcessor warns when a node overflows
+    // the page bottom (see OversizedNonTableNodeLogsWarning).
+    TEST_F(DocraftLoomStackNodesTest, VStack_ExplicitHeightOverflowLogsWarning)
+    {
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(50.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto vstack = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        vstack->set_name("peso_stack");
+        vstack->set_padding(0.0F);
+        vstack->set_spacing(0.0F);
+        vstack->set_height(12.0F); // smaller than the 20pt sum of natural heights
+        vstack->set_weights({1.0F, 1.0F});
+        vstack->add_child(make_text("a"));
+        vstack->add_child(make_text("b"));
+
+        vstack->accept(*measure_);
+        testing::internal::CaptureStdout();
+        vstack->accept(*layout_);
+        const std::string stdout_log = testing::internal::GetCapturedStdout();
+
+        EXPECT_NE(stdout_log.find("[WARNING]"), std::string::npos);
+        EXPECT_NE(stdout_log.find("peso_stack"), std::string::npos);
+    }
+
+    // A VStack whose explicit height() already fits the children's natural heights must
+    // not trigger the overflow warning.
+    TEST_F(DocraftLoomStackNodesTest, VStack_ExplicitHeightFittingContentLogsNoWarning)
+    {
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(50.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto vstack = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        vstack->set_padding(0.0F);
+        vstack->set_spacing(0.0F);
+        vstack->set_height(30.0F); // comfortably fits the 20pt sum of natural heights
+        vstack->set_weights({1.0F, 1.0F});
+        vstack->add_child(make_text("a"));
+        vstack->add_child(make_text("b"));
+
+        vstack->accept(*measure_);
+        testing::internal::CaptureStdout();
+        vstack->accept(*layout_);
+        const std::string stdout_log = testing::internal::GetCapturedStdout();
+
+        EXPECT_EQ(stdout_log.find("[WARNING]"), std::string::npos);
+    }
+
     // Regression guard for the opt-in gate: weights() alone, without an explicit
     // height(), has nothing well-defined to divide (a VStack has no ambient "page
     // height" budget the way HStack always has a page width) -- so it must keep
