@@ -354,7 +354,8 @@ namespace docraft::loom::pipeline {
         // An explicit height() is a hard override, same as DocraftLoomRectangle's own
         // explicit width() above -- this is what gives DocraftLoomLayoutProcessor's
         // weighted-height distribution a real, bounded amount to divide among children.
-        ms.height = node->height() > 0.0F ? node->height() : total_height + (n > 0 ? (2.0F * padding) : 0.0F);
+        const auto computed_height=total_height + (n > 0 ? (2.0F * padding) : 0.0F);
+        ms.height = node->height() > 0.0F ? node->height() : computed_height;
     }
 
     void DocraftLoomMeasureProcessor::visit(docraft::loom::nodes::DocraftLoomHStack* node)
