@@ -165,6 +165,63 @@ namespace docraft::test {
         EXPECT_NEAR(w1, w2, 1.0F);
     }
 
+    // Companion to the vertical page-bottom overflow warning (#71): when a table's
+    // explicit column widths sum wider than the available width, it silently
+    // overflows past the page margin (bug found while validating #81's flexible-column
+    // fix). Mirrors DocraftLoomPaginationProcessorTest.OversizedNonTableNodeLogsWarning's
+    // stdout-capture approach.
+    TEST(DocraftLoomLayoutProcessorTest, ExplicitColumnWidthsWiderThanAvailableWidthLogsWarning)
+    {
+        auto table = std::make_shared<loom::nodes::DocraftLoomTable>();
+        table->set_name("wide_table");
+        table->set_padding(0.0F);
+
+        std::vector<std::shared_ptr<loom::nodes::DocraftLoomTableCell>> row;
+        for (int i = 0; i < 3; ++i)
+        {
+            auto cell = std::make_shared<loom::nodes::DocraftLoomTableCell>();
+            cell->set_explicit_width(300.0F);
+            cell->set_content(std::make_shared<loom::nodes::DocraftLoomText>("x"));
+            cell->edit_layout_box().measured_size = {.width = 300.0F, .height = 10.0F};
+            row.push_back(cell);
+        }
+        table->add_row(row);
+
+        // 900pt of explicit column width against a 200pt page -- must overflow.
+        loom::pipeline::DocraftLoomLayoutProcessor processor(200.0F);
+        testing::internal::CaptureStdout();
+        table->accept(processor);
+        const std::string stdout_log = testing::internal::GetCapturedStdout();
+
+        EXPECT_NE(stdout_log.find("[WARNING]"), std::string::npos);
+        EXPECT_NE(stdout_log.find("wide_table"), std::string::npos);
+    }
+
+    TEST(DocraftLoomLayoutProcessorTest, ExplicitColumnWidthsWithinAvailableWidthLogsNoWarning)
+    {
+        auto table = std::make_shared<loom::nodes::DocraftLoomTable>();
+        table->set_name("narrow_table");
+        table->set_padding(0.0F);
+
+        std::vector<std::shared_ptr<loom::nodes::DocraftLoomTableCell>> row;
+        for (int i = 0; i < 2; ++i)
+        {
+            auto cell = std::make_shared<loom::nodes::DocraftLoomTableCell>();
+            cell->set_explicit_width(50.0F);
+            cell->set_content(std::make_shared<loom::nodes::DocraftLoomText>("x"));
+            cell->edit_layout_box().measured_size = {.width = 50.0F, .height = 10.0F};
+            row.push_back(cell);
+        }
+        table->add_row(row);
+
+        loom::pipeline::DocraftLoomLayoutProcessor processor(200.0F);
+        testing::internal::CaptureStdout();
+        table->accept(processor);
+        const std::string stdout_log = testing::internal::GetCapturedStdout();
+
+        EXPECT_EQ(stdout_log.find("[WARNING]"), std::string::npos);
+    }
+
     // Review bug #8 (a): table cell content in absolute position mode must be
     // rejected the same way the cell itself already is -- resolving it to a raw
     // page coordinate silently ignores the cell's own layout entirely.

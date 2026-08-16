@@ -650,6 +650,15 @@ namespace docraft::loom::pipeline {
                 remaining -= resolved[static_cast<std::size_t>(c)];
             }
         }
+        if (remaining < 0.0F)
+        {
+            const std::string node_label =
+                table.name().empty() ? std::string{"A table"} : fmt::format("Table '{}'", table.name());
+            LOG_WARNING(fmt::format(
+                "{} has explicit column widths summing to {:.1f}pt, wider than the {:.1f}pt available "
+                "on the page -- it overflows past the page margin.",
+                node_label, available_width - remaining, available_width));
+        }
         remaining = std::max(0.0F, remaining);
 
         // 2) Split `remaining` among the flexible columns by weight. total_weight
