@@ -14,6 +14,9 @@ concurrency:
   group: pages
   cancel-in-progress: false
 
+permissions:
+  contents: read
+  packages: read
 jobs:
   build-docs:
     uses: ./.github/workflows/docs-build.yml
