@@ -627,67 +627,20 @@ namespace docraft::loom::pipeline {
                                           (2.0F * table.padding())
                                           : sum_natural;
 
-        // A column is "fixed" if the author gave it an explicit width, "flexible"
-        // otherwise. Both helpers just read geometry/table -- no bookkeeping needed.
-        const auto& weights = table.column_weights();
-        auto is_fixed = [&](int c) { return geometry.explicit_widths[static_cast<std::size_t>(c)] > 0.0F; };
-        auto column_weight = [&](int c) {
-            if (c >= 0 && c < static_cast<int>(weights.size()) && weights[static_cast<std::size_t>(c)] > 0.0F)
-                return weights[static_cast<std::size_t>(c)];
-            return 1.0F; // missing/non-positive weight defaults to 1.0, same as distribute_weighted_amounts()
-        };
-
-        std::vector resolved(static_cast<std::size_t>(cols), 0.0F);
-
-        // 1) Fixed columns keep their own width verbatim. `remaining` is what's
-        // actually left over for the flexible ones -- not the full available_width.
-        float remaining = available_width;
-        for (int c = 0; c < cols; ++c)
-        {
-            if (is_fixed(c))
-            {
-                resolved[static_cast<std::size_t>(c)] = geometry.explicit_widths[static_cast<std::size_t>(c)];
-                remaining -= resolved[static_cast<std::size_t>(c)];
-            }
-        }
-        remaining = std::max(0.0F, remaining);
-
-        // 2) Split `remaining` among the flexible columns by weight. total_weight
-        // only sums flexible columns' weights, so a fixed column's weight can't
-        // dilute anyone else's share -- this is the actual fix (see example above).
-        // Each share is floored at the column's own natural width: never squeeze a
-        // column narrower than its content.
-        float total_weight = 0.0F;
-        for (int c = 0; c < cols; ++c)
-            if (!is_fixed(c))
-                total_weight += column_weight(c);
-
-        float flexible_total = 0.0F;
-        for (int c = 0; c < cols; ++c)
-        {
-            if (is_fixed(c))
-                continue;
-            const float share = total_weight > 0.0F ? remaining * column_weight(c) / total_weight : 0.0F;
-            resolved[static_cast<std::size_t>(c)] =
-                std::max(geometry.natural_widths[static_cast<std::size_t>(c)], share);
-            flexible_total += resolved[static_cast<std::size_t>(c)];
-        }
-
-        // 3) The floor in step 2 can push a column above its weighted share, so the
-        // flexible columns might no longer add up to `remaining`. Scale just those
-        // columns (fixed ones stay untouched) so the total matches available_width
-        // whenever the floors allow it. If the floors alone already exceed
-        // `remaining`, this scales below 1 and shrinks columns under their natural
-        // width -- content genuinely doesn't fit, but the table still stays close to
-        // available_width instead of overflowing it freely.
-        if (flexible_total > 0.0F && remaining > 0.0F)
-        {
-            const float scale = remaining / flexible_total;
-            for (int c = 0; c < cols; ++c)
-                if (!is_fixed(c))
-                    resolved[static_cast<std::size_t>(c)] *= scale;
-        }
-        return resolved;
+        // Fixed columns (explicit_widths[c] > 0) keep their own width verbatim and
+        // reserve it out of available_width before flexible columns split what's left
+        // by weight, floored at each flexible column's own natural width so content
+        // never gets squeezed narrower than it needs -- see
+        // resolve_fixed_and_flexible_amounts for the shared fixed/flexible algorithm
+        // (also used by DocraftLoomMeasureProcessor's table wrap-budget estimate, so
+        // both agree on which columns are fixed).
+        return resolve_fixed_and_flexible_amounts({
+            .available_amount = available_width,
+            .count = cols,
+            .weights = table.column_weights(),
+            .explicit_amounts = geometry.explicit_widths,
+            .floors = geometry.natural_widths,
+        });
     }
 
     // Horizontal offset for content re-centered within a wider resolved column: text
