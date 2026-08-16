@@ -280,6 +280,48 @@ namespace docraft::test {
 
         EXPECT_FLOAT_EQ(t1->layout_box().frame.size.height, 10.0F);
         EXPECT_FLOAT_EQ(t2->layout_box().frame.size.height, 10.0F);
+
+        // Bug: the container's own box used to stay stuck at the too-small declared
+        // height() (12) even though its children's natural-height floor pushed the
+        // real content down to 20 -- both frame.size (what Pagination advances by) and
+        // measured_size (what every other container's own child-advance loop reads
+        // while still inside Layout, e.g. an outer VStack placing this one among its
+        // siblings) must grow to match, or whatever comes after this VStack gets
+        // positioned on top of its overflowed content instead of below it.
+        EXPECT_FLOAT_EQ(vstack->layout_box().frame.size.height, 20.0F);
+        EXPECT_FLOAT_EQ(vstack->layout_box().measured_size.height, 20.0F);
+    }
+
+    // Regression test for the exact end-to-end symptom: an outer VStack (e.g. <Body>)
+    // sequencing an inner VStack with a too-small explicit height() followed by a
+    // sibling Text. The sibling must land below the inner VStack's real (overflowed)
+    // content, not below its declared-but-too-small height.
+    TEST_F(DocraftLoomStackNodesTest, VStack_OuterSiblingAdvancesPastInnerVStacksOverflowedContent)
+    {
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(50.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto inner = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        inner->set_padding(0.0F);
+        inner->set_spacing(0.0F);
+        inner->set_height(12.0F); // smaller than the 20pt sum of its children's natural heights
+        inner->set_weights({1.0F, 1.0F});
+        inner->add_child(make_text("a"));
+        inner->add_child(make_text("b"));
+
+        auto outer = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        outer->set_padding(0.0F);
+        outer->set_spacing(0.0F);
+        outer->add_child(inner);
+        auto sibling = make_text("after");
+        outer->add_child(sibling);
+
+        outer->accept(*measure_);
+        outer->accept(*layout_);
+
+        // 10 = the layout processor's default page top-margin cursor start (see
+        // VStack_LayoutChildrenStackedVertically above).
+        EXPECT_FLOAT_EQ(sibling->layout_box().frame.position.y, 30.0F); // 10 + 20, not 10 + 12
     }
 
     // Regression guard for the opt-in gate: weights() alone, without an explicit

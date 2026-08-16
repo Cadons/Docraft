@@ -303,6 +303,11 @@ namespace docraft::loom::pipeline {
                 current_y += gaps[static_cast<std::size_t>(i)];
             }
         }
+
+        const float content_bottom = current_y + trailing_margin + padding;
+        const float actual_height = std::max(layout_box.frame.size.height, content_bottom - position.y);
+        layout_box.frame.size.height = actual_height;
+        layout_box.measured_size.height = actual_height;
         cursor_.set_position(position.x, position.y + layout_box.frame.size.height);
     }
 
