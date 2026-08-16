@@ -18,6 +18,7 @@
 
 #include "docraft/backend/docraft_backend_providers_factory.h"
 #include "docraft/loom/interfaces/docraft_loom_visitor.h"
+#include "docraft/loom/pipeline/docraft_loom_text_wrapper.h"
 
 namespace docraft::loom::pipeline {
     /**
@@ -86,16 +87,8 @@ namespace docraft::loom::pipeline {
         void visit(docraft::loom::nodes::DocraftLoomNewPage*) override;
 
     private:
-        /**
-         * @brief Greedily word-wraps text into lines that each fit within max_width,
-         * falling back to a character-level split for a single word wider than
-         * max_width on its own. Splits on explicit '\n' first, then wraps each resulting
-         * paragraph by words.
-         */
-        std::vector<std::string> wrap_text(const std::string& text, float max_width, const std::string& font_name,
-                                           float font_size) const;
-
         std::shared_ptr<docraft::backend::IDocraftTextRenderingBackend> text_backend_;
+        DocraftLoomTextWrapper text_wrapper_;
         float content_width_ = 0.0F;
 
         // The width budget the node about to be measured should wrap/fit into, pushed
