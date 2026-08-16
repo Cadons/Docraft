@@ -15,6 +15,7 @@ set(TEST_SOURCES
         docraft/utils/docraft_file_utils_test.cc
         docraft/utils/docraft_test_temp_file.h
         docraft/loom/pipeline/docraft_loom_measure_processor_test.cc
+        docraft/loom/pipeline/docraft_loom_text_wrapper_test.cc
         docraft/loom/pipeline/docraft_loom_layout_processor_test.cc
         docraft/loom/pipeline/docraft_loom_pagination_processor_test.cc
         docraft/loom/nodes/docraft_loom_stack_nodes_test.cc
