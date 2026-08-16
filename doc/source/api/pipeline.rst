@@ -86,13 +86,15 @@ inherited content width) never leaks between regions.
    :project: docraft
    :members:
 
-Weighted Column Distribution
+Weighted Distribution
 -------------------------------
 
-Shared helper used by Measure and Layout to resolve ``weights`` on a
-horizontal ``<Layout>`` or ``<Table>`` column set — divides available width
-by weight (missing/non-positive entries default to an even 1.0 share), with
-optional per-item floors so no result goes below a natural minimum.
+Shared, axis-agnostic helper used by Measure and Layout to resolve
+``weights`` on a horizontal ``<Layout>`` or ``<Table>`` column set, and on a
+vertical ``<Layout>`` with an explicit ``height`` — divides the available
+amount (width or height) by weight (missing/non-positive entries default to
+an even 1.0 share), with optional per-item floors so no result goes below a
+natural minimum.
 
-.. doxygenfunction:: docraft::loom::pipeline::distribute_weighted_widths
+.. doxygenfunction:: docraft::loom::pipeline::distribute_weighted_amounts
    :project: docraft
