@@ -155,8 +155,9 @@ namespace docraft::loom::nodes {
         std::vector<float> column_weights_;
         std::optional<DocraftColor> default_cell_background_;
         float baseline_offset_ = 0.25F;
-        // Light default so a Table never sits flush against surrounding content out of
-        // the box; still fully overridable via the `padding` attribute.
-        float padding_ = 6.0F;
+        // No padding by default -- a Table's grid/border sits flush with whatever width
+        // its container hands it (e.g. the body's margins), matching every other node's
+        // default. Still fully overridable via the `padding` attribute.
+        float padding_ = 0.0F;
     };
 } // docraft
