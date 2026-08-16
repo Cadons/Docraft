@@ -34,21 +34,38 @@ namespace docraft::test {
             return cell;
         }
 
+        // The width/height pair most tests below mock the text backend with -- kept as
+        // one call so a test only states the two numbers that actually matter to it,
+        // not the boilerplate EXPECT_CALL wiring around them.
+        void expect_uniform_text_metrics(float width, float height = 10.0F)
+        {
+            EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(width));
+            EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(height));
+        }
+
+        // Runs Measure over `table`, then hands back a not-yet-accepted Layout processor
+        // for `page_width` -- callers that don't need anything special between the two
+        // passes just do `table->accept(prepare_layout(*table, W));`; callers that do
+        // (e.g. reset_cursor()) call that on the returned processor first.
+        loom::pipeline::DocraftLoomLayoutProcessor prepare_layout(loom::nodes::DocraftLoomTable& table,
+                                                                   float page_width)
+        {
+            table.accept(*measure_);
+            return loom::pipeline::DocraftLoomLayoutProcessor(page_width);
+        }
+
         std::shared_ptr<backend::MockDocraftTextRenderingBackend> text_backend_;
         std::unique_ptr<loom::pipeline::DocraftLoomMeasureProcessor> measure_;
     };
 
     TEST_F(DocraftLoomTableTest, EqualWeightColumnsDistributeEvenly)
     {
-        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(10.0F));
-        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+        expect_uniform_text_metrics(10.0F);
 
         auto table = std::make_shared<loom::nodes::DocraftLoomTable>();
         table->set_padding(0.0F); // isolate column-width math from the table's own outer padding
         table->add_row({make_cell("a", true), make_cell("b", true)});
-        table->accept(*measure_);
-
-        loom::pipeline::DocraftLoomLayoutProcessor layout(200.0F);
+        auto layout = prepare_layout(*table, 200.0F);
         table->accept(layout);
 
         // available_width = 200 (table padding=0; kCellPaddingX is a per-cell inset already
@@ -60,17 +77,14 @@ namespace docraft::test {
 
     TEST_F(DocraftLoomTableTest, ExplicitWidthIsRespectedAndRemainderRedistributed)
     {
-        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(10.0F));
-        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+        expect_uniform_text_metrics(10.0F);
 
         auto table = std::make_shared<loom::nodes::DocraftLoomTable>();
         table->set_padding(0.0F); // isolate column-width math from the table's own outer padding
         auto c0 = make_cell("a", true);
         c0->set_explicit_width(40.0F);
         table->add_row({c0, make_cell("b", true)});
-        table->accept(*measure_);
-
-        loom::pipeline::DocraftLoomLayoutProcessor layout(200.0F);
+        auto layout = prepare_layout(*table, 200.0F);
         table->accept(layout);
 
         EXPECT_FLOAT_EQ(table->cell(0, 0)->layout_box().frame.size.width, 40.0F);
@@ -94,18 +108,16 @@ namespace docraft::test {
         // shrunk back down along with everything else -- the floor is not an absolute
         // per-column guarantee once a rescale is triggered, only a preference that
         // holds when it doesn't need to fight the rescale.
-        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(75.0F));
-        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+        expect_uniform_text_metrics(75.0F);
 
         auto table = std::make_shared<loom::nodes::DocraftLoomTable>();
         table->set_padding(0.0F); // isolate column-width math from the table's own outer padding
         table->add_row({make_cell("a", true), make_cell("b", true)});
-        table->accept(*measure_);
 
         // available_width = 200 (table padding=0); weight share = 100 each, which already
         // exceeds the natural width of 75, so the floor never has to compete with the
         // rescale here -- both columns simply get their even weight-based share.
-        loom::pipeline::DocraftLoomLayoutProcessor layout(200.0F);
+        auto layout = prepare_layout(*table, 200.0F);
         table->accept(layout);
 
         EXPECT_FLOAT_EQ(table->cell(0, 0)->layout_box().frame.size.width, 100.0F);
@@ -128,9 +140,7 @@ namespace docraft::test {
         auto table = std::make_shared<loom::nodes::DocraftLoomTable>();
         table->set_padding(0.0F); // isolate column-width math from the table's own outer padding
         table->add_row({make_cell("very long title text", true), make_cell("b", true)});
-        table->accept(*measure_);
-
-        loom::pipeline::DocraftLoomLayoutProcessor layout(20.0F); // deliberately too narrow
+        auto layout = prepare_layout(*table, 20.0F); // deliberately too narrow
         table->accept(layout);
 
         // Cell natural widths include the automatic content padding (2*2.5 = 5), so
@@ -149,9 +159,7 @@ namespace docraft::test {
 
         auto table = std::make_shared<loom::nodes::DocraftLoomTable>();
         table->add_row({make_cell("a"), make_cell("b")});
-        table->accept(*measure_);
-
-        loom::pipeline::DocraftLoomLayoutProcessor layout(200.0F);
+        auto layout = prepare_layout(*table, 200.0F);
         table->accept(layout);
 
         EXPECT_FLOAT_EQ(table->cell(0, 0)->layout_box().frame.size.height, 35.0F); // 30 + 2*2.5
@@ -159,14 +167,11 @@ namespace docraft::test {
 
     TEST_F(DocraftLoomTableTest, LayoutDoesNotOverlapColumns)
     {
-        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(10.0F));
-        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+        expect_uniform_text_metrics(10.0F);
 
         auto table = std::make_shared<loom::nodes::DocraftLoomTable>();
         table->add_row({make_cell("a"), make_cell("b"), make_cell("c")});
-        table->accept(*measure_);
-
-        loom::pipeline::DocraftLoomLayoutProcessor layout(300.0F);
+        auto layout = prepare_layout(*table, 300.0F);
         table->accept(layout);
 
         const float col0_right = table->cell(0, 0)->layout_box().frame.position.x
@@ -184,15 +189,12 @@ namespace docraft::test {
         // away from wherever the parent positioned this table -- not just inset cell
         // content within an unmoved border, which would leave the table sitting flush
         // against whatever precedes it.
-        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(10.0F));
-        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+        expect_uniform_text_metrics(10.0F);
 
         auto table = std::make_shared<loom::nodes::DocraftLoomTable>();
         table->set_padding(6.0F);
         table->add_row({make_cell("a"), make_cell("b")});
-        table->accept(*measure_);
-
-        loom::pipeline::DocraftLoomLayoutProcessor layout(200.0F);
+        auto layout = prepare_layout(*table, 200.0F);
         layout.reset_cursor(10.0F, 20.0F);
         table->accept(layout);
 
@@ -265,14 +267,11 @@ namespace docraft::test {
 
     TEST_F(DocraftLoomTableTest, FrameSizeMatchesMeasuredSizeForTableAndCells)
     {
-        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(10.0F));
-        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+        expect_uniform_text_metrics(10.0F);
 
         auto table = std::make_shared<loom::nodes::DocraftLoomTable>();
         table->add_row({make_cell("a"), make_cell("b")});
-        table->accept(*measure_);
-
-        loom::pipeline::DocraftLoomLayoutProcessor layout(200.0F);
+        auto layout = prepare_layout(*table, 200.0F);
         table->accept(layout);
 
         EXPECT_GT(table->layout_box().frame.size.width, 0.0F);
@@ -283,15 +282,12 @@ namespace docraft::test {
     TEST_F(DocraftLoomTableTest, RowTitleGridProducesCorrectLayout)
     {
         // "vertical"-style usage: column 0 holds row labels (is_title), column 1 holds values.
-        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(10.0F));
-        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+        expect_uniform_text_metrics(10.0F);
 
         auto table = std::make_shared<loom::nodes::DocraftLoomTable>();
         table->add_row({make_cell("Name", true), make_cell("Alice")});
         table->add_row({make_cell("Age", true), make_cell("30")});
-        table->accept(*measure_);
-
-        loom::pipeline::DocraftLoomLayoutProcessor layout(200.0F);
+        auto layout = prepare_layout(*table, 200.0F);
         table->accept(layout);
 
         EXPECT_FLOAT_EQ(table->cell(1, 0)->layout_box().frame.position.y,
