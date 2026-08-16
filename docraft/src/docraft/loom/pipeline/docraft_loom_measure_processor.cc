@@ -494,40 +494,66 @@ namespace docraft::loom::pipeline {
         const int rows = table->row_count();
         const int cols = table->column_count();
 
-        // Best-effort per-column wrap ceiling, computed the same way Layout will later
-        // resolve column widths (explicit_width(), else a weight-based share, else an
-        // even split) -- see DocraftLoomLayoutProcessor::resolve_table_column_widths for
-        // the authoritative post-Measure version. This is only an upfront estimate so
-        // over-long cell text wraps instead of silently overflowing its column; it isn't
-        // pushed unconditionally (see visit(DocraftLoomTableCell*)), so it never disturbs
-        // the natural-width-floor sizing of cells that already fit.
-        std::vector<float> column_wrap_budget(static_cast<std::size_t>(cols), 0.0F);
-        if (cols > 0 && incoming_width > 0.0F) {
-            // See the matching comment in DocraftLoomLayoutProcessor::resolve_table_column_widths:
-            // kCellPaddingX is a per-cell inset, already reflected in each cell's own
-            // measured_size -- it must not also be subtracted here as a table-wide margin.
-            const float available_width = incoming_width - (2.0F * table->padding());
-            if (available_width > 0.0F) {
-                const auto shares = distribute_weighted_amounts(available_width, table->column_weights(), cols);
-                for (int c = 0; c < cols; ++c) {
-                    column_wrap_budget[static_cast<std::size_t>(c)] =
-                            std::max(0.0F, shares[static_cast<std::size_t>(c)] -
-                                           (2.0F * nodes::DocraftLoomTable::kCellPaddingX));
+        // A column counts as "fixed" as soon as ONE of its cells sets Cell width="...",
+        // no matter which row -- so this scans every row before measuring any cell,
+        // not just the row currently being visited. Without this, a row that omits
+        // width() (inheriting the column from a sibling row) would look flexible here,
+        // and the wrap budget below would shrink that column instead of matching what
+        // it's actually painted at. Same idea as
+        // DocraftLoomLayoutProcessor::gather_table_natural_geometry's explicit_widths,
+        // minus natural_widths -- no cell has been measured yet at this point.
+        std::vector column_explicit_widths(static_cast<std::size_t>(cols), 0.0F);
+        for (int r = 0; r < rows; ++r) {
+            for (int c = 0; c < cols; ++c) {
+                if (auto width = table->cell(r, c)->explicit_width()) {
+                    column_explicit_widths[static_cast<std::size_t>(c)] =
+                            std::max(column_explicit_widths[static_cast<std::size_t>(c)], *width);
                 }
             }
         }
 
-        std::vector<float> col_widths(static_cast<std::size_t>(cols), 0.0F);
-        std::vector<float> row_heights(static_cast<std::size_t>(rows), 0.0F);
+        // Upfront estimate of each column's wrap ceiling, using the same fixed-vs-
+        // flexible split Layout performs for real once every cell is measured (see
+        // resolve_table_column_widths) -- fixed columns keep column_explicit_widths
+        // verbatim, flexible columns split whatever's left by weight. The one thing
+        // this pass can't do yet is floor flexible columns at their natural width
+        // (nothing has been measured), so it's an estimate, not the final word: a cell
+        // only wraps if its own text turns out wider than this budget (see
+        // visit(DocraftLoomTableCell*)), so a short cell in a wide column is never
+        // disturbed by an under-estimate here.
+        //
+        // resolve_fixed_and_flexible_amounts() always honors a fixed column's own
+        // explicit width, even when available_width below is 0 -- so a cell with its
+        // own width() still gets a real wrap budget with no page/content width set at
+        // all; only the flexible columns then get no budget (0), same as before.
+        //
+        // kCellPaddingX is a per-cell content inset, already reflected in each cell's
+        // own measured_size -- see the matching comment in
+        // DocraftLoomLayoutProcessor::resolve_table_column_widths -- so it must not
+        // also be subtracted here as a table-wide margin.
+        float available_width = 0.0F;
+        if (incoming_width > 0.0F) {
+            available_width = std::max(0.0F, incoming_width - (2.0F * table->padding()));
+        }
+        const auto resolved_widths = resolve_fixed_and_flexible_amounts({
+                .available_amount = available_width,
+                .count = cols,
+                .weights = table->column_weights(),
+                .explicit_amounts = column_explicit_widths,
+        });
+        std::vector column_wrap_budget(static_cast<std::size_t>(cols), 0.0F);
+        for (int c = 0; c < cols; ++c) {
+            column_wrap_budget[static_cast<std::size_t>(c)] =
+                    std::max(0.0F, resolved_widths[static_cast<std::size_t>(c)] -
+                                   (2.0F * nodes::DocraftLoomTable::kCellPaddingX));
+        }
+
+        std::vector col_widths(static_cast<std::size_t>(cols), 0.0F);
+        std::vector row_heights(static_cast<std::size_t>(rows), 0.0F);
         for (int r = 0; r < rows; ++r) {
             for (int c = 0; c < cols; ++c) {
                 auto cell = table->cell(r, c);
-                // An explicit per-cell width is a harder, more specific constraint than
-                // the column estimate above -- prefer it when set.
-                pending_cell_wrap_budget_ =
-                        cell->explicit_width().has_value()
-                            ? std::max(0.0F, *cell->explicit_width() - (2.0F * nodes::DocraftLoomTable::kCellPaddingX))
-                            : column_wrap_budget[static_cast<std::size_t>(c)];
+                pending_cell_wrap_budget_ = column_wrap_budget[static_cast<std::size_t>(c)];
                 cell->accept(*this);
                 // Cell's own measured_size already folds in its padding inset (see
                 // DocraftLoomTableCell's own Measure visit above) -- no extra term here.
