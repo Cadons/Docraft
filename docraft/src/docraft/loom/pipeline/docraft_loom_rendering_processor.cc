@@ -249,10 +249,18 @@ namespace docraft::loom::pipeline {
     {
         if (!node || !should_render(*node))
             return;
-        draw_container_background(node->style(), node->layout_box().frame.position, node->layout_box().frame.size);
+        const auto& frame = node->layout_box().frame;
+        draw_container_background(node->style(), frame.position, frame.size);
+        // Clips children to the rectangle's own bounds, mirroring visit(DocraftLoomCanvas*)
+        // below -- without this, a child whose computed size exceeds the rectangle's frame
+        // (e.g. a Text node whose own explicit wrap_width overrides the width relayed by
+        // this rectangle) paints past the rectangle's edges instead of being contained by it.
+        shape_backend_->save_state();
+        shape_backend_->clip_rectangle(frame.position.x, frame.position.y, frame.size.width, frame.size.height);
         for (int i: node->paint_order_indices())
             if (auto child = node->edit_child(i))
                 child->accept(*this);
+        shape_backend_->restore_state();
     }
 
     void DocraftLoomRenderingProcessor::visit(docraft::loom::nodes::DocraftLoomCanvas* node)

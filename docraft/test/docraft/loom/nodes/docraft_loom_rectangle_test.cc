@@ -6,6 +6,8 @@
 #include "docraft/loom/nodes/docraft_loom_text.h"
 #include "docraft/loom/pipeline/docraft_loom_layout_processor.h"
 #include "docraft/loom/pipeline/docraft_loom_measure_processor.h"
+#include "docraft/loom/pipeline/docraft_loom_rendering_processor.h"
+#include "docraft/utils/docraft_mock_rendering_backend.h"
 #include "../../backend/docraft_mock_backend.h"
 
 namespace docraft::test {
@@ -112,5 +114,38 @@ namespace docraft::test {
 
         EXPECT_FLOAT_EQ(rect.layout_box().frame.position.x, 80.0F);
         EXPECT_FLOAT_EQ(rect.layout_box().frame.position.y, 90.0F);
+    }
+
+    TEST_F(DocraftLoomRectangleTest, RenderingClipsChildrenToRectangleBoundsBracketedBySaveRestore)
+    {
+        // Regression test: visit(DocraftLoomRectangle*) used to paint children with no
+        // clip at all (unlike the equivalent visit(DocraftLoomCanvas*)), so a child whose
+        // computed size exceeded the rectangle's own frame (e.g. a Text node whose own
+        // explicit wrap_width overrides the width relayed by this rectangle) painted past
+        // the rectangle's edges instead of being contained by it.
+        utils::MockRenderingBackend backend;
+        loom::pipeline::DocraftLoomRenderingProcessor rendering(&backend);
+
+        auto rect = std::make_shared<loom::nodes::DocraftLoomRectangle>();
+        rect->set_position_mode(loom::nodes::DocraftPositionType::kAbsolute);
+        rect->set_explicit_position({.x = 10.0F, .y = 10.0F});
+        rect->set_width(80.0F);
+        rect->set_height(60.0F);
+        auto child = std::make_shared<loom::nodes::DocraftLoomText>("overflowing text");
+        rect->add_child(child);
+
+        rect->accept(*measure_);
+        rect->accept(*layout_);
+        rect->accept(rendering);
+
+        // Assert against the rectangle's own resolved frame (rather than the
+        // width_/height_ set above) so this test only exercises clipping and stays
+        // agnostic to how that frame is sized.
+        const auto& frame = rect->layout_box().frame;
+        ASSERT_EQ(backend.clip_calls().size(), 1U);
+        EXPECT_FLOAT_EQ(backend.clip_calls()[0].x, frame.position.x);
+        EXPECT_FLOAT_EQ(backend.clip_calls()[0].y, frame.position.y);
+        EXPECT_FLOAT_EQ(backend.clip_calls()[0].width, frame.size.width);
+        EXPECT_FLOAT_EQ(backend.clip_calls()[0].height, frame.size.height);
     }
 } // namespace docraft::test
