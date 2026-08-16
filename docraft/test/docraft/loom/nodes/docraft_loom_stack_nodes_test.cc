@@ -105,6 +105,24 @@ namespace docraft::test {
         EXPECT_FLOAT_EQ(vstack->layout_box().measured_size.height, 54.0F); // 3 * 10, no spacing
     }
 
+    TEST_F(DocraftLoomStackNodesTest, VStack_MeasureExplicitHeightOverridesDerivedSum)
+    {
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(50.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto vstack = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        vstack->set_padding(0.0F); // isolate stacking math from the container's own default padding
+        vstack->set_spacing(0.0F);
+        vstack->set_height(200.0F);
+        vstack->add_child(make_text("a"));
+        vstack->add_child(make_text("b"));
+        vstack->accept(*measure_);
+
+        // Explicit height() wins outright over the derived sum of natural child
+        // heights (2 * 10 = 20), mirroring DocraftLoomRectangle's own explicit width().
+        EXPECT_FLOAT_EQ(vstack->layout_box().measured_size.height, 200.0F);
+    }
+
     // ── HStack measure ──────────────────────────────────────────────────────────
 
     TEST_F(DocraftLoomStackNodesTest, HStack_MeasureEmptyStack)
@@ -208,6 +226,179 @@ namespace docraft::test {
         vstack->accept(*layout_);
 
         EXPECT_FLOAT_EQ(t1->layout_box().frame.position.x, t2->layout_box().frame.position.x);
+    }
+
+    // Bug #75: `weight` on a child of a vertical `<Layout>` used to be silently
+    // dropped. A VStack now divides its own explicit height() among weighted children,
+    // mirroring DocraftLoomHStack's weighted-width distribution but on the vertical axis.
+    TEST_F(DocraftLoomStackNodesTest, VStack_LayoutWeightedHeightDistributesAmongChildren)
+    {
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(50.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto vstack = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        vstack->set_padding(0.0F); // isolate weighted-height math from the container's own default padding
+        vstack->set_spacing(0.0F);
+        vstack->set_height(200.0F);
+        vstack->set_weights({1.0F, 3.0F});
+        auto t1 = make_text("a");
+        auto t2 = make_text("b");
+        vstack->add_child(t1);
+        vstack->add_child(t2);
+
+        vstack->accept(*measure_);
+        vstack->accept(*layout_);
+
+        EXPECT_FLOAT_EQ(t1->layout_box().frame.size.height, 50.0F); // 200 * 1/4
+        EXPECT_FLOAT_EQ(t2->layout_box().frame.size.height, 150.0F); // 200 * 3/4
+        // 10 = the layout processor's default page top-margin cursor start (see
+        // VStack_LayoutChildrenStackedVertically above).
+        EXPECT_FLOAT_EQ(t1->layout_box().frame.position.y, 10.0F);
+        EXPECT_FLOAT_EQ(t2->layout_box().frame.position.y, 60.0F); // 10 + 50
+    }
+
+    // A weighted child is never squeezed shorter than its own natural height, even if
+    // that makes the resolved heights sum past the explicit height() budget -- mirrors
+    // HStack's natural-width floor.
+    TEST_F(DocraftLoomStackNodesTest, VStack_LayoutWeightedHeightNeverShrinksBelowNaturalHeight)
+    {
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(50.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto vstack = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        vstack->set_padding(0.0F);
+        vstack->set_spacing(0.0F);
+        vstack->set_height(12.0F); // smaller than the 20pt sum of natural heights
+        vstack->set_weights({1.0F, 1.0F});
+        auto t1 = make_text("a");
+        auto t2 = make_text("b");
+        vstack->add_child(t1);
+        vstack->add_child(t2);
+
+        vstack->accept(*measure_);
+        vstack->accept(*layout_);
+
+        EXPECT_FLOAT_EQ(t1->layout_box().frame.size.height, 10.0F);
+        EXPECT_FLOAT_EQ(t2->layout_box().frame.size.height, 10.0F);
+
+        // Bug: the container's own box used to stay stuck at the too-small declared
+        // height() (12) even though its children's natural-height floor pushed the
+        // real content down to 20 -- both frame.size (what Pagination advances by) and
+        // measured_size (what every other container's own child-advance loop reads
+        // while still inside Layout, e.g. an outer VStack placing this one among its
+        // siblings) must grow to match, or whatever comes after this VStack gets
+        // positioned on top of its overflowed content instead of below it.
+        EXPECT_FLOAT_EQ(vstack->layout_box().frame.size.height, 20.0F);
+        EXPECT_FLOAT_EQ(vstack->layout_box().measured_size.height, 20.0F);
+    }
+
+    // Regression test for the exact end-to-end symptom: an outer VStack (e.g. <Body>)
+    // sequencing an inner VStack with a too-small explicit height() followed by a
+    // sibling Text. The sibling must land below the inner VStack's real (overflowed)
+    // content, not below its declared-but-too-small height.
+    TEST_F(DocraftLoomStackNodesTest, VStack_OuterSiblingAdvancesPastInnerVStacksOverflowedContent)
+    {
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(50.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto inner = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        inner->set_padding(0.0F);
+        inner->set_spacing(0.0F);
+        inner->set_height(12.0F); // smaller than the 20pt sum of its children's natural heights
+        inner->set_weights({1.0F, 1.0F});
+        inner->add_child(make_text("a"));
+        inner->add_child(make_text("b"));
+
+        auto outer = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        outer->set_padding(0.0F);
+        outer->set_spacing(0.0F);
+        outer->add_child(inner);
+        auto sibling = make_text("after");
+        outer->add_child(sibling);
+
+        outer->accept(*measure_);
+        outer->accept(*layout_);
+
+        // 10 = the layout processor's default page top-margin cursor start (see
+        // VStack_LayoutChildrenStackedVertically above).
+        EXPECT_FLOAT_EQ(sibling->layout_box().frame.position.y, 30.0F); // 10 + 20, not 10 + 12
+    }
+
+    // The box growing past a too-small explicit height() is silent otherwise -- the
+    // author asked for height="12" and got 20 with no visible sign anything was off.
+    // Log it, mirroring how DocraftLoomPaginationProcessor warns when a node overflows
+    // the page bottom (see OversizedNonTableNodeLogsWarning).
+    TEST_F(DocraftLoomStackNodesTest, VStack_ExplicitHeightOverflowLogsWarning)
+    {
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(50.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto vstack = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        vstack->set_name("peso_stack");
+        vstack->set_padding(0.0F);
+        vstack->set_spacing(0.0F);
+        vstack->set_height(12.0F); // smaller than the 20pt sum of natural heights
+        vstack->set_weights({1.0F, 1.0F});
+        vstack->add_child(make_text("a"));
+        vstack->add_child(make_text("b"));
+
+        vstack->accept(*measure_);
+        testing::internal::CaptureStdout();
+        vstack->accept(*layout_);
+        const std::string stdout_log = testing::internal::GetCapturedStdout();
+
+        EXPECT_NE(stdout_log.find("[WARNING]"), std::string::npos);
+        EXPECT_NE(stdout_log.find("peso_stack"), std::string::npos);
+    }
+
+    // A VStack whose explicit height() already fits the children's natural heights must
+    // not trigger the overflow warning.
+    TEST_F(DocraftLoomStackNodesTest, VStack_ExplicitHeightFittingContentLogsNoWarning)
+    {
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(50.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto vstack = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        vstack->set_padding(0.0F);
+        vstack->set_spacing(0.0F);
+        vstack->set_height(30.0F); // comfortably fits the 20pt sum of natural heights
+        vstack->set_weights({1.0F, 1.0F});
+        vstack->add_child(make_text("a"));
+        vstack->add_child(make_text("b"));
+
+        vstack->accept(*measure_);
+        testing::internal::CaptureStdout();
+        vstack->accept(*layout_);
+        const std::string stdout_log = testing::internal::GetCapturedStdout();
+
+        EXPECT_EQ(stdout_log.find("[WARNING]"), std::string::npos);
+    }
+
+    // Regression guard for the opt-in gate: weights() alone, without an explicit
+    // height(), has nothing well-defined to divide (a VStack has no ambient "page
+    // height" budget the way HStack always has a page width) -- so it must keep
+    // today's shrink-to-fit behavior unchanged.
+    TEST_F(DocraftLoomStackNodesTest, VStack_WeightsWithoutExplicitHeightKeepsShrinkToFit)
+    {
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(50.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto vstack = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        vstack->set_padding(0.0F);
+        vstack->set_spacing(0.0F);
+        vstack->set_weights({1.0F, 3.0F}); // no set_height() call -- stays 0.0F (unset)
+        auto t1 = make_text("a");
+        auto t2 = make_text("b");
+        vstack->add_child(t1);
+        vstack->add_child(t2);
+
+        vstack->accept(*measure_);
+        vstack->accept(*layout_);
+
+        EXPECT_FLOAT_EQ(t1->layout_box().frame.size.height, 10.0F);
+        EXPECT_FLOAT_EQ(t2->layout_box().frame.size.height, 10.0F);
+        EXPECT_FLOAT_EQ(t2->layout_box().frame.position.y, 20.0F); // 10 (default page top margin) + 10
+        EXPECT_FLOAT_EQ(vstack->layout_box().measured_size.height, 20.0F);
     }
 
     // ── HStack layout ───────────────────────────────────────────────────────────

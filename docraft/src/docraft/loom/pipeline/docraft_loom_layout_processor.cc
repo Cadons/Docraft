@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <memory>
 
+#include <fmt/format.h>
+
 #include "docraft/exception/docraft_input_exceptions.h"
 #include "docraft/loom/nodes/docraft_loom_blank_line.h"
 #include "docraft/loom/nodes/docraft_loom_circle.h"
@@ -24,6 +26,7 @@
 #include "docraft/loom/nodes/docraft_loom_title.h"
 #include "docraft/loom/nodes/docraft_loom_vstack.h"
 #include "docraft/loom/pipeline/docraft_loom_weighted_distribution.h"
+#include "docraft/utils/docraft_logger.h"
 
 namespace docraft::loom::pipeline {
 #pragma region Cursor
@@ -237,25 +240,86 @@ namespace docraft::loom::pipeline {
         const float padding = node->effective_padding();
         const float relay_width = std::max(0.0F, incoming_width() - (2.0F * padding));
 
-        const float start_x = position.x + padding;
         const int n = node->children_count();
+        const auto& weights = node->weights();
+
+        // Precomputed once, upfront (see the matching comment in
+        // DocraftLoomLayoutProcessor::visit(DocraftLoomHStack*)) so the weighted-height
+        // math and the final placement loop agree on the same gaps.
+        std::vector<float> gaps;
+        if (n > 1)
+        {
+            gaps.resize(static_cast<std::size_t>(n - 1));
+            for (int i = 0; i < n - 1; ++i)
+            {
+                gaps[static_cast<std::size_t>(i)] = nodes::DocraftLoomLayoutContainer::resolve_child_gap(
+                    node->spacing(), node->child(i)->margin().bottom, node->child(i + 1)->margin().top);
+            }
+        }
+        float total_gap = 0.0F;
+        for (const float gap : gaps)
+        {
+            total_gap += gap;
+        }
+
+        const float leading_margin = node->resolve_outer_margin(*node, /*leading=*/true);
+        const float trailing_margin = node->resolve_outer_margin(*node, /*leading=*/false);
+
+        // Opt-in: only engaged when weights() is non-empty AND this VStack has its own
+        // explicit height() -- unlike HStack, a VStack has no ambient "page height"
+        // budget to divide (pagination makes vertical space effectively unbounded), so
+        // weights() alone has nothing well-defined to divide until height() gives it
+        // one. Each child is never squeezed shorter than its own natural height, though
+        // (mirrors HStack's natural-width floor).
+        std::vector<float> resolved_heights;
+        if (!weights.empty() && n > 0 && node->height() > 0.0F)
+        {
+            const float available_height = std::max(0.0F,
+                node->height() - total_gap - leading_margin - trailing_margin - (2.0F * padding));
+            std::vector<float> natural_heights(static_cast<std::size_t>(n));
+            for (int i = 0; i < n; ++i)
+            {
+                natural_heights[static_cast<std::size_t>(i)] = node->child(i)->layout_box().measured_size.height;
+            }
+            resolved_heights = distribute_weighted_amounts(available_height, weights, n, natural_heights);
+        }
+
+        const float start_x = position.x + padding;
         // Mirrors the measure pass: the first/last child's own margin is reserved
         // outright, with no sibling on that side to combine it with.
-        float current_y = position.y + padding + node->resolve_outer_margin(*node, /*leading=*/true);
+        float current_y = position.y + padding + leading_margin;
         for (int i = 0; i < n; ++i)
         {
             inherited_width_ = relay_width;
             cursor_.set_position(start_x, current_y);
             auto child = node->edit_child(i);
             child->accept(*this);
-            current_y += child->layout_box().measured_size.height;
+            float advance = child->layout_box().measured_size.height;
+            if (!resolved_heights.empty())
+            {
+                advance = resolved_heights[static_cast<std::size_t>(i)];
+                child->edit_layout_box().frame.size.height = advance;
+            }
+            current_y += advance;
             if (i < n - 1)
             {
-                const auto next = node->child(i + 1);
-                current_y += nodes::DocraftLoomLayoutContainer::resolve_child_gap(
-                    node->spacing(), child->margin().bottom, next->margin().top);
+                current_y += gaps[static_cast<std::size_t>(i)];
             }
         }
+
+        const float content_bottom = current_y + trailing_margin + padding;
+        const float actual_height = std::max(layout_box.frame.size.height, content_bottom - position.y);
+        if (node->height() > 0.0F && actual_height > layout_box.frame.size.height)
+        {
+            const std::string node_label =
+                node->name().empty() ? std::string{"A vertical Layout"} : fmt::format("Layout '{}'", node->name());
+            LOG_WARNING(fmt::format(
+                "{} has height=\"{:.1f}\" but its weighted children's own natural heights needed "
+                "{:.1f}pt to fit -- the box grew to that instead of clipping them.",
+                node_label, node->height(), actual_height));
+        }
+        layout_box.frame.size.height = actual_height;
+        layout_box.measured_size.height = actual_height;
         cursor_.set_position(position.x, position.y + layout_box.frame.size.height);
     }
 
@@ -315,7 +379,7 @@ namespace docraft::loom::pipeline {
             {
                 natural_widths[static_cast<std::size_t>(i)] = node->child(i)->layout_box().measured_size.width;
             }
-            resolved_widths = distribute_weighted_widths(available_width, weights, n, natural_widths);
+            resolved_widths = distribute_weighted_amounts(available_width, weights, n, natural_widths);
         }
 
         float current_x = position.x + padding + leading_margin;
@@ -551,7 +615,7 @@ namespace docraft::loom::pipeline {
         //   just hugs its own content. Mirrors the matching fix in
         //   DocraftLoomMeasureProcessor::visit(Table).
         // - column weights: missing or non-positive entries default to 1.0 (handled by
-        //   distribute_weighted_widths()), so an all-zero weight vector divides evenly.
+        //   distribute_weighted_amounts()), so an all-zero weight vector divides evenly.
         // - a column with an explicit width uses it verbatim (a hard constraint); otherwise
         //   it gets its proportional share of available_width by weight, floored at its own
         //   natural width (a column is never squeezed narrower than its content).
@@ -570,7 +634,7 @@ namespace docraft::loom::pipeline {
                                           : sum_natural;
 
         const auto by_weight =
-            distribute_weighted_widths(available_width, table.column_weights(), cols, geometry.natural_widths);
+            distribute_weighted_amounts(available_width, table.column_weights(), cols, geometry.natural_widths);
 
         std::vector<float> resolved(static_cast<std::size_t>(cols), 0.0F);
         bool any_explicit = false;

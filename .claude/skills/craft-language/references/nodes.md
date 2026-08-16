@@ -315,9 +315,9 @@ Mixed-type arrays (some objects, some arrays) in `model` → error. Ragged rows 
 array-of-arrays model → error. All cells in an array-of-arrays model must be JSON strings →
 error otherwise.
 
-There is **no `<Table weights="...">`** — column widths come from each `<Cell width="...">`'s
-explicit width, else an even split; there's no author-specified per-column weighting in XML
-(unlike `<Layout weights="...">`).
+There is **no per-column weight on `<Table>`** — column widths come from each
+`<Cell width="...">`'s explicit width, else an even split; there's no author-specified per-column
+weighting in XML (unlike `<Layout>`'s per-child `weight="..."`).
 
 ## `<Layout>`
 
@@ -327,18 +327,29 @@ Becomes `DocraftLoomHStack` or `DocraftLoomVStack`.
 |---|---|---|
 | `orientation` | `horizontal`, `vertical` | `vertical` |
 | `spacing` | float | HStack `0.0`; VStack `12.0` |
-| `weights` | comma-separated floats, e.g. `"1,2,1"` | empty = shrink-to-fit |
+| `height` | float | VStack only; unset = shrink-to-fit (see below) |
 
-Weight precedence: explicit `weights` on `<Layout>` wins over per-child `weight="..."`; if
-`weights` is absent but a child has `weight`, a vector is built from each child's `weight`
-(default `1.0`). **Weights only apply to `orientation="horizontal"`** — VStack has no weights
-support yet; weights on a vertical layout are silently dropped.
+Each child of a `<Layout>` may carry its own `weight="..."` attribute (a plain float). There is no
+`<Layout weights="...">` list attribute — `weight` on the individual child is the only way to
+specify it, and it is a parse error anywhere `weight` isn't a direct child of `<Layout>`. A child
+with no `weight` defaults to `1.0` once any sibling specifies one.
+
+On `orientation="horizontal"` (HStack), weights always divide the available page/container width.
+On `orientation="vertical"` (VStack), weights only take effect when the `<Layout>` itself also has
+an explicit `height="..."` — a VStack's height is otherwise derived bottom-up from its children (no
+ambient "page height" budget the way HStack always has a page width to divide), so per-child
+`weight` alone on a heightless vertical layout is silently dropped.
 
 ```xml
-<Layout orientation="horizontal" spacing="8" weights="1,2,1">
-  <Text>Narrow</Text>
-  <Text>Wide</Text>
-  <Text>Narrow</Text>
+<Layout orientation="horizontal" spacing="8">
+  <Text weight="1">Narrow</Text>
+  <Text weight="2">Wide</Text>
+  <Text weight="1">Narrow</Text>
+</Layout>
+
+<Layout orientation="vertical" height="400">
+  <Text weight="1">Short</Text>
+  <Text weight="2">Tall</Text>
 </Layout>
 ```
 

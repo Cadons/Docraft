@@ -229,13 +229,6 @@ namespace docraft::loom::craft {
                     node.set_height(*common.height);
                 }
             }
-            if constexpr (requires(NodeT& n, float v) { n.set_weight(v); })
-            {
-                if (common.weight)
-                {
-                    node.set_weight(*common.weight);
-                }
-            }
 
             if (common.position_mode)
             {
@@ -1385,26 +1378,20 @@ namespace docraft::loom::craft {
     {
         const auto& data = std::any_cast<const parser::ParsedLayoutData&>(element.data);
 
-        // Precedence: an explicit `<layout weights="...">` attribute wins over per-child
-        // `weight` attributes; if neither is present, the weights vector stays empty so
-        // today's default homogeneous-shrink-to-fit behavior is preserved.
+        // The only way to specify per-child weights is `weight="..."` on each child of
+        // <Layout> itself (already validated at parse time -- `weight` is rejected
+        // anywhere else). A missing weight defaults to 1.0, matching
+        // distribute_weighted_amounts()'s own default for a missing/non-positive entry.
         std::vector<float> weights;
-        if (data.weights)
+        const bool any_child_weight = std::ranges::any_of(
+            element.children,
+            [](const auto& child) { return child->common.weight.has_value(); });
+        if (any_child_weight)
         {
-            weights = *data.weights;
-        }
-        else
-        {
-            const bool any_child_weight = std::ranges::any_of(
-                element.children,
-                [](const auto& child) { return child->common.weight.has_value(); });
-            if (any_child_weight)
+            weights.reserve(element.children.size());
+            for (const auto& child : element.children)
             {
-                weights.reserve(element.children.size());
-                for (const auto& child : element.children)
-                {
-                    weights.push_back(child->common.weight.value_or(1.0F));
-                }
+                weights.push_back(child->common.weight.value_or(1.0F));
             }
         }
 
@@ -1428,8 +1415,10 @@ namespace docraft::loom::craft {
         {
             node->set_spacing(*data.spacing);
         }
-        // VStack has no set_weights() yet (Phase 6) -- any collected weights are
-        // deliberately not applied here.
+        if (!weights.empty())
+        {
+            node->set_weights(weights);
+        }
         apply_common_attributes(*node, element.common);
         add_children(node, element.children);
         return node;

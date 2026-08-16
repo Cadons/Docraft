@@ -26,6 +26,76 @@
 
 #include "docraft/exception/docraft_exceptions.h"
 
+namespace {
+    // These nodes derive their extent from their contents or coordinates. Although
+    // width/height are common syntactically, their current layout implementations
+    // have no explicit-size semantics, so accepting them would be a silent no-op.
+    constexpr std::array<std::string_view, 5> kContentOrCoordinateSized = {
+        docraft::craft::elements::kList, docraft::craft::elements::kParagraph,
+        docraft::craft::elements::kLine, docraft::craft::elements::kCurveLine,
+        docraft::craft::elements::kTable};
+
+    void reject_unsupported_explicit_size(std::string_view name, const std::string& tag_name)
+    {
+        const bool is_explicit_size = name == docraft::craft::basic::attribute::kWidth ||
+            name == docraft::craft::basic::attribute::kHeight;
+        if (!is_explicit_size ||
+            std::ranges::find(kContentOrCoordinateSized, tag_name) == kContentOrCoordinateSized.end())
+        {
+            return;
+        }
+        throw docraft::exception::InvalidInputException(std::format(
+            "Attribute '{}' is not supported on <{}>; that element's size is determined by {}",
+            name, tag_name,
+            tag_name == docraft::craft::elements::kLine || tag_name == docraft::craft::elements::kCurveLine
+                ? "its coordinates"
+                : "its content"));
+    }
+
+    // `weight` is deliberately not part of kCommon: unlike x/y/padding/etc. it only
+    // means anything on a direct child of <Layout> (DocraftLoomTreeBuilder collects it
+    // there to build the parent HStack/VStack's weights()) -- on any other tag it would
+    // silently no-op, so it's rejected outright instead. Returns true once `name` has
+    // been fully handled as the `weight` attribute (accepted or rejected), so the caller
+    // knows to move on to the next attribute without falling through to the generic
+    // accepted/common checks.
+    bool handle_weight_attribute(const pugi::xml_node& craft_language_source, std::string_view name,
+                                  const std::string& tag_name)
+    {
+        if (name != docraft::craft::basic::attribute::kWeight)
+        {
+            return false;
+        }
+        const pugi::xml_node parent = craft_language_source.parent();
+        const bool parent_is_layout =
+            parent && std::string_view{parent.name()} == docraft::craft::elements::kLayout;
+        if (!parent_is_layout)
+        {
+            throw docraft::exception::InvalidInputException(std::format(
+                "Attribute 'weight' is not supported on <{}>; weight only applies to a "
+                "direct child of <Layout>", tag_name));
+        }
+        return true;
+    }
+
+    [[noreturn]] void throw_unknown_attribute(std::string_view name, const std::string& tag_name,
+                                               const std::vector<std::string_view>& accepted, bool allow_common)
+    {
+        std::string known;
+        for (const std::string_view candidate : accepted)
+        {
+            known += known.empty() ? "" : ", ";
+            known += candidate;
+        }
+        throw docraft::exception::InvalidInputException(std::format(
+            "Unknown attribute '{}' on <{}>. That element accepts {}{}", name, tag_name,
+            known.empty() ? std::string{"only the common attributes"} : std::format("'{}'", known),
+            allow_common ? ", plus the common attributes (name, x, y, width, height, padding, margin*, "
+                           "position, z_index, visible)"
+                         : " and nothing else"));
+    }
+} // namespace
+
 namespace docraft::craft::parser::detail {
     bool is_hex_color(const std::string &color) {
         if (color.size() != 7 && color.size() != 9) {
@@ -93,34 +163,21 @@ namespace docraft::craft::parser::detail {
         // Exactly the names parse_common_node_attributes() below reads -- deliberately
         // not "everything in basic::attribute", which also holds `color` (only some tags
         // read it) and the position *values*, neither of which every element accepts.
-        static constexpr std::array<std::string_view, 15> kCommon = {
+        static constexpr std::array<std::string_view, 14> kCommon = {
             basic::attribute::kNodeName, basic::attribute::kX, basic::attribute::kY,
             basic::attribute::kWidth, basic::attribute::kHeight, basic::attribute::kPadding,
             basic::attribute::kMargin, basic::attribute::kMarginTop, basic::attribute::kMarginRight,
-            basic::attribute::kMarginBottom, basic::attribute::kMarginLeft, basic::attribute::kWeight,
+            basic::attribute::kMarginBottom, basic::attribute::kMarginLeft,
             basic::attribute::kPosition, basic::attribute::kZIndex, basic::attribute::kVisible};
-
-        // These nodes derive their extent from their contents or coordinates. Although
-        // width/height are common syntactically, their current layout implementations
-        // have no explicit-size semantics, so accepting them would be a silent no-op.
-        static constexpr std::array<std::string_view, 5> kContentOrCoordinateSized = {
-            elements::kList, elements::kParagraph, elements::kLine,
-            elements::kCurveLine, elements::kTable};
 
         for (const auto& attribute : craft_language_source.attributes())
         {
             const std::string_view name = attribute.name();
-            const bool is_explicit_size =
-                name == basic::attribute::kWidth || name == basic::attribute::kHeight;
-            if (is_explicit_size &&
-                std::ranges::find(kContentOrCoordinateSized, tag_name) != kContentOrCoordinateSized.end())
+            reject_unsupported_explicit_size(name, tag_name);
+
+            if (handle_weight_attribute(craft_language_source, name, tag_name))
             {
-                throw docraft::exception::InvalidInputException(std::format(
-                    "Attribute '{}' is not supported on <{}>; that element's size is determined by {}",
-                    name, tag_name,
-                    tag_name == elements::kLine || tag_name == elements::kCurveLine
-                        ? "its coordinates"
-                        : "its content"));
+                continue;
             }
             // Table sub-elements (Row/Cell/HTitle/VTitle) are not laid out as nodes of
             // their own, so the common positioning attributes mean nothing on them and
@@ -133,19 +190,7 @@ namespace docraft::craft::parser::detail {
             {
                 continue;
             }
-
-            std::string known;
-            for (const std::string_view candidate : accepted)
-            {
-                known += known.empty() ? "" : ", ";
-                known += candidate;
-            }
-            throw docraft::exception::InvalidInputException(std::format(
-                "Unknown attribute '{}' on <{}>. That element accepts {}{}", name, tag_name,
-                known.empty() ? std::string{"only the common attributes"} : std::format("'{}'", known),
-                allow_common ? ", plus the common attributes (name, x, y, width, height, padding, margin*, "
-                               "weight, position, z_index, visible)"
-                             : " and nothing else"));
+            throw_unknown_attribute(name, tag_name, accepted, allow_common);
         }
     }
 

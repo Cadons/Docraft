@@ -19,7 +19,7 @@
 #include <algorithm>
 
 namespace docraft::loom::pipeline {
-    std::vector<float> distribute_weighted_widths(float available_width,
+    std::vector<float> distribute_weighted_amounts(float available_amount,
                                                   const std::vector<float>& weights,
                                                   int count,
                                                   const std::vector<float>& floors)
@@ -43,7 +43,7 @@ namespace docraft::loom::pipeline {
 
         for (int i = 0; i < count; ++i)
         {
-            const float share = available_width * effective_weights[static_cast<std::size_t>(i)] / total_weight;
+            const float share = available_amount * effective_weights[static_cast<std::size_t>(i)] / total_weight;
             resolved[static_cast<std::size_t>(i)] =
                 floors.empty() ? share : std::max(floors[static_cast<std::size_t>(i)], share);
         }

@@ -96,6 +96,8 @@ set(DOCRAFT_SOURCES
         include/docraft/loom/nodes/docraft_loom_node.h
         src/docraft/loom/pipeline/docraft_loom_measure_processor.cc
         include/docraft/loom/pipeline/docraft_loom_measure_processor.h
+        src/docraft/loom/pipeline/docraft_loom_text_wrapper.cc
+        include/docraft/loom/pipeline/docraft_loom_text_wrapper.h
         src/docraft/loom/pipeline/docraft_loom_weighted_distribution.cc
         include/docraft/loom/pipeline/docraft_loom_weighted_distribution.h
         src/docraft/loom/nodes/docraft_loom_paragraph.cc

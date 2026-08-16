@@ -240,7 +240,6 @@ namespace docraft::craft {
         namespace layout::attribute {
             constexpr string kOrientation = "orientation";
             constexpr string kSpacing = "spacing";
-            constexpr string kWeights = "weights";
         }
 
         namespace paragraph::attribute {

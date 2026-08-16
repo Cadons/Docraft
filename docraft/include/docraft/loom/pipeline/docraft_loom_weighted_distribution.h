@@ -20,18 +20,22 @@
 
 namespace docraft::loom::pipeline {
     /**
-     * @brief Divides `available_width` across `count` items by weight -- a missing
+     * @brief Divides `available_amount` across `count` items by weight -- a missing
      * (short `weights`) or non-positive entry defaults to 1.0, i.e. an even share.
-     * Shared by DocraftLoomMeasureProcessor and DocraftLoomLayoutProcessor's HStack and
-     * Table weighted-column code, so both stages resolve the same weights the same way.
-     * @param available_width Total width to divide among the `count` items.
+     * Axis-agnostic: shared by DocraftLoomMeasureProcessor and
+     * DocraftLoomLayoutProcessor's HStack/Table weighted-width code and
+     * DocraftLoomLayoutProcessor's VStack weighted-height code, so all resolve the same
+     * weights the same way regardless of which axis they're dividing.
+     * @param available_amount Total amount (width or height) to divide among the
+     * `count` items.
      * @param weights Per-item weight; a missing or non-positive entry defaults to 1.0.
      * @param count Number of items to resolve a share for.
      * @param floors Optional per-item floor (e.g. each item's own natural/measured
-     * width); if non-empty (same size as `count`), no result is smaller than its floor.
-     * @return `count` resolved widths.
+     * size on that axis); if non-empty (same size as `count`), no result is smaller
+     * than its floor.
+     * @return `count` resolved shares.
      */
-    std::vector<float> distribute_weighted_widths(float available_width,
+    std::vector<float> distribute_weighted_amounts(float available_amount,
                                                   const std::vector<float>& weights,
                                                   int count,
                                                   const std::vector<float>& floors = {});

@@ -258,21 +258,6 @@ docker run --rm -v "$PWD:/work" -w /work docraft_tool:latest test.craft out.pdf 
 - `build/artifacts/` — final binaries (e.g. `docraft_tool`)
 - `doc` — documentation (Sphinx and Doxygen)
 
-## Roadmap / known limitations
-
-- **PDF/A and tagged PDF (PDF/UA) output.** Docraft doesn't currently emit XMP metadata,
-  an OutputIntent, or tag structure — `pdfinfo` on a generated file shows no XMP stream and
-  `Tagged: no`. Several of Docraft's target document types (invoices, compliance/QC reports)
-  are exactly the kind regulated/archival workflows often require as PDF/A or accessible
-  PDF/UA. Not implemented yet; tracked here as a future direction rather than a near-term
-  item, since it touches the PDF backend layer broadly.
-- **`pdftoppm`/`pdftotext`/`pdfinfo` (Poppler) print a `ToUnicode CMap` syntax warning**
-  for documents with an embedded TTF font, e.g. `Syntax Warning: Invalid 'begincidrange'
-  operator in ToUnicode CMap`. Text extraction still works. Docraft doesn't write CMap data
-  itself — font embedding and its CMap are generated entirely by libharu
-  (`HPDF_LoadTTFontFromFile`/`HPDF_GetFont`), so this is an upstream libharu conformance gap,
-  not something fixable from Docraft's own code.
-
 ## Contributing
 - Fork the repository and create a new branch for your feature or bug fix.
 - Follow the coding style and commit message guidelines outlined in [`CONTRIBUTING.md`](CONTRIBUTING.md).

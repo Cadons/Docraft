@@ -41,7 +41,9 @@ namespace docraft::craft {
      * @brief Universal attributes any Craft-language tag can carry (name/x/y/width/
      * height/padding/margin/weight/z_index/visible/position). Parsed once, generically,
      * by `DocraftCraftLanguageParser` -- independent of what `DocraftParsedElement::data`
-     * holds or which engine eventually consumes the parsed tree.
+     * holds or which engine eventually consumes the parsed tree. `weight` is the odd one
+     * out: it is only accepted on a direct child of `<Layout>` (validated at parse time),
+     * since it has no meaning anywhere else.
      */
     struct DocraftCommonAttributes
     {
