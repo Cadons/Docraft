@@ -38,8 +38,6 @@ namespace docraft::craft::parser {
         {
             data.spacing = spacing_attr.as_float();
         }
-        data.weights = detail::parse_float_list_attribute(craft_language_source,
-                                                          elements::layout::attribute::kWeights.data());
         return data;
     }
 
@@ -47,8 +45,7 @@ namespace docraft::craft::parser {
     {
         return {
             elements::layout::attribute::kOrientation,
-            elements::layout::attribute::kSpacing,
-            elements::layout::attribute::kWeights
+            elements::layout::attribute::kSpacing
         };
     }
 } // namespace docraft::craft::parser

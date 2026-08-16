@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <optional>
 #include <string>
 #include <vector>
 
@@ -30,12 +29,4 @@ namespace docraft::craft::parser::detail {
      * and Polygon) into a list of points.
      */
     std::vector<docraft::Position> parse_points_attribute(const pugi::xml_node& node, const char* attr_name);
-
-    /**
-     * @brief Parses a comma-separated list of floats (e.g. "1,2,1"), the convention used
-     * by `<layout>`'s `weights` attribute.
-     * @return `std::nullopt` if the attribute is absent; otherwise the parsed values.
-     * @throws docraft::exception::InvalidInputException on an empty/malformed token.
-     */
-    std::optional<std::vector<float>> parse_float_list_attribute(const pugi::xml_node& node, const char* attr_name);
 }

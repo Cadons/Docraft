@@ -1378,6 +1378,23 @@ namespace docraft::loom::craft {
     {
         const auto& data = std::any_cast<const parser::ParsedLayoutData&>(element.data);
 
+        // The only way to specify per-child weights is `weight="..."` on each child of
+        // <Layout> itself (already validated at parse time -- `weight` is rejected
+        // anywhere else). A missing weight defaults to 1.0, matching
+        // distribute_weighted_amounts()'s own default for a missing/non-positive entry.
+        std::vector<float> weights;
+        const bool any_child_weight = std::ranges::any_of(
+            element.children,
+            [](const auto& child) { return child->common.weight.has_value(); });
+        if (any_child_weight)
+        {
+            weights.reserve(element.children.size());
+            for (const auto& child : element.children)
+            {
+                weights.push_back(child->common.weight.value_or(1.0F));
+            }
+        }
+
         if (data.orientation == parser::ParsedLayoutOrientation::kHorizontal)
         {
             auto node = std::make_shared<nodes::DocraftLoomHStack>();
@@ -1385,9 +1402,9 @@ namespace docraft::loom::craft {
             {
                 node->set_spacing(*data.spacing);
             }
-            if (data.weights)
+            if (!weights.empty())
             {
-                node->set_weights(*data.weights);
+                node->set_weights(weights);
             }
             apply_common_attributes(*node, element.common);
             add_children(node, element.children);
@@ -1398,9 +1415,9 @@ namespace docraft::loom::craft {
         {
             node->set_spacing(*data.spacing);
         }
-        if (data.weights)
+        if (!weights.empty())
         {
-            node->set_weights(*data.weights);
+            node->set_weights(weights);
         }
         apply_common_attributes(*node, element.common);
         add_children(node, element.children);

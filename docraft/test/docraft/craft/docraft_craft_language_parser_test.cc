@@ -302,19 +302,26 @@ TEST(DocraftCraftLanguageParserTest, AcceptsTagSpecificAndCommonAttributes)
                                                  position="absolute" z_index="2" visible="true"/>)XML"));
 }
 
-// There is no per-child `weight` attribute -- the only way to specify per-child
-// weights is `<Layout weights="1,2,1">` on the Layout element itself.
-TEST(DocraftCraftLanguageParserTest, RejectsPerChildWeightAttribute)
+// `weight` is only meaningful on a direct child of <Layout> (DocraftLoomTreeBuilder
+// collects it there to build the parent HStack/VStack's weights()) -- anywhere else it
+// would silently no-op, so it's rejected outright instead.
+TEST(DocraftCraftLanguageParserTest, AcceptsWeightAttributeOnLayoutChild)
+{
+    EXPECT_NO_THROW(parse_craft(R"XML(<Layout><Rectangle weight="0.5"/></Layout>)XML"));
+}
+
+TEST(DocraftCraftLanguageParserTest, RejectsWeightAttributeOutsideLayoutChild)
 {
     try
     {
         parse_craft(R"XML(<Rectangle weight="1"/>)XML");
-        FAIL() << "expected a per-child weight attribute to be rejected";
+        FAIL() << "expected weight outside a <Layout> child to be rejected";
     }
     catch (const docraft::exception::InvalidInputException& e)
     {
         const std::string message = e.what();
         EXPECT_NE(message.find("weight"), std::string::npos);
+        EXPECT_NE(message.find("Layout"), std::string::npos);
     }
 }
 

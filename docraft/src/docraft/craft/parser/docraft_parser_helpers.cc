@@ -122,6 +122,23 @@ namespace docraft::craft::parser::detail {
                         ? "its coordinates"
                         : "its content"));
             }
+            // `weight` is deliberately not part of kCommon: unlike x/y/padding/etc. it
+            // only means anything on a direct child of <Layout> (DocraftLoomTreeBuilder
+            // collects it there to build the parent HStack/VStack's weights()) -- on any
+            // other tag it would silently no-op, so it's rejected outright instead.
+            if (name == basic::attribute::kWeight)
+            {
+                const pugi::xml_node parent = craft_language_source.parent();
+                const bool parent_is_layout =
+                    parent && std::string_view{parent.name()} == elements::kLayout;
+                if (!parent_is_layout)
+                {
+                    throw docraft::exception::InvalidInputException(std::format(
+                        "Attribute 'weight' is not supported on <{}>; weight only applies to a "
+                        "direct child of <Layout>", tag_name));
+                }
+                continue;
+            }
             // Table sub-elements (Row/Cell/HTitle/VTitle) are not laid out as nodes of
             // their own, so the common positioning attributes mean nothing on them and
             // are not silently tolerated either.
@@ -220,6 +237,9 @@ namespace docraft::craft::parser::detail {
             // Explicit coordinates with no explicit "position" attribute imply absolute
             // placement, mirroring the legacy parser's behavior.
             common.position_mode = PositionMode::kAbsolute;
+        }
+        if (auto weight_attr = craft_language_source.attribute(basic::attribute::kWeight.data())) {
+            common.weight = weight_attr.as_float();
         }
         if (auto z_index_attr = craft_language_source.attribute(basic::attribute::kZIndex.data())) {
             common.z_index = z_index_attr.as_int();

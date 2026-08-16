@@ -20,9 +20,9 @@ one is a case where a document parses fine but doesn't do what a reasonable auth
    it no longer silently drops the extra content. Only ever put a single `<Text>` or `<Image>`
    directly inside `<Cell>`.
 
-4. **No `<Table weights="...">`.** Unlike `<Layout weights="...">` (HStack), table column widths
-   come only from each `<Cell width="...">`'s explicit width or an even split — there's no
-   author-specified per-column weighting in XML.
+4. **No per-column weight on `<Table>`.** Unlike `<Layout>`'s per-child `weight="..."`, table
+   column widths come only from each `<Cell width="...">`'s explicit width or an even split —
+   there's no author-specified per-column weighting in XML.
 
 5. **Table cell text-wrap width is a best-effort estimate**, computed during the Measure pass
    before Layout has authoritatively resolved final column widths. It's not guaranteed to
@@ -30,13 +30,14 @@ one is a case where a document parses fine but doesn't do what a reasonable auth
    constraints interact. Don't promise pixel-perfect no-overflow guarantees for long cell text —
    it wraps, but the ceiling it wraps to is an estimate.
 
-6. **`<Layout weights="...">` on a vertical orientation needs an explicit `height` too.** There is
-   no per-child `weight="..."` attribute — `weights` is a `<Layout>`-only attribute. On
-   `orientation="horizontal"` (HStack) it always works on its own, dividing the available
-   page/container width. On `orientation="vertical"` (VStack) it only takes effect when that same
-   `<Layout>` also has an explicit `height="..."` — a VStack's height is otherwise derived
-   bottom-up from its children (no ambient "page height" budget the way HStack always has a page
-   width to divide), so `weights` alone on a heightless vertical layout still has zero effect.
+6. **Per-child `weight="..."` on a vertical `<Layout>` needs an explicit `height` on the `<Layout>`
+   too.** `weight` is only accepted on a direct child of `<Layout>` — used anywhere else it's a
+   parse error, not a silent no-op. On `orientation="horizontal"` (HStack), children's weights
+   always divide the available page/container width. On `orientation="vertical"` (VStack), weights
+   only take effect when the `<Layout>` itself also has an explicit `height="..."` — a VStack's
+   height is otherwise derived bottom-up from its children (no ambient "page height" budget the way
+   HStack always has a page width to divide), so per-child `weight` alone on a heightless vertical
+   layout still has zero effect.
 
 7. **`width`/`height` silently do nothing on several tags** even though they parse without error:
    `<List>`, `<Paragraph>`, `<Line>`, `<CurveLine>`, `<Table>` have no setter wired for them.

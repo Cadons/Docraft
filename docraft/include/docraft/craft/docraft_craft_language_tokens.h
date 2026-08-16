@@ -37,6 +37,7 @@ namespace docraft::craft {
         constexpr string kMarginRight = "margin_right";
         constexpr string kMarginBottom = "margin_bottom";
         constexpr string kMarginLeft = "margin_left";
+        constexpr string kWeight = "weight";
         constexpr string kPosition = "position";
         constexpr string kZIndex = "z_index";
         constexpr string kColor = "color";
@@ -239,7 +240,6 @@ namespace docraft::craft {
         namespace layout::attribute {
             constexpr string kOrientation = "orientation";
             constexpr string kSpacing = "spacing";
-            constexpr string kWeights = "weights";
         }
 
         namespace paragraph::attribute {
