@@ -1,0 +1,39 @@
+name: Documentation Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'doc/**'
+      - 'docraft/include/**'
+      - '.github/workflows/docs-deploy.yml'
+      - '.github/workflows/docs-build.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build-docs:
+    uses: ./.github/workflows/docs-build.yml
+    with:
+      upload-artifact: true
+
+  deploy-docs:
+    needs: build-docs
+    runs-on: ubuntu-latest
+    name: Deploy documentation to GitHub Pages
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
