@@ -31,13 +31,13 @@ namespace docraft::loom::craft {
         node->set_kind(data.kind == docraft::craft::parser::ParsedListKind::kOrdered
                            ? nodes::ListKind::kOrdered
                            : nodes::ListKind::kUnordered);
-        if (data.ordered_style)
+        if (data.ordered_style.has_value())
         {
             node->set_ordered_style(*data.ordered_style == docraft::craft::parser::ParsedOrderedListStyle::kNumber
                                         ? nodes::OrderedListStyle::kNumber
                                         : nodes::OrderedListStyle::kRoman);
         }
-        if (data.unordered_dot)
+        if (data.unordered_dot.has_value())
         {
             nodes::UnorderedListDot dot = nodes::UnorderedListDot::kCircle;
             switch (*data.unordered_dot)

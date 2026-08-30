@@ -48,11 +48,11 @@ namespace docraft::loom::craft {
         }
         node->set_start(start);
         node->set_end(end);
-        if (data.border_color)
+        if (data.border_color.has_value())
         {
             node->set_border_color(context.resolve_color(*data.border_color));
         }
-        if (data.border_width)
+        if (data.border_width.has_value())
         {
             node->set_border_width(*data.border_width);
         }

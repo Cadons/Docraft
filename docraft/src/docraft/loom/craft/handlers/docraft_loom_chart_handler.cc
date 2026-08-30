@@ -109,11 +109,11 @@ namespace docraft::loom::craft {
     {
         const auto& data = std::any_cast<const parser::ParsedChartData&>(element.data);
 
-        if (!data.style)
+        if (!data.style.has_value())
         {
             throw docraft::exception::InvalidInputException("<Chart> requires a 'style' attribute");
         }
-        if (!element.common.width || !element.common.height)
+        if (!element.common.width.has_value() || !element.common.height.has_value())
         {
             throw docraft::exception::InvalidInputException(
                 "<Chart> requires explicit 'width' and 'height' attributes");
@@ -129,15 +129,15 @@ namespace docraft::loom::craft {
         build_context.width = *element.common.width;
         build_context.height = *element.common.height;
         build_context.axis_position = charts::parse_chart_axis_position(data.axis_position.value_or("left"));
-        if (data.title)
+        if (data.title.has_value())
         {
             build_context.title = context.render_template_text(*data.title);
         }
-        if (data.x_label)
+        if (data.x_label.has_value())
         {
             build_context.x_label = context.render_template_text(*data.x_label);
         }
-        if (data.y_label)
+        if (data.y_label.has_value())
         {
             build_context.y_label = context.render_template_text(*data.y_label);
         }

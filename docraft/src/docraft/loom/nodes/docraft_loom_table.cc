@@ -45,11 +45,11 @@ namespace docraft::loom::nodes {
                     clone->set_content(image_clone);
                 }
             }
-            if (source.background())
+            if (source.background().has_value())
             {
                 clone->set_background(*source.background());
             }
-            if (source.explicit_width())
+            if (source.explicit_width().has_value())
             {
                 clone->set_explicit_width(*source.explicit_width());
             }
@@ -184,7 +184,7 @@ namespace docraft::loom::nodes {
                 // No set_content() call -- this cell stays blank -- but background and
                 // explicit_width are still styling of the cell itself and must carry
                 // over, same as clone_cell does for the split.kept/remainder cells.
-                if (split.kept->background()) {
+                if (split.kept->background().has_value()) {
                     blank->set_background(*split.kept->background());
                 }
                 if (auto explicit_width = split.kept->explicit_width(); explicit_width.has_value()) {

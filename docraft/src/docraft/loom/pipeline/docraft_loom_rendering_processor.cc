@@ -519,7 +519,7 @@ namespace docraft::loom::pipeline {
         // Own explicit background, if set -- the table draws the default fallback for
         // cells that don't set one (see Table's visit()), so there's no precedence logic
         // to duplicate here.
-        if (cell->background())
+        if (cell->background().has_value())
         {
             const auto rgba = cell->background()->toRGB();
             if (rgba.a > 0.0F)
@@ -547,7 +547,7 @@ namespace docraft::loom::pipeline {
     // background (which each cell draws itself in its own visit()).
     void DocraftLoomRenderingProcessor::draw_table_default_backgrounds(nodes::DocraftLoomTable& table)
     {
-        if (!table.default_cell_background())
+        if (!table.default_cell_background().has_value())
         {
             return;
         }
@@ -567,7 +567,7 @@ namespace docraft::loom::pipeline {
             for (int c = 0; c < table.column_count(); ++c)
             {
                 auto cell = table.cell(r, c);
-                if (!cell->background())
+                if (!cell->background().has_value())
                 {
                     const auto& pos = nodes::sealed_frame(*cell).position;
                     const auto& size = nodes::sealed_frame(*cell).size;

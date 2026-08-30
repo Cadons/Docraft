@@ -31,7 +31,7 @@ namespace docraft::loom::nodes {
     inline LayoutBox::LayoutProof layout_proof_or_throw(const DocraftLoomNode& node)
     {
         const auto proof = node.layout_box().layout_proof();
-        if (!proof)
+        if (!proof.has_value())
         {
             throw docraft::exception::InvalidInputException(
                 "LayoutBox::frame read for a node DocraftLoomLayoutProcessor hasn't laid out yet");

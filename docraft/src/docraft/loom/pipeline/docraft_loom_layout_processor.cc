@@ -583,7 +583,7 @@ namespace docraft::loom::pipeline {
                     geometry.natural_widths[static_cast<std::size_t>(c)], sz.width);
                 geometry.row_heights[static_cast<std::size_t>(r)] = std::max(
                     geometry.row_heights[static_cast<std::size_t>(r)], sz.height);
-                if (cell->explicit_width())
+                if (cell->explicit_width().has_value())
                 {
                     geometry.explicit_widths[static_cast<std::size_t>(c)] = std::max(
                         geometry.explicit_widths[static_cast<std::size_t>(c)], *cell->explicit_width());

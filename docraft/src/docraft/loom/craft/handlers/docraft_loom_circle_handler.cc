@@ -118,7 +118,7 @@ namespace docraft::loom::craft {
                     "<Circle> arcs are supported on circles only, not on an oval sized by "
                     "differing 'width' and 'height'");
             }
-            if (data.background_color)
+            if (data.background_color.has_value())
             {
                 throw docraft::exception::InvalidInputException(
                     "<Circle> arc is an open path and cannot be filled -- drop "

@@ -104,8 +104,8 @@ namespace docraft::loom::charts {
             }
         }
 
-        const float title_h = ctx.title ? kTitleBandHeight : 0.0F;
-        if (ctx.title)
+        const float title_h = ctx.title.has_value() ? kTitleBandHeight : 0.0F;
+        if (ctx.title.has_value())
         {
             const float title_w = estimate_text_width(*ctx.title, kTitleFontSize);
             add_text(*canvas, {.text = *ctx.title, .x = std::max(0.0F, (ctx.width - title_w) / 2.0F),

@@ -30,7 +30,7 @@ namespace docraft::loom::craft {
         // Canvas has no auto-sizing (its children are free-positioned, not stacked), so
         // it needs an explicit bound to clip against -- unlike Rectangle, an unset
         // width/height is a configuration error, not a "shrink to content" default.
-        if (!element.common.width || !element.common.height)
+        if (!element.common.width.has_value() || !element.common.height.has_value())
         {
             throw docraft::exception::InvalidInputException(
                 "<Canvas> requires explicit 'width' and 'height' attributes");

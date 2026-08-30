@@ -38,11 +38,11 @@ namespace docraft::loom::craft {
                 "<CurveLine> requires at least 2 points, got " + std::to_string(data.points.size()));
         }
         node->set_points(data.points);
-        if (data.border_color)
+        if (data.border_color.has_value())
         {
             node->set_border_color(context.resolve_color(*data.border_color));
         }
-        if (data.border_width)
+        if (data.border_width.has_value())
         {
             node->set_border_width(*data.border_width);
         }

@@ -51,7 +51,7 @@ namespace docraft::loom::craft {
         if (data.orientation == docraft::craft::parser::ParsedLayoutOrientation::kHorizontal)
         {
             auto node = std::make_shared<nodes::DocraftLoomHStack>();
-            if (data.spacing)
+            if (data.spacing.has_value())
             {
                 node->set_spacing(*data.spacing);
             }
@@ -64,7 +64,7 @@ namespace docraft::loom::craft {
             return node;
         }
         auto node = std::make_shared<nodes::DocraftLoomVStack>();
-        if (data.spacing)
+        if (data.spacing.has_value())
         {
             node->set_spacing(*data.spacing);
         }

@@ -71,18 +71,18 @@ namespace docraft::loom::craft {
             context.template_engine().render_template_string(title.text));
         text->set_alignment(to_loom_alignment(title.alignment));
         apply_style(*text, title.style);
-        if (title.color)
+        if (title.color.has_value())
         {
             text->set_color(context.resolve_color(*title.color));
         }
-        if (title.font_size)
+        if (title.font_size.has_value())
         {
             text->set_font_size(*title.font_size);
         }
         auto cell = std::make_shared<nodes::DocraftLoomTableCell>();
         cell->set_content(text);
         cell->set_is_title(true);
-        if (title.background)
+        if (title.background.has_value())
         {
             cell->set_background(context.resolve_color(*title.background));
         }
@@ -120,11 +120,11 @@ namespace docraft::loom::craft {
             cell->set_content(content);
         }
 
-        if (cell_data.background)
+        if (cell_data.background.has_value())
         {
             cell->set_background(context.resolve_color(*cell_data.background));
         }
-        if (cell_data.width)
+        if (cell_data.width.has_value())
         {
             cell->set_explicit_width(*cell_data.width);
         }
@@ -223,7 +223,7 @@ namespace docraft::loom::craft {
                                                              std::size_t column_count,
                                                              DocraftLoomTableHandlerContext& context)
     {
-        if (data.header_data_template)
+        if (data.header_data_template.has_value())
         {
             const std::vector<std::string> header = resolve_table_header(*data.header_data_template, context);
             if (header.size() != column_count)
@@ -319,18 +319,18 @@ namespace docraft::loom::craft {
         // build_content_cell() (via render_template_text()). build_templated_model_rows()
         // below additionally overrides it per JSON-model object, scoped to that object's
         // own rows.
-        if (data.baseline_offset)
+        if (data.baseline_offset.has_value())
         {
             table->set_baseline_offset(*data.baseline_offset);
         }
-        if (data.default_cell_background)
+        if (data.default_cell_background.has_value())
         {
             table->set_default_cell_background(context.resolve_color(*data.default_cell_background));
         }
 
         const bool is_vertical = data.orientation == parser::ParsedTableOrientation::kVertical;
 
-        if (data.model_data_template)
+        if (data.model_data_template.has_value())
         {
             const nlohmann::json model_json = resolve_table_model_json(*data.model_data_template, context);
 

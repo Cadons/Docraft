@@ -97,7 +97,7 @@ namespace docraft::loom::craft {
     {
         const auto& data = std::any_cast<const parser::ParsedForeachData&>(foreach_element.data);
 
-        if (data.model)
+        if (data.model.has_value())
         {
             // `model` may itself be (or contain) a `${variable}`/`${data("field")}`
             // expression -- e.g. model="${employees}", or, nested inside an outer
@@ -154,35 +154,35 @@ namespace docraft::loom::craft {
     void DocraftLoomTreeBuilder::fill_text_node(nodes::DocraftLoomText& node, const parser::ParsedTextData& data) const
     {
         node.set_text(render_template_text(data.text));
-        if (data.font_size)
+        if (data.font_size.has_value())
         {
             node.set_font_size(*data.font_size);
         }
-        if (data.font_name)
+        if (data.font_name.has_value())
         {
             node.set_font_family(*data.font_name);
         }
-        else if (default_font_family_)
+        else if (default_font_family_.has_value())
         {
             node.set_font_family(*default_font_family_);
         }
-        if (data.color)
+        if (data.color.has_value())
         {
             node.set_color(resolve_color(*data.color));
         }
-        if (data.style)
+        if (data.style.has_value())
         {
             apply_style(node, *data.style);
         }
-        if (data.alignment)
+        if (data.alignment.has_value())
         {
             node.set_alignment(to_loom_alignment(*data.alignment));
         }
-        if (data.underline)
+        if (data.underline.has_value())
         {
             node.set_underline(*data.underline);
         }
-        if (data.strikeout)
+        if (data.strikeout.has_value())
         {
             node.set_strikeout(*data.strikeout);
         }
@@ -191,39 +191,39 @@ namespace docraft::loom::craft {
     void DocraftLoomTreeBuilder::fill_page_number_node(nodes::DocraftLoomPageNumber& node,
                                                        const parser::ParsedPageNumberData& data) const
     {
-        if (data.font_size)
+        if (data.font_size.has_value())
         {
             node.set_font_size(*data.font_size);
         }
-        if (data.font_name)
+        if (data.font_name.has_value())
         {
             node.set_font_family(*data.font_name);
         }
-        else if (default_font_family_)
+        else if (default_font_family_.has_value())
         {
             node.set_font_family(*default_font_family_);
         }
-        if (data.color)
+        if (data.color.has_value())
         {
             node.set_color(resolve_color(*data.color));
         }
-        if (data.style)
+        if (data.style.has_value())
         {
             apply_style(node, *data.style);
         }
-        if (data.alignment)
+        if (data.alignment.has_value())
         {
             node.set_alignment(to_loom_alignment(*data.alignment));
         }
-        if (data.underline)
+        if (data.underline.has_value())
         {
             node.set_underline(*data.underline);
         }
-        if (data.strikeout)
+        if (data.strikeout.has_value())
         {
             node.set_strikeout(*data.strikeout);
         }
-        if (data.format)
+        if (data.format.has_value())
         {
             node.set_format(*data.format);
         }
@@ -232,11 +232,11 @@ namespace docraft::loom::craft {
     void DocraftLoomTreeBuilder::fill_image_node(nodes::DocraftLoomImage& node,
                                                  const parser::ParsedImageData& data) const
     {
-        if (data.raw_data && data.raw_pixel_width && data.raw_pixel_height)
+        if (data.raw_data.has_value() && data.raw_pixel_width.has_value() && data.raw_pixel_height.has_value())
         {
             node.set_raw_data(*data.raw_data, *data.raw_pixel_width, *data.raw_pixel_height);
         }
-        else if (data.path)
+        else if (data.path.has_value())
         {
             node.set_path(render_template_text(*data.path));
         }

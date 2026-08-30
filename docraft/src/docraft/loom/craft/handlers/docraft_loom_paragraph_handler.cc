@@ -29,19 +29,19 @@ namespace docraft::loom::craft {
     {
         const auto& data = std::any_cast<const docraft::craft::parser::ParsedParagraphData&>(element.data);
         auto node = std::make_shared<nodes::DocraftLoomParagraph>();
-        if (data.line_spacing)
+        if (data.line_spacing.has_value())
         {
             node->set_line_spacing(*data.line_spacing);
         }
-        if (data.space_before)
+        if (data.space_before.has_value())
         {
             node->set_space_before(*data.space_before);
         }
-        if (data.space_after)
+        if (data.space_after.has_value())
         {
             node->set_space_after(*data.space_after);
         }
-        if (data.alignment)
+        if (data.alignment.has_value())
         {
             node->set_alignment(to_loom_alignment(*data.alignment));
         }

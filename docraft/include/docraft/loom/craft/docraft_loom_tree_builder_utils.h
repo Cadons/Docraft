@@ -55,23 +55,24 @@ namespace docraft::loom::craft {
     template <typename NodeT>
     void apply_common_attributes(NodeT& node, const docraft::craft::DocraftCommonAttributes& common)
     {
-        if (common.name)
+        if (common.name.has_value())
         {
             node.set_name(*common.name);
         }
-        if (common.z_index)
+        if (common.z_index.has_value())
         {
             node.set_z_index(*common.z_index);
         }
-        if (common.padding)
+        if (common.padding.has_value())
         {
             node.set_padding(*common.padding);
         }
-        if (common.margin)
+        if (common.margin.has_value())
         {
             node.set_margin(*common.margin);
         }
-        if (common.margin_top || common.margin_right || common.margin_bottom || common.margin_left)
+        if (common.margin_top.has_value() || common.margin_right.has_value() || common.margin_bottom.has_value()
+            || common.margin_left.has_value())
         {
             const auto& current = node.margin();
             node.set_margin(common.margin_top.value_or(current.top), common.margin_right.value_or(current.right),
@@ -81,33 +82,33 @@ namespace docraft::loom::craft {
 
         if constexpr (requires(NodeT& n, float v) { n.set_width(v); })
         {
-            if (common.width)
+            if (common.width.has_value())
             {
                 node.set_width(*common.width);
             }
         }
         if constexpr (requires(NodeT& n, float v) { n.set_height(v); })
         {
-            if (common.height)
+            if (common.height.has_value())
             {
                 node.set_height(*common.height);
             }
         }
 
-        if (common.position_mode)
+        if (common.position_mode.has_value())
         {
             node.set_position_mode(*common.position_mode == docraft::craft::PositionMode::kAbsolute
                                        ? nodes::DocraftPositionType::kAbsolute
                                        : nodes::DocraftPositionType::kBlock);
         }
-        if (common.x || common.y)
+        if (common.x.has_value() || common.y.has_value())
         {
             nodes::Position pos = node.explicit_position();
-            if (common.x)
+            if (common.x.has_value())
             {
                 pos.x = *common.x;
             }
-            if (common.y)
+            if (common.y.has_value())
             {
                 pos.y = *common.y;
             }
@@ -126,15 +127,15 @@ namespace docraft::loom::craft {
     template <typename NodeT, typename ShapeDataT, typename ColorResolver>
     void apply_shape_style(NodeT& node, const ShapeDataT& data, const ColorResolver& resolve_color)
     {
-        if (data.background_color)
+        if (data.background_color.has_value())
         {
             node.edit_style().background_color = resolve_color(*data.background_color);
         }
-        if (data.border_color)
+        if (data.border_color.has_value())
         {
             node.edit_style().border_color = resolve_color(*data.border_color);
         }
-        if (data.border_width)
+        if (data.border_width.has_value())
         {
             node.edit_style().border_width = *data.border_width;
         }

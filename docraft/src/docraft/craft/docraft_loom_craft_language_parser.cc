@@ -34,19 +34,19 @@ namespace docraft::craft {
         loom::DocraftLoomPdfCreator::Margins to_margins(const parser::ParsedSectionData& data)
         {
             loom::DocraftLoomPdfCreator::Margins margins;
-            if (data.margin_top)
+            if (data.margin_top.has_value())
             {
                 margins.top = *data.margin_top;
             }
-            if (data.margin_bottom)
+            if (data.margin_bottom.has_value())
             {
                 margins.bottom = *data.margin_bottom;
             }
-            if (data.margin_left)
+            if (data.margin_left.has_value())
             {
                 margins.left = *data.margin_left;
             }
-            if (data.margin_right)
+            if (data.margin_right.has_value())
             {
                 margins.right = *data.margin_right;
             }

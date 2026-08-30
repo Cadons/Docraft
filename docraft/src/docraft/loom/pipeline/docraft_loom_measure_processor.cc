@@ -508,7 +508,7 @@ namespace docraft::loom::pipeline {
         std::vector column_explicit_widths(static_cast<std::size_t>(cols), 0.0F);
         for (int r = 0; r < rows; ++r) {
             for (int c = 0; c < cols; ++c) {
-                if (auto width = table->cell(r, c)->explicit_width()) {
+                if (auto width = table->cell(r, c)->explicit_width(); width.has_value()) {
                     column_explicit_widths[static_cast<std::size_t>(c)] =
                             std::max(column_explicit_widths[static_cast<std::size_t>(c)], *width);
                 }
