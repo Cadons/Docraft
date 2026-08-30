@@ -45,7 +45,7 @@ namespace docraft::tools {
      * @brief Aggregated result of DocraftValidator::validate(): every diagnostic found,
      * in the order they were discovered.
      */
-    struct DocraftValidationResult
+    struct DOCRAFT_LIB DocraftValidationResult
     {
         std::vector<DocraftValidationIssue> issues;
 
