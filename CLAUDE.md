@@ -53,10 +53,7 @@ Docs (Sphinx + Doxygen) live in `doc/source/`; build with `cd doc && make html`.
 
 ## Architecture: the loom pipeline
 
-The old chain-of-responsibility pipeline (`model/`, `layout/`, `renderer/`, `services/`, and the
-`DocraftDocument`/`DocraftDocumentContext` god object) has been **fully removed** — the migration
-called out in earlier notes here is done, not in progress. There is a single layout/render
-pipeline today, **loom**, built around a pipeline-of-visitors over a plain node tree:
+There is a single layout/render pipeline **loom**, built around a pipeline-of-visitors over a plain node tree:
 
 ```
 Craft XML (pugixml)
