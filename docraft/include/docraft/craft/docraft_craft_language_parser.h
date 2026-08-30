@@ -49,6 +49,9 @@ namespace docraft::craft {
 
         ~DocraftCraftLanguageParser() = default;
 
+        DocraftCraftLanguageParser(const DocraftCraftLanguageParser&) = delete;
+        DocraftCraftLanguageParser& operator=(const DocraftCraftLanguageParser&) = delete;
+
         /**
          * @brief Parses craft language source (a single root element) as a string.
          * @param craft_language_source XML source as string.
