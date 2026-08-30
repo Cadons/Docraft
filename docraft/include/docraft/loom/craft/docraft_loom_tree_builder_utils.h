@@ -22,6 +22,7 @@
 #include "docraft/craft/docraft_craft_parsed_element.h"
 #include "docraft/craft/parser/docraft_parser.h"
 #include "docraft/docraft_lib.h"
+#include "docraft/loom/nodes/docraft_loom_line_style.h"
 #include "docraft/loom/nodes/docraft_loom_node.h"
 #include "docraft/loom/nodes/docraft_loom_text.h"
 
@@ -33,6 +34,13 @@ namespace docraft::loom::craft {
     DOCRAFT_LIB void apply_style(nodes::DocraftLoomText& node, docraft::craft::parser::ParsedTextStyle style);
 
     DOCRAFT_LIB nodes::TextAlignment to_loom_alignment(docraft::craft::parser::ParsedTextAlignment alignment);
+
+    /**
+     * @brief Translates the parser's `ParsedLineStyle` into loom's own
+     * `DocraftLineStyle`, for the same "duplicate a tiny enum and translate" reason as
+     * to_loom_alignment().
+     */
+    DOCRAFT_LIB nodes::DocraftLineStyle to_loom_line_style(docraft::craft::parser::ParsedLineStyle style);
 
     /**
      * @brief Normalizes a JSON string that may use single quotes for strings instead of
@@ -138,6 +146,16 @@ namespace docraft::loom::craft {
         if (data.border_width.has_value())
         {
             node.edit_style().border_width = *data.border_width;
+        }
+        // Not every ShapeDataT carries a border_style (e.g. Canvas/Section/Chart's parsed
+        // data doesn't) -- if constexpr keeps this a no-op for those instead of a hard
+        // compile error, the same idiom apply_common_attributes() uses for width/height.
+        if constexpr (requires { data.border_style; })
+        {
+            if (data.border_style.has_value())
+            {
+                node.edit_style().border_style = to_loom_line_style(*data.border_style);
+            }
         }
     }
 } // namespace docraft::loom::craft

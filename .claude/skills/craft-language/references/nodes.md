@@ -76,6 +76,7 @@ background/border.
 | `background_color` | color | fully transparent |
 | `border_color` | color | fully transparent |
 | `border_width` | float | `1.0` (invisible unless `border_color` has alpha) |
+| `border_style` | enum: `solid`, `dashed` | `solid` |
 | `width`, `height` | float | `0` = shrink-to-fit / use incoming width, not literally zero |
 | `padding` | float (common) | `10.0`, but collapses to `0` if the rectangle paints neither fill nor stroke |
 
@@ -146,6 +147,7 @@ Rectangle/Text).
 | Attribute | Type | Notes |
 |---|---|---|
 | `background_color`, `border_color`, `border_width` | color/color/float | shared shape style |
+| `border_style` | enum: `solid`, `dashed` | default `solid`; applies to the arc too, when present |
 | `radius` | float | true circle; mutually exclusive with `width`/`height` |
 | `width`, `height` | float | inscribes an ellipse in that bounding box; both required together |
 | `start_x`, `start_y`, `finish_x`, `finish_y` | float | arc endpoints, all four or none |
@@ -171,6 +173,7 @@ direction — swapping them picks the complementary arc.
 | Attribute | Type | Notes |
 |---|---|---|
 | `background_color`, `border_color`, `border_width` | color/color/float | |
+| `border_style` | enum: `solid`, `dashed` | default `solid` |
 | `points` | string, space-separated `x,y` tokens | **must be exactly 3 points**, else throws |
 
 `points="0,0 50,0 25,50"`. Y-down offsets from the node's own frame origin.
@@ -191,6 +194,7 @@ shape node — no `background_color` (fill) at all.
 | `points` | space-separated `x,y` tokens | **minimum 2 points**, else throws |
 | `border_color` | color | black |
 | `border_width` | float | `1.0` |
+| `border_style` | enum: `solid`, `dashed` | `solid` |
 
 ```xml
 <CurveLine points="0,0 20,40 60,10" border_color="blue" border_width="2"/>
@@ -204,6 +208,7 @@ shape node — no `background_color` (fill) at all.
 | `x2`, `y2` | float | `(100, 0)` |
 | `border_color` | color | black |
 | `border_width` | float | `1.0` |
+| `border_style` | enum: `solid`, `dashed` | `solid` |
 
 ## `<List>` / `<UList>`
 

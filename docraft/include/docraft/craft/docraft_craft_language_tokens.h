@@ -251,12 +251,14 @@ namespace docraft::craft {
             constexpr string kBackgroundColor = "background_color";
             constexpr string kBorderColor = "border_color";
             constexpr string kBorderWidth = "border_width";
+            constexpr string kBorderStyle = "border_style";
 
         }
         namespace circle::attribute {
             constexpr string kBackgroundColor = "background_color";
             constexpr string kBorderColor = "border_color";
             constexpr string kBorderWidth = "border_width";
+            constexpr string kBorderStyle = "border_style";
             constexpr string kRadius = "radius";
             // Arc endpoints: given as points, all four together or none.
             constexpr string kStartX = "start_x";
@@ -268,6 +270,7 @@ namespace docraft::craft {
             constexpr string kBackgroundColor = "background_color";
             constexpr string kBorderColor = "border_color";
             constexpr string kBorderWidth = "border_width";
+            constexpr string kBorderStyle = "border_style";
             constexpr string kPoints = "points";
         }
         namespace line::attribute {
@@ -277,17 +280,20 @@ namespace docraft::craft {
             constexpr string kY2 = "y2";
             constexpr string kBorderColor = "border_color";
             constexpr string kBorderWidth = "border_width";
+            constexpr string kBorderStyle = "border_style";
         }
         namespace polygon::attribute {
             constexpr string kBackgroundColor = "background_color";
             constexpr string kBorderColor = "border_color";
             constexpr string kBorderWidth = "border_width";
+            constexpr string kBorderStyle = "border_style";
             constexpr string kPoints = "points";
         }
         // No background_color: an open curve has no interior to fill.
         namespace curve_line::attribute {
             constexpr string kBorderColor = "border_color";
             constexpr string kBorderWidth = "border_width";
+            constexpr string kBorderStyle = "border_style";
             constexpr string kPoints = "points";
         }
 
@@ -359,6 +365,14 @@ namespace docraft::craft {
     namespace orientation {
         constexpr string kHorizontal = "horizontal";
         constexpr string kVertical = "vertical";
+    }
+
+    /**
+     * @brief `border_style` string literals for line-like elements and shape borders.
+     */
+    namespace line_style {
+        constexpr string kSolid = "solid";
+        constexpr string kDashed = "dashed";
     }
 
 }

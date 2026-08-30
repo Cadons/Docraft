@@ -34,6 +34,10 @@ namespace docraft::craft::parser {
                 elements::rectangle::attribute::kBorderWidth.data())) {
             data.border_width = border_width_attr.as_float();
         }
+        if (auto border_style_attr = craft_language_source.attribute(
+                elements::rectangle::attribute::kBorderStyle.data())) {
+            data.border_style = detail::parse_line_style(border_style_attr.as_string());
+        }
         return data;
     }
 
@@ -42,7 +46,8 @@ namespace docraft::craft::parser {
         return {
             elements::rectangle::attribute::kBackgroundColor,
             elements::rectangle::attribute::kBorderColor,
-            elements::rectangle::attribute::kBorderWidth
+            elements::rectangle::attribute::kBorderWidth,
+            elements::rectangle::attribute::kBorderStyle
         };
     }
 } // namespace docraft::craft::parser

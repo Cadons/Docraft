@@ -69,6 +69,9 @@ set(DOCRAFT_SOURCES
         include/docraft/loom/nodes/docraft_loom_rectangle.h
         src/docraft/loom/nodes/docraft_loom_canvas.cc
         include/docraft/loom/nodes/docraft_loom_canvas.h
+        include/docraft/loom/nodes/docraft_loom_line_style.h
+        src/docraft/loom/nodes/docraft_loom_stroked_line.cc
+        include/docraft/loom/nodes/docraft_loom_stroked_line.h
         include/docraft/loom/nodes/docraft_loom_shape_style.h
         src/docraft/loom/nodes/docraft_loom_shape.cc
         include/docraft/loom/nodes/docraft_loom_shape.h
@@ -141,6 +144,7 @@ set(DOCRAFT_SOURCES
         include/docraft/craft/parser/docraft_craft_enum_parsers.h
         src/docraft/craft/parser/docraft_shape_parser_utils.cc
         include/docraft/craft/parser/docraft_shape_parser_utils.h
+        include/docraft/craft/parser/docraft_parsed_line_style.h
         include/docraft/craft/parser/docraft_parser.h
         src/docraft/craft/parser/docraft_rectangle_parser.cc
         src/docraft/craft/parser/docraft_chart_parser.cc

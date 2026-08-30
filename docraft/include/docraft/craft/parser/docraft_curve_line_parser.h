@@ -24,6 +24,7 @@
 #include "docraft/docraft_lib.h"
 
 #include "docraft/craft/i_docraft_parser.h"
+#include "docraft/craft/parser/docraft_parsed_line_style.h"
 #include "docraft/docraft_position.h"
 
 namespace docraft::craft::parser {
@@ -34,11 +35,9 @@ namespace docraft::craft::parser {
      * `<Polygon>` this element is stroke-only by construction rather than by
      * convention.
      */
-    struct ParsedCurveLineData
+    struct ParsedCurveLineData : ParsedStrokeStyleData
     {
         std::vector<docraft::Position> points;
-        std::optional<std::string> border_color;
-        std::optional<float> border_width;
     };
 
     /**

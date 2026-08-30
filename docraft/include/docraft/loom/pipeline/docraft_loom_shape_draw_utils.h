@@ -55,9 +55,27 @@ namespace docraft::loom::pipeline {
             ShapeRenderTarget target;
             const DocraftColor &border_color;
             float border_width;
+            nodes::DocraftLineStyle border_style = nodes::DocraftLineStyle::kSolid;
             nodes::Position origin;
             const std::vector<nodes::Position> &points;
         };
+
+        /**
+         * @brief On/off segment length (points) of a dashed stroke's repeating unit.
+         */
+        static constexpr float kDashSegmentLength = 4.0F;
+
+        /**
+         * @brief Gap length (points) between dashes of a dashed stroke.
+         */
+        static constexpr float kDashGapLength = 2.0F;
+
+        /**
+         * @brief Resolves a DocraftLineStyle to the on/off pattern IDocraftLineRenderingBackend::
+         * set_line_dash_pattern() expects -- empty (solid) for kSolid, {kDashSegmentLength,
+         * kDashGapLength} for kDashed.
+         */
+        static std::vector<float> resolve_dash_pattern(nodes::DocraftLineStyle style);
 
         static ShapeDrawFlags resolve_shape_draw_flags(const nodes::DocraftLoomShapeStyle &style);
 

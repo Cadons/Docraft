@@ -2,7 +2,18 @@ Shapes
 ======
 
 Docraft supports several geometric shape elements. All shapes share
-``background_color``, ``border_color``, and ``border_width`` attributes.
+``background_color``, ``border_color``, ``border_width``, and ``border_style``
+attributes. ``<Line>`` and ``<CurveLine>`` are stroke-only (no ``background_color``) but
+share the same ``border_color``/``border_width``/``border_style`` trio.
+
+``border_style`` accepts ``solid`` (the default) or ``dashed``, and applies to every
+shape's border as well as to ``<Line>``/``<CurveLine>``:
+
+.. code-block:: xml
+
+   <Rectangle width="200" height="100" border_color="black" border_width="1"
+              border_style="dashed"/>
+   <Line x1="0" y1="0" x2="200" y2="0" border_color="black" border_style="dashed"/>
 
 Rectangle
 ---------
@@ -33,6 +44,9 @@ Rectangle
    * - ``border_width``
      - float
      - Stroke width in points (default ``1``).
+   * - ``border_style``
+     - ``solid`` | ``dashed``
+     - Stroke pattern (default ``solid``).
 
 Circle
 ------
@@ -76,6 +90,9 @@ the center is ``(x + width/2, y + height/2)``.
    * - ``border_width``
      - float
      - Stroke width in points.
+   * - ``border_style``
+     - ``solid`` | ``dashed``
+     - Stroke pattern (default ``solid``). Applies to the arc too, when present.
 
 The two sizing methods are exclusive on purpose, and every violation is a parse error
 rather than a silently misdrawn shape:
@@ -158,6 +175,9 @@ Triangle
    * - ``border_width``
      - float
      - Stroke width in points.
+   * - ``border_style``
+     - ``solid`` | ``dashed``
+     - Stroke pattern (default ``solid``).
 
 Line
 ----
@@ -201,6 +221,9 @@ they are clipped at its bounds.
    * - ``border_width``
      - float
      - Stroke width in points.
+   * - ``border_style``
+     - ``solid`` | ``dashed``
+     - Stroke pattern (default ``solid``).
 
 .. _craft-canvas:
 
@@ -259,6 +282,9 @@ curved counterpart of ``<Line>``, and what a spline chart's series line is made 
    * - ``border_width``
      - float
      - Stroke width in points.
+   * - ``border_style``
+     - ``solid`` | ``dashed``
+     - Stroke pattern (default ``solid``).
 
 The curve **interpolates**: it passes exactly through every point rather than near
 them. With exactly 2 points it degenerates to a straight segment, which is why 2 is a
@@ -304,4 +330,7 @@ an open curve through the same points see :ref:`CurveLine <craft-curveline>` abo
    * - ``border_width``
      - float
      - Stroke width in points.
+   * - ``border_style``
+     - ``solid`` | ``dashed``
+     - Stroke pattern (default ``solid``).
 

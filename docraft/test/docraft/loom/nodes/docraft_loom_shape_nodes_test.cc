@@ -4,6 +4,7 @@
 #include "docraft/exception/docraft_input_exceptions.h"
 #include "docraft/loom/nodes/docraft_loom_circle.h"
 #include "docraft/loom/nodes/docraft_loom_curve_line.h"
+#include "docraft/loom/nodes/docraft_loom_line.h"
 #include "docraft/loom/nodes/docraft_loom_polygon.h"
 #include "docraft/loom/nodes/docraft_loom_triangle.h"
 #include "docraft/loom/pipeline/docraft_loom_layout_processor.h"
@@ -25,6 +26,39 @@ namespace docraft::test {
         std::unique_ptr<loom::pipeline::DocraftLoomMeasureProcessor> measure_;
         std::unique_ptr<loom::pipeline::DocraftLoomLayoutProcessor> layout_;
     };
+
+    // ── Line ────────────────────────────────────────────────────────────────────
+
+    TEST_F(DocraftLoomShapeNodesTest, LineDefaultsToSolidAndSendsAnEmptyDashPattern)
+    {
+        utils::MockRenderingBackend backend;
+        loom::pipeline::DocraftLoomRenderingProcessor rendering(&backend);
+
+        auto line = std::make_shared<loom::nodes::DocraftLoomLine>();
+        line->accept(*measure_);
+        line->accept(*layout_);
+        line->accept(rendering);
+
+        ASSERT_EQ(backend.dash_pattern_calls().size(), 1U);
+        EXPECT_TRUE(backend.dash_pattern_calls()[0].pattern.empty());
+    }
+
+    TEST_F(DocraftLoomShapeNodesTest, DashedLineSendsTheDashPatternBeforeDrawing)
+    {
+        utils::MockRenderingBackend backend;
+        loom::pipeline::DocraftLoomRenderingProcessor rendering(&backend);
+
+        auto line = std::make_shared<loom::nodes::DocraftLoomLine>();
+        line->set_border_style(loom::nodes::DocraftLineStyle::kDashed);
+
+        line->accept(*measure_);
+        line->accept(*layout_);
+        line->accept(rendering);
+
+        ASSERT_EQ(backend.dash_pattern_calls().size(), 1U);
+        EXPECT_FALSE(backend.dash_pattern_calls()[0].pattern.empty());
+        ASSERT_EQ(backend.draw_line_calls().size(), 1U);
+    }
 
     // ── Circle ──────────────────────────────────────────────────────────────────
 
@@ -154,6 +188,26 @@ namespace docraft::test {
         EXPECT_FLOAT_EQ(call.end_angle, 450.0F);
         // The closed outline must not also be drawn underneath the arc.
         EXPECT_TRUE(backend.draw_ellipse_calls().empty());
+    }
+
+    TEST_F(DocraftLoomShapeNodesTest, DashedArcSendsTheDashPatternBeforeDrawing)
+    {
+        utils::MockRenderingBackend backend;
+        loom::pipeline::DocraftLoomRenderingProcessor rendering(&backend);
+
+        auto circle = std::make_shared<loom::nodes::DocraftLoomCircle>();
+        circle->set_radius(50.0F);
+        circle->set_arc(0.0F, 90.0F);
+        circle->edit_style().border_color = DocraftColor::fromRGB(1.0F, 0.0F, 0.0F, 1.0F);
+        circle->edit_style().border_width = 2.0F;
+        circle->edit_style().border_style = loom::nodes::DocraftLineStyle::kDashed;
+
+        circle->accept(*measure_);
+        circle->accept(*layout_);
+        circle->accept(rendering);
+
+        ASSERT_EQ(backend.dash_pattern_calls().size(), 1U);
+        EXPECT_FALSE(backend.dash_pattern_calls()[0].pattern.empty());
     }
 
     TEST_F(DocraftLoomShapeNodesTest, ArcIsSkippedWhenItWouldHaveNoStroke)
@@ -294,6 +348,25 @@ namespace docraft::test {
 
         ASSERT_EQ(backend.draw_curve_calls().size(), 1U);
         EXPECT_EQ(backend.draw_curve_calls()[0].points.size(), 3U);
+    }
+
+    TEST_F(DocraftLoomShapeNodesTest, DashedCurveLineSendsTheDashPatternBeforeDrawing)
+    {
+        utils::MockRenderingBackend backend;
+        loom::pipeline::DocraftLoomRenderingProcessor rendering(&backend);
+
+        auto curve = std::make_shared<loom::nodes::DocraftLoomCurveLine>();
+        curve->set_points({{.x = 0.0F, .y = 0.0F}, {.x = 10.0F, .y = 5.0F}, {.x = 20.0F, .y = 0.0F}});
+        curve->set_border_color(DocraftColor::fromRGB(0.0F, 0.0F, 1.0F, 1.0F));
+        curve->set_border_width(2.0F);
+        curve->set_border_style(loom::nodes::DocraftLineStyle::kDashed);
+
+        curve->accept(*measure_);
+        curve->accept(*layout_);
+        curve->accept(rendering);
+
+        ASSERT_EQ(backend.dash_pattern_calls().size(), 1U);
+        EXPECT_FALSE(backend.dash_pattern_calls()[0].pattern.empty());
     }
 
     TEST_F(DocraftLoomShapeNodesTest, CurveLineMeasuresToTheBoundingBoxOfItsPoints)

@@ -25,16 +25,14 @@
 
 #include "docraft/craft/docraft_craft_parsed_element.h"
 #include "docraft/craft/i_docraft_parser.h"
+#include "docraft/craft/parser/docraft_parsed_line_style.h"
 
 namespace docraft::craft::parser {
     /**
      * @brief Tag-specific payload parsed from a `<Rectangle>` element.
      */
-    struct ParsedRectangleData
+    struct ParsedRectangleData : ParsedShapeStyleData
     {
-        std::optional<std::string> background_color;
-        std::optional<std::string> border_color;
-        std::optional<float> border_width;
     };
 
     /**

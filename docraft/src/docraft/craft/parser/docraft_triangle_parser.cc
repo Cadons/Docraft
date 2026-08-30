@@ -37,6 +37,10 @@ namespace docraft::craft::parser {
                 elements::triangle::attribute::kBorderWidth.data())) {
             data.border_width = border_width_attr.as_float();
         }
+        if (auto border_style_attr = craft_language_source.attribute(
+                elements::triangle::attribute::kBorderStyle.data())) {
+            data.border_style = detail::parse_line_style(border_style_attr.as_string());
+        }
 
         auto points = detail::parse_points_attribute(craft_language_source,
                                                      elements::triangle::attribute::kPoints.data());
@@ -56,7 +60,8 @@ namespace docraft::craft::parser {
             elements::triangle::attribute::kPoints,
             elements::triangle::attribute::kBackgroundColor,
             elements::triangle::attribute::kBorderColor,
-            elements::triangle::attribute::kBorderWidth
+            elements::triangle::attribute::kBorderWidth,
+            elements::triangle::attribute::kBorderStyle
         };
     }
 } // namespace docraft::craft::parser

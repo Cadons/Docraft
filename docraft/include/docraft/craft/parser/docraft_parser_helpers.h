@@ -103,6 +103,16 @@ namespace docraft::craft::parser::detail {
     ParsedTextAlignment parse_text_alignment(const std::string& alignment_str);
 
     /**
+     * @brief Parses a `border_style` attribute value (e.g. "dashed") into a
+     * `ParsedLineStyle`. Shared by every line/shape-border parser (`Line`/`CurveLine`/
+     * `Rectangle`/`Circle`/`Triangle`/`Polygon`).
+     * @param style_str The raw attribute string.
+     * @return The parsed line style.
+     * @throws docraft::exception::InvalidInputException if the string is not a recognized style.
+     */
+    ParsedLineStyle parse_line_style(const std::string& style_str);
+
+    /**
      * @brief Trims leading/trailing whitespace (space, tab, newline, CR, form feed,
      * vertical tab) from a string.
      * @param text The string to trim.
