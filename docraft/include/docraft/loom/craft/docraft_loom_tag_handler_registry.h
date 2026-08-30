@@ -37,6 +37,9 @@ namespace docraft::loom::craft {
     public:
         static DocraftLoomTagHandlerRegistry& instance();
 
+        DocraftLoomTagHandlerRegistry(const DocraftLoomTagHandlerRegistry&) = delete;
+        DocraftLoomTagHandlerRegistry& operator=(const DocraftLoomTagHandlerRegistry&) = delete;
+
         void register_handler(const std::string& tag, std::unique_ptr<IDocraftLoomTagHandler> handler);
 
         /**
