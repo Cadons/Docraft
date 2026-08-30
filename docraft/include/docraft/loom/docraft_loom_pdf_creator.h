@@ -24,7 +24,7 @@ namespace docraft::loom {
      * and re-visited by the rendering pass for each physical page. The body is laid out
      * as one continuous flow and then split across pages by DocraftLoomPaginationProcessor.
      */
-    class DocraftLoomPdfCreator
+    class DOCRAFT_LIB DocraftLoomPdfCreator
     {
     public:
         /**
