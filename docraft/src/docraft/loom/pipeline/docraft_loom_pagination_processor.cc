@@ -14,6 +14,7 @@
 #include <fmt/format.h>
 
 #include "docraft/loom/nodes/docraft_loom_hstack.h"
+#include "docraft/loom/nodes/docraft_loom_layout_box_access.h"
 #include "docraft/loom/nodes/docraft_loom_list.h"
 #include "docraft/loom/nodes/docraft_loom_new_page.h"
 #include "docraft/loom/nodes/docraft_loom_canvas.h"
@@ -159,9 +160,15 @@ namespace docraft::loom::pipeline {
         }
     }
 
+    void DocraftLoomPaginationProcessor::seal_page_index(nodes::DocraftLoomNode& node, int index)
+    {
+        node.edit_layout_box().set_page_index(
+            index, make_page_index_proof(nodes::layout_proof_or_throw(node)));
+    }
+
     void DocraftLoomPaginationProcessor::assign_page_index_recursive(nodes::DocraftLoomNode& node, int page_index)
     {
-        node.edit_layout_box().page_index = page_index;
+        seal_page_index(node, page_index);
 
         // Table cells live in the table's own grid_, not in the inherited children_
         // vector, so they need their own recursion branch.
@@ -184,7 +191,7 @@ namespace docraft::loom::pipeline {
 
     void DocraftLoomPaginationProcessor::shift_subtree_position(nodes::DocraftLoomNode& node, float dy)
     {
-        node.edit_layout_box().frame.position.y += dy;
+        sealed_edit_frame(node).position.y += dy;
 
         // A list's marker positions are stored separately from the layout box, so they
         // need to be shifted in lockstep with the node itself.
@@ -230,7 +237,7 @@ namespace docraft::loom::pipeline {
                 continue;
             }
             const float row_height = remainder->row_height(r);
-            const float dy = row_top - reference_cell->layout_box().frame.position.y;
+            const float dy = row_top - sealed_frame(*reference_cell).position.y;
             for (int c = 0; c < remainder_cols; ++c)
             {
                 if (auto cell = remainder->cell(r, c))
@@ -243,9 +250,9 @@ namespace docraft::loom::pipeline {
 
         // The remainder's own frame mirrors the kept table's column layout (widths are
         // unchanged by a row/cell-content split) and spans exactly the rows it now holds.
-        auto& remainder_frame = remainder->edit_layout_box().frame;
-        remainder_frame.position = {table.layout_box().frame.position.x, new_page_top_y};
-        remainder_frame.size = {table.layout_box().frame.size.width, row_top - new_page_top_y};
+        auto& remainder_frame = remainder->edit_layout_box().edit_frame(nodes::layout_proof_or_throw(table));
+        remainder_frame.position = {sealed_frame(table).position.x, new_page_top_y};
+        remainder_frame.size = {sealed_frame(table).size.width, row_top - new_page_top_y};
 
         // The kept table's own frame must shrink to cover only the rows left behind.
         float kept_height = 0.0F;
@@ -253,7 +260,7 @@ namespace docraft::loom::pipeline {
         {
             kept_height += table.row_height(r);
         }
-        table.edit_layout_box().frame.size.height = kept_height;
+        sealed_edit_frame(table).size.height = kept_height;
 
         return remainder;
     }
@@ -266,7 +273,7 @@ namespace docraft::loom::pipeline {
             return nullptr;
         }
 
-        const bool at_fresh_page_top = std::abs(table.layout_box().frame.position.y - new_page_top_y) < 0.01F;
+        const bool at_fresh_page_top = std::abs(sealed_frame(table).position.y - new_page_top_y) < 0.01F;
 
         // A row "fits" on the current page only if every one of its cells clears
         // page_bottom_y. All cells in a row share the same height (Layout assigns row
@@ -279,7 +286,7 @@ namespace docraft::loom::pipeline {
             for (int r = 0; r < rows; ++r) {
                 auto reference_cell = table.cell(r, 0);
                 const float row_bottom = reference_cell
-                                             ? reference_cell->layout_box().frame.position.y + table.row_height(r)
+                                             ? sealed_frame(*reference_cell).position.y + table.row_height(r)
                                              : -1.0F;
                 //row_bottom can't be negative, if it is, it means the cell is missing or has no layout box yet (e.g. a blank line), so the row doesn't fit.
                 if (row_bottom == -1.0F || row_bottom > page_bottom_y + 0.01F) {
@@ -303,7 +310,7 @@ namespace docraft::loom::pipeline {
         // across this page and the next instead of giving up on it.
         if (at_fresh_page_top && fit_rows <= table.leading_title_row_count()) {
             auto reference_cell = table.cell(fit_rows, 0);
-            const float row_top = reference_cell ? reference_cell->layout_box().frame.position.y : new_page_top_y;
+            const float row_top = reference_cell ? sealed_frame(*reference_cell).position.y : new_page_top_y;
             const float available_height = page_bottom_y - row_top;
             if (auto content_remainder = table.split_row_content(fit_rows, available_height,
                                                                  /*repeat_header_rows=*/true)) {
@@ -342,7 +349,7 @@ namespace docraft::loom::pipeline {
         // The body's own root container (e.g. a VStack) must be visited on every page so
         // Rendering recurses into it -- the real per-page decision happens at its direct
         // children, which get concrete indices below.
-        body_root.edit_layout_box().page_index = -1;
+        seal_page_index(body_root, -1);
 
         std::vector<std::shared_ptr<nodes::DocraftLoomNode>> children;
         children.reserve(static_cast<std::size_t>(body_root.children_count()));
@@ -367,9 +374,9 @@ namespace docraft::loom::pipeline {
             {
                 continue;
             }
-            const auto& box = children[k]->layout_box();
             original_gap_after[children[k].get()] =
-                children[k + 1]->layout_box().frame.position.y - (box.frame.position.y + box.frame.size.height);
+                sealed_frame(*children[k + 1]).position.y
+                - (sealed_frame(*children[k]).position.y + sealed_frame(*children[k]).size.height);
         }
         auto gap_after = [&](const nodes::DocraftLoomNode* node) -> float
         {
@@ -411,10 +418,10 @@ namespace docraft::loom::pipeline {
             // Move the child into place for this attempt: from wherever it currently
             // sits (either Layout's original continuous-canvas position, the first time
             // it's seen, or a prior failed placement, on a retry) to next_y.
-            const float current_top = child->layout_box().frame.position.y;
+            const float current_top = sealed_frame(*child).position.y;
             shift_subtree_position(*child, next_y - current_top);
 
-            const auto& frame = child->layout_box().frame;
+            const auto& frame = sealed_frame(*child);
             const float bottom = frame.position.y + frame.size.height;
             if (const bool fits = bottom <= page_bottom_y + 0.01F)
             {

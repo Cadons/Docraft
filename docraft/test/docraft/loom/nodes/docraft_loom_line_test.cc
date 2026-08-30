@@ -3,6 +3,7 @@
 #include "docraft/loom/nodes/docraft_loom_line.h"
 #include "docraft/loom/pipeline/docraft_loom_layout_processor.h"
 #include "docraft/loom/pipeline/docraft_loom_measure_processor.h"
+#include "docraft/utils/docraft_loom_layout_box_test_access.h"
 
 namespace docraft::test {
     class DocraftLoomLineTest : public ::testing::Test
@@ -100,15 +101,15 @@ namespace docraft::test {
         line->accept(*measure_);
         line->accept(*layout_);
 
-        EXPECT_FLOAT_EQ(line->layout_box().frame.size.width, 100.0F);
-        EXPECT_FLOAT_EQ(line->layout_box().frame.size.height, 4.0F);
+        EXPECT_FLOAT_EQ(line->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.width, 100.0F);
+        EXPECT_FLOAT_EQ(line->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.height, 4.0F);
 
         auto next = std::make_shared<loom::nodes::DocraftLoomLine>();
         next->accept(*measure_);
         next->accept(*layout_);
 
-        EXPECT_FLOAT_EQ(next->layout_box().frame.position.x, line->layout_box().frame.position.x);
-        EXPECT_FLOAT_EQ(next->layout_box().frame.position.y, line->layout_box().frame.position.y + 4.0F);
+        EXPECT_FLOAT_EQ(next->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x, line->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x);
+        EXPECT_FLOAT_EQ(next->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y, line->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y + 4.0F);
     }
 
     TEST_F(DocraftLoomLineTest, AbsolutePositionDoesNotAdvanceCursor)
@@ -120,12 +121,12 @@ namespace docraft::test {
         line->accept(*measure_);
         line->accept(layout);
 
-        EXPECT_FLOAT_EQ(line->layout_box().frame.position.x, 30.0F);
-        EXPECT_FLOAT_EQ(line->layout_box().frame.position.y, 40.0F);
+        EXPECT_FLOAT_EQ(line->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x, 30.0F);
+        EXPECT_FLOAT_EQ(line->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y, 40.0F);
 
         auto next = std::make_shared<loom::nodes::DocraftLoomLine>();
         next->accept(*measure_);
         next->accept(layout);
-        EXPECT_FLOAT_EQ(next->layout_box().frame.position.y, 10.0F); // default top margin, untouched
+        EXPECT_FLOAT_EQ(next->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y, 10.0F); // default top margin, untouched
     }
 } // namespace docraft::test

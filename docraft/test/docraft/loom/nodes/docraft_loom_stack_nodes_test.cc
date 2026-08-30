@@ -11,6 +11,7 @@
 #include "docraft/loom/pipeline/docraft_loom_rendering_processor.h"
 #include "docraft/utils/docraft_mock_rendering_backend.h"
 #include "../../backend/docraft_mock_backend.h"
+#include "docraft/utils/docraft_loom_layout_box_test_access.h"
 
 namespace docraft::test {
     using ::testing::Return;
@@ -207,8 +208,8 @@ namespace docraft::test {
         vstack->accept(*layout_);
 
         // VStack placed at cursor origin (0, 10 = default top margin)
-        EXPECT_FLOAT_EQ(t1->layout_box().frame.position.y, 10.0F);
-        EXPECT_FLOAT_EQ(t2->layout_box().frame.position.y, 24.0F); // 10 + 10 + 4
+        EXPECT_FLOAT_EQ(t1->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y, 10.0F);
+        EXPECT_FLOAT_EQ(t2->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y, 24.0F); // 10 + 10 + 4
     }
 
     TEST_F(DocraftLoomStackNodesTest, VStack_LayoutChildrenShareSameX)
@@ -225,7 +226,7 @@ namespace docraft::test {
         vstack->accept(*measure_);
         vstack->accept(*layout_);
 
-        EXPECT_FLOAT_EQ(t1->layout_box().frame.position.x, t2->layout_box().frame.position.x);
+        EXPECT_FLOAT_EQ(t1->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x, t2->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x);
     }
 
     // Bug #75: `weight` on a child of a vertical `<Layout>` used to be silently
@@ -249,12 +250,12 @@ namespace docraft::test {
         vstack->accept(*measure_);
         vstack->accept(*layout_);
 
-        EXPECT_FLOAT_EQ(t1->layout_box().frame.size.height, 50.0F); // 200 * 1/4
-        EXPECT_FLOAT_EQ(t2->layout_box().frame.size.height, 150.0F); // 200 * 3/4
+        EXPECT_FLOAT_EQ(t1->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.height, 50.0F); // 200 * 1/4
+        EXPECT_FLOAT_EQ(t2->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.height, 150.0F); // 200 * 3/4
         // 10 = the layout processor's default page top-margin cursor start (see
         // VStack_LayoutChildrenStackedVertically above).
-        EXPECT_FLOAT_EQ(t1->layout_box().frame.position.y, 10.0F);
-        EXPECT_FLOAT_EQ(t2->layout_box().frame.position.y, 60.0F); // 10 + 50
+        EXPECT_FLOAT_EQ(t1->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y, 10.0F);
+        EXPECT_FLOAT_EQ(t2->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y, 60.0F); // 10 + 50
     }
 
     // A weighted child is never squeezed shorter than its own natural height, even if
@@ -278,8 +279,8 @@ namespace docraft::test {
         vstack->accept(*measure_);
         vstack->accept(*layout_);
 
-        EXPECT_FLOAT_EQ(t1->layout_box().frame.size.height, 10.0F);
-        EXPECT_FLOAT_EQ(t2->layout_box().frame.size.height, 10.0F);
+        EXPECT_FLOAT_EQ(t1->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.height, 10.0F);
+        EXPECT_FLOAT_EQ(t2->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.height, 10.0F);
 
         // Bug: the container's own box used to stay stuck at the too-small declared
         // height() (12) even though its children's natural-height floor pushed the
@@ -288,7 +289,7 @@ namespace docraft::test {
         // while still inside Layout, e.g. an outer VStack placing this one among its
         // siblings) must grow to match, or whatever comes after this VStack gets
         // positioned on top of its overflowed content instead of below it.
-        EXPECT_FLOAT_EQ(vstack->layout_box().frame.size.height, 20.0F);
+        EXPECT_FLOAT_EQ(vstack->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.height, 20.0F);
         EXPECT_FLOAT_EQ(vstack->layout_box().measured_size.height, 20.0F);
     }
 
@@ -321,7 +322,7 @@ namespace docraft::test {
 
         // 10 = the layout processor's default page top-margin cursor start (see
         // VStack_LayoutChildrenStackedVertically above).
-        EXPECT_FLOAT_EQ(sibling->layout_box().frame.position.y, 30.0F); // 10 + 20, not 10 + 12
+        EXPECT_FLOAT_EQ(sibling->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y, 30.0F); // 10 + 20, not 10 + 12
     }
 
     // The box growing past a too-small explicit height() is silent otherwise -- the
@@ -395,9 +396,9 @@ namespace docraft::test {
         vstack->accept(*measure_);
         vstack->accept(*layout_);
 
-        EXPECT_FLOAT_EQ(t1->layout_box().frame.size.height, 10.0F);
-        EXPECT_FLOAT_EQ(t2->layout_box().frame.size.height, 10.0F);
-        EXPECT_FLOAT_EQ(t2->layout_box().frame.position.y, 20.0F); // 10 (default page top margin) + 10
+        EXPECT_FLOAT_EQ(t1->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.height, 10.0F);
+        EXPECT_FLOAT_EQ(t2->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.height, 10.0F);
+        EXPECT_FLOAT_EQ(t2->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y, 20.0F); // 10 (default page top margin) + 10
         EXPECT_FLOAT_EQ(vstack->layout_box().measured_size.height, 20.0F);
     }
 
@@ -419,8 +420,8 @@ namespace docraft::test {
         hstack->accept(*measure_);
         hstack->accept(*layout_);
 
-        EXPECT_FLOAT_EQ(t1->layout_box().frame.position.x, 0.0F);
-        EXPECT_FLOAT_EQ(t2->layout_box().frame.position.x, 56.0F); // 50 + 6
+        EXPECT_FLOAT_EQ(t1->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x, 0.0F);
+        EXPECT_FLOAT_EQ(t2->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x, 56.0F); // 50 + 6
     }
 
     TEST_F(DocraftLoomStackNodesTest, HStack_LayoutChildrenShareSameY)
@@ -437,7 +438,7 @@ namespace docraft::test {
         hstack->accept(*measure_);
         hstack->accept(*layout_);
 
-        EXPECT_FLOAT_EQ(t1->layout_box().frame.position.y, t2->layout_box().frame.position.y);
+        EXPECT_FLOAT_EQ(t1->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y, t2->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y);
     }
 
     // ── Spacing property ────────────────────────────────────────────────────────
@@ -483,8 +484,8 @@ namespace docraft::test {
         vstack->accept(*measure_);
         vstack->accept(*layout_);
 
-        EXPECT_FLOAT_EQ(vstack->layout_box().frame.position.x, 50.0F);
-        EXPECT_FLOAT_EQ(vstack->layout_box().frame.position.y, 50.0F);
+        EXPECT_FLOAT_EQ(vstack->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x, 50.0F);
+        EXPECT_FLOAT_EQ(vstack->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y, 50.0F);
     }
 
     TEST_F(DocraftLoomStackNodesTest, VStack_AbsolutePositionDoesNotAdvanceCursorForNextSibling)
@@ -507,8 +508,8 @@ namespace docraft::test {
 
         // The absolute subtree must be fully out of flow: the next sibling is placed as if
         // the absolutely-positioned VStack (and its two children) had never been visited.
-        EXPECT_FLOAT_EQ(next_sibling->layout_box().frame.position.x, 0.0F);
-        EXPECT_FLOAT_EQ(next_sibling->layout_box().frame.position.y, 10.0F);
+        EXPECT_FLOAT_EQ(next_sibling->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x, 0.0F);
+        EXPECT_FLOAT_EQ(next_sibling->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y, 10.0F);
     }
 
     // Regression tests: an HStack/VStack with no background/border (a purely
@@ -626,7 +627,7 @@ namespace docraft::test {
         vstack->accept(*measure_);
         vstack->accept(*layout_);
 
-        EXPECT_FLOAT_EQ(vstack->layout_box().frame.size.height, 20.0F);
+        EXPECT_FLOAT_EQ(vstack->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.height, 20.0F);
     }
 
     // ── z-index paint order ─────────────────────────────────────────────────────

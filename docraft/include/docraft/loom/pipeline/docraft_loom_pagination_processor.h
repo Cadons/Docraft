@@ -10,7 +10,8 @@
 #include "docraft/loom/nodes/docraft_loom_table.h"
 
 namespace docraft::loom::pipeline {
-    class DocraftLoomPaginationProcessor : public interfaces::DocraftLoomIVisitor
+    class DocraftLoomPaginationProcessor : public interfaces::DocraftLoomIVisitor,
+                                            protected nodes::DocraftLoomLayoutBoxPaginationAccessor
     {
     public:
         void visit(docraft::loom::nodes::DocraftLoomText*) override;
@@ -71,6 +72,16 @@ namespace docraft::loom::pipeline {
         static void assign_page_index_recursive(nodes::DocraftLoomNode& node, int page_index);
 
     private:
+        /**
+         * @brief Seals `index` onto `node`'s LayoutBox, minting the PageIndexProof via
+         * the inherited DocraftLoomLayoutBoxAccessor -- reuses node's own LayoutProof
+         * (Layout must have already run for it, or this throws), which is what proves
+         * the Measure -> Layout -> Pagination order at the type level rather than by
+         * convention.
+         */
+        static void seal_page_index(nodes::DocraftLoomNode& node, int index);
+
+
         /**
          * @brief Recurses into every child of node, in order, via the visitor
          * (child->accept(*this)) -- the shared body of every visit() overload for a node

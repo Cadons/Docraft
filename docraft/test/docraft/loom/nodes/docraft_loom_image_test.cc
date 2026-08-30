@@ -3,6 +3,7 @@
 #include "docraft/loom/nodes/docraft_loom_image.h"
 #include "docraft/loom/pipeline/docraft_loom_layout_processor.h"
 #include "docraft/loom/pipeline/docraft_loom_measure_processor.h"
+#include "docraft/utils/docraft_loom_layout_box_test_access.h"
 
 namespace docraft::test {
     class DocraftLoomImageTest : public ::testing::Test
@@ -69,14 +70,14 @@ namespace docraft::test {
         image->accept(*measure_);
         image->accept(*layout_);
 
-        EXPECT_FLOAT_EQ(image->layout_box().frame.size.width, 50.0F);
-        EXPECT_FLOAT_EQ(image->layout_box().frame.size.height, 30.0F);
+        EXPECT_FLOAT_EQ(image->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.width, 50.0F);
+        EXPECT_FLOAT_EQ(image->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.height, 30.0F);
 
         auto next = std::make_shared<loom::nodes::DocraftLoomImage>();
         next->accept(*measure_);
         next->accept(*layout_);
-        EXPECT_FLOAT_EQ(next->layout_box().frame.position.y,
-                        image->layout_box().frame.position.y + 30.0F);
+        EXPECT_FLOAT_EQ(next->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y,
+                        image->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y + 30.0F);
     }
 
     TEST_F(DocraftLoomImageTest, AbsolutePositionOverridesCursor)
@@ -88,7 +89,7 @@ namespace docraft::test {
         image->accept(*measure_);
         image->accept(layout);
 
-        EXPECT_FLOAT_EQ(image->layout_box().frame.position.x, 15.0F);
-        EXPECT_FLOAT_EQ(image->layout_box().frame.position.y, 25.0F);
+        EXPECT_FLOAT_EQ(image->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x, 15.0F);
+        EXPECT_FLOAT_EQ(image->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y, 25.0F);
     }
 } // namespace docraft::test

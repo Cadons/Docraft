@@ -8,6 +8,7 @@
 #include "docraft/loom/nodes/docraft_loom_vstack.h"
 #include "docraft/utils/docraft_font_registry.h"
 #include "docraft/utils/docraft_test_temp_file.h"
+#include "docraft/utils/docraft_loom_layout_box_test_access.h"
 
 TEST(DocraftLoomCraftLanguageParserTest, ParsesFullDocumentWithHeaderBodyFooter)
 {
@@ -153,14 +154,14 @@ TEST(DocraftLoomCraftLanguageParserTest, HeaderTallerThanRatioPushesBodyDownInst
   EXPECT_NO_THROW(creator->create());
 
   ASSERT_TRUE(creator->header());
-  const auto& header_frame = creator->header()->layout_box().frame;
+  const auto& header_frame = creator->header()->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof());
   const float header_bottom = header_frame.position.y + header_frame.size.height;
 
   const auto body_vstack = std::dynamic_pointer_cast<docraft::loom::nodes::DocraftLoomVStack>(creator->root_node());
   ASSERT_TRUE(body_vstack);
   // Body must start below the header's actual bottom edge -- not at the tiny
   // header_ratio-allocated position, which would overlap this header's real content.
-  EXPECT_GT(body_vstack->layout_box().frame.position.y, header_bottom);
+  EXPECT_GT(body_vstack->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y, header_bottom);
 }
 
 TEST(DocraftLoomCraftLanguageParserTest, FooterTallerThanRatioStaysFullyOnThePage)
@@ -188,7 +189,7 @@ TEST(DocraftLoomCraftLanguageParserTest, FooterTallerThanRatioStaysFullyOnThePag
   EXPECT_NO_THROW(creator->create());
 
   ASSERT_TRUE(creator->footer());
-  const auto& footer_frame = creator->footer()->layout_box().frame;
+  const auto& footer_frame = creator->footer()->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof());
   // The footer's whole box must still fit on the (portrait A4, ~841.89pt-tall) page --
   // not overflow past the bottom edge just because footer_ratio's allocation was too
   // small for its real content.

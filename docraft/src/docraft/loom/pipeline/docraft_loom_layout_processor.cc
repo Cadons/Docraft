@@ -84,7 +84,7 @@ namespace docraft::loom::pipeline {
         : processor_(processor), entry_cursor_(processor.cursor_),
           restore_on_exit_(node.position_mode() == nodes::DocraftPositionType::kAbsolute)
     {
-        node.edit_layout_box().frame.position = processor.resolve_position(node);
+        edit_frame(node.edit_layout_box()).position = processor.resolve_position(node);
     }
 
     DocraftLoomLayoutProcessor::PositionScope::~PositionScope()
@@ -110,8 +110,7 @@ namespace docraft::loom::pipeline {
         // for each top-level child -- leaving this at its zero-initialized default causes
         // Pagination to treat a bare Text/Title/Subtitle as zero-height and pull the
         // following sibling back on top of it.
-        layout_box.frame.size = layout_box.measured_size;
-
+        edit_frame(layout_box).size = layout_box.measured_size;
         // Move cursor to the right after placing the text; harmless if this node is
         // absolutely positioned, since the scope above restores the cursor on exit.
         cursor_.move(layout_box.measured_size.width, 0.0F);
@@ -133,7 +132,7 @@ namespace docraft::loom::pipeline {
             return;
         PositionScope scope(*this, *node);
         auto& layout_box = node->edit_layout_box();
-        layout_box.frame.size = layout_box.measured_size;
+        edit_frame(layout_box).size = layout_box.measured_size;
         const float padding = node->effective_padding();
         const float own_width = node->width() > 0.0F ? node->width() : incoming_width();
         const float children_width =
@@ -142,10 +141,10 @@ namespace docraft::loom::pipeline {
         const int n = node->children_count();
         if (n > 0)
         {
-            const float start_x = layout_box.frame.position.x + padding;
+            const float start_x = edit_frame(layout_box).position.x + padding;
             // Mirrors the measure pass: the first child's own top margin is reserved
             // outright, with no preceding sibling to combine it with.
-            float current_y = layout_box.frame.position.y + padding
+            float current_y = edit_frame(layout_box).position.y + padding
                 + node->resolve_outer_margin(*node, /*leading=*/true);
             for (int i = 0; i < n; ++i)
             {
@@ -162,7 +161,7 @@ namespace docraft::loom::pipeline {
                 }
             }
         }
-        cursor_.set_position(layout_box.frame.position.x, layout_box.frame.position.y + layout_box.frame.size.height);
+        cursor_.set_position(edit_frame(layout_box).position.x, edit_frame(layout_box).position.y + edit_frame(layout_box).size.height);
     }
 
     void DocraftLoomLayoutProcessor::visit(docraft::loom::nodes::DocraftLoomCanvas* node)
@@ -171,7 +170,7 @@ namespace docraft::loom::pipeline {
             return;
         PositionScope scope(*this, *node);
         auto& layout_box = node->edit_layout_box();
-        layout_box.frame.size = layout_box.measured_size;
+        edit_frame(layout_box).size = layout_box.measured_size;
 
         // Every direct child is positioned by its own x/y relative to the canvas's own
         // origin (defaulting to (0,0) when omitted), never block-stacked. Forcing
@@ -182,7 +181,7 @@ namespace docraft::loom::pipeline {
         // original mode/position are restored right after accept() so a second layout
         // pass over the same tree (e.g. after set_page_format()) re-translates from the
         // same local coordinates instead of compounding the previous pass's translation.
-        const auto& origin = layout_box.frame.position;
+        const auto& origin = edit_frame(layout_box).position;
         for (int i = 0; i < node->children_count(); ++i)
         {
             auto child = node->edit_child(i);
@@ -194,21 +193,21 @@ namespace docraft::loom::pipeline {
             child->set_position_mode(original_mode);
             child->set_explicit_position(local);
         }
-        cursor_.set_position(origin.x, origin.y + layout_box.frame.size.height);
+        cursor_.set_position(origin.x, origin.y + edit_frame(layout_box).size.height);
     }
 
     void DocraftLoomLayoutProcessor::visit(docraft::loom::nodes::DocraftLoomParagraph* node)
     {
         PositionScope scope(*this, *node);
         auto& layout_box = node->edit_layout_box();
-        const auto& position = layout_box.frame.position;
+        const auto& position = edit_frame(layout_box).position;
         // Mirrors every other container node (Rectangle/List/Table): frame.size must be
         // set from measured_size, since Pagination's own bookkeeping (paginate_body)
         // advances its next_y using frame.position.y + frame.size.height for each
         // top-level child -- leaving this at its zero-initialized default causes
         // Pagination to treat the paragraph as zero-height and pull the following
         // sibling back on top of it.
-        layout_box.frame.size = layout_box.measured_size;
+        edit_frame(layout_box).size = layout_box.measured_size;
         //layout the children of the paragraph
         const float start_x = position.x;
         float current_y = position.y + node->space_before();
@@ -227,11 +226,11 @@ namespace docraft::loom::pipeline {
         if (!node) return;
         PositionScope scope(*this, *node);
         auto& layout_box = node->edit_layout_box();
-        const auto& position = layout_box.frame.position;
+        const auto& position = edit_frame(layout_box).position;
         // Mirrors Rectangle/List/Table: frame.size must reflect measured_size so that
         // Pagination's next_y bookkeeping (frame.position.y + frame.size.height) sees
         // this container's real footprint instead of a zero-initialized default.
-        layout_box.frame.size = layout_box.measured_size;
+        edit_frame(layout_box).size = layout_box.measured_size;
 
         // A VStack has no explicit width of its own, so it neither narrows to a fixed
         // width nor owns the constraint like Rectangle does -- but it does narrow the
@@ -289,7 +288,7 @@ namespace docraft::loom::pipeline {
             if (!resolved_heights.empty())
             {
                 advance = resolved_heights[static_cast<std::size_t>(i)];
-                child->edit_layout_box().frame.size.height = advance;
+                edit_frame(child->edit_layout_box()).size.height = advance;
             }
             current_y += advance;
             if (i < n - 1)
@@ -299,8 +298,8 @@ namespace docraft::loom::pipeline {
         }
 
         const float content_bottom = current_y + trailing_margin + padding;
-        const float actual_height = std::max(layout_box.frame.size.height, content_bottom - position.y);
-        if (node->height() > 0.0F && actual_height > layout_box.frame.size.height)
+        const float actual_height = std::max(edit_frame(layout_box).size.height, content_bottom - position.y);
+        if (node->height() > 0.0F && actual_height > edit_frame(layout_box).size.height)
         {
             const std::string node_label =
                 node->name().empty() ? std::string{"A vertical Layout"} : fmt::format("Layout '{}'", node->name());
@@ -309,9 +308,9 @@ namespace docraft::loom::pipeline {
                 "{:.1f}pt to fit -- the box grew to that instead of clipping them.",
                 node_label, node->height(), actual_height));
         }
-        layout_box.frame.size.height = actual_height;
+        edit_frame(layout_box).size.height = actual_height;
         layout_box.measured_size.height = actual_height;
-        cursor_.set_position(position.x, position.y + layout_box.frame.size.height);
+        cursor_.set_position(position.x, position.y + edit_frame(layout_box).size.height);
     }
 
     void DocraftLoomLayoutProcessor::visit(docraft::loom::nodes::DocraftLoomHStack* node)
@@ -319,9 +318,9 @@ namespace docraft::loom::pipeline {
         if (!node) return;
         PositionScope scope(*this, *node);
         auto& layout_box = node->edit_layout_box();
-        const auto& position = layout_box.frame.position;
+        const auto& position = edit_frame(layout_box).position;
         // See the matching comment in visit(DocraftLoomVStack*).
-        layout_box.frame.size = layout_box.measured_size;
+        edit_frame(layout_box).size = layout_box.measured_size;
 
         // Capture whatever an ancestor pushed down before clearing it: without
         // weights, HStack's contract is shrink-to-fit (each child keeps its own
@@ -394,7 +393,7 @@ namespace docraft::loom::pipeline {
             if (!resolved_widths.empty())
             {
                 advance = resolved_widths[static_cast<std::size_t>(i)];
-                child->edit_layout_box().frame.size.width = advance;
+                edit_frame(child->edit_layout_box()).size.width = advance;
             }
             current_x += advance;
             if (i < n - 1)
@@ -410,7 +409,7 @@ namespace docraft::loom::pipeline {
         cursor_.set_position(current_x, start_y);
         if (!resolved_widths.empty())
         {
-            layout_box.frame.size.width = current_x - position.x;
+            edit_frame(layout_box).size.width = current_x - position.x;
         }
     }
 
@@ -419,7 +418,7 @@ namespace docraft::loom::pipeline {
         if (!node) return;
         PositionScope scope(*this, *node);
         auto& layout_box = node->edit_layout_box();
-        layout_box.frame.size = {.width = page_size_.width, .height = node->height()};
+        edit_frame(layout_box).size = {.width = page_size_.width, .height = node->height()};
         cursor_.move(0.0F, node->height());
     }
 
@@ -429,7 +428,7 @@ namespace docraft::loom::pipeline {
             return;
         PositionScope scope(*this, *node);
         auto& layout_box = node->edit_layout_box();
-        layout_box.frame.size = layout_box.measured_size;
+        edit_frame(layout_box).size = layout_box.measured_size;
         cursor_.move(0.0F, layout_box.measured_size.height);
     }
 
@@ -439,7 +438,7 @@ namespace docraft::loom::pipeline {
             return;
         PositionScope scope(*this, *node);
         auto& layout_box = node->edit_layout_box();
-        layout_box.frame.size = layout_box.measured_size;
+        edit_frame(layout_box).size = layout_box.measured_size;
         // A line is a block-level element like Text-in-a-VStack: only the vertical extent
         // participates in flow, its width does not push a following sibling to the right.
         cursor_.move(0.0F, layout_box.measured_size.height);
@@ -451,7 +450,7 @@ namespace docraft::loom::pipeline {
             return;
         PositionScope scope(*this, *node);
         auto& layout_box = node->edit_layout_box();
-        layout_box.frame.size = layout_box.measured_size;
+        edit_frame(layout_box).size = layout_box.measured_size;
         cursor_.move(0.0F, layout_box.measured_size.height);
     }
 
@@ -461,7 +460,7 @@ namespace docraft::loom::pipeline {
             return;
         PositionScope scope(*this, *node);
         auto& layout_box = node->edit_layout_box();
-        layout_box.frame.size = layout_box.measured_size;
+        edit_frame(layout_box).size = layout_box.measured_size;
         cursor_.move(0.0F, layout_box.measured_size.height);
     }
 
@@ -471,7 +470,7 @@ namespace docraft::loom::pipeline {
             return;
         PositionScope scope(*this, *node);
         auto& layout_box = node->edit_layout_box();
-        layout_box.frame.size = layout_box.measured_size;
+        edit_frame(layout_box).size = layout_box.measured_size;
         cursor_.move(0.0F, layout_box.measured_size.height);
     }
 
@@ -481,7 +480,7 @@ namespace docraft::loom::pipeline {
             return;
         PositionScope scope(*this, *node);
         auto& layout_box = node->edit_layout_box();
-        layout_box.frame.size = layout_box.measured_size;
+        edit_frame(layout_box).size = layout_box.measured_size;
         cursor_.move(0.0F, layout_box.measured_size.height);
     }
 
@@ -491,10 +490,10 @@ namespace docraft::loom::pipeline {
             return;
         PositionScope scope(*this, *node);
         auto& layout_box = node->edit_layout_box();
-        layout_box.frame.size = layout_box.measured_size;
+        edit_frame(layout_box).size = layout_box.measured_size;
 
-        const float item_x = layout_box.frame.position.x;
-        float y = layout_box.frame.position.y;
+        const float item_x = edit_frame(layout_box).position.x;
+        float y = edit_frame(layout_box).position.y;
         auto& markers = node->edit_markers();
         for (int i = 0; i < node->children_count(); ++i)
         {
@@ -534,7 +533,7 @@ namespace docraft::loom::pipeline {
         }
         PositionScope scope(*this, *cell);
         auto& layout_box = cell->edit_layout_box();
-        layout_box.frame.size = layout_box.measured_size;
+        edit_frame(layout_box).size = layout_box.measured_size;
         if (auto content = cell->content())
         {
             // Content is positioned by the cell's own grid slot, same as the cell itself --
@@ -548,8 +547,8 @@ namespace docraft::loom::pipeline {
             // plus the content's own margin -- mirrors how VStack/HStack apply
             // resolve_outer_margin to their children instead of only their own padding.
             cursor_.set_position(
-                layout_box.frame.position.x + nodes::DocraftLoomTable::kCellPaddingX + content->margin().left,
-                layout_box.frame.position.y + nodes::DocraftLoomTable::kCellPaddingY + content->margin().top);
+                edit_frame(layout_box).position.x + nodes::DocraftLoomTable::kCellPaddingX + content->margin().left,
+                edit_frame(layout_box).position.y + nodes::DocraftLoomTable::kCellPaddingY + content->margin().top);
             content->accept(*this);
         }
     }
@@ -698,7 +697,7 @@ namespace docraft::loom::pipeline {
         nodes::DocraftLoomTable& table, const std::vector<float>& resolved_widths,
         const std::vector<float>& row_heights)
     {
-        const auto& table_position = table.layout_box().frame.position;
+        const auto& table_position = frame_of(table.layout_box()).position;
         float row_top = table_position.y + table.padding();
         for (int r = 0; r < table.row_count(); ++r)
         {
@@ -710,15 +709,15 @@ namespace docraft::loom::pipeline {
                 cell->accept(*this);
 
                 auto& cell_layout = cell->edit_layout_box();
-                const float natural_width = cell_layout.frame.size.width;
-                const float natural_height = cell_layout.frame.size.height;
+                const float natural_width = edit_frame(cell_layout).size.width;
+                const float natural_height = edit_frame(cell_layout).size.height;
                 const float resolved_width = resolved_widths[static_cast<std::size_t>(c)];
                 const float resolved_height = row_heights[static_cast<std::size_t>(r)];
-                cell_layout.frame.size = {.width = resolved_width, .height = resolved_height};
+                edit_frame(cell_layout).size = {.width = resolved_width, .height = resolved_height};
 
                 if (auto content = cell->content())
                 {
-                    auto& content_frame = content->edit_layout_box().frame;
+                    auto& content_frame = edit_frame(content->edit_layout_box());
                     content_frame.position.x += table_cell_horizontal_offset(*content, resolved_width - natural_width);
                     content_frame.position.y += (resolved_height - natural_height) / 2.0F;
                 }
@@ -753,7 +752,7 @@ namespace docraft::loom::pipeline {
             total_height += h;
         // Mirrors Measure's own +2*padding() inflation, so frame.size (what Pagination
         // advances by) matches measured_size exactly, same as every other node type.
-        table->edit_layout_box().frame.size = {
+        edit_frame(table->edit_layout_box()).size = {
             .width = total_width + (2.0F * table->padding()),
             .height = total_height + (2.0F * table->padding())
         };
@@ -771,6 +770,6 @@ namespace docraft::loom::pipeline {
     {
         if (!node) return;
         PositionScope scope(*this, *node);
-        node->edit_layout_box().frame.size = {.width = 0.0F, .height = 0.0F};
+        edit_frame(node->edit_layout_box()).size = {.width = 0.0F, .height = 0.0F};
     }
 } // pipeline

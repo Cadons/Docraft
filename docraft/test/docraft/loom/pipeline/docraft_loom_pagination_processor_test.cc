@@ -7,14 +7,22 @@
 #include "docraft/loom/nodes/docraft_loom_vstack.h"
 #include "docraft/loom/pipeline/docraft_loom_pagination_processor.h"
 #include "docraft/utils/docraft_mock_rendering_backend.h"
+#include "docraft/utils/docraft_loom_layout_box_test_access.h"
 
 namespace docraft::test {
     namespace {
         std::shared_ptr<loom::nodes::DocraftLoomTableCell> make_positioned_cell(float y, float height, bool is_title) {
             auto cell = std::make_shared<loom::nodes::DocraftLoomTableCell>();
-            cell->set_content(std::make_shared<loom::nodes::DocraftLoomText>("x"));
+            auto text = std::make_shared<loom::nodes::DocraftLoomText>("x");
+            // set_content() makes text a real child (see DocraftLoomTableCell's class
+            // doc), so shift_subtree_position's generic child recursion reaches it too
+            // -- it needs its own sealed frame, not just the cell's.
+            text->edit_layout_box().edit_frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()) = {
+                .position = {.x = 0.0F, .y = y}, .size = {.width = 50.0F, .height = height}
+            };
+            cell->set_content(text);
             cell->set_is_title(is_title);
-            cell->edit_layout_box().frame = {
+            cell->edit_layout_box().edit_frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()) = {
                 .position = {.x = 0.0F, .y = y}, .size = {.width = 50.0F, .height = height}
             };
             return cell;
@@ -37,10 +45,11 @@ namespace docraft::test {
             if (!name.empty()) {
                 node->set_name(name);
             }
-            node->edit_layout_box().frame = {
+            node->edit_layout_box().edit_frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()) = {
                 .position = {.x = 0.0F, .y = y}, .size = {.width = 50.0F, .height = height}
             };
             auto body = std::make_shared<loom::nodes::DocraftLoomVStack>();
+            body->edit_layout_box().edit_frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof());
             body->add_child(node);
             return body;
         }
@@ -54,19 +63,22 @@ namespace docraft::test {
         utils::MockPageBackend page_backend{state};
 
         auto body = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        body->edit_layout_box().edit_frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof());
 
         auto first = std::make_shared<loom::nodes::DocraftLoomText>("first");
-        first->edit_layout_box().frame = {
+        first->edit_layout_box().edit_frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()) = {
             .position = {.x = 0.0F, .y = 10.0F}, .size = {.width = 50.0F, .height = 10.0F}
         };
         body->add_child(first);
 
         // Plenty of room left on the current page -- without the forced-break special
         // case, `second` below would simply continue flowing right after `first`.
-        body->add_child(std::make_shared<loom::nodes::DocraftLoomNewPage>());
+        auto new_page = std::make_shared<loom::nodes::DocraftLoomNewPage>();
+        new_page->edit_layout_box().edit_frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof());
+        body->add_child(new_page);
 
         auto second = std::make_shared<loom::nodes::DocraftLoomText>("second");
-        second->edit_layout_box().frame = {
+        second->edit_layout_box().edit_frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()) = {
             .position = {.x = 0.0F, .y = 20.0F}, .size = {.width = 50.0F, .height = 10.0F}
         };
         body->add_child(second);
@@ -77,8 +89,8 @@ namespace docraft::test {
 
         EXPECT_EQ(total_pages, 2);
         ASSERT_EQ(body->children_count(), 3);
-        EXPECT_EQ(body->child(0)->layout_box().page_index, 0);
-        EXPECT_EQ(body->child(2)->layout_box().page_index, 1);
+        EXPECT_EQ(body->child(0)->layout_box().page_index(docraft::test::utils::LayoutBoxTestAccess::make_page_index_proof()), 0);
+        EXPECT_EQ(body->child(2)->layout_box().page_index(docraft::test::utils::LayoutBoxTestAccess::make_page_index_proof()), 1);
         EXPECT_EQ(page_backend.total_page_count(), 2U);
     }
 
@@ -91,8 +103,9 @@ namespace docraft::test {
         utils::MockPageBackend page_backend{state};
 
         auto body = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        body->edit_layout_box().edit_frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof());
         auto only = std::make_shared<loom::nodes::DocraftLoomText>("only");
-        only->edit_layout_box().frame = {
+        only->edit_layout_box().edit_frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()) = {
             .position = {.x = 0.0F, .y = 10.0F}, .size = {.width = 50.0F, .height = 10.0F}
         };
         body->add_child(only);
@@ -120,11 +133,12 @@ namespace docraft::test {
         auto table = std::make_shared<loom::nodes::DocraftLoomTable>();
         table->add_row({make_positioned_cell(10.0F, 10.0F, true), make_positioned_cell(10.0F, 10.0F, true)});
         table->add_row({make_positioned_cell(20.0F, 200.0F, false), make_positioned_cell(20.0F, 200.0F, false)});
-        table->edit_layout_box().frame = {
+        table->edit_layout_box().edit_frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()) = {
             .position = {.x = 0.0F, .y = 10.0F}, .size = {.width = 100.0F, .height = 210.0F}
         };
 
         auto body = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        body->edit_layout_box().edit_frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof());
         body->add_child(table);
 
         loom::pipeline::DocraftLoomPaginationProcessor processor;
@@ -133,7 +147,7 @@ namespace docraft::test {
 
         EXPECT_EQ(total_pages, 1);
         ASSERT_EQ(body->children_count(), 1);
-        EXPECT_EQ(body->child(0)->layout_box().page_index, 0);
+        EXPECT_EQ(body->child(0)->layout_box().page_index(docraft::test::utils::LayoutBoxTestAccess::make_page_index_proof()), 0);
     }
 
     // Non-regression: a table with a header row that genuinely needs to split across
@@ -150,11 +164,12 @@ namespace docraft::test {
         table->add_row({make_positioned_cell(10.0F, 10.0F, true), make_positioned_cell(10.0F, 10.0F, true)});
         table->add_row({make_positioned_cell(20.0F, 40.0F, false), make_positioned_cell(20.0F, 40.0F, false)});
         table->add_row({make_positioned_cell(60.0F, 40.0F, false), make_positioned_cell(60.0F, 40.0F, false)});
-        table->edit_layout_box().frame = {
+        table->edit_layout_box().edit_frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()) = {
             .position = {.x = 0.0F, .y = 10.0F}, .size = {.width = 100.0F, .height = 90.0F}
         };
 
         auto body = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        body->edit_layout_box().edit_frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof());
         body->add_child(table);
 
         loom::pipeline::DocraftLoomPaginationProcessor processor;
@@ -163,8 +178,8 @@ namespace docraft::test {
 
         EXPECT_EQ(total_pages, 2);
         ASSERT_EQ(body->children_count(), 2);
-        EXPECT_EQ(body->child(0)->layout_box().page_index, 0);
-        EXPECT_EQ(body->child(1)->layout_box().page_index, 1);
+        EXPECT_EQ(body->child(0)->layout_box().page_index(docraft::test::utils::LayoutBoxTestAccess::make_page_index_proof()), 0);
+        EXPECT_EQ(body->child(1)->layout_box().page_index(docraft::test::utils::LayoutBoxTestAccess::make_page_index_proof()), 1);
 
         auto continuation = std::dynamic_pointer_cast<const loom::nodes::DocraftLoomTable>(body->child(1));
         ASSERT_NE(continuation, nullptr);
@@ -194,24 +209,30 @@ namespace docraft::test {
         wrapped_text->set_wrap_width(50.0F);
         wrapped_text->set_wrapped_lines(lines);
         wrapped_text->edit_layout_box().measured_size = {.width = 50.0F, .height = kLineHeight * kLineCount};
+        // set_content() below makes wrapped_text a real child of content_cell, so
+        // shift_subtree_position's generic child recursion reaches it too.
+        wrapped_text->edit_layout_box().edit_frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()) = {
+            .position = {.x = 0.0F, .y = 20.0F}, .size = {.width = 50.0F, .height = kLineHeight * kLineCount}
+        };
 
         auto content_cell = std::make_shared<loom::nodes::DocraftLoomTableCell>();
         content_cell->set_content(wrapped_text);
         const float content_natural_height =
                 (kLineHeight * kLineCount) + (2.0F * loom::nodes::DocraftLoomTable::kCellPaddingY);
         content_cell->edit_layout_box().measured_size = {.width = 50.0F, .height = content_natural_height};
-        content_cell->edit_layout_box().frame = {
+        content_cell->edit_layout_box().edit_frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()) = {
             .position = {.x = 0.0F, .y = 20.0F}, .size = {.width = 50.0F, .height = content_natural_height}
         };
 
         auto table = std::make_shared<loom::nodes::DocraftLoomTable>();
         table->add_row({make_positioned_cell(10.0F, 10.0F, true), make_positioned_cell(10.0F, 10.0F, true)});
         table->add_row({content_cell, make_positioned_cell(20.0F, 10.0F, false)});
-        table->edit_layout_box().frame = {
+        table->edit_layout_box().edit_frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()) = {
             .position = {.x = 0.0F, .y = 10.0F}, .size = {.width = 100.0F, .height = 10.0F + content_natural_height}
         };
 
         auto body = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        body->edit_layout_box().edit_frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof());
         body->add_child(table);
 
         loom::pipeline::DocraftLoomPaginationProcessor processor;
@@ -228,8 +249,8 @@ namespace docraft::test {
         auto page1 = std::dynamic_pointer_cast<const loom::nodes::DocraftLoomTable>(body->child(1));
         ASSERT_NE(page0, nullptr);
         ASSERT_NE(page1, nullptr);
-        EXPECT_EQ(page0->layout_box().page_index, 0);
-        EXPECT_EQ(page1->layout_box().page_index, 1);
+        EXPECT_EQ(page0->layout_box().page_index(docraft::test::utils::LayoutBoxTestAccess::make_page_index_proof()), 0);
+        EXPECT_EQ(page1->layout_box().page_index(docraft::test::utils::LayoutBoxTestAccess::make_page_index_proof()), 1);
 
         auto page0_text = std::dynamic_pointer_cast<const loom::nodes::DocraftLoomText>(page0->cell(1, 0)->content());
         auto page1_text = std::dynamic_pointer_cast<const loom::nodes::DocraftLoomText>(page1->cell(1, 0)->content());
@@ -261,7 +282,7 @@ namespace docraft::test {
 
         EXPECT_EQ(total_pages, 1);
         ASSERT_EQ(body->children_count(), 1);
-        EXPECT_EQ(body->child(0)->layout_box().page_index, 0);
+        EXPECT_EQ(body->child(0)->layout_box().page_index(docraft::test::utils::LayoutBoxTestAccess::make_page_index_proof()), 0);
         EXPECT_NE(stdout_log.find("[WARNING]"), std::string::npos);
         EXPECT_NE(stdout_log.find("overflowing_text"), std::string::npos);
     }

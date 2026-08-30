@@ -9,6 +9,7 @@
 #include "docraft/loom/pipeline/docraft_loom_layout_processor.h"
 #include "docraft/loom/pipeline/docraft_loom_measure_processor.h"
 #include "../../backend/docraft_mock_backend.h"
+#include "docraft/utils/docraft_loom_layout_box_test_access.h"
 
 namespace docraft::test {
     using ::testing::Return;
@@ -71,8 +72,8 @@ namespace docraft::test {
         // available_width = 200 (table padding=0; kCellPaddingX is a per-cell inset already
         // folded into each cell's own measured_size, not a table-wide margin), split evenly
         // -> 100 each (floored at natural 10)
-        EXPECT_FLOAT_EQ(table->cell(0, 0)->layout_box().frame.size.width, 100.0F);
-        EXPECT_FLOAT_EQ(table->cell(0, 1)->layout_box().frame.size.width, 100.0F);
+        EXPECT_FLOAT_EQ(table->cell(0, 0)->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.width, 100.0F);
+        EXPECT_FLOAT_EQ(table->cell(0, 1)->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.width, 100.0F);
     }
 
     TEST_F(DocraftLoomTableTest, ExplicitWidthIsRespectedAndRemainderRedistributed)
@@ -87,13 +88,13 @@ namespace docraft::test {
         auto layout = prepare_layout(*table, 200.0F);
         table->accept(layout);
 
-        EXPECT_FLOAT_EQ(table->cell(0, 0)->layout_box().frame.size.width, 40.0F);
+        EXPECT_FLOAT_EQ(table->cell(0, 0)->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.width, 40.0F);
         // column 1 (the only flexible column) gets everything available_width has left
         // over after column 0's explicit width is deducted (200 - 40 = 160), not a share
         // of the full available_width diluted by column 0 -- otherwise the table's total
         // resolved width would exceed available_width (40 + 100 = 140 happened to fit
         // here, but the same dilution overflows the margin with more columns/less slack).
-        EXPECT_FLOAT_EQ(table->cell(0, 1)->layout_box().frame.size.width, 160.0F);
+        EXPECT_FLOAT_EQ(table->cell(0, 1)->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.width, 160.0F);
     }
 
     TEST_F(DocraftLoomTableTest, NaturalWidthFloorIsRespectedWhenNoRescaleIsNeeded)
@@ -120,8 +121,8 @@ namespace docraft::test {
         auto layout = prepare_layout(*table, 200.0F);
         table->accept(layout);
 
-        EXPECT_FLOAT_EQ(table->cell(0, 0)->layout_box().frame.size.width, 100.0F);
-        EXPECT_FLOAT_EQ(table->cell(0, 1)->layout_box().frame.size.width, 100.0F);
+        EXPECT_FLOAT_EQ(table->cell(0, 0)->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.width, 100.0F);
+        EXPECT_FLOAT_EQ(table->cell(0, 1)->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.width, 100.0F);
     }
 
     TEST_F(DocraftLoomTableTest, NarrowPageRescalesColumnsProportionally)
@@ -146,8 +147,8 @@ namespace docraft::test {
         // Cell natural widths include the automatic content padding (2*2.5 = 5), so
         // natural widths are 150+5=155 and 10+5=15. available_width = 20 (table padding=0);
         // scale = 20 / (155+15) = 20/170.
-        EXPECT_NEAR(table->cell(0, 0)->layout_box().frame.size.width, 155.0F * 20.0F / 170.0F, 0.001F);
-        EXPECT_NEAR(table->cell(0, 1)->layout_box().frame.size.width, 15.0F * 20.0F / 170.0F, 0.001F);
+        EXPECT_NEAR(table->cell(0, 0)->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.width, 155.0F * 20.0F / 170.0F, 0.001F);
+        EXPECT_NEAR(table->cell(0, 1)->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.width, 15.0F * 20.0F / 170.0F, 0.001F);
     }
 
     TEST_F(DocraftLoomTableTest, RowHeightIsTallestCellPlusPadding)
@@ -162,7 +163,7 @@ namespace docraft::test {
         auto layout = prepare_layout(*table, 200.0F);
         table->accept(layout);
 
-        EXPECT_FLOAT_EQ(table->cell(0, 0)->layout_box().frame.size.height, 35.0F); // 30 + 2*2.5
+        EXPECT_FLOAT_EQ(table->cell(0, 0)->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.height, 35.0F); // 30 + 2*2.5
     }
 
     TEST_F(DocraftLoomTableTest, LayoutDoesNotOverlapColumns)
@@ -174,12 +175,12 @@ namespace docraft::test {
         auto layout = prepare_layout(*table, 300.0F);
         table->accept(layout);
 
-        const float col0_right = table->cell(0, 0)->layout_box().frame.position.x
-            + table->cell(0, 0)->layout_box().frame.size.width;
-        EXPECT_FLOAT_EQ(col0_right, table->cell(0, 1)->layout_box().frame.position.x);
-        const float col1_right = table->cell(0, 1)->layout_box().frame.position.x
-            + table->cell(0, 1)->layout_box().frame.size.width;
-        EXPECT_FLOAT_EQ(col1_right, table->cell(0, 2)->layout_box().frame.position.x);
+        const float col0_right = table->cell(0, 0)->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x
+            + table->cell(0, 0)->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.width;
+        EXPECT_FLOAT_EQ(col0_right, table->cell(0, 1)->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x);
+        const float col1_right = table->cell(0, 1)->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x
+            + table->cell(0, 1)->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.width;
+        EXPECT_FLOAT_EQ(col1_right, table->cell(0, 2)->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x);
     }
 
     TEST_F(DocraftLoomTableTest, PaddingPushesTheWholeGridAwayFromTheTableOrigin)
@@ -198,11 +199,11 @@ namespace docraft::test {
         layout.reset_cursor(10.0F, 20.0F);
         table->accept(layout);
 
-        const auto& table_origin = table->layout_box().frame.position;
+        const auto& table_origin = table->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position;
         EXPECT_FLOAT_EQ(table_origin.x, 10.0F);
         EXPECT_FLOAT_EQ(table_origin.y, 20.0F);
 
-        const auto& first_cell_pos = table->cell(0, 0)->layout_box().frame.position;
+        const auto& first_cell_pos = table->cell(0, 0)->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position;
         EXPECT_FLOAT_EQ(first_cell_pos.x, table_origin.x + 6.0F);
         EXPECT_FLOAT_EQ(first_cell_pos.y, table_origin.y + 6.0F);
 
@@ -212,7 +213,9 @@ namespace docraft::test {
         const auto& measured = table->layout_box().measured_size;
         const auto& last_cell = table->cell(0, 1)->layout_box();
         EXPECT_FLOAT_EQ(table_origin.y + measured.height,
-                        first_cell_pos.y + last_cell.frame.size.height + 6.0F);
+                        first_cell_pos.y
+                            + last_cell.frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.height
+                            + 6.0F);
     }
 
     TEST_F(DocraftLoomTableTest, LongCellTextWrapsInsteadOfOverflowingItsColumn)
@@ -274,9 +277,9 @@ namespace docraft::test {
         auto layout = prepare_layout(*table, 200.0F);
         table->accept(layout);
 
-        EXPECT_GT(table->layout_box().frame.size.width, 0.0F);
-        EXPECT_GT(table->layout_box().frame.size.height, 0.0F);
-        EXPECT_GT(table->cell(0, 0)->layout_box().frame.size.width, 0.0F);
+        EXPECT_GT(table->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.width, 0.0F);
+        EXPECT_GT(table->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.height, 0.0F);
+        EXPECT_GT(table->cell(0, 0)->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.width, 0.0F);
     }
 
     TEST_F(DocraftLoomTableTest, RowTitleGridProducesCorrectLayout)
@@ -290,8 +293,8 @@ namespace docraft::test {
         auto layout = prepare_layout(*table, 200.0F);
         table->accept(layout);
 
-        EXPECT_FLOAT_EQ(table->cell(1, 0)->layout_box().frame.position.y,
-                        table->cell(0, 0)->layout_box().frame.position.y + table->cell(0, 0)->layout_box().frame.size.
+        EXPECT_FLOAT_EQ(table->cell(1, 0)->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y,
+                        table->cell(0, 0)->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y + table->cell(0, 0)->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.
                         height);
         EXPECT_TRUE(table->cell(0, 0)->is_title());
         EXPECT_FALSE(table->cell(0, 1)->is_title());

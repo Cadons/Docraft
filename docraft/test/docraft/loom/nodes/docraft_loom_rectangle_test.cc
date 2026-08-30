@@ -9,6 +9,7 @@
 #include "docraft/loom/pipeline/docraft_loom_rendering_processor.h"
 #include "docraft/utils/docraft_mock_rendering_backend.h"
 #include "../../backend/docraft_mock_backend.h"
+#include "docraft/utils/docraft_loom_layout_box_test_access.h"
 
 namespace docraft::test {
     using ::testing::Return;
@@ -92,14 +93,14 @@ namespace docraft::test {
         rect->accept(*measure_);
         rect->accept(*layout_);
 
-        EXPECT_FLOAT_EQ(t1->layout_box().frame.position.x, rect->layout_box().frame.position.x + 4.0F);
-        EXPECT_FLOAT_EQ(t1->layout_box().frame.position.y, rect->layout_box().frame.position.y + 4.0F);
+        EXPECT_FLOAT_EQ(t1->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x, rect->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x + 4.0F);
+        EXPECT_FLOAT_EQ(t1->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y, rect->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y + 4.0F);
 
         auto next = std::make_shared<loom::nodes::DocraftLoomText>("next");
         next->accept(*measure_);
         next->accept(*layout_);
-        EXPECT_FLOAT_EQ(next->layout_box().frame.position.y,
-                        rect->layout_box().frame.position.y + rect->layout_box().frame.size.height);
+        EXPECT_FLOAT_EQ(next->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y,
+                        rect->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y + rect->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.height);
     }
 
     TEST_F(DocraftLoomRectangleTest, AbsolutePositionOverridesCursor)
@@ -112,8 +113,8 @@ namespace docraft::test {
         rect.accept(*measure_);
         rect.accept(*layout_);
 
-        EXPECT_FLOAT_EQ(rect.layout_box().frame.position.x, 80.0F);
-        EXPECT_FLOAT_EQ(rect.layout_box().frame.position.y, 90.0F);
+        EXPECT_FLOAT_EQ(rect.layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x, 80.0F);
+        EXPECT_FLOAT_EQ(rect.layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y, 90.0F);
     }
 
     TEST_F(DocraftLoomRectangleTest, RenderingClipsChildrenToRectangleBoundsBracketedBySaveRestore)
@@ -141,7 +142,7 @@ namespace docraft::test {
         // Assert against the rectangle's own resolved frame (rather than the
         // width_/height_ set above) so this test only exercises clipping and stays
         // agnostic to how that frame is sized.
-        const auto& frame = rect->layout_box().frame;
+        const auto& frame = rect->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof());
         ASSERT_EQ(backend.clip_calls().size(), 1U);
         EXPECT_FLOAT_EQ(backend.clip_calls()[0].x, frame.position.x);
         EXPECT_FLOAT_EQ(backend.clip_calls()[0].y, frame.position.y);
