@@ -51,68 +51,57 @@ add a font file, register it in `fonts.json` — the CMake step generates the em
 
 Docs (Sphinx + Doxygen) live in `doc/source/`; build with `cd doc && make html`.
 
-## Two parallel architectures — know which one you're in
+## Architecture: the loom pipeline
 
-The codebase currently contains **two layout/rendering pipelines** side by side. This is
-intentional, active migration work (see branch names like
-`find-the-best-pattern-for-layout-engine`) — do not assume one is dead code without checking
-recent commits/CMakeLists first.
-
-### 1. Legacy pipeline (`docraft/{include,src}/docraft/{model,layout,renderer,backend,services}`)
+There is a single layout/render pipeline **loom**, built around a pipeline-of-visitors over a plain node tree:
 
 ```
-Craft XML → CraftLanguageParser (pugixml) → DocraftNode AST
-  → Template Engine (${var} substitution, <Foreach> expansion)
-  → Layout Engine: Chain-of-Responsibility handlers (layout/handler/*) compute x/y/width/height + pagination
-  → Renderer: Visitor pattern walks the AST, dispatching to Painters (renderer/painter/*)
-  → Painters call capability-provider Backend interfaces (backend/docraft_*_rendering_backend.h)
-  → DocraftHaruBackend (backend/pdf/*) implements those interfaces on libharu
-```
-
-- `DocraftDocument` (include/docraft/docraft_document.h) is the entry point; orchestrates
-  `configure_settings → template_document → layout → render → save_to_file`.
-- `DocraftDocumentContext` holds shared render state; note it's a known Service-Locator-style
-  god object (20+ getters) — treat as legacy, avoid extending its surface.
-- Backend interfaces are split by capability domain (Text/Line/Shape/Image/Page/Output/Font/Metadata
-  rendering backends), not one aggregated facade — this split is deliberate (a prior aggregated
-  facade was removed for SRP reasons).
-- Node types (Text, Table, List, Image, Shape, Layout, Paragraph, ...) each have: a parser
-  registration, a layout handler, and a paint/render path. Adding a node type touches all three
-  plus tests.
-- Known architectural pain points are catalogued in `.local/ARCHITETTURA_CRITICITA.md` (circular
-  deps between PageHaruBackend/DocraftHaruBackend, scattered ownership of cursor/color state, no
-  fallback strategy for unsupported backend capabilities, etc.) — useful context before touching
-  `backend/` or `docraft_document_context`.
-
-### 2. New "loom" pipeline (`docraft/{include,src}/docraft/loom/`)
-
-A from-scratch redesign of the layout/render path, built around a **pipeline-of-visitors** over a
-plain node tree rather than chain-of-responsibility handlers + a document-context god object:
-
-```
-DocraftLoomNode tree (nodes/: Text, Paragraph, Rectangle, VStack, HStack, ...)
+Craft XML (pugixml)
+  → docraft::craft front-end (craft/, craft/parser/): tokenizes tags and validates attributes into
+    typed "parsed element" data (ParsedElement, Parsed*Data, shared line-style/shape-style parsing)
+  → docraft::craft::DocraftLoomCraftLanguageParser: top-level driver for <Document>/<Settings>/
+    <Metadata>/<Header>/<Body>/<Footer>/<Foreach>/<NewPage>
+  → DocraftLoomTreeBuilder + per-tag handlers (loom/craft/handlers/) build the DocraftLoomNode
+    tree (nodes/: Text, Paragraph, Rectangle, Canvas, VStack, HStack, Table, ...)
   → MeasureProcessor   (visitor: computes LayoutBox.measured_size per node)
   → LayoutProcessor    (visitor: walks tree with a DocraftLoomCursor, fills LayoutBox.frame)
   → PaginationProcessor(visitor: fills LayoutBox.page_index)
   → RenderingProcessor (visitor: paints using the final frame/page_index)
+  → docraft::backend::pdf (DocraftHaruBackend + capability interfaces) writes to libharu
 ```
 
-- Each processor implements `interfaces::DocraftLoomIVisitor` (double-dispatch visitor, one
-  `visit(NodeType*)` overload per node type) — adding a node type means adding a `visit` overload
-  to every processor, not editing a big switch.
+- `docraft::craft` (`docraft/{include,src}/docraft/craft/`) is the shared XML front-end: it parses
+  Craft-language tags into generic, typed "parsed element" data — attribute validation, enum
+  parsing (e.g. `border_style="solid"/"dashed"`), no knowledge of loom's node types or layout.
+  Despite the name, `DocraftCraftLanguageParser` here is this low-level tag/attribute parser, not
+  a document-level entry point.
+- `docraft::craft::DocraftLoomCraftLanguageParser` (`docraft_loom_craft_language_parser.h`) is the
+  actual top-level orchestrator — the one that knows about `<Document>` structure and walks it
+  into a fully wired `DocraftLoomPdfCreator`. `docraft_tool` (`docraft/src/docraft/main.cpp`)
+  exercises it end to end.
+- `docraft::loom::craft` (`docraft/{include,src}/docraft/loom/craft/`) holds the per-tag handlers
+  (`handlers/docraft_loom_*_handler.h`) and `DocraftLoomTreeBuilder` that turn parsed elements into
+  the actual `DocraftLoomNode` tree.
+- Each pipeline processor implements `interfaces::DocraftLoomIVisitor` (double-dispatch visitor,
+  one `visit(NodeType*)` overload per node type) — adding a node type means adding a `visit`
+  overload to every processor, not editing a big switch.
 - `DocraftLoomNode::layout_box()` accumulates the results of each pipeline stage
   (`measured_size` → `page_index` → `frame`) — later stages read fields earlier stages wrote, so
   pipeline order matters and stages must not be skipped for a node type.
 - `DocraftLoomCursor` tracks the "pen" position during layout (origin top-left, y grows downward),
-  separate from any node — this replaces the old handler-local cursor bookkeeping.
-- `DocraftLoomPdfCreator` is the loom-side equivalent of `DocraftDocument` (top-level orchestrator);
-  `docraft_tool` (`docraft/src/docraft/main.cpp`) exercises it end to end via
-  `DocraftLoomCraftLanguageParser`.
+  separate from any node.
+- `docraft::backend` (`docraft/{include,src}/docraft/backend/`) is the one piece of the old
+  architecture that survived: capability-split rendering interfaces
+  (Text/Line/Shape/Image/Page/Output/Font/Metadata), implemented on libharu under `backend/pdf/`
+  (`DocraftHaruBackend` and friends). This split by capability domain, not one aggregated facade,
+  is deliberate (SRP). It's low-level PDF-writing infrastructure used directly by loom's
+  `RenderingProcessor`/`DocraftLoomPdfCreator` — not itself legacy, just the layer that talks to
+  libharu.
+- Charts (`<Chart>`/`<Series>`) are native to loom, not a legacy leftover: `docraft/{include,src}/
+  docraft/loom/charts/` has builders for scatter/spline/line/histogram/pie, synthesized as a
+  `<Canvas>` full of primitives (Line/Circle/Rectangle/Text) via `docraft_loom_chart_handler`.
 - Tests live in `docraft/test/docraft/loom/`; `docraft/test/CMakeLists.txt` is not glob-based — if
   you add a new loom test file, you must add it to TEST_SOURCES there or it silently won't run.
-
-When asked to work on layout/rendering, check whether the task is about the legacy pipeline or
-`loom` — they don't share types, and "the layout engine" is ambiguous in this repo right now.
 
 ## Coding conventions (enforced by `.clang-tidy`, warnings are errors)
 
@@ -140,6 +129,3 @@ Format enforced by convention (`.github/git-commit-instructions.md`): first line
   layout, driven by JSON data (`data("key")` inside a `Foreach`).
 - Common attributes across nodes: `name`, `x`, `y`, `width`, `height`, `padding`,
   `z_index`, `position`, `visible`. Colors are `#RRGGBB` or named (`red`, `blue`, ...).
-
-Loom architecture is the newer architecture, follow it as main architecture, and use the old one only to understand
-which items must be port into the new architecture

@@ -110,7 +110,7 @@ namespace docraft::backend::pdf {
          */
         HPDF_Font resolve_font(const std::string& font_name, bool* needs_win_ansi_transcode = nullptr) const;
         std::shared_ptr<DocraftHaruSharedState> state_;
-        static constexpr std::string kDefaultFont = "Helvetica";
+        static inline const std::string kDefaultFont = "Helvetica";
         // Sticky across draw_text()/draw_text_matrix() calls that don't take a font_name
         // of their own -- set by the preceding set_font() call, which does know which
         // encoding resolve_font() picked for the font it just activated.
