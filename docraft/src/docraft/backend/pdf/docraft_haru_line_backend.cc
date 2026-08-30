@@ -18,10 +18,40 @@
 
 #include <hpdf.h>
 
-#include <utility>
+#include <algorithm>
 #include <cmath>
+#include <utility>
 
 namespace docraft::backend::pdf {
+    namespace {
+        template <typename PatternT>
+        auto invoke_set_dash(HPDF_Page page, const PatternT& pattern, int)
+            -> decltype(HPDF_Page_SetDash(page, pattern.data(), HPDF_UINT{0}, HPDF_REAL{0}), void())
+        {
+            HPDF_Page_SetDash(page, pattern.empty() ? nullptr : pattern.data(),
+                              static_cast<HPDF_UINT>(pattern.size()), 0.0F);
+        }
+
+        template <typename PatternT>
+        void invoke_set_dash(HPDF_Page page, const PatternT& pattern, long)
+        {
+            // Rounds each on/off segment length to the nearest non-negative integer
+            // point, since HPDF_UINT16 (unlike HPDF_REAL) cannot represent a fraction
+            // or a negative length.
+            std::vector<HPDF_REAL> dash_ptn;
+            dash_ptn.reserve(pattern.size());
+            for (float segment : pattern) {
+                dash_ptn.push_back(static_cast<HPDF_UINT16>(std::max(0.0F, std::round(segment))));
+            }
+            const auto dash_ptn_size = static_cast<HPDF_REAL>(dash_ptn.size());
+            if (dash_ptn_size == 0.0F) {
+                HPDF_Page_SetDash(page, nullptr, 0, 0.0F);
+            } else {
+                HPDF_Page_SetDash(page, dash_ptn.data(), static_cast<HPDF_UINT>(dash_ptn_size), 0.0F);
+            }
+        }
+    } // namespace
+
     DocraftHaruLineBackend::DocraftHaruLineBackend(const std::shared_ptr<DocraftHaruSharedState> &state)
         : state_(state) {
     }
@@ -38,24 +68,7 @@ namespace docraft::backend::pdf {
 
     void DocraftHaruLineBackend::set_line_dash_pattern(const std::vector<float>& pattern) const {
         auto *provider = state_->ensure_page_provider();
-        if (pattern.empty()) {
-            HPDF_Page_SetDash(provider->current_page(), nullptr, 0, 0);
-            return;
-        }
-
-        // libharu expects an array of HPDF_UINT16 (unsigned 16-bit) values for the dash
-        // pattern. Convert the float pattern to integers, rounding to nearest and
-        // clamping to >= 0 to avoid underflow when casting.
-        std::vector<HPDF_REAL> dash;
-        dash.reserve(pattern.size());
-        for (float v : pattern) {
-            int rounded = static_cast<int>(std::lround(v));
-            if (rounded < 0) rounded = 0;
-            dash.push_back(static_cast<HPDF_REAL>(rounded));
-        }
-
-        HPDF_Page_SetDash(provider->current_page(), dash.data(),
-                          static_cast<HPDF_UINT>(dash.size()), 0);
+        invoke_set_dash(provider->current_page(), pattern, 0);
     }
 
     void DocraftHaruLineBackend::draw_line(float x1, float y1, float x2, float y2) const {
