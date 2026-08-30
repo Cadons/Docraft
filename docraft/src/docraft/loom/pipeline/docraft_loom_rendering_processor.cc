@@ -371,6 +371,7 @@ namespace docraft::loom::pipeline {
         }
         line_backend_->set_line_width(line->border_width());
         line_backend_->set_stroke_color(rgba.r, rgba.g, rgba.b);
+        line_backend_->set_line_dash_pattern(DocraftLoomShapeDrawUtils::resolve_dash_pattern(line->border_style()));
         line_backend_->draw_line(p1.x, p1.y, p2.x, p2.y);
         shape_backend_->restore_state();
     }
@@ -409,6 +410,8 @@ namespace docraft::loom::pipeline {
             }
             line_backend_->set_line_width(node->style().border_width);
             line_backend_->set_stroke_color(rgba.r, rgba.g, rgba.b);
+            line_backend_->set_line_dash_pattern(
+                DocraftLoomShapeDrawUtils::resolve_dash_pattern(node->style().border_style));
             shape_backend_->draw_arc(center.x, center.y, radius_x, node->arc_start_angle(), node->arc_end_angle());
             shape_backend_->stroke();
             shape_backend_->restore_state();
@@ -467,6 +470,7 @@ namespace docraft::loom::pipeline {
             .target = {.shape_backend = shape_backend_, .line_backend = line_backend_},
             .border_color = node->border_color(),
             .border_width = node->border_width(),
+            .border_style = node->border_style(),
             .origin = nodes::sealed_frame(*node).position,
             .points = node->points(),
         });

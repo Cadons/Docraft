@@ -5,6 +5,13 @@
 #include "docraft/loom/pipeline/docraft_loom_shape_draw_utils.h"
 
 namespace docraft::loom::pipeline {
+    std::vector<float> DocraftLoomShapeDrawUtils::resolve_dash_pattern(nodes::DocraftLineStyle style) {
+        if (style == nodes::DocraftLineStyle::kDashed) {
+            return {kDashSegmentLength, kDashGapLength};
+        }
+        return {};
+    }
+
     DocraftLoomShapeDrawUtils::ShapeDrawFlags DocraftLoomShapeDrawUtils::resolve_shape_draw_flags(
         const nodes::DocraftLoomShapeStyle &style) {
         return {
@@ -30,6 +37,7 @@ namespace docraft::loom::pipeline {
             }
             target.line_backend->set_line_width(style.border_width);
             target.line_backend->set_stroke_color(border.r, border.g, border.b);
+            target.line_backend->set_line_dash_pattern(resolve_dash_pattern(style.border_style));
         }
     }
 
@@ -90,6 +98,7 @@ namespace docraft::loom::pipeline {
         }
         request.target.line_backend->set_line_width(request.border_width);
         request.target.line_backend->set_stroke_color(rgba.r, rgba.g, rgba.b);
+        request.target.line_backend->set_line_dash_pattern(resolve_dash_pattern(request.border_style));
         request.target.line_backend->draw_curve(transformed);
         request.target.shape_backend->restore_state();
     }

@@ -46,6 +46,10 @@ namespace docraft::loom::craft {
         {
             node->set_border_width(*data.border_width);
         }
+        if (data.border_style.has_value())
+        {
+            node->set_border_style(to_loom_line_style(*data.border_style));
+        }
         apply_common_attributes(*node, element.common);
         return node;
     }

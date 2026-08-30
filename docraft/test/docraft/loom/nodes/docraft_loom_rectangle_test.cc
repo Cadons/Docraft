@@ -149,4 +149,24 @@ namespace docraft::test {
         EXPECT_FLOAT_EQ(backend.clip_calls()[0].width, frame.size.width);
         EXPECT_FLOAT_EQ(backend.clip_calls()[0].height, frame.size.height);
     }
+
+    TEST_F(DocraftLoomRectangleTest, DashedBorderStyleSendsTheDashPatternBeforeDrawing)
+    {
+        utils::MockRenderingBackend backend;
+        loom::pipeline::DocraftLoomRenderingProcessor rendering(&backend);
+
+        auto rect = std::make_shared<loom::nodes::DocraftLoomRectangle>();
+        rect->set_width(80.0F);
+        rect->set_height(60.0F);
+        rect->edit_style().border_color = DocraftColor::fromRGB(0.0F, 0.0F, 0.0F, 1.0F);
+        rect->edit_style().border_width = 2.0F;
+        rect->edit_style().border_style = loom::nodes::DocraftLineStyle::kDashed;
+
+        rect->accept(*measure_);
+        rect->accept(*layout_);
+        rect->accept(rendering);
+
+        ASSERT_EQ(backend.dash_pattern_calls().size(), 1U);
+        EXPECT_FALSE(backend.dash_pattern_calls()[0].pattern.empty());
+    }
 } // namespace docraft::test

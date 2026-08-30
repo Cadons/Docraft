@@ -79,6 +79,11 @@ namespace docraft::test::utils {
             std::vector<docraft::Position> points;
         };
 
+        struct DashPatternCall
+        {
+            std::vector<float> pattern;
+        };
+
         // Records draw_circle() and draw_ellipse() alike -- a circle is stored with
         // radius_x == radius_y, so a test can assert on the resulting geometry without
         // caring which of the two primitives the rendering stage picked.
@@ -108,6 +113,7 @@ namespace docraft::test::utils {
         mutable std::vector<ClipCall> clip_calls;
         mutable std::vector<DrawLineCall> draw_line_calls;
         mutable std::vector<DrawCurveCall> draw_curve_calls;
+        mutable std::vector<DashPatternCall> dash_pattern_calls;
         mutable std::vector<DrawEllipseCall> draw_ellipse_calls;
         mutable std::vector<DrawArcCall> draw_arc_calls;
 
@@ -136,6 +142,13 @@ namespace docraft::test::utils {
             MockBackendSharedState::ensure_supported(state_->config.supports_line_backend,
                                                      "Line backend capability not supported");
             state_->ensure_page_available();
+        }
+
+        void set_line_dash_pattern(const std::vector<float>& pattern) const override {
+            MockBackendSharedState::ensure_supported(state_->config.supports_line_backend,
+                                                     "Line backend capability not supported");
+            state_->ensure_page_available();
+            state_->dash_pattern_calls.push_back({.pattern = pattern});
         }
 
         void draw_line(float x1, float y1, float x2, float y2) const override {
@@ -615,6 +628,11 @@ namespace docraft::test::utils {
         [[nodiscard]] const std::vector<MockBackendSharedState::DrawCurveCall>& draw_curve_calls() const
         {
             return state_->draw_curve_calls;
+        }
+
+        [[nodiscard]] const std::vector<MockBackendSharedState::DashPatternCall>& dash_pattern_calls() const
+        {
+            return state_->dash_pattern_calls;
         }
 
         [[nodiscard]] const std::string &last_saved_path() const {

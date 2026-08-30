@@ -35,6 +35,16 @@ namespace docraft::backend::pdf {
         HPDF_Page_SetLineWidth(provider->current_page(), thickness);
     }
 
+    void DocraftHaruLineBackend::set_line_dash_pattern(const std::vector<float>& pattern) const {
+        auto *provider = state_->ensure_page_provider();
+        if (pattern.empty()) {
+            HPDF_Page_SetDash(provider->current_page(), nullptr, 0, 0.0F);
+            return;
+        }
+        HPDF_Page_SetDash(provider->current_page(), pattern.data(),
+                          static_cast<HPDF_UINT>(pattern.size()), 0.0F);
+    }
+
     void DocraftHaruLineBackend::draw_line(float x1, float y1, float x2, float y2) const {
         auto *provider = state_->ensure_page_provider();
         float px1, py1, px2, py2;

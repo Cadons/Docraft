@@ -139,3 +139,61 @@ TEST(DocraftRectangleParserTest, ParsesBorderWidth) {
     ASSERT_TRUE(data.border_width.has_value());
     EXPECT_FLOAT_EQ(*data.border_width, 3.0F);
 }
+
+TEST(DocraftRectangleParserTest, ParsesDashedBorderStyle) {
+    const char *xml = R"XML(
+<Rectangle border_style="dashed" />
+)XML";
+
+    pugi::xml_document doc;
+    ASSERT_TRUE(doc.load_string(xml));
+
+    docraft::craft::parser::DocraftRectangleParser parser;
+    const auto data = std::any_cast<docraft::craft::parser::ParsedRectangleData>(parser.parse(doc.child("Rectangle")));
+
+    ASSERT_TRUE(data.border_style.has_value());
+    EXPECT_EQ(*data.border_style, docraft::craft::parser::ParsedLineStyle::kDashed);
+}
+
+TEST(DocraftLineParserTest, ParsesDashedBorderStyle) {
+    const char *xml = R"XML(
+<Line x1="0" y1="0" x2="10" y2="0" border_style="dashed" />
+)XML";
+
+    pugi::xml_document doc;
+    ASSERT_TRUE(doc.load_string(xml));
+
+    docraft::craft::parser::DocraftLineParser parser;
+    const auto data = std::any_cast<docraft::craft::parser::ParsedLineData>(parser.parse(doc.child("Line")));
+
+    ASSERT_TRUE(data.border_style.has_value());
+    EXPECT_EQ(*data.border_style, docraft::craft::parser::ParsedLineStyle::kDashed);
+}
+
+TEST(DocraftLineParserTest, DefaultsBorderStyleToUnset)
+{
+    const char *xml = R"XML(
+<Line x1="0" y1="0" x2="10" y2="0" />
+)XML";
+
+    pugi::xml_document doc;
+    ASSERT_TRUE(doc.load_string(xml));
+
+    docraft::craft::parser::DocraftLineParser parser;
+    const auto data = std::any_cast<docraft::craft::parser::ParsedLineData>(parser.parse(doc.child("Line")));
+
+    EXPECT_FALSE(data.border_style.has_value());
+}
+
+TEST(DocraftLineParserTest, RejectsUnrecognizedBorderStyle)
+{
+    const char *xml = R"XML(
+<Line x1="0" y1="0" x2="10" y2="0" border_style="dotted" />
+)XML";
+
+    pugi::xml_document doc;
+    ASSERT_TRUE(doc.load_string(xml));
+
+    docraft::craft::parser::DocraftLineParser parser;
+    EXPECT_THROW(parser.parse(doc.child("Line")), docraft::exception::InvalidInputException);
+}

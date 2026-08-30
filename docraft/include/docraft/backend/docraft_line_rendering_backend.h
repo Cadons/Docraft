@@ -47,6 +47,14 @@ namespace docraft::backend {
         virtual void set_line_width(float thickness) const = 0;
 
         /**
+         * @brief Sets the dash pattern used for subsequent line/curve stroking:
+         * alternating on/off segment lengths in points, starting with an "on" segment.
+         * An empty pattern resets to a solid (continuous) line.
+         * @param pattern The on/off segment lengths, in points.
+         */
+        virtual void set_line_dash_pattern(const std::vector<float>& pattern) const = 0;
+
+        /**
          * @brief Draws a line between two points using the current stroke settings.
          * @param x1 The x-coordinate of the line start.
          * @param y1 The y-coordinate of the line start.

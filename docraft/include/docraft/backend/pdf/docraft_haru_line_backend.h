@@ -46,6 +46,12 @@ namespace docraft::backend::pdf {
         void set_line_width(float thickness) const override;
 
         /**
+         * @brief Sets the dash pattern used for line/curve stroking via libharu's
+         * HPDF_Page_SetDash. An empty pattern resets to a solid line (num_dash=0).
+         */
+        void set_line_dash_pattern(const std::vector<float>& pattern) const override;
+
+        /**
          * @brief Draws a line segment between two points.
          */
         void draw_line(float x1, float y1, float x2, float y2) const override;

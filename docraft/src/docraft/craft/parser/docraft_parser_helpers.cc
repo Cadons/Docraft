@@ -312,6 +312,16 @@ namespace docraft::craft::parser::detail {
         throw docraft::exception::InvalidInputException("Invalid text alignment: " + alignment_str);
     }
 
+    ParsedLineStyle parse_line_style(const std::string& style_str) {
+        if (style_str == std::string{line_style::kDashed}) {
+            return ParsedLineStyle::kDashed;
+        }
+        if (style_str == std::string{line_style::kSolid}) {
+            return ParsedLineStyle::kSolid;
+        }
+        throw docraft::exception::InvalidInputException("Invalid border style: " + style_str);
+    }
+
     std::string trim_whitespace(const std::string& text) {
         constexpr auto whitespace = " \t\n\r\f\v";
 

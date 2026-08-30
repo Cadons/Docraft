@@ -22,19 +22,18 @@
 #include "docraft/docraft_lib.h"
 
 #include "docraft/craft/i_docraft_parser.h"
+#include "docraft/craft/parser/docraft_parsed_line_style.h"
 
 namespace docraft::craft::parser {
     /**
      * @brief Tag-specific payload parsed from a `<Line>` element.
      */
-    struct ParsedLineData
+    struct ParsedLineData : ParsedStrokeStyleData
     {
         std::optional<float> x1;
         std::optional<float> y1;
         std::optional<float> x2;
         std::optional<float> y2;
-        std::optional<std::string> border_color;
-        std::optional<float> border_width;
     };
 
     /**

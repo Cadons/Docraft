@@ -35,6 +35,10 @@ namespace docraft::craft::parser {
                 elements::circle::attribute::kBorderWidth.data())) {
             data.border_width = border_width_attr.as_float();
         }
+        if (auto border_style_attr = craft_language_source.attribute(
+                elements::circle::attribute::kBorderStyle.data())) {
+            data.border_style = detail::parse_line_style(border_style_attr.as_string());
+        }
         if (auto radius_attr = craft_language_source.attribute(elements::circle::attribute::kRadius.data()))
         {
             data.radius = radius_attr.as_float();
@@ -64,6 +68,7 @@ namespace docraft::craft::parser {
             elements::circle::attribute::kBackgroundColor,
             elements::circle::attribute::kBorderColor,
             elements::circle::attribute::kBorderWidth,
+            elements::circle::attribute::kBorderStyle,
             elements::circle::attribute::kRadius,
             elements::circle::attribute::kStartX,
             elements::circle::attribute::kStartY,

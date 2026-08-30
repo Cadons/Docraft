@@ -61,6 +61,18 @@ namespace docraft::loom::craft {
         }
     }
 
+    nodes::DocraftLineStyle to_loom_line_style(parser::ParsedLineStyle style)
+    {
+        switch (style)
+        {
+        case parser::ParsedLineStyle::kDashed:
+            return nodes::DocraftLineStyle::kDashed;
+        case parser::ParsedLineStyle::kSolid:
+        default:
+            return nodes::DocraftLineStyle::kSolid;
+        }
+    }
+
     namespace {
         bool is_word_char(char ch)
         {

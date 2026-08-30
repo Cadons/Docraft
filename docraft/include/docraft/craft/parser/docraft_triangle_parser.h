@@ -24,16 +24,14 @@
 #include "docraft/docraft_position.h"
 
 #include "docraft/craft/i_docraft_parser.h"
+#include "docraft/craft/parser/docraft_parsed_line_style.h"
 
 namespace docraft::craft::parser {
     /**
      * @brief Tag-specific payload parsed from a `<Triangle>` element.
      */
-    struct ParsedTriangleData
+    struct ParsedTriangleData : ParsedShapeStyleData
     {
-        std::optional<std::string> background_color;
-        std::optional<std::string> border_color;
-        std::optional<float> border_width;
         std::vector<docraft::Position> points; // exactly 3 when present
     };
 

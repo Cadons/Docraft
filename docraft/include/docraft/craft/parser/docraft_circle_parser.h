@@ -22,6 +22,7 @@
 #include "docraft/docraft_lib.h"
 
 #include "docraft/craft/i_docraft_parser.h"
+#include "docraft/craft/parser/docraft_parsed_line_style.h"
 
 namespace docraft::craft::parser {
     /**
@@ -31,11 +32,8 @@ namespace docraft::craft::parser {
      * used a width/height bounding box); `docraft::loom::nodes::DocraftLoomCircle` only
      * ever has a single radius.
      */
-    struct ParsedCircleData
+    struct ParsedCircleData : ParsedShapeStyleData
     {
-        std::optional<std::string> background_color;
-        std::optional<std::string> border_color;
-        std::optional<float> border_width;
         std::optional<float> radius;
         /**
          * @brief Arc endpoints, as points in the node's own box. All four are required

@@ -1,8 +1,7 @@
 #pragma once
 #include <vector>
 
-#include "docraft/docraft_color.h"
-#include "docraft/loom/nodes/docraft_loom_node.h"
+#include "docraft/loom/nodes/docraft_loom_stroked_line.h"
 
 namespace docraft::loom::nodes {
     /**
@@ -19,23 +18,17 @@ namespace docraft::loom::nodes {
      * through `IDocraftLineRenderingBackend::draw_curve()`, which interpolates a uniform
      * Catmull-Rom spline: it passes exactly through every point rather than near them.
      */
-    class DOCRAFT_LIB DocraftLoomCurveLine : public DocraftLoomNode
+    class DOCRAFT_LIB DocraftLoomCurveLine : public DocraftLoomStrokedLine
     {
     public:
-        DocraftLoomCurveLine();
+        DocraftLoomCurveLine() = default;
         ~DocraftLoomCurveLine() override = default;
         void accept(loom::interfaces::DocraftLoomIVisitor& visitor) override;
 
         const std::vector<Position>& points() const;
         void set_points(const std::vector<Position>& points);
-        const DocraftColor& border_color() const;
-        void set_border_color(const DocraftColor& color);
-        float border_width() const;
-        void set_border_width(float width);
 
     private:
         std::vector<Position> points_;
-        DocraftColor border_color_;
-        float border_width_ = 1.0F;
     };
 } // docraft

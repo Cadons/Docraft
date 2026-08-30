@@ -39,6 +39,11 @@ namespace docraft::craft::parser {
         {
             data.border_width = border_width_attr.as_float();
         }
+        if (auto border_style_attr = craft_language_source.attribute(
+                elements::polygon::attribute::kBorderStyle.data()))
+        {
+            data.border_style = detail::parse_line_style(border_style_attr.as_string());
+        }
 
         auto points = detail::parse_points_attribute(craft_language_source,
                                                      elements::polygon::attribute::kPoints.data());
@@ -56,7 +61,8 @@ namespace docraft::craft::parser {
             elements::polygon::attribute::kPoints,
             elements::polygon::attribute::kBackgroundColor,
             elements::polygon::attribute::kBorderColor,
-            elements::polygon::attribute::kBorderWidth
+            elements::polygon::attribute::kBorderWidth,
+            elements::polygon::attribute::kBorderStyle
         };
     }
 } // namespace docraft::craft::parser
