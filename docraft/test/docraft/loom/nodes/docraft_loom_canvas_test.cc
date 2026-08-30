@@ -8,6 +8,7 @@
 #include "docraft/loom/pipeline/docraft_loom_pagination_processor.h"
 #include "docraft/loom/pipeline/docraft_loom_rendering_processor.h"
 #include "docraft/utils/docraft_mock_rendering_backend.h"
+#include "docraft/utils/docraft_loom_layout_box_test_access.h"
 
 namespace docraft::test {
     class DocraftLoomCanvasTest : public ::testing::Test
@@ -56,8 +57,8 @@ namespace docraft::test {
         canvas->accept(*measure_);
         canvas->accept(*layout_);
 
-        EXPECT_FLOAT_EQ(child->layout_box().frame.position.x, canvas->layout_box().frame.position.x);
-        EXPECT_FLOAT_EQ(child->layout_box().frame.position.y, canvas->layout_box().frame.position.y);
+        EXPECT_FLOAT_EQ(child->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x, canvas->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x);
+        EXPECT_FLOAT_EQ(child->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y, canvas->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y);
     }
 
     TEST_F(DocraftLoomCanvasTest, LayoutPlacesChildRelativeToCanvasOrigin)
@@ -75,11 +76,11 @@ namespace docraft::test {
         canvas->accept(*measure_);
         canvas->accept(*layout_);
 
-        EXPECT_FLOAT_EQ(canvas->layout_box().frame.position.x, 20.0F);
-        EXPECT_FLOAT_EQ(canvas->layout_box().frame.position.y, 30.0F);
+        EXPECT_FLOAT_EQ(canvas->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x, 20.0F);
+        EXPECT_FLOAT_EQ(canvas->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y, 30.0F);
         // 20 (canvas origin x) + 10 (child local x), 30 (canvas origin y) + 20 (child local y)
-        EXPECT_FLOAT_EQ(child->layout_box().frame.position.x, 30.0F);
-        EXPECT_FLOAT_EQ(child->layout_box().frame.position.y, 50.0F);
+        EXPECT_FLOAT_EQ(child->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x, 30.0F);
+        EXPECT_FLOAT_EQ(child->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y, 50.0F);
     }
 
     TEST_F(DocraftLoomCanvasTest, LayoutIsIdempotentAcrossRepeatedPasses)
@@ -101,13 +102,13 @@ namespace docraft::test {
 
         canvas->accept(*measure_);
         canvas->accept(*layout_);
-        EXPECT_FLOAT_EQ(child->layout_box().frame.position.x, 30.0F);
-        EXPECT_FLOAT_EQ(child->layout_box().frame.position.y, 50.0F);
+        EXPECT_FLOAT_EQ(child->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x, 30.0F);
+        EXPECT_FLOAT_EQ(child->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y, 50.0F);
 
         canvas->accept(*measure_);
         canvas->accept(*layout_);
-        EXPECT_FLOAT_EQ(child->layout_box().frame.position.x, 30.0F);
-        EXPECT_FLOAT_EQ(child->layout_box().frame.position.y, 50.0F);
+        EXPECT_FLOAT_EQ(child->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x, 30.0F);
+        EXPECT_FLOAT_EQ(child->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y, 50.0F);
     }
 
     TEST_F(DocraftLoomCanvasTest, LayoutComposesForNestedCanvas)
@@ -131,10 +132,10 @@ namespace docraft::test {
         outer->accept(*measure_);
         outer->accept(*layout_);
 
-        EXPECT_FLOAT_EQ(inner->layout_box().frame.position.x, 15.0F); // 5 + 10
-        EXPECT_FLOAT_EQ(inner->layout_box().frame.position.y, 15.0F);
-        EXPECT_FLOAT_EQ(leaf->layout_box().frame.position.x, 16.0F); // 15 + 1
-        EXPECT_FLOAT_EQ(leaf->layout_box().frame.position.y, 17.0F); // 15 + 2
+        EXPECT_FLOAT_EQ(inner->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x, 15.0F); // 5 + 10
+        EXPECT_FLOAT_EQ(inner->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y, 15.0F);
+        EXPECT_FLOAT_EQ(leaf->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x, 16.0F); // 15 + 1
+        EXPECT_FLOAT_EQ(leaf->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y, 17.0F); // 15 + 2
     }
 
     TEST_F(DocraftLoomCanvasTest, LayoutAdvancesCursorPastCanvasBottomForNextSibling)
@@ -149,8 +150,8 @@ namespace docraft::test {
         next->accept(*measure_);
         next->accept(*layout_);
 
-        EXPECT_FLOAT_EQ(next->layout_box().frame.position.y,
-                        canvas->layout_box().frame.position.y + canvas->layout_box().frame.size.height);
+        EXPECT_FLOAT_EQ(next->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y,
+                        canvas->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y + canvas->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.height);
     }
 
     TEST_F(DocraftLoomCanvasTest, PaginationRecursesIntoChildrenWithoutSplitting)
@@ -213,10 +214,10 @@ namespace docraft::test {
 
         ASSERT_EQ(backend.draw_line_calls().size(), 1U);
         const auto& call = backend.draw_line_calls()[0];
-        EXPECT_FLOAT_EQ(call.x1, canvas->layout_box().frame.position.x + 5.0F);
-        EXPECT_FLOAT_EQ(call.y1, canvas->layout_box().frame.position.y + 5.0F);
-        EXPECT_FLOAT_EQ(call.x2, canvas->layout_box().frame.position.x + 5.0F + 30.0F);
-        EXPECT_FLOAT_EQ(call.y2, canvas->layout_box().frame.position.y + 5.0F + 40.0F);
+        EXPECT_FLOAT_EQ(call.x1, canvas->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x + 5.0F);
+        EXPECT_FLOAT_EQ(call.y1, canvas->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y + 5.0F);
+        EXPECT_FLOAT_EQ(call.x2, canvas->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x + 5.0F + 30.0F);
+        EXPECT_FLOAT_EQ(call.y2, canvas->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y + 5.0F + 40.0F);
     }
 
     TEST_F(DocraftLoomCanvasTest, RenderingKeepsLineEndpointsAtTheirCanvasLocalCoordinates)
@@ -272,7 +273,7 @@ namespace docraft::test {
         canvas->accept(*layout_);
         canvas->accept(rendering);
 
-        const auto& origin = canvas->layout_box().frame.position;
+        const auto& origin = canvas->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position;
         ASSERT_EQ(backend.draw_line_calls().size(), 1U);
         const auto& call = backend.draw_line_calls()[0];
         EXPECT_FLOAT_EQ(call.x1, origin.x + 8.0F + 1.0F);
@@ -309,10 +310,10 @@ namespace docraft::test {
         canvas->accept(rendering);
 
         ASSERT_EQ(backend.draw_line_calls().size(), 2U);
-        EXPECT_FLOAT_EQ(backend.draw_line_calls()[0].x2, canvas->layout_box().frame.position.x);
-        EXPECT_FLOAT_EQ(backend.draw_line_calls()[0].y2, canvas->layout_box().frame.position.y + 30.0F);
-        EXPECT_FLOAT_EQ(backend.draw_line_calls()[1].x2, canvas->layout_box().frame.position.x + 30.0F);
-        EXPECT_FLOAT_EQ(backend.draw_line_calls()[1].y2, canvas->layout_box().frame.position.y);
+        EXPECT_FLOAT_EQ(backend.draw_line_calls()[0].x2, canvas->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x);
+        EXPECT_FLOAT_EQ(backend.draw_line_calls()[0].y2, canvas->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y + 30.0F);
+        EXPECT_FLOAT_EQ(backend.draw_line_calls()[1].x2, canvas->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x + 30.0F);
+        EXPECT_FLOAT_EQ(backend.draw_line_calls()[1].y2, canvas->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y);
     }
 
     TEST_F(DocraftLoomCanvasTest, RenderingPreservesDeclarationOrderForEqualZIndex)
@@ -339,9 +340,9 @@ namespace docraft::test {
         canvas->accept(rendering);
 
         ASSERT_EQ(backend.draw_line_calls().size(), 2U);
-        EXPECT_FLOAT_EQ(backend.draw_line_calls()[0].x2, canvas->layout_box().frame.position.x + 30.0F);
-        EXPECT_FLOAT_EQ(backend.draw_line_calls()[0].y2, canvas->layout_box().frame.position.y);
-        EXPECT_FLOAT_EQ(backend.draw_line_calls()[1].x2, canvas->layout_box().frame.position.x);
-        EXPECT_FLOAT_EQ(backend.draw_line_calls()[1].y2, canvas->layout_box().frame.position.y + 30.0F);
+        EXPECT_FLOAT_EQ(backend.draw_line_calls()[0].x2, canvas->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x + 30.0F);
+        EXPECT_FLOAT_EQ(backend.draw_line_calls()[0].y2, canvas->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y);
+        EXPECT_FLOAT_EQ(backend.draw_line_calls()[1].x2, canvas->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x);
+        EXPECT_FLOAT_EQ(backend.draw_line_calls()[1].y2, canvas->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y + 30.0F);
     }
 } // namespace docraft::test

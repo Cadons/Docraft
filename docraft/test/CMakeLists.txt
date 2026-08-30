@@ -14,6 +14,7 @@ set(TEST_SOURCES
         docraft/utils/docraft_font_registry_test.cc
         docraft/utils/docraft_file_utils_test.cc
         docraft/utils/docraft_test_temp_file.h
+        docraft/utils/docraft_loom_layout_box_test_access.h
         docraft/loom/pipeline/docraft_loom_measure_processor_test.cc
         docraft/loom/pipeline/docraft_loom_text_wrapper_test.cc
         docraft/loom/pipeline/docraft_loom_layout_processor_test.cc

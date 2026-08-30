@@ -94,6 +94,7 @@ set(DOCRAFT_SOURCES
         include/docraft/loom/nodes/docraft_loom_text.h
         src/docraft/loom/nodes/docraft_loom_node.cc
         include/docraft/loom/nodes/docraft_loom_node.h
+        include/docraft/loom/nodes/docraft_loom_layout_box_access.h
         src/docraft/loom/pipeline/docraft_loom_measure_processor.cc
         include/docraft/loom/pipeline/docraft_loom_measure_processor.h
         src/docraft/loom/pipeline/docraft_loom_text_wrapper.cc
@@ -136,6 +137,8 @@ set(DOCRAFT_SOURCES
         include/docraft/craft/docraft_craft_language_parser.h
         src/docraft/craft/parser/docraft_parser_helpers.cc
         include/docraft/craft/parser/docraft_parser_helpers.h
+        src/docraft/craft/parser/docraft_craft_enum_parsers.cc
+        include/docraft/craft/parser/docraft_craft_enum_parsers.h
         src/docraft/craft/parser/docraft_shape_parser_utils.cc
         include/docraft/craft/parser/docraft_shape_parser_utils.h
         include/docraft/craft/parser/docraft_parser.h
@@ -171,6 +174,53 @@ set(DOCRAFT_SOURCES
         # docraft/loom (translates DocraftParsedElement trees into loom nodes).
         include/docraft/loom/craft/docraft_loom_tree_builder.h
         src/docraft/loom/craft/docraft_loom_tree_builder.cc
+        include/docraft/loom/craft/docraft_loom_tree_builder_context.h
+        include/docraft/loom/craft/docraft_loom_tree_builder_utils.h
+        src/docraft/loom/craft/docraft_loom_tree_builder_utils.cc
+
+        # Loom tree-builder tag-handler registry: one IDocraftLoomTagHandler per Craft-
+        # language tag, mirroring docraft::craft's own IDocraftParser registry one stage
+        # earlier. Adding a new tag means adding one handler file + one registration line.
+        include/docraft/loom/craft/handlers/i_docraft_loom_tag_handler.h
+        include/docraft/loom/craft/docraft_loom_tag_handler_registry.h
+        src/docraft/loom/craft/docraft_loom_tag_handler_registry.cc
+        src/docraft/loom/craft/docraft_loom_builtin_tag_handlers.cc
+        include/docraft/loom/craft/handlers/docraft_loom_rectangle_handler.h
+        src/docraft/loom/craft/handlers/docraft_loom_rectangle_handler.cc
+        include/docraft/loom/craft/handlers/docraft_loom_circle_handler.h
+        src/docraft/loom/craft/handlers/docraft_loom_circle_handler.cc
+        include/docraft/loom/craft/handlers/docraft_loom_triangle_handler.h
+        src/docraft/loom/craft/handlers/docraft_loom_triangle_handler.cc
+        include/docraft/loom/craft/handlers/docraft_loom_polygon_handler.h
+        src/docraft/loom/craft/handlers/docraft_loom_polygon_handler.cc
+        include/docraft/loom/craft/handlers/docraft_loom_line_handler.h
+        src/docraft/loom/craft/handlers/docraft_loom_line_handler.cc
+        include/docraft/loom/craft/handlers/docraft_loom_curve_line_handler.h
+        src/docraft/loom/craft/handlers/docraft_loom_curve_line_handler.cc
+        include/docraft/loom/craft/handlers/docraft_loom_canvas_handler.h
+        src/docraft/loom/craft/handlers/docraft_loom_canvas_handler.cc
+        include/docraft/loom/craft/handlers/docraft_loom_chart_handler.h
+        src/docraft/loom/craft/handlers/docraft_loom_chart_handler.cc
+        include/docraft/loom/craft/handlers/docraft_loom_text_handler.h
+        src/docraft/loom/craft/handlers/docraft_loom_text_handler.cc
+        include/docraft/loom/craft/handlers/docraft_loom_page_number_handler.h
+        src/docraft/loom/craft/handlers/docraft_loom_page_number_handler.cc
+        include/docraft/loom/craft/handlers/docraft_loom_image_handler.h
+        src/docraft/loom/craft/handlers/docraft_loom_image_handler.cc
+        include/docraft/loom/craft/handlers/docraft_loom_blank_line_handler.h
+        src/docraft/loom/craft/handlers/docraft_loom_blank_line_handler.cc
+        include/docraft/loom/craft/handlers/docraft_loom_new_page_handler.h
+        src/docraft/loom/craft/handlers/docraft_loom_new_page_handler.cc
+        include/docraft/loom/craft/handlers/docraft_loom_list_handler.h
+        src/docraft/loom/craft/handlers/docraft_loom_list_handler.cc
+        include/docraft/loom/craft/handlers/docraft_loom_paragraph_handler.h
+        src/docraft/loom/craft/handlers/docraft_loom_paragraph_handler.cc
+        include/docraft/loom/craft/handlers/docraft_loom_layout_handler.h
+        src/docraft/loom/craft/handlers/docraft_loom_layout_handler.cc
+        include/docraft/loom/craft/handlers/docraft_loom_section_handler.h
+        src/docraft/loom/craft/handlers/docraft_loom_section_handler.cc
+        include/docraft/loom/craft/handlers/docraft_loom_table_handler.h
+        src/docraft/loom/craft/handlers/docraft_loom_table_handler.cc
 
         # docraft/loom/charts (Chart/Series craft tags expand into a populated Canvas via
         # a style registry -- Docraft's "chart plugin" mechanism; see DocraftChartBuilderRegistry).

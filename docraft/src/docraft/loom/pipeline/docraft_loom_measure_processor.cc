@@ -58,6 +58,10 @@ namespace docraft::loom::pipeline {
         inherited_wrap_width_ = 0.0F;
     }
 
+    float DocraftLoomMeasureProcessor::incoming_width() const {
+        return inherited_wrap_width_ > 0.0F ? inherited_wrap_width_ : content_width_;
+    }
+
     void DocraftLoomMeasureProcessor::visit(docraft::loom::nodes::DocraftLoomText *text) {
         if (!text) {
             return;
@@ -109,7 +113,7 @@ namespace docraft::loom::pipeline {
         // same way a weighted HStack column or Table cell already does for Text, so
         // plain block content (Text, Paragraph, VStack, ...) wraps to the page/section
         // width instead of measuring at its unbounded natural width.
-        const float incoming_width = inherited_wrap_width_ > 0.0F ? inherited_wrap_width_ : content_width_;
+        const float incoming_width = this->incoming_width();
         inherited_wrap_width_ = 0.0F;
         const float own_width = node->width() > 0.0F ? node->width() : incoming_width;
         const float padding = node->effective_padding();
@@ -201,7 +205,7 @@ namespace docraft::loom::pipeline {
         // child (plus 2x padding()) rather than owning a fixed width like Rectangle --
         // but it does narrow the width relayed to children by its own padding(), the
         // same inset Rectangle already applies around its children.
-        const float incoming_width = inherited_wrap_width_ > 0.0F ? inherited_wrap_width_ : content_width_;
+        const float incoming_width = this->incoming_width();
         inherited_wrap_width_ = 0.0F;
         const float padding = node->effective_padding();
         const float children_wrap_width = std::max(0.0F, incoming_width - (2.0F * padding));
@@ -209,6 +213,7 @@ namespace docraft::loom::pipeline {
         float total_height = node->resolve_outer_margin(*node, /*leading=*/true);
         float max_width = 0.0F;
         const int n = node->children_count();
+        const auto gaps = node->resolve_vertical_child_gaps(*node, node->spacing());
         for (int i = 0; i < n; ++i) {
             inherited_wrap_width_ = children_wrap_width;
             auto child = node->edit_child(i);
@@ -216,9 +221,7 @@ namespace docraft::loom::pipeline {
             const auto &sz = child->layout_box().measured_size;
             total_height += sz.height;
             if (i < n - 1) {
-                const auto next = node->child(i + 1);
-                total_height += nodes::DocraftLoomLayoutContainer::resolve_child_gap(
-                    node->spacing(), child->margin().bottom, next->margin().top);
+                total_height += gaps[static_cast<std::size_t>(i)];
             }
             max_width = std::max(max_width, sz.width);
         }
@@ -245,7 +248,7 @@ namespace docraft::loom::pipeline {
         // stale inherited value must not leak into the first child -- but the weighted
         // branch below still needs it (an ancestor's constraint, not content_width_, is
         // what a nested weighted HStack must divide among its columns).
-        const float incoming_width = inherited_wrap_width_ > 0.0F ? inherited_wrap_width_ : content_width_;
+        const float incoming_width = this->incoming_width();
         inherited_wrap_width_ = 0.0F;
 
         // Precomputed once, upfront: margin() is a static per-child property (doesn't
@@ -397,7 +400,7 @@ namespace docraft::loom::pipeline {
         // once here and re-armed before each item below, mirroring
         // DocraftLoomParagraph's relay (a single accept() call per item would otherwise
         // only let the first item consume it, leaving the rest unwrapped).
-        const float incoming_width = inherited_wrap_width_ > 0.0F ? inherited_wrap_width_ : content_width_;
+        const float incoming_width = this->incoming_width();
         inherited_wrap_width_ = 0.0F;
 
         float max_width = 0.0F;
@@ -488,7 +491,7 @@ namespace docraft::loom::pipeline {
         // so it doesn't leak into a cell's Text measurement alongside the budget
         // computed below, but the weight-based estimate can still divide it (rather than
         // content_width_ unconditionally) for a Table nested in a narrower container.
-        const float incoming_width = inherited_wrap_width_ > 0.0F ? inherited_wrap_width_ : content_width_;
+        const float incoming_width = this->incoming_width();
         inherited_wrap_width_ = 0.0F;
 
         const int rows = table->row_count();
@@ -505,7 +508,7 @@ namespace docraft::loom::pipeline {
         std::vector column_explicit_widths(static_cast<std::size_t>(cols), 0.0F);
         for (int r = 0; r < rows; ++r) {
             for (int c = 0; c < cols; ++c) {
-                if (auto width = table->cell(r, c)->explicit_width()) {
+                if (auto width = table->cell(r, c)->explicit_width(); width.has_value()) {
                     column_explicit_widths[static_cast<std::size_t>(c)] =
                             std::max(column_explicit_widths[static_cast<std::size_t>(c)], *width);
                 }

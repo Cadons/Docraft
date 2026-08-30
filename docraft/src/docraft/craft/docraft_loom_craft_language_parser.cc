@@ -24,6 +24,7 @@
 
 #include "docraft/craft/docraft_craft_language_parser.h"
 #include "docraft/craft/docraft_craft_language_tokens.h"
+#include "docraft/craft/parser/docraft_craft_enum_parsers.h"
 #include "docraft/craft/parser/docraft_section_parsers.h"
 #include "docraft/exception/docraft_exceptions.h"
 #include "docraft/loom/craft/docraft_loom_tree_builder.h"
@@ -33,61 +34,23 @@ namespace docraft::craft {
         loom::DocraftLoomPdfCreator::Margins to_margins(const parser::ParsedSectionData& data)
         {
             loom::DocraftLoomPdfCreator::Margins margins;
-            if (data.margin_top)
+            if (data.margin_top.has_value())
             {
                 margins.top = *data.margin_top;
             }
-            if (data.margin_bottom)
+            if (data.margin_bottom.has_value())
             {
                 margins.bottom = *data.margin_bottom;
             }
-            if (data.margin_left)
+            if (data.margin_left.has_value())
             {
                 margins.left = *data.margin_left;
             }
-            if (data.margin_right)
+            if (data.margin_right.has_value())
             {
                 margins.right = *data.margin_right;
             }
             return margins;
-        }
-
-        docraft::backend::DocraftPageSize parse_page_size(const std::string& size_str)
-        {
-            if (size_str == "A3" || size_str == "a3")
-            {
-                return docraft::backend::DocraftPageSize::kA3;
-            }
-            if (size_str == "A5" || size_str == "a5")
-            {
-                return docraft::backend::DocraftPageSize::kA5;
-            }
-            if (size_str == "Letter" || size_str == "letter")
-            {
-                return docraft::backend::DocraftPageSize::kLetter;
-            }
-            if (size_str == "Legal" || size_str == "legal")
-            {
-                return docraft::backend::DocraftPageSize::kLegal;
-            }
-            if (size_str == "A4" || size_str == "a4")
-            {
-                return docraft::backend::DocraftPageSize::kA4;
-            }
-            throw docraft::exception::InvalidInputException("Invalid page_size: " + size_str);
-        }
-
-        docraft::backend::DocraftPageOrientation parse_page_orientation(const std::string& orientation_str)
-        {
-            if (orientation_str == "landscape")
-            {
-                return docraft::backend::DocraftPageOrientation::kLandscape;
-            }
-            if (orientation_str == "portrait")
-            {
-                return docraft::backend::DocraftPageOrientation::kPortrait;
-            }
-            throw docraft::exception::InvalidInputException("Invalid page_orientation: " + orientation_str);
         }
 
         void apply_page(const pugi::xml_node& page_node, loom::DocraftLoomPdfCreator& creator)
@@ -96,10 +59,10 @@ namespace docraft::craft {
             const auto orientation_attr =
                 page_node.attribute(elements::settings::page::attribute::kOrientation.data());
             const auto size = size_attr
-                                  ? parse_page_size(size_attr.as_string())
+                                  ? parser::detail::parse_page_size(size_attr.as_string())
                                   : docraft::backend::DocraftPageSize::kA4;
             const auto orientation = orientation_attr
-                                         ? parse_page_orientation(orientation_attr.as_string())
+                                         ? parser::detail::parse_page_orientation(orientation_attr.as_string())
                                          : docraft::backend::DocraftPageOrientation::kPortrait;
             creator.set_page_format(size, orientation);
         }

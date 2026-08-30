@@ -6,7 +6,23 @@
 
 #include <array>
 
+#include "docraft/exception/docraft_exceptions.h"
+
 namespace docraft::loom::charts {
+    DocraftChartAxisPosition parse_chart_axis_position(const std::string& raw)
+    {
+        if (raw == "left") return DocraftChartAxisPosition::kLeft;
+        if (raw == "right") return DocraftChartAxisPosition::kRight;
+        if (raw == "top-left") return DocraftChartAxisPosition::kTopLeft;
+        if (raw == "top-right") return DocraftChartAxisPosition::kTopRight;
+        if (raw == "bottom-left") return DocraftChartAxisPosition::kBottomLeft;
+        if (raw == "bottom-right") return DocraftChartAxisPosition::kBottomRight;
+        if (raw == "center") return DocraftChartAxisPosition::kCenter;
+        throw docraft::exception::InvalidInputException(
+            "<Chart> 'axis_position' must be one of left/right/center/top-left/top-right/"
+            "bottom-left/bottom-right, got '" + raw + "'");
+    }
+
     DocraftChartBuilderRegistry& DocraftChartBuilderRegistry::instance()
     {
         static DocraftChartBuilderRegistry registry;

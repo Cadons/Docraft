@@ -14,6 +14,7 @@
 #include "docraft/loom/nodes/docraft_loom_curve_line.h"
 #include "docraft/loom/nodes/docraft_loom_hstack.h"
 #include "docraft/loom/nodes/docraft_loom_image.h"
+#include "docraft/loom/nodes/docraft_loom_layout_box_access.h"
 #include "docraft/loom/nodes/docraft_loom_line.h"
 #include "docraft/loom/nodes/docraft_loom_list.h"
 #include "docraft/loom/nodes/docraft_loom_new_page.h"
@@ -48,7 +49,7 @@ namespace docraft::loom::pipeline {
 
     bool DocraftLoomRenderingProcessor::should_render(const nodes::DocraftLoomNode& node) const
     {
-        const int page_index = node.layout_box().page_index;
+        const int page_index = node.layout_box().page_index_or_unpaginated();
         return page_index < 0 || page_index == current_page_index_;
     }
 
@@ -149,10 +150,10 @@ namespace docraft::loom::pipeline {
         const auto rgba = text->color().toRGB();
         if (lines.empty())
         {
-            const float y = text->layout_box().frame.position.y + ascent;
+            const float y = nodes::sealed_frame(*text).position.y + ascent;
             text_backend_->begin_text();
             text_backend_->set_text_color(rgba.r, rgba.g, rgba.b);
-            text_backend_->draw_text(text->text(), text->layout_box().frame.position.x, y);
+            text_backend_->draw_text(text->text(), nodes::sealed_frame(*text).position.x, y);
             text_backend_->end_text();
             // Path painting is not valid inside a BT/ET text object, so the
             // underline/strikeout strokes are issued after end_text().
@@ -160,7 +161,7 @@ namespace docraft::loom::pipeline {
             {
                 const float width = text_backend_->measure_text_width(text->text(), text->resolved_font_name(),
                                                                        text->font_size());
-                const float x_start = text->layout_box().frame.position.x;
+                const float x_start = nodes::sealed_frame(*text).position.x;
                 const float x_end = x_start + width;
                 if (text->underline())
                 {
@@ -175,8 +176,8 @@ namespace docraft::loom::pipeline {
         }
 
         const float line_height = text->layout_box().measured_size.height / static_cast<float>(lines.size());
-        const float box_x = text->layout_box().frame.position.x;
-        const float box_top = text->layout_box().frame.position.y;
+        const float box_x = nodes::sealed_frame(*text).position.x;
+        const float box_top = nodes::sealed_frame(*text).position.y;
         TextLineStyle style{
             .box_width = text->wrap_width(),
             .alignment = text->alignment(),
@@ -260,7 +261,7 @@ namespace docraft::loom::pipeline {
     {
         if (!node || !should_render(*node))
             return;
-        const auto& frame = node->layout_box().frame;
+        const auto& frame = nodes::sealed_frame(*node);
         draw_container_background(node->style(), frame.position, frame.size);
         // Without this clip, a child whose computed size exceeds the rectangle's own
         // frame (e.g. a Text node whose own explicit wrap_width overrides the width
@@ -273,7 +274,7 @@ namespace docraft::loom::pipeline {
     {
         if (!node || !should_render(*node))
             return;
-        const auto& frame = node->layout_box().frame;
+        const auto& frame = nodes::sealed_frame(*node);
         draw_container_background(node->style(), frame.position, frame.size);
         // Trims anything that overflows the canvas bounds -- see visit(DocraftLoomCanvas*)
         // in the layout processor for how children are positioned relative to this
@@ -294,7 +295,7 @@ namespace docraft::loom::pipeline {
     void DocraftLoomRenderingProcessor::visit(docraft::loom::nodes::DocraftLoomVStack* node)
     {
         if (!node || !should_render(*node)) return;
-        draw_container_background(node->style(), node->layout_box().frame.position, node->layout_box().frame.size);
+        draw_container_background(node->style(), nodes::sealed_frame(*node).position, nodes::sealed_frame(*node).size);
         for (int i: node->paint_order_indices())
             if (auto child = node->edit_child(i))
                 child->accept(*this);
@@ -303,7 +304,7 @@ namespace docraft::loom::pipeline {
     void DocraftLoomRenderingProcessor::visit(docraft::loom::nodes::DocraftLoomHStack* node)
     {
         if (!node || !should_render(*node)) return;
-        draw_container_background(node->style(), node->layout_box().frame.position, node->layout_box().frame.size);
+        draw_container_background(node->style(), nodes::sealed_frame(*node).position, nodes::sealed_frame(*node).size);
         for (int i: node->paint_order_indices())
             if (auto child = node->edit_child(i))
                 child->accept(*this);
@@ -320,8 +321,8 @@ namespace docraft::loom::pipeline {
             return;
         // frame.position is already engine-space top-left, matching what these backend
         // calls expect internally -- do not subtract height() here (see coordinate note).
-        const auto& pos = image->layout_box().frame.position;
-        const auto& size = image->layout_box().frame.size;
+        const auto& pos = nodes::sealed_frame(*image).position;
+        const auto& size = nodes::sealed_frame(*image).size;
         switch (image->format())
         {
         case nodes::ImageFormat::kPng:
@@ -352,7 +353,7 @@ namespace docraft::loom::pipeline {
             return;
         }
 
-        const auto& pos = line->layout_box().frame.position;
+        const auto& pos = nodes::sealed_frame(*line).position;
         // start()/end() are plain offsets from the node's anchor, exactly like the local
         // points of a Polygon/Triangle: inside a Canvas that anchor is the canvas origin
         // (plus the line's own x/y, both defaulting to 0), so x1/y1/x2/y2 read as
@@ -388,7 +389,7 @@ namespace docraft::loom::pipeline {
         // frame.position is the bounding box's top-left corner, so the center sits one
         // semi-axis in on each side -- for a width/height-sized oval that is exactly the
         // middle of the box its four extreme points touch.
-        const auto& pos = node->layout_box().frame.position;
+        const auto& pos = nodes::sealed_frame(*node).position;
         const nodes::Position center = {.x = pos.x + radius_x, .y = pos.y + radius_y};
 
         if (node->has_arc())
@@ -439,7 +440,7 @@ namespace docraft::loom::pipeline {
         DocraftLoomShapeDrawUtils::draw_shape_polygon({
             .target = {.shape_backend = shape_backend_, .line_backend = line_backend_},
             .style = node->style(),
-            .origin = node->layout_box().frame.position,
+            .origin = nodes::sealed_frame(*node).position,
             .points = node->points(),
         });
     }
@@ -451,7 +452,7 @@ namespace docraft::loom::pipeline {
         DocraftLoomShapeDrawUtils::draw_shape_polygon({
             .target = {.shape_backend = shape_backend_, .line_backend = line_backend_},
             .style = node->style(),
-            .origin = node->layout_box().frame.position,
+            .origin = nodes::sealed_frame(*node).position,
             .points = node->points(),
         });
     }
@@ -466,7 +467,7 @@ namespace docraft::loom::pipeline {
             .target = {.shape_backend = shape_backend_, .line_backend = line_backend_},
             .border_color = node->border_color(),
             .border_width = node->border_width(),
-            .origin = node->layout_box().frame.position,
+            .origin = nodes::sealed_frame(*node).position,
             .points = node->points(),
         });
     }
@@ -518,13 +519,13 @@ namespace docraft::loom::pipeline {
         // Own explicit background, if set -- the table draws the default fallback for
         // cells that don't set one (see Table's visit()), so there's no precedence logic
         // to duplicate here.
-        if (cell->background())
+        if (cell->background().has_value())
         {
             const auto rgba = cell->background()->toRGB();
             if (rgba.a > 0.0F)
             {
-                const auto& pos = cell->layout_box().frame.position;
-                const auto& size = cell->layout_box().frame.size;
+                const auto& pos = nodes::sealed_frame(*cell).position;
+                const auto& size = nodes::sealed_frame(*cell).size;
                 shape_backend_->save_state();
                 if (rgba.a < 1.0F)
                 {
@@ -546,7 +547,7 @@ namespace docraft::loom::pipeline {
     // background (which each cell draws itself in its own visit()).
     void DocraftLoomRenderingProcessor::draw_table_default_backgrounds(nodes::DocraftLoomTable& table)
     {
-        if (!table.default_cell_background())
+        if (!table.default_cell_background().has_value())
         {
             return;
         }
@@ -566,10 +567,10 @@ namespace docraft::loom::pipeline {
             for (int c = 0; c < table.column_count(); ++c)
             {
                 auto cell = table.cell(r, c);
-                if (!cell->background())
+                if (!cell->background().has_value())
                 {
-                    const auto& pos = cell->layout_box().frame.position;
-                    const auto& size = cell->layout_box().frame.size;
+                    const auto& pos = nodes::sealed_frame(*cell).position;
+                    const auto& size = nodes::sealed_frame(*cell).size;
                     shape_backend_->draw_rectangle(pos.x, pos.y, size.width, size.height);
                     shape_backend_->fill();
                 }
@@ -587,11 +588,11 @@ namespace docraft::loom::pipeline {
         // -- because that frame's position/size describe the outer padding() footprint
         // (see LayoutProcessor::visit(DocraftLoomTable*)), while the border must wrap
         // only the actual grid, inset by that padding from the footprint's edges.
-        const auto table_pos = table.cell(0, 0)->layout_box().frame.position;
+        const auto table_pos = nodes::sealed_frame(*table.cell(0, 0)).position;
         nodes::Size table_size{};
         for (int c = 0; c < table.column_count(); ++c)
         {
-            table_size.width += table.cell(0, c)->layout_box().frame.size.width;
+            table_size.width += nodes::sealed_frame(*table.cell(0, c)).size.width;
         }
         for (int r = 0; r < table.row_count(); ++r)
         {
@@ -608,12 +609,12 @@ namespace docraft::loom::pipeline {
         shape_backend_->stroke();
         for (int c = 1; c < table.column_count(); ++c)
         {
-            const float x = table.cell(0, c)->layout_box().frame.position.x;
+            const float x = nodes::sealed_frame(*table.cell(0, c)).position.x;
             line_backend_->draw_line(x, table_pos.y, x, table_pos.y + table_size.height);
         }
         for (int r = 1; r < table.row_count(); ++r)
         {
-            const float y = table.cell(r, 0)->layout_box().frame.position.y;
+            const float y = nodes::sealed_frame(*table.cell(r, 0)).position.y;
             line_backend_->draw_line(table_pos.x, y, table_pos.x + table_size.width, y);
         }
         shape_backend_->restore_state();

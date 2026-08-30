@@ -8,6 +8,7 @@
 #include "docraft/loom/nodes/docraft_loom_table.h"
 #include "docraft/loom/nodes/docraft_loom_table_cell.h"
 #include "docraft/loom/nodes/docraft_loom_text.h"
+#include "docraft/utils/docraft_loom_layout_box_test_access.h"
 
 // Regression tests for confirmed-but-not-yet-fixed bugs from the code review
 // (.local/CODE_REVIEW_LOOM_MIGRATION.md). These currently FAIL against the
@@ -45,8 +46,8 @@ namespace docraft::test {
         loom::pipeline::DocraftLoomLayoutProcessor processor(500.0F);
         rectangle->accept(processor);
 
-        const float first_width = hstack->child(0)->layout_box().frame.size.width;
-        const float second_width = hstack->child(1)->layout_box().frame.size.width;
+        const float first_width = hstack->child(0)->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.width;
+        const float second_width = hstack->child(1)->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.width;
         EXPECT_NEAR(first_width, 100.0F, 0.01F);
         EXPECT_NEAR(second_width, 100.0F, 0.01F);
         EXPECT_LE(first_width + second_width, 200.0F + 0.01F);
@@ -97,8 +98,8 @@ namespace docraft::test {
         // The inner HStack must divide `column`'s ~300pt resolved share (150 each),
         // not the outer HStack's own 600pt page width (which is what it would divide
         // if `column` were laid out against the wrong incoming width).
-        EXPECT_NEAR(a->layout_box().frame.size.width, 150.0F, 0.01F);
-        EXPECT_NEAR(b->layout_box().frame.size.width, 150.0F, 0.01F);
+        EXPECT_NEAR(a->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.width, 150.0F, 0.01F);
+        EXPECT_NEAR(b->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.width, 150.0F, 0.01F);
     }
 
     // Review bug #2 (Layout side, Table): same nesting bug for a weighted Table --
@@ -128,8 +129,8 @@ namespace docraft::test {
         loom::pipeline::DocraftLoomLayoutProcessor processor(500.0F);
         rectangle->accept(processor);
 
-        const float total_width = table->cell(0, 0)->layout_box().frame.size.width
-            + table->cell(0, 1)->layout_box().frame.size.width;
+        const float total_width = table->cell(0, 0)->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.width
+            + table->cell(0, 1)->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.width;
         EXPECT_LE(total_width, 200.0F + 0.01F);
     }
 
@@ -158,9 +159,9 @@ namespace docraft::test {
         // Effective weight is 1.0 for every column (negative treated as the 1.0
         // default), so all three columns must end up roughly equal -- not with the
         // first two inflated because the negative weight dragged total_weight down.
-        const float w0 = table->cell(0, 0)->layout_box().frame.size.width;
-        const float w1 = table->cell(0, 1)->layout_box().frame.size.width;
-        const float w2 = table->cell(0, 2)->layout_box().frame.size.width;
+        const float w0 = table->cell(0, 0)->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.width;
+        const float w1 = table->cell(0, 1)->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.width;
+        const float w2 = table->cell(0, 2)->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.width;
         EXPECT_NEAR(w0, w2, 1.0F);
         EXPECT_NEAR(w1, w2, 1.0F);
     }
@@ -257,7 +258,7 @@ namespace docraft::test {
 
             loom::pipeline::DocraftLoomLayoutProcessor processor(300.0F);
             table->accept(processor);
-            return content->layout_box().frame.position.y;
+            return content->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y;
         };
 
         const float y_without_margin = make_table_with_margin(0.0F);

@@ -10,6 +10,7 @@
 #include "docraft/loom/pipeline/docraft_loom_layout_processor.h"
 #include "docraft/loom/pipeline/docraft_loom_measure_processor.h"
 #include "../../backend/docraft_mock_backend.h"
+#include "docraft/utils/docraft_loom_layout_box_test_access.h"
 
 namespace docraft::test {
     using ::testing::Return;
@@ -130,8 +131,8 @@ namespace docraft::test {
 
         auto item = std::dynamic_pointer_cast<loom::nodes::DocraftLoomText>(list->edit_child(0));
         // item_x (list x) + marker width 50 + gap 6
-        EXPECT_FLOAT_EQ(item->layout_box().frame.position.x, list->layout_box().frame.position.x + 56.0F);
-        EXPECT_FLOAT_EQ(list->markers()[0].position.x, list->layout_box().frame.position.x);
+        EXPECT_FLOAT_EQ(item->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x, list->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x + 56.0F);
+        EXPECT_FLOAT_EQ(list->markers()[0].position.x, list->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x);
     }
 
     TEST_F(DocraftLoomListTest, BoxMarkerAlignsToFirstLineNotWholeWrappedBlock)
@@ -161,7 +162,7 @@ namespace docraft::test {
         const float first_line_height = 10.0F;
         const float marker_width = 12.0F;
         const float expected_offset = std::max(0.0F, (first_line_height - marker_width) / 2.0F);
-        EXPECT_FLOAT_EQ(list->markers()[0].position.y, list->layout_box().frame.position.y + expected_offset);
+        EXPECT_FLOAT_EQ(list->markers()[0].position.y, list->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y + expected_offset);
     }
 
     TEST_F(DocraftLoomListTest, NonTextChildThrowsOnMeasure)

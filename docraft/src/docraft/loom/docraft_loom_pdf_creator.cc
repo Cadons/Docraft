@@ -9,6 +9,7 @@
 
 #include "docraft/backend/pdf/docraft_haru_backend.h"
 #include "docraft/exception/docraft_exceptions.h"
+#include "docraft/loom/nodes/docraft_loom_layout_box_access.h"
 #include "docraft/utils/docraft_logger.h"
 #include "docraft/loom/pipeline/docraft_loom_measure_processor.h"
 #include "docraft/loom/pipeline/docraft_loom_pagination_processor.h"
@@ -194,7 +195,7 @@ namespace docraft::loom {
             executor.run(*header_, page_width - header_margins_.left - header_margins_.right,
                          header_margins_.left, header_margins_.top, /*assign_fixed_page_index=*/true);
             const float header_content_extent =
-                header_margins_.top + header_->layout_box().frame.size.height + header_margins_.bottom;
+                header_margins_.top + nodes::sealed_frame(*header_).size.height + header_margins_.bottom;
             header_extent = std::max(header_extent, header_content_extent);
         }
 

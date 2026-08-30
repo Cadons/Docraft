@@ -203,7 +203,7 @@ namespace docraft::craft::parser {
                 }
                 if (col_name == std::string{elements::kCell}) {
                     auto cell_data = parse_cell(col);
-                    if (!cell_data.background)
+                    if (!cell_data.background.has_value())
                     {
                         cell_data.background = row_data.background;
                     }
@@ -282,7 +282,7 @@ namespace docraft::craft::parser {
 
         if (auto thead = craft_language_source.child(elements::kTHead.data()))
         {
-            if (data.header_data_template)
+            if (data.header_data_template.has_value())
             {
                 throw docraft::exception::InvalidInputException(
                     "Table 'header' attribute cannot be combined with an explicit THead");

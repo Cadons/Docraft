@@ -42,7 +42,8 @@ namespace docraft::loom::pipeline {
      * @brief Implementation of the DocraftLoomIVisitor interface for processing Loom nodes during the layout phase.
      *
      */
-    class DocraftLoomLayoutProcessor : public interfaces::DocraftLoomIVisitor
+    class DocraftLoomLayoutProcessor : public interfaces::DocraftLoomIVisitor,
+                                        protected nodes::DocraftLoomLayoutBoxLayoutAccessor
     {
     public:
         /**
@@ -104,6 +105,23 @@ namespace docraft::loom::pipeline {
          * cleared or overwritten for that node's own children.
          */
         float incoming_width() const;
+
+        /**
+         * @brief Mints a fresh LayoutBox::LayoutProof (via the inherited
+         * DocraftLoomLayoutBoxAccessor) to read/write `box`'s frame -- safe to call
+         * from anywhere in this class, including nested member classes like
+         * PositionScope, which have the same access to private/protected members as
+         * any other member. A proof carries no data, so minting a new one is
+         * equivalent to reusing an existing one.
+         */
+        static nodes::Rect& edit_frame(nodes::LayoutBox& box)
+        {
+            return box.edit_frame(make_layout_proof());
+        }
+        static const nodes::Rect& frame_of(const nodes::LayoutBox& box)
+        {
+            return box.frame(make_layout_proof());
+        }
 
         /**
          * @brief RAII helper class to manage cursor state during node visits.

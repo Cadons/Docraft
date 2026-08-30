@@ -10,6 +10,7 @@
 #include "docraft/loom/pipeline/docraft_loom_measure_processor.h"
 #include "docraft/loom/pipeline/docraft_loom_rendering_processor.h"
 #include "docraft/utils/docraft_mock_rendering_backend.h"
+#include "docraft/utils/docraft_loom_layout_box_test_access.h"
 
 namespace docraft::test {
     class DocraftLoomShapeNodesTest : public ::testing::Test
@@ -44,12 +45,12 @@ namespace docraft::test {
         circle->accept(*measure_);
         circle->accept(*layout_);
 
-        EXPECT_FLOAT_EQ(circle->layout_box().frame.size.width, 20.0F);
+        EXPECT_FLOAT_EQ(circle->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.width, 20.0F);
 
         auto next = std::make_shared<loom::nodes::DocraftLoomCircle>();
         next->accept(*measure_);
         next->accept(*layout_);
-        EXPECT_FLOAT_EQ(next->layout_box().frame.position.y, circle->layout_box().frame.position.y + 20.0F);
+        EXPECT_FLOAT_EQ(next->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y, circle->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y + 20.0F);
     }
 
     TEST_F(DocraftLoomShapeNodesTest, CircleMeasuresToTheBoundingBoxOfItsTwoSemiAxes)
@@ -227,8 +228,8 @@ namespace docraft::test {
         triangle->accept(*measure_);
         triangle->accept(*layout_);
 
-        EXPECT_FLOAT_EQ(triangle->layout_box().frame.size.width, 10.0F);
-        EXPECT_FLOAT_EQ(triangle->layout_box().frame.size.height, 10.0F);
+        EXPECT_FLOAT_EQ(triangle->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.width, 10.0F);
+        EXPECT_FLOAT_EQ(triangle->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).size.height, 10.0F);
     }
 
     // ── Polygon ──────────────────────────────────────────────────────────────────
@@ -334,7 +335,7 @@ namespace docraft::test {
         circle.accept(*measure_);
         circle.accept(*layout_);
 
-        EXPECT_FLOAT_EQ(circle.layout_box().frame.position.x, 33.0F);
-        EXPECT_FLOAT_EQ(circle.layout_box().frame.position.y, 44.0F);
+        EXPECT_FLOAT_EQ(circle.layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x, 33.0F);
+        EXPECT_FLOAT_EQ(circle.layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y, 44.0F);
     }
 } // namespace docraft::test

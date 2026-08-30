@@ -219,14 +219,14 @@ namespace docraft::loom::charts {
         const bool show_legend = ctx.series.size() >= 2
                                   || (ctx.series.size() == 1 && !ctx.series.front().name.empty());
 
-        const float title_h = ctx.title ? kTitleBandHeight : 0.0F;
+        const float title_h = ctx.title.has_value() ? kTitleBandHeight : 0.0F;
         // y_label is its own horizontal band stacked below the title, above the plot --
         // NOT extra left-column width (there is no rotation to stand it up alongside the
         // Y-axis, see map_y()'s doc comment), so it never shares a row with the topmost Y
         // tick's numeric label.
-        const float y_label_h = ctx.y_label ? kYLabelBandHeight : 0.0F;
+        const float y_label_h = ctx.y_label.has_value() ? kYLabelBandHeight : 0.0F;
         const float legend_w = show_legend ? kLegendBandWidth : 0.0F;
-        const float bottom_h = kBottomAxisBandHeight + (ctx.x_label ? kXLabelHeight : 0.0F);
+        const float bottom_h = kBottomAxisBandHeight + (ctx.x_label.has_value() ? kXLabelHeight : 0.0F);
         const float left_w = kLeftAxisBandWidth;
 
         PlotRect plot{
@@ -316,7 +316,7 @@ namespace docraft::loom::charts {
         draw_series(*canvas, ctx, plot, mapped_bounds);
 
         // 5. Title.
-        if (ctx.title)
+        if (ctx.title.has_value())
         {
             const float title_w = estimate_text_width(*ctx.title, kTitleFontSize);
             add_text(*canvas, {.text = *ctx.title, .x = std::max(0.0F, (ctx.width - title_w) / 2.0F),
@@ -344,14 +344,14 @@ namespace docraft::loom::charts {
         // rather than rotated 90 degrees -- DocraftLoomText has no rotation support today
         // (see the rendering processor's visit(DocraftLoomText*)); wiring up the
         // already-unused draw_text_matrix backend primitive is a separate feature.
-        if (ctx.x_label)
+        if (ctx.x_label.has_value())
         {
             const float label_w = estimate_text_width(*ctx.x_label, kTickLabelFontSize);
             add_text(*canvas, {.text = *ctx.x_label, .x = plot.left + std::max(0.0F, (plot.width() - label_w) / 2.0F),
                                 .y = ctx.height - kXLabelHeight, .font_size = kTickLabelFontSize,
                                 .color = text_color, .bold = false, .font_family = font_family});
         }
-        if (ctx.y_label)
+        if (ctx.y_label.has_value())
         {
             // Its own reserved band (plot.top already accounts for y_label_h), aligned
             // above the plot's left edge -- never shares a row with the topmost Y tick's

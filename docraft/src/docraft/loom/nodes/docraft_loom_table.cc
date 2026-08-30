@@ -5,6 +5,7 @@
 
 #include "docraft/exception/docraft_input_exceptions.h"
 #include "docraft/loom/nodes/docraft_loom_image.h"
+#include "docraft/loom/nodes/docraft_loom_layout_box_access.h"
 #include "docraft/loom/nodes/docraft_loom_text.h"
 
 namespace docraft::loom::nodes {
@@ -44,11 +45,11 @@ namespace docraft::loom::nodes {
                     clone->set_content(image_clone);
                 }
             }
-            if (source.background())
+            if (source.background().has_value())
             {
                 clone->set_background(*source.background());
             }
-            if (source.explicit_width())
+            if (source.explicit_width().has_value())
             {
                 clone->set_explicit_width(*source.explicit_width());
             }
@@ -92,7 +93,7 @@ namespace docraft::loom::nodes {
                 // the whole row's split (another cell returns nullopt), and the original
                 // grid_ cell must be left untouched for that to be a true no-op.
                 auto kept_cell = clone_cell(*cell);
-                kept_cell->edit_layout_box().frame.size.height = natural_height;
+                sealed_edit_frame(*kept_cell).size.height = natural_height;
                 return CellContentSplit{.kept = kept_cell, .remainder = nullptr};
             }
 
@@ -114,7 +115,7 @@ namespace docraft::loom::nodes {
                 // (same reasoning as above) and normalize its frame away from any prior
                 // row-uniform stretch.
                 auto kept_cell = clone_cell(*cell);
-                kept_cell->edit_layout_box().frame.size.height = cell->layout_box().measured_size.height;
+                sealed_edit_frame(*kept_cell).size.height = cell->layout_box().measured_size.height;
                 return CellContentSplit{.kept = kept_cell, .remainder = nullptr};
             }
 
@@ -126,7 +127,7 @@ namespace docraft::loom::nodes {
             auto kept_text = std::static_pointer_cast<DocraftLoomText>(kept_cell->content());
             kept_text->set_wrapped_lines(kept_lines);
             kept_text->edit_layout_box().measured_size.height = line_height * static_cast<float>(kept_lines.size());
-            kept_cell->edit_layout_box().frame.size.height =
+            sealed_edit_frame(*kept_cell).size.height =
                     kept_text->layout_box().measured_size.height + (2.0F * DocraftLoomTable::kCellPaddingY);
 
             auto remainder_cell = clone_cell(*cell);
@@ -134,7 +135,7 @@ namespace docraft::loom::nodes {
             remainder_text->set_wrapped_lines(remainder_lines);
             remainder_text->edit_layout_box().measured_size.height =
                     line_height * static_cast<float>(remainder_lines.size());
-            remainder_cell->edit_layout_box().frame.size.height =
+            sealed_edit_frame(*remainder_cell).size.height =
                     remainder_text->layout_box().measured_size.height + (2.0F * DocraftLoomTable::kCellPaddingY);
 
             return CellContentSplit{.kept = kept_cell, .remainder = remainder_cell};
@@ -154,10 +155,10 @@ namespace docraft::loom::nodes {
             float kept_row_height = 0.0F;
             float remainder_row_height = 0.0F;
             for (const auto &split: splits) {
-                kept_row_height = std::max(kept_row_height, split.kept->layout_box().frame.size.height);
+                kept_row_height = std::max(kept_row_height, sealed_frame(*split.kept).size.height);
                 if (split.remainder) {
                     remainder_row_height =
-                            std::max(remainder_row_height, split.remainder->layout_box().frame.size.height);
+                            std::max(remainder_row_height, sealed_frame(*split.remainder).size.height);
                 }
             }
 
@@ -165,11 +166,11 @@ namespace docraft::loom::nodes {
             result.kept_row.reserve(splits.size());
             result.remainder_row.reserve(splits.size());
             for (const auto &split: splits) {
-                split.kept->edit_layout_box().frame.size.height = kept_row_height;
+                sealed_edit_frame(*split.kept).size.height = kept_row_height;
                 result.kept_row.push_back(split.kept);
 
                 if (split.remainder) {
-                    split.remainder->edit_layout_box().frame.size.height = remainder_row_height;
+                    sealed_edit_frame(*split.remainder).size.height = remainder_row_height;
                     result.remainder_row.push_back(split.remainder);
                     continue;
                 }
@@ -183,15 +184,15 @@ namespace docraft::loom::nodes {
                 // No set_content() call -- this cell stays blank -- but background and
                 // explicit_width are still styling of the cell itself and must carry
                 // over, same as clone_cell does for the split.kept/remainder cells.
-                if (split.kept->background()) {
+                if (split.kept->background().has_value()) {
                     blank->set_background(*split.kept->background());
                 }
                 if (auto explicit_width = split.kept->explicit_width(); explicit_width.has_value()) {
                     blank->set_explicit_width(explicit_width.value());
                 }
-                blank->edit_layout_box().frame = {
-                    .position = split.kept->layout_box().frame.position,
-                    .size = {split.kept->layout_box().frame.size.width, remainder_row_height}
+                blank->edit_layout_box().edit_frame(layout_proof_or_throw(*split.kept)) = {
+                    .position = sealed_frame(*split.kept).position,
+                    .size = {sealed_frame(*split.kept).size.width, remainder_row_height}
                 };
                 result.remainder_row.push_back(blank);
             }
@@ -242,7 +243,7 @@ namespace docraft::loom::nodes {
     float DocraftLoomTable::row_height(int row) const
     {
         auto reference_cell = cell(row, 0);
-        return reference_cell ? reference_cell->layout_box().frame.size.height : 0.0F;
+        return reference_cell ? sealed_frame(*reference_cell).size.height : 0.0F;
     }
 
     void DocraftLoomTable::set_column_weights(std::vector<float> weights)
