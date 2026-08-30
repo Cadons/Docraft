@@ -87,6 +87,15 @@ namespace docraft::loom::pipeline {
         void visit(docraft::loom::nodes::DocraftLoomNewPage*) override;
 
     private:
+        /**
+         * @brief Whatever width an ancestor (Rectangle/VStack/weighted HStack) pushed
+         * down via inherited_wrap_width_, or content_width_ if none did -- the width
+         * budget a container about to measure its own children should wrap/relay to
+         * them. Mirrors DocraftLoomLayoutProcessor::incoming_width()'s identical role in
+         * the layout pass.
+         */
+        float incoming_width() const;
+
         std::shared_ptr<docraft::backend::IDocraftTextRenderingBackend> text_backend_;
         DocraftLoomTextWrapper text_wrapper_;
         float content_width_ = 0.0F;

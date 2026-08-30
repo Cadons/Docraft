@@ -46,6 +46,14 @@ namespace docraft::loom::nodes {
         void set_weights(std::vector<float> weights);
         const std::vector<float>& weights() const;
 
+        /**
+         * @brief DocraftLoomLayoutContainer::resolve_child_gap() applied to every
+         * adjacent pair of node's children at once, using each child's bottom/top
+         * margin (the vertical-stacking counterpart of
+         * DocraftLoomHStack::resolve_horizontal_child_gaps()).
+         */
+        std::vector<float> resolve_vertical_child_gaps(const DocraftLoomNode& node, float container_spacing);
+
     private:
         float height_ = 0.0F;
         std::vector<float> weights_;

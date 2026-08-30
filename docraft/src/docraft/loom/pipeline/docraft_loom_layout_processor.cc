@@ -246,16 +246,7 @@ namespace docraft::loom::pipeline {
         // Precomputed once, upfront (see the matching comment in
         // DocraftLoomLayoutProcessor::visit(DocraftLoomHStack*)) so the weighted-height
         // math and the final placement loop agree on the same gaps.
-        std::vector<float> gaps;
-        if (n > 1)
-        {
-            gaps.resize(static_cast<std::size_t>(n - 1));
-            for (int i = 0; i < n - 1; ++i)
-            {
-                gaps[static_cast<std::size_t>(i)] = nodes::DocraftLoomLayoutContainer::resolve_child_gap(
-                    node->spacing(), node->child(i)->margin().bottom, node->child(i + 1)->margin().top);
-            }
-        }
+        const auto gaps = node->resolve_vertical_child_gaps(*node, node->spacing());
         float total_gap = 0.0F;
         for (const float gap : gaps)
         {

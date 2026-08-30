@@ -34,6 +34,13 @@ namespace docraft::loom::charts {
     };
 
     /**
+     * @brief Parses a `<Chart axis_position="...">` attribute value.
+     * @throws docraft::exception::InvalidInputException if `raw` isn't one of
+     * left/right/center/top-left/top-right/bottom-left/bottom-right.
+     */
+    DOCRAFT_LIB DocraftChartAxisPosition parse_chart_axis_position(const std::string& raw);
+
+    /**
      * @brief A single data series: a name (for the legend), a color, and its points in
      * data space.
      * @details Points are not yet mapped to canvas-local pixel coordinates -- each chart

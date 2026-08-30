@@ -28,6 +28,7 @@
 
 #include "docraft/craft/docraft_craft_parsed_element.h"
 #include "docraft/templating/docraft_template_engine.h"
+#include "docraft/loom/craft/docraft_loom_tree_builder_context.h"
 #include "docraft/loom/nodes/docraft_loom_blank_line.h"
 #include "docraft/loom/nodes/docraft_loom_circle.h"
 #include "docraft/loom/nodes/docraft_loom_image.h"
@@ -53,9 +54,6 @@ namespace docraft::craft::parser {
     struct ParsedTextData;
     struct ParsedPageNumberData;
     struct ParsedImageData;
-    struct ParsedTableTitleData;
-    struct ParsedTableCellData;
-    struct ParsedTableData;
 } // namespace docraft::craft::parser
 
 namespace docraft::loom::craft {
@@ -68,7 +66,7 @@ namespace docraft::loom::craft {
      * `docraft::loom` -- keeping the craft parser itself fully engine-agnostic (see the
      * plan's "Craft parser: generic + a separate loom builder layer").
      */
-    class DOCRAFT_LIB DocraftLoomTreeBuilder
+    class DOCRAFT_LIB DocraftLoomTreeBuilder : public DocraftLoomTableHandlerContext
     {
     public:
         /**
@@ -92,7 +90,7 @@ namespace docraft::loom::craft {
          * tag this builder recognizes.
          */
         std::shared_ptr<nodes::DocraftLoomNode> build(
-            const std::shared_ptr<docraft::craft::DocraftParsedElement>& element);
+            const std::shared_ptr<docraft::craft::DocraftParsedElement>& element) override;
 
         /**
          * @brief Sets the font family applied to Text/Title/Subtitle/PageNumber/table-cell
@@ -105,27 +103,6 @@ namespace docraft::loom::craft {
     private:
         using ParsedElement = docraft::craft::DocraftParsedElement;
 
-        std::shared_ptr<nodes::DocraftLoomRectangle> build_rectangle(const ParsedElement& element);
-        std::shared_ptr<nodes::DocraftLoomCanvas> build_canvas(const ParsedElement& element);
-        std::shared_ptr<nodes::DocraftLoomCanvas> build_chart(const ParsedElement& element);
-        std::shared_ptr<nodes::DocraftLoomCircle> build_circle(const ParsedElement& element);
-        std::shared_ptr<nodes::DocraftLoomTriangle> build_triangle(const ParsedElement& element);
-        std::shared_ptr<nodes::DocraftLoomPolygon> build_polygon(const ParsedElement& element);
-        std::shared_ptr<nodes::DocraftLoomCurveLine> build_curve_line(const ParsedElement& element);
-        std::shared_ptr<nodes::DocraftLoomLine> build_line(const ParsedElement& element);
-        std::shared_ptr<nodes::DocraftLoomText> build_text(const ParsedElement& element);
-        std::shared_ptr<nodes::DocraftLoomTitle> build_title(const ParsedElement& element);
-        std::shared_ptr<nodes::DocraftLoomSubtitle> build_subtitle(const ParsedElement& element);
-        std::shared_ptr<nodes::DocraftLoomPageNumber> build_page_number(const ParsedElement& element);
-        std::shared_ptr<nodes::DocraftLoomImage> build_image(const ParsedElement& element);
-        std::shared_ptr<nodes::DocraftLoomBlankLine> build_blank_line(const ParsedElement& element);
-        std::shared_ptr<nodes::DocraftLoomList> build_list(const ParsedElement& element);
-        std::shared_ptr<nodes::DocraftLoomTable> build_table(const ParsedElement& element);
-        std::shared_ptr<nodes::DocraftLoomNode> build_layout(const ParsedElement& element);
-        std::shared_ptr<nodes::DocraftLoomParagraph> build_paragraph(const ParsedElement& element);
-        std::shared_ptr<nodes::DocraftLoomVStack> build_section(const ParsedElement& element);
-        std::shared_ptr<nodes::DocraftLoomNewPage> build_new_page(const ParsedElement& element);
-
         /**
          * @brief Resolves a raw color attribute (hex, named color, or a `${...}` template
          * expression) against this builder's template engine and current Foreach item, then
@@ -136,110 +113,27 @@ namespace docraft::loom::craft {
          * @throws docraft::exception::InvalidInputException if the resolved string is not a
          * valid hex code or a recognized named color.
          */
-        DocraftColor resolve_color(const std::string& raw) const;
+        DocraftColor resolve_color(const std::string& raw) const override;
 
         /**
          * @brief Renders `text` against this builder's template engine, using
          * current_foreach_item_ if one is in scope (per-Foreach-item `${data("field")}`
          * resolution) or plain `${variable}` substitution otherwise.
          */
-        std::string render_template_text(const std::string& text) const;
+        std::string render_template_text(const std::string& text) const override;
 
-        void fill_text_node(nodes::DocraftLoomText& node, const docraft::craft::parser::ParsedTextData& data) const;
+        void fill_text_node(nodes::DocraftLoomText& node,
+                            const docraft::craft::parser::ParsedTextData& data) const override;
         void fill_page_number_node(nodes::DocraftLoomPageNumber& node,
-                                   const docraft::craft::parser::ParsedPageNumberData& data) const;
+                                   const docraft::craft::parser::ParsedPageNumberData& data) const override;
         void fill_image_node(nodes::DocraftLoomImage& node,
-                             const docraft::craft::parser::ParsedImageData& data) const;
+                             const docraft::craft::parser::ParsedImageData& data) const override;
 
-        /**
-         * @brief Builds a `<HTitle>`/`<VTitle>` table title cell. Deliberately resolves only
-         * plain `${variable}` expressions, not `${data("field")}` -- unlike model/header/cell
-         * content, a title's text has no per-row or per-object data of its own to bind to, so
-         * it never consults current_foreach_item_.
-         */
-        std::shared_ptr<nodes::DocraftLoomTableCell> build_title_cell(
-            const docraft::craft::parser::ParsedTableTitleData& title) const;
-        std::shared_ptr<nodes::DocraftLoomTableCell> build_content_cell(
-            const docraft::craft::parser::ParsedTableCellData& cell_data) const;
+        std::optional<std::string> default_font_family() const override { return default_font_family_; }
 
-        /**
-         * @brief Resolves a `<Table model="...">` attribute (already known not to be the
-         * "horizontal"/"vertical" keyword) into its parsed JSON form: `${...}` substitution
-         * (never against a Foreach item -- Table forces current_foreach_item_ null for its
-         * own model/header resolution), then single-quote-JSON normalization and parsing.
-         * @throws docraft::exception::DataFormatException if `raw` doesn't resolve to valid,
-         * non-empty JSON array.
-         */
-        nlohmann::json resolve_table_model_json(const std::string& raw) const;
-
-        /**
-         * @brief Converts an already-resolved `<Table model="...">` JSON array into a
-         * rectangular, string-only matrix (the "array of arrays" model shape).
-         * @throws docraft::exception::DataFormatException if `parsed` isn't a non-empty,
-         * rectangular JSON array of arrays of strings.
-         */
-        std::vector<std::vector<std::string>> to_string_matrix(const nlohmann::json& parsed) const;
-
-        /**
-         * @brief Resolves a `<Table header="...">` attribute into a non-empty,
-         * string-only array.
-         * @throws docraft::exception::DataFormatException if `raw` doesn't resolve to a
-         * non-empty JSON array of strings.
-         */
-        std::vector<std::string> resolve_table_header(const std::string& raw) const;
-
-        /**
-         * @brief Result of resolve_series_points(): `points` and `labels` are parallel
-         * arrays (same size, same index).
-         * @details See `charts::DocraftChartSeries::point_labels` for how the label side
-         * is consumed downstream.
-         */
-        struct ResolvedSeriesPoints
-        {
-            std::vector<nodes::Position> points;
-            std::vector<std::optional<std::string>> labels;
-        };
-
-        /**
-         * @brief Resolves a `<Series model="...">` attribute into numeric data points.
-         * @details Applies `${...}` substitution, single-quote-JSON normalization (same
-         * helpers Table's own model resolution uses), then JSON-parses the result. Each
-         * array entry must be one of: a 2-element numeric array (`[x,y]`); an object with
-         * numeric `x`/`y` keys; or a single-key object (`{"label": value}`, the shape
-         * pie/histogram model data always uses) -- which becomes `x` = the entry's
-         * ordinal index (0-based), `y` = the value, and `label` = the key. This is a
-         * separate resolver from `to_string_matrix()` (Table's own model matrix, which
-         * requires string cells) rather than a variant of it.
-         * @throws docraft::exception::DataFormatException if `raw` doesn't resolve to a
-         * JSON array, or any entry doesn't match one of the three accepted shapes.
-         */
-        ResolvedSeriesPoints resolve_series_points(const std::string& raw) const;
-
-        /**
-         * @brief Builds and appends the header row for a JSON/template `model` table (either
-         * shape), from `header` attribute or an explicit `<THead>` -- whichever `data`
-         * carries -- validated against `column_count`. Does nothing if neither is present.
-         * @throws docraft::exception::DataFormatException if the header size doesn't match
-         * `column_count`.
-         */
-        void add_table_model_header_row(nodes::DocraftLoomTable& table,
-                                        const docraft::craft::parser::ParsedTableData& data,
-                                        std::size_t column_count) const;
-
-        /**
-         * @brief Builds rows for a `<Table model="...">` that resolves to a JSON array of
-         * objects: the explicit `<TBody>` (already parsed into `data.rows`) is used as a
-         * per-object row template, repeated once per array element with
-         * current_foreach_item_ set to that element so `build_content_cell()`'s
-         * `${data("field")}` substitution resolves against it -- the same mechanism
-         * expand_foreach() uses for `<Foreach model="...">`.
-         * @throws docraft::exception::InvalidInputException if `data.rows` is empty (no
-         * `<TBody>` template was given).
-         * @throws docraft::exception::DataFormatException if `model_json` contains a
-         * non-object element.
-         */
-        void build_templated_model_rows(nodes::DocraftLoomTable& table, const nlohmann::json& model_json,
-                                        const docraft::craft::parser::ParsedTableData& data);
+        docraft::templating::DocraftTemplateEngine& template_engine() const override { return *template_engine_; }
+        const nlohmann::json* current_foreach_item() const override { return current_foreach_item_; }
+        void set_current_foreach_item(const nlohmann::json* item) override { current_foreach_item_ = item; }
 
         /**
          * @brief Recursively builds each of `children` and appends the non-null results
@@ -248,7 +142,7 @@ namespace docraft::loom::craft {
          * end up as direct siblings of the surrounding content in `parent`.
          */
         void add_children(const std::shared_ptr<nodes::DocraftLoomNode>& parent,
-                          const std::vector<std::shared_ptr<ParsedElement>>& children);
+                          const std::vector<std::shared_ptr<ParsedElement>>& children) override;
 
         /**
          * @brief Expands a `<Foreach>` element's children (its repeat template) into
