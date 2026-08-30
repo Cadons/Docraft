@@ -26,7 +26,7 @@ stage: ``measured_size`` (Measure) → ``frame`` (Layout) → ``page_index``
 (Pagination). Later stages read only what earlier stages wrote — skipping a
 stage for a node type breaks whatever reads its field.
 
-.. doxygenstruct:: docraft::loom::nodes::LayoutBox
+.. doxygenclass:: docraft::loom::nodes::LayoutBox
    :project: docraft
    :members:
 
