@@ -22,8 +22,6 @@
 #include <format>
 #include <ranges>
 
-#include <cctype>
-#include <fmt/base.h>
 #include <fmt/format.h>
 
 #include "docraft/exception/docraft_exceptions.h"
