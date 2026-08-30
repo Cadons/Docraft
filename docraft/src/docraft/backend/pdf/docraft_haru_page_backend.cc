@@ -20,6 +20,7 @@
 #include <string>
 
 #include <hpdf.h>
+#include <fmt/format.h>
 
 #include "docraft/exception/docraft_exceptions.h"
 
@@ -100,7 +101,7 @@ namespace docraft::backend::pdf {
             state_->edit_current_page_index() = page_number;
             return;
         }
-        throw docraft::exception::PageStateException(std::format("Invalid page number: {}. Total pages: {}",
+        throw docraft::exception::PageStateException(fmt::format("Invalid page number: {}. Total pages: {}",
                                                                  page_number + 1,
                                                                  state_->page_count()));
     }
