@@ -16,6 +16,9 @@
 
 #include "docraft/craft/parser/docraft_craft_enum_parsers.h"
 
+#include <algorithm>
+#include <cctype>
+
 #include "docraft/exception/docraft_exceptions.h"
 #define A3_STRING "a3"
 #define A4_STRING "a4"
