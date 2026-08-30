@@ -20,31 +20,36 @@
 
 #include <algorithm>
 #include <cmath>
+#include <type_traits>
 #include <utility>
+#include <vector>
 
 namespace docraft::backend::pdf {
     namespace {
-        template <typename PatternT>
-        auto invoke_set_dash(HPDF_Page page, const PatternT& pattern, int)
-            -> decltype(HPDF_Page_SetDash(page, pattern.data(), HPDF_UINT{0}, HPDF_REAL{0}), void())
-        {
-            HPDF_Page_SetDash(page, pattern.empty() ? nullptr : pattern.data(),
-                              static_cast<HPDF_UINT>(pattern.size()), 0.0F);
-        }
+        // Deduces the element type HPDF_Page_SetDash actually expects for its dash_ptn
+        // parameter (e.g. HPDF_UINT16 on some libharu builds, HPDF_REAL/float on others)
+        // straight from the linked function's signature, so the conversion below adapts
+        // to whichever libharu is linked instead of guessing per platform.
+        template <typename PageT, typename ElemT, typename NumT, typename PhaseT>
+        ElemT dash_pattern_element_type(HPDF_STATUS (*)(PageT, const ElemT*, NumT, PhaseT));
 
-        template <typename PatternT>
-        void invoke_set_dash(HPDF_Page page, const PatternT& pattern, long)
-        {
-             std::vector<HPDF_REAL> dash_ptn;
+        using DashPatternElement = decltype(dash_pattern_element_type(&HPDF_Page_SetDash));
+
+        void invoke_set_dash(HPDF_Page page, const std::vector<float>& pattern) {
+            std::vector<DashPatternElement> dash_ptn;
             dash_ptn.reserve(pattern.size());
             for (float segment : pattern) {
-                dash_ptn.push_back(static_cast<HPDF_REAL>(std::max(0.0F, std::round(segment))));
+                const float clamped = std::max(0.0F, segment);
+                if constexpr (std::is_integral_v<DashPatternElement>) {
+                    dash_ptn.push_back(static_cast<DashPatternElement>(std::round(clamped)));
+                } else {
+                    dash_ptn.push_back(static_cast<DashPatternElement>(clamped));
+                }
             }
-            const auto dash_ptn_size = static_cast<HPDF_REAL>(dash_ptn.size());
-            if (dash_ptn_size == 0.0F) {
+            if (dash_ptn.empty()) {
                 HPDF_Page_SetDash(page, nullptr, 0, 0.0F);
             } else {
-                HPDF_Page_SetDash(page, dash_ptn.data(), static_cast<HPDF_UINT>(dash_ptn_size), 0.0F);
+                HPDF_Page_SetDash(page, dash_ptn.data(), static_cast<HPDF_UINT>(dash_ptn.size()), 0.0F);
             }
         }
     } // namespace
@@ -65,7 +70,7 @@ namespace docraft::backend::pdf {
 
     void DocraftHaruLineBackend::set_line_dash_pattern(const std::vector<float>& pattern) const {
         auto *provider = state_->ensure_page_provider();
-        invoke_set_dash(provider->current_page(), pattern, 0);
+        invoke_set_dash(provider->current_page(), pattern);
     }
 
     void DocraftHaruLineBackend::draw_line(float x1, float y1, float x2, float y2) const {
