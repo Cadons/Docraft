@@ -87,7 +87,7 @@ namespace docraft::loom::nodes {
 
     std::vector<int> DocraftLoomNode::paint_order_indices() const {
         std::vector<int> indices(children_.size());
-        std::ranges::iota(indices, 0);
+        std::iota(indices.begin(), indices.end(), 0);
         std::ranges::stable_sort(indices, [this](int a, int b) {
             return children_[static_cast<std::size_t>(a)]->z_index()
                    < children_[static_cast<std::size_t>(b)]->z_index();

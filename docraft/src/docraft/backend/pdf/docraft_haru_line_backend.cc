@@ -33,6 +33,15 @@ namespace docraft::backend::pdf {
         template <typename PageT, typename ElemT, typename NumT, typename PhaseT>
         ElemT dash_pattern_element_type(HPDF_STATUS (*)(PageT, const ElemT*, NumT, PhaseT));
 
+#if defined(_MSC_VER) && defined(_M_IX86)
+        // On 32-bit MSVC, HPDF_EXPORT declares libharu's API __stdcall, a distinct
+        // function pointer type from the implicit __cdecl overload above (they only
+        // coincide on x64) -- without this overload, deducing against
+        // &HPDF_Page_SetDash fails to compile on x86.
+        template <typename PageT, typename ElemT, typename NumT, typename PhaseT>
+        ElemT dash_pattern_element_type(HPDF_STATUS(__stdcall*)(PageT, const ElemT*, NumT, PhaseT));
+#endif
+
         using DashPatternElement = decltype(dash_pattern_element_type(&HPDF_Page_SetDash));
 
         void invoke_set_dash(HPDF_Page page, const std::vector<float>& pattern) {
