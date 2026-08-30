@@ -19,6 +19,7 @@
 #include <hpdf.h>
 
 #include <utility>
+#include <cmath>
 
 namespace docraft::backend::pdf {
     DocraftHaruLineBackend::DocraftHaruLineBackend(const std::shared_ptr<DocraftHaruSharedState> &state)
@@ -38,11 +39,23 @@ namespace docraft::backend::pdf {
     void DocraftHaruLineBackend::set_line_dash_pattern(const std::vector<float>& pattern) const {
         auto *provider = state_->ensure_page_provider();
         if (pattern.empty()) {
-            HPDF_Page_SetDash(provider->current_page(), nullptr, 0, 0.0F);
+            HPDF_Page_SetDash(provider->current_page(), nullptr, 0, 0);
             return;
         }
-        HPDF_Page_SetDash(provider->current_page(), pattern.data(),
-                          static_cast<HPDF_UINT>(pattern.size()), 0.0F);
+
+        // libharu expects an array of HPDF_UINT16 (unsigned 16-bit) values for the dash
+        // pattern. Convert the float pattern to integers, rounding to nearest and
+        // clamping to >= 0 to avoid underflow when casting.
+        std::vector<HPDF_REAL> dash;
+        dash.reserve(pattern.size());
+        for (float v : pattern) {
+            int rounded = static_cast<int>(std::lround(v));
+            if (rounded < 0) rounded = 0;
+            dash.push_back(static_cast<HPDF_REAL>(rounded));
+        }
+
+        HPDF_Page_SetDash(provider->current_page(), dash.data(),
+                          static_cast<HPDF_UINT>(dash.size()), 0);
     }
 
     void DocraftHaruLineBackend::draw_line(float x1, float y1, float x2, float y2) const {
