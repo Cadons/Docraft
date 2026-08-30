@@ -22,7 +22,7 @@
 #include <format>
 #include <ranges>
 
-#include <cctype>
+#include <fmt/format.h>
 
 #include "docraft/exception/docraft_exceptions.h"
 
@@ -44,7 +44,7 @@ namespace {
         {
             return;
         }
-        throw docraft::exception::InvalidInputException(std::format(
+        throw docraft::exception::InvalidInputException(fmt::format(
             "Attribute '{}' is not supported on <{}>; that element's size is determined by {}",
             name, tag_name,
             tag_name == docraft::craft::elements::kLine || tag_name == docraft::craft::elements::kCurveLine
@@ -71,7 +71,7 @@ namespace {
             parent && std::string_view{parent.name()} == docraft::craft::elements::kLayout;
         if (!parent_is_layout)
         {
-            throw docraft::exception::InvalidInputException(std::format(
+            throw docraft::exception::InvalidInputException(fmt::format(
                 "Attribute 'weight' is not supported on <{}>; weight only applies to a "
                 "direct child of <Layout>", tag_name));
         }
@@ -87,9 +87,9 @@ namespace {
             known += known.empty() ? "" : ", ";
             known += candidate;
         }
-        throw docraft::exception::InvalidInputException(std::format(
+        throw docraft::exception::InvalidInputException(fmt::format(
             "Unknown attribute '{}' on <{}>. That element accepts {}{}", name, tag_name,
-            known.empty() ? std::string{"only the common attributes"} : std::format("'{}'", known),
+            known.empty() ? std::string{"only the common attributes"} : fmt::format("'{}'", known),
             allow_common ? ", plus the common attributes (name, x, y, width, height, padding, margin*, "
                            "position, z_index, visible)"
                          : " and nothing else"));

@@ -21,6 +21,7 @@
 #include <string>
 
 #include <pugixml.hpp>
+#include <fmt/format.h>
 
 #include "docraft/craft/docraft_craft_language_parser.h"
 #include "docraft/craft/docraft_craft_language_tokens.h"
@@ -375,7 +376,7 @@ namespace docraft::craft {
                 metadata_node = child;
                 seen_tags.at(section::kMetadata) = true;
             }else {
-                throw docraft::exception::InvalidInputException(std::format("Unknown top-level element <{}> in <{}>", tag, section::kDocument));
+                throw docraft::exception::InvalidInputException(fmt::format("Unknown top-level element <{}> in <{}>", tag, section::kDocument));
             }
         }
 

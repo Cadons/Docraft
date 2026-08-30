@@ -20,6 +20,7 @@
 #include <fstream>
 #include <random>
 #include <string>
+#include <fmt/format.h>
 
 namespace {
     // Name of the file created inside each private per-call subdirectory; the
@@ -57,7 +58,7 @@ namespace docraft::utils {
         std::filesystem::path private_dir;
         for (int attempt = 0; attempt < kMaxDirCreateAttempts; ++attempt)
         {
-            auto candidate = tmp_root / (std::format("{}{:016x}", kTempDirPrefix, rng()));
+            auto candidate = tmp_root / (fmt::format("{}{:016x}", kTempDirPrefix, rng()));
             if (std::filesystem::create_directory(candidate, ec))
             {
                 private_dir = std::move(candidate);
