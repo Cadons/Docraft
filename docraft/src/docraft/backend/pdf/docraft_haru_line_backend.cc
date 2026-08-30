@@ -35,13 +35,10 @@ namespace docraft::backend::pdf {
         template <typename PatternT>
         void invoke_set_dash(HPDF_Page page, const PatternT& pattern, long)
         {
-            // Rounds each on/off segment length to the nearest non-negative integer
-            // point, since HPDF_UINT16 (unlike HPDF_REAL) cannot represent a fraction
-            // or a negative length.
-            std::vector<HPDF_REAL> dash_ptn;
+             std::vector<HPDF_REAL> dash_ptn;
             dash_ptn.reserve(pattern.size());
             for (float segment : pattern) {
-                dash_ptn.push_back(static_cast<HPDF_UINT16>(std::max(0.0F, std::round(segment))));
+                dash_ptn.push_back(static_cast<HPDF_REAL>(std::max(0.0F, std::round(segment))));
             }
             const auto dash_ptn_size = static_cast<HPDF_REAL>(dash_ptn.size());
             if (dash_ptn_size == 0.0F) {
