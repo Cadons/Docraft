@@ -169,4 +169,31 @@ namespace docraft::test {
         ASSERT_EQ(backend.dash_pattern_calls().size(), 1U);
         EXPECT_FALSE(backend.dash_pattern_calls()[0].pattern.empty());
     }
+
+    // Bug #102 (follow-up to #99): DocraftLoomRectangle stacks its children
+    // top-to-bottom the same way DocraftLoomVStack does, but never picked up #99's
+    // cross-axis margin fix -- margin_left/right on a child was still silently
+    // dropped instead of being honored as a per-child offset, same as VStack.
+    TEST_F(DocraftLoomRectangleTest, HonorsChildMarginLeftAsCrossAxisOffset)
+    {
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(50.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto rect = std::make_shared<loom::nodes::DocraftLoomRectangle>();
+        rect->set_padding(0.0F);
+        auto plain = std::make_shared<loom::nodes::DocraftLoomText>("a");
+        auto offset = std::make_shared<loom::nodes::DocraftLoomText>("b");
+        offset->set_margin(0.0F, 0.0F, 0.0F, 40.0F); // left only
+        rect->add_child(plain);
+        rect->add_child(offset);
+
+        rect->accept(*measure_);
+        rect->accept(*layout_);
+
+        const float plain_x = plain->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x;
+        const float offset_x = offset->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x;
+        EXPECT_FLOAT_EQ(offset_x - plain_x, 40.0F);
+        // The rectangle must widen to still fit the offset child's full extent.
+        EXPECT_FLOAT_EQ(rect->layout_box().measured_size.width, 90.0F); // 50 (text) + 40 (margin_left)
+    }
 } // namespace docraft::test

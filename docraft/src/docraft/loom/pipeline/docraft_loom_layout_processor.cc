@@ -149,8 +149,11 @@ namespace docraft::loom::pipeline {
             for (int i = 0; i < n; ++i)
             {
                 inherited_width_ = children_width;
-                cursor_.set_position(start_x, current_y);
                 auto child = node->edit_child(i);
+                // Cross-axis margin (left/right): no sibling shares this axis to
+                // collapse against, so it's a plain per-child offset within the
+                // rectangle, mirroring how VStack honors margin_left/right.
+                cursor_.set_position(start_x + child->margin().left, current_y);
                 child->accept(*this);
                 current_y += child->layout_box().measured_size.height;
                 if (i < n - 1)
