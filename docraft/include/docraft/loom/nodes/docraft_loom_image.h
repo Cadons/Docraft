@@ -43,6 +43,8 @@ namespace docraft::loom::nodes {
         float height() const;
         void set_height(float height);
 
+        bool keeps_own_size_in_weighted_slot() const override;
+
     private:
         std::string path_;
         ImageFormat format_ = ImageFormat::kPng;

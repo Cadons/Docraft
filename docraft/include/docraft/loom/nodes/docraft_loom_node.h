@@ -278,6 +278,20 @@ namespace docraft::loom::nodes {
         void set_margin(float margin);
         void set_margin(float top, float right, float bottom, float left);
 
+        /**
+         * @brief Whether this node's own declared size should survive being placed
+         * into a weighted stacking layout's (HStack/VStack) resolved slot, instead
+         * of being stretched to fill it. Default false -- filling the slot is the
+         * whole point of weight() for most node types (a Rectangle used as a
+         * column background, plain text, a nested container). DocraftLoomImage
+         * overrides this when it has an explicit width(): stretching an image
+         * along only one axis (its own height() is left untouched) distorts it.
+         * A plain virtual here lets the layout processor ask any child without a
+         * dynamic_cast/type-check chain -- a future node type with the same
+         * concern just overrides this, no processor edits required.
+         */
+        virtual bool keeps_own_size_in_weighted_slot() const { return false; }
+
     private:
         std::vector<std::shared_ptr<DocraftLoomNode>> children_;
         LayoutBox layout_box_ = {};

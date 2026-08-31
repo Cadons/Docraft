@@ -399,14 +399,13 @@ namespace docraft::loom::pipeline {
             if (!resolved_widths.empty())
             {
                 advance = resolved_widths[static_cast<std::size_t>(i)];
-                // An Image that declared its own explicit width() keeps it -- stretching
-                // it to the resolved slot width would distort it (only this axis gets
-                // overwritten, height is left alone). Unweighted/undeclared images and
-                // every other child type (e.g. a Rectangle used as a column background)
-                // still fill the slot, which is the whole point of weights() for them.
-                const auto* image = dynamic_cast<const nodes::DocraftLoomImage*>(child.get());
-                const bool keep_own_width = image != nullptr && image->width() > 0.0F;
-                if (!keep_own_width)
+                // A child that opts out (e.g. an Image with its own declared width --
+                // see DocraftLoomNode::keeps_own_size_in_weighted_slot()) keeps its own
+                // width instead of being stretched to the resolved slot, which would
+                // distort it (only this axis gets overwritten, height is left alone).
+                // Every other child type still fills the slot, the whole point of
+                // weights() for them.
+                if (!child->keeps_own_size_in_weighted_slot())
                 {
                     edit_frame(child->edit_layout_box()).size.width = advance;
                 }
