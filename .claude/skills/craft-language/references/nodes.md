@@ -378,7 +378,9 @@ the point of `weight` for those.
 A declared `width` survives even inside a weighted `<Layout orientation="horizontal">` column —
 the image is not force-stretched to the column's resolved width the way other weighted children
 are (that used to distort it, widening only its width and leaving height untouched). Omit `width`
-if you *do* want the image to fill its weighted slot.
+(and give it an explicit `height`) if you do want the image to fill its weighted slot — omitting
+both leaves it measured at the slot's width and **0 height** (dimensions are never derived from
+the file, see above), i.e. invisible.
 
 ```xml
 <Image src="assets/logo.png" width="50" height="50" />
