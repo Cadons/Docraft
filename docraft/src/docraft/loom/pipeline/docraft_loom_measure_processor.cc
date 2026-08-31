@@ -223,7 +223,10 @@ namespace docraft::loom::pipeline {
             if (i < n - 1) {
                 total_height += gaps[static_cast<std::size_t>(i)];
             }
-            max_width = std::max(max_width, sz.width);
+            // Cross-axis margins (left/right) have no sibling on this axis to collapse
+            // against, unlike top/bottom -- they're a plain per-child inset the column
+            // must widen to still fit, mirroring how HStack treats top/bottom below.
+            max_width = std::max(max_width, sz.width + child->margin().left + child->margin().right);
         }
         total_height += node->resolve_outer_margin(*node, /*leading=*/false);
         auto &ms = node->edit_layout_box().measured_size;
@@ -297,7 +300,10 @@ namespace docraft::loom::pipeline {
             if (i < n - 1) {
                 total_width += gaps[static_cast<std::size_t>(i)];
             }
-            max_height = std::max(max_height, sz.height);
+            // Cross-axis margins (top/bottom) have no sibling on this axis to collapse
+            // against, unlike left/right -- they're a plain per-child inset the row
+            // must grow to still fit, mirroring how VStack treats left/right above.
+            max_height = std::max(max_height, sz.height + child->margin().top + child->margin().bottom);
         }
         auto &ms = node->edit_layout_box().measured_size;
         ms.width = total_width + leading_margin + trailing_margin + (n > 0 ? (2.0F * padding) : 0.0F);

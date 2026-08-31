@@ -84,4 +84,9 @@ namespace docraft::loom::nodes {
     {
         requested_height_ = height;
     }
+
+    bool DocraftLoomImage::keeps_own_size_in_weighted_slot() const
+    {
+        return width() > 0.0F;
+    }
 } // docraft

@@ -345,6 +345,11 @@ an explicit `height="..."` — a VStack's height is otherwise derived bottom-up 
 ambient "page height" budget the way HStack always has a page width to divide), so per-child
 `weight` alone on a heightless vertical layout is silently dropped.
 
+A weighted child is stretched to fill its resolved column/row share — **except an `<Image>` that
+declares its own `width`** (see below), which keeps that declared width undistorted; everything
+else (a `<Rectangle>` used as a column background, plain text, etc.) still fills the slot, which is
+the point of `weight` for those.
+
 ```xml
 <Layout orientation="horizontal" spacing="8">
   <Text weight="1">Narrow</Text>
@@ -369,6 +374,11 @@ ambient "page height" budget the way HStack always has a page width to divide), 
 
 `src` and `data` together throws. Image format derives from `src`'s extension first letter:
 `p`/`P` → PNG, `j`/`J` → JPEG, else raw.
+
+A declared `width` survives even inside a weighted `<Layout orientation="horizontal">` column —
+the image is not force-stretched to the column's resolved width the way other weighted children
+are (that used to distort it, widening only its width and leaving height untouched). Omit `width`
+if you *do* want the image to fill its weighted slot.
 
 ```xml
 <Image src="assets/logo.png" width="50" height="50" />

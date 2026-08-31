@@ -281,8 +281,11 @@ namespace docraft::loom::pipeline {
         for (int i = 0; i < n; ++i)
         {
             inherited_width_ = relay_width;
-            cursor_.set_position(start_x, current_y);
             auto child = node->edit_child(i);
+            // Cross-axis margin (left/right): no sibling shares this axis to collapse
+            // against, so it's a plain per-child offset within the column, mirroring
+            // how HStack honors margin_top/bottom below.
+            cursor_.set_position(start_x + child->margin().left, current_y);
             child->accept(*this);
             float advance = child->layout_box().measured_size.height;
             if (!resolved_heights.empty())
@@ -386,14 +389,26 @@ namespace docraft::loom::pipeline {
             {
                 inherited_width_ = resolved_widths[static_cast<std::size_t>(i)];
             }
-            cursor_.set_position(current_x, start_y);
             auto child = node->edit_child(i);
+            // Cross-axis margin (top/bottom): no sibling shares this axis to collapse
+            // against, so it's a plain per-child offset within the row, mirroring how
+            // VStack honors margin_left/right above.
+            cursor_.set_position(current_x, start_y + child->margin().top);
             child->accept(*this);
             float advance = child->layout_box().measured_size.width;
             if (!resolved_widths.empty())
             {
                 advance = resolved_widths[static_cast<std::size_t>(i)];
-                edit_frame(child->edit_layout_box()).size.width = advance;
+                // A child that opts out (e.g. an Image with its own declared width --
+                // see DocraftLoomNode::keeps_own_size_in_weighted_slot()) keeps its own
+                // width instead of being stretched to the resolved slot, which would
+                // distort it (only this axis gets overwritten, height is left alone).
+                // Every other child type still fills the slot, the whole point of
+                // weights() for them.
+                if (!child->keeps_own_size_in_weighted_slot())
+                {
+                    edit_frame(child->edit_layout_box()).size.width = advance;
+                }
             }
             current_x += advance;
             if (i < n - 1)

@@ -193,6 +193,20 @@ TEST_F(DocraftHaruBackendTest, SavesPdfToFile) {
     std::filesystem::remove(output_path);
 }
 
+// Bug #97: HPDF_SaveToFile's HPDF_STATUS was discarded, so a failed write (e.g.
+// the output path is unwritable) still logged success and returned normally --
+// docraft_tool exited 0 with the old file on disk untouched. save_to_file() must
+// now surface that failure instead of swallowing it.
+TEST_F(DocraftHaruBackendTest, ThrowsWhenOutputPathCannotBeWritten) {
+    ASSERT_NE(backend().output_backend(), nullptr);
+    // A path inside a directory that doesn't exist -- libharu's own file open
+    // fails the same way it does for a locked/inaccessible file (HPDF_FILE_OPEN_ERROR).
+    const std::string unwritable_path =
+        "/__docraft_nonexistent_directory__/out.pdf";
+    EXPECT_THROW(backend().output_backend()->save_to_file(unwritable_path),
+                 docraft::exception::RenderingFailedException);
+}
+
 TEST_F(DocraftHaruBackendTest, SavesPdfWithMetadataInfo) {
     DocraftDocumentMetadata metadata;
     metadata.set_title("Docraft Metadata Title");
