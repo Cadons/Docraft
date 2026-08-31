@@ -33,9 +33,6 @@ Thumbs.db
 # User presets
 CMakeUserPresets.json
 
-# Build artifacts outside Docker
-stress_artifacts/
-
 # Documentation source (build from container if needed)
 doc/build/
 

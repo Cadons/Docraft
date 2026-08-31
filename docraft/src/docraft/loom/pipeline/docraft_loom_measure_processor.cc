@@ -134,7 +134,10 @@ namespace docraft::loom::pipeline {
                 child_height += nodes::DocraftLoomLayoutContainer::resolve_child_gap(
                     node->spacing(), child->margin().bottom, next->margin().top);
             }
-            child_width = std::max(child_width, sz.width);
+            // Cross-axis margins (left/right) have no sibling on this axis to collapse
+            // against, unlike top/bottom -- they're a plain per-child inset the
+            // rectangle must widen to still fit, mirroring how VStack treats them.
+            child_width = std::max(child_width, sz.width + child->margin().left + child->margin().right);
         }
         child_height += node->resolve_outer_margin(*node, /*leading=*/false);
         const bool has_children = n > 0;

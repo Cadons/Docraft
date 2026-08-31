@@ -51,15 +51,10 @@ one is a case where a document parses fine but doesn't do what a reasonable auth
    skipped**, not an error — only `Header`/`Body`/`Footer`/`Settings`/`Metadata` are recognized
    directly under `<Document>`.
 
-9. **`fonts.json`'s `OpenSans-Italic` entry actually points at the bold-italic TTF.** Requesting
-   `font_name="OpenSans" style="italic"` currently renders bold-italic glyphs. Don't present that
-   combination as a clean italic example; use `Roboto` or a custom font if a plain-italic example
-   is needed.
+9. **No conditional/branching templating directive exists.** Only `<Foreach>` (repetition) and
+   `visible` (boolean show/hide of one element) provide control flow — there is no `<If>`, no
+   comparison operators, no ternary syntax anywhere in the template engine.
 
-10. **No conditional/branching templating directive exists.** Only `<Foreach>` (repetition) and
-    `visible` (boolean show/hide of one element) provide control flow — there is no `<If>`, no
-    comparison operators, no ternary syntax anywhere in the template engine.
-
-11. **`${data(...)}` only reads one JSON nesting level.** For nested data, nest `<Foreach>`
+10. **`${data(...)}` only reads one JSON nesting level.** For nested data, nest `<Foreach>`
     elements (see `templating.md`) — dotted paths (`${data("a.b")}`) don't work for `data(...)`;
     that syntax only exists for the separate `${variable}` form.

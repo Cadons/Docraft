@@ -31,12 +31,6 @@ ctest --test-dir build -C Release -R DocraftLayoutEngineTest.SomeCase --output-o
 ./build/artifacts/bin/docraft_test --gtest_filter=DocraftLayoutEngineTest.SomeCase
 ```
 
-Stress tests are a separate target/binary and labeled, excluded from normal runs unless asked for:
-
-```bash
-ctest --test-dir build -C Release -L stress
-```
-
 CLI tools (built alongside the library):
 
 ```bash
