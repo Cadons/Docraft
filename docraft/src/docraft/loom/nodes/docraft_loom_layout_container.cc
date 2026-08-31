@@ -22,8 +22,19 @@ namespace docraft::loom::nodes {
 
     float DocraftLoomLayoutContainer::resolve_child_gap(float container_spacing, float margin_a, float margin_b)
     {
-        const float requested_margin = std::max(margin_a, margin_b);
-        return requested_margin > 0.0F ? requested_margin : container_spacing;
+        // Neither neighbor asked for a margin on this touching edge -- the container's
+        // own spacing (which may itself be negative) is what fills the gap.
+        if (margin_a == 0.0F && margin_b == 0.0F)
+        {
+            return container_spacing;
+        }
+        // CSS-style margin collapsing: the combined gap is the larger of the two
+        // positive requests plus the smaller (most negative) of the two negative
+        // requests -- so a lone negative margin still pulls its neighbors together
+        // instead of being discarded the way a plain max() would drop it.
+        const float positive = std::max({margin_a, margin_b, 0.0F});
+        const float negative = std::min({margin_a, margin_b, 0.0F});
+        return positive + negative;
     }
 
     float DocraftLoomLayoutContainer::resolve_outer_margin(const DocraftLoomNode& node, bool leading)

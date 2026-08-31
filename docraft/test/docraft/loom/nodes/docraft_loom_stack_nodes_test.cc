@@ -666,4 +666,107 @@ namespace docraft::test {
         EXPECT_FLOAT_EQ(backend.draw_line_calls()[1].x2 - backend.draw_line_calls()[1].x1, 30.0F);
         EXPECT_FLOAT_EQ(backend.draw_line_calls()[1].y2 - backend.draw_line_calls()[1].y1, 0.0F);
     }
+
+    // ── Bug #99: cross-axis margins ──────────────────────────────────────────────
+    // margin_top/bottom on an HStack child, and margin_left/right on a VStack
+    // child, have no sibling on that axis to collapse against -- they used to be
+    // silently dropped instead of being honored as a per-child inset.
+
+    TEST_F(DocraftLoomStackNodesTest, HStack_HonorsChildMarginTopAsCrossAxisOffset)
+    {
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(50.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto hstack = std::make_shared<loom::nodes::DocraftLoomHStack>();
+        hstack->set_padding(0.0F);
+        auto plain = make_text("a");
+        auto offset = make_text("b");
+        offset->set_margin(10.0F, 0.0F, 0.0F, 0.0F); // top only
+        hstack->add_child(plain);
+        hstack->add_child(offset);
+
+        hstack->accept(*measure_);
+        hstack->accept(*layout_);
+
+        const float plain_y = plain->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y;
+        const float offset_y = offset->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y;
+        EXPECT_FLOAT_EQ(offset_y - plain_y, 10.0F);
+        // The row must grow to still fit the offset child instead of clipping it.
+        EXPECT_FLOAT_EQ(hstack->layout_box().measured_size.height, 20.0F); // 10 (text) + 10 (margin_top)
+    }
+
+    TEST_F(DocraftLoomStackNodesTest, VStack_HonorsChildMarginLeftAsCrossAxisOffset)
+    {
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(50.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto vstack = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        vstack->set_padding(0.0F);
+        auto plain = make_text("a");
+        auto offset = make_text("b");
+        offset->set_margin(0.0F, 0.0F, 0.0F, 40.0F); // left only
+        vstack->add_child(plain);
+        vstack->add_child(offset);
+
+        vstack->accept(*measure_);
+        vstack->accept(*layout_);
+
+        const float plain_x = plain->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x;
+        const float offset_x = offset->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.x;
+        EXPECT_FLOAT_EQ(offset_x - plain_x, 40.0F);
+        // The column must widen to still fit the offset child's full extent.
+        EXPECT_FLOAT_EQ(vstack->layout_box().measured_size.width, 90.0F); // 50 (text) + 40 (margin_left)
+    }
+
+    // ── Bug #100: negative margins between siblings ────────────────────────────
+    // resolve_child_gap() used to drop any margin <= 0, dropping the request in
+    // favor of the container's own spacing -- so a negative margin_top on a
+    // second-or-later child had no effect. CSS-style collapsing (max of positives
+    // plus min of negatives) must let it pull siblings together, exactly like a
+    // negative spacing() already does.
+
+    TEST_F(DocraftLoomStackNodesTest, VStack_NegativeMarginBetweenSiblingsPullsThemTogether)
+    {
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(50.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto vstack = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        vstack->set_padding(0.0F);
+        vstack->set_spacing(0.0F);
+        auto first = make_text("a");
+        auto second = make_text("b");
+        second->set_margin(-5.0F, 0.0F, 0.0F, 0.0F); // margin_top="-5" on the second (non-first) child
+        vstack->add_child(first);
+        vstack->add_child(second);
+
+        vstack->accept(*measure_);
+        vstack->accept(*layout_);
+
+        const float first_y = first->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y;
+        const float second_y = second->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y;
+        // 10 (first's natural height) - 5 (negative margin pulls it up), not the old
+        // silently-dropped-to-spacing(0) result of 10.
+        EXPECT_FLOAT_EQ(second_y - first_y, 5.0F);
+    }
+
+    TEST_F(DocraftLoomStackNodesTest, VStack_NoMarginOnEitherSideFallsBackToContainerSpacing)
+    {
+        EXPECT_CALL(*text_backend_, measure_text_width(_, _, _)).WillRepeatedly(Return(50.0F));
+        EXPECT_CALL(*text_backend_, measure_text_height(_, _)).WillRepeatedly(Return(10.0F));
+
+        auto vstack = std::make_shared<loom::nodes::DocraftLoomVStack>();
+        vstack->set_padding(0.0F);
+        vstack->set_spacing(6.0F);
+        auto first = make_text("a");
+        auto second = make_text("b");
+        vstack->add_child(first);
+        vstack->add_child(second);
+
+        vstack->accept(*measure_);
+        vstack->accept(*layout_);
+
+        const float first_y = first->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y;
+        const float second_y = second->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof()).position.y;
+        EXPECT_FLOAT_EQ(second_y - first_y, 16.0F); // 10 (natural height) + 6 (spacing)
+    }
 } // namespace docraft::test

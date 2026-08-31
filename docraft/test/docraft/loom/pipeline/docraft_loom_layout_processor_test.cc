@@ -4,6 +4,7 @@
 
 #include "docraft/exception/docraft_exceptions.h"
 #include "docraft/loom/nodes/docraft_loom_hstack.h"
+#include "docraft/loom/nodes/docraft_loom_image.h"
 #include "docraft/loom/nodes/docraft_loom_rectangle.h"
 #include "docraft/loom/nodes/docraft_loom_table.h"
 #include "docraft/loom/nodes/docraft_loom_table_cell.h"
@@ -264,5 +265,41 @@ namespace docraft::test {
         const float y_without_margin = make_table_with_margin(0.0F);
         const float y_with_margin = make_table_with_margin(20.0F);
         EXPECT_NEAR(y_with_margin - y_without_margin, 20.0F, 0.01F);
+    }
+
+    // Bug #98: an Image with a declared width() inside a weighted HStack used to be
+    // force-stretched to the resolved column width regardless -- height was left
+    // alone, so the image came out distorted. The declared width must now survive;
+    // the column itself still gets the full resolved share (weights() still divides
+    // the row into columns), it just isn't imposed onto the image's own frame.
+    TEST(DocraftLoomLayoutProcessorTest, WeightedHStackDoesNotStretchImageWithExplicitWidth)
+    {
+        auto hstack = std::make_shared<loom::nodes::DocraftLoomHStack>();
+        hstack->set_padding(0.0F);
+        hstack->set_weights({1.0F, 1.0F});
+
+        auto image = std::make_shared<loom::nodes::DocraftLoomImage>();
+        image->set_width(83.1F);
+        image->set_height(34.0F);
+        image->edit_layout_box().measured_size = {.width = 83.1F, .height = 34.0F};
+        hstack->add_child(image);
+
+        auto other = std::make_shared<loom::nodes::DocraftLoomText>("b");
+        other->edit_layout_box().measured_size = {.width = 20.0F, .height = 10.0F};
+        hstack->add_child(other);
+
+        loom::pipeline::DocraftLoomLayoutProcessor processor(200.0F);
+        hstack->accept(processor);
+
+        const auto& image_frame = image->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof());
+        // Not stretched to its 100pt resolved slot -- keeps its declared 83.1pt width,
+        // undistorted alongside its declared height.
+        EXPECT_NEAR(image_frame.size.width, 83.1F, 0.01F);
+        EXPECT_NEAR(image_frame.size.height, 34.0F, 0.01F);
+
+        // A weighted child with no explicit width of its own (e.g. a plain Rectangle
+        // used as a column background) is unaffected and still fills its slot.
+        const auto& other_frame = other->layout_box().frame(docraft::test::utils::LayoutBoxTestAccess::make_layout_proof());
+        EXPECT_NEAR(other_frame.size.width, 100.0F, 0.01F);
     }
 } // namespace docraft::test

@@ -18,6 +18,8 @@
 
 #include <hpdf.h>
 
+#include <fmt/format.h>
+
 #include "docraft/exception/docraft_exceptions.h"
 
 namespace docraft::backend::pdf {
@@ -30,7 +32,12 @@ namespace docraft::backend::pdf {
         if (!pdf) {
             throw docraft::exception::BackendStateException("Haru document is not initialized");
         }
-        HPDF_SaveToFile(pdf, path.c_str());
+        const HPDF_STATUS status = HPDF_SaveToFile(pdf, path.c_str());
+        if (status != HPDF_OK) {
+            HPDF_ResetError(pdf);
+            throw docraft::exception::RenderingFailedException(
+                fmt::format("Failed to save PDF to output file '{}' (HPDF error_no={:#x})", path, status));
+        }
     }
 
     std::string DocraftHaruOutputBackend::file_extension() const {
