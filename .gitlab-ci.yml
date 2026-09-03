@@ -11,7 +11,7 @@ default:
 .build_env: &build_env
   before_script:
     - apt-get update -y
-    - apt-get install -y cmake make libgtest-dev libhpdf-dev libpugixml-dev nlohmann-json3-dev
+    - apt-get install -y cmake make libgtest-dev libhpdf-dev libpugixml-dev nlohmann-json3-dev libfmt-dev libgmock-dev
     - g++ --version
     - cmake --version
 
@@ -51,7 +51,7 @@ test:
 
 docs:
   stage: docs
-  image: python:3.9
+  image: python:3.12
   before_script:
     - apt-get update -y
     - apt-get install -y doxygen graphviz
