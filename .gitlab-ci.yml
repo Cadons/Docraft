@@ -51,7 +51,7 @@ test:
 
 docs:
   stage: docs
-  image: python:3.9
+  image: python:3.12
   before_script:
     - apt-get update -y
     - apt-get install -y doxygen graphviz
